@@ -3,7 +3,7 @@ name: Python Package
 on: [push]
 
 jobs:
-  build-linux:
+  Test-Models:
     runs-on: ubuntu-latest
     strategy:
       max-parallel: 5
