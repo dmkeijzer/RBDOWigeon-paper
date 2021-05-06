@@ -1,5 +1,7 @@
+<div style="text-align: center;">
 # Design Synthesis Exercise Repository
 ### A repository for the modelling and optimisation of a long range eVTOL
+</div>
 <hr>
 
 ## Compatibility
