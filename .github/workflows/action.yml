@@ -28,6 +28,7 @@ jobs:
       max-parallel: 5
 
     steps:
+      - uses: actions/checkout@v2
       - name: Lint with pylint
         run: |
           ls -ltr
@@ -42,6 +43,7 @@ jobs:
       max-parallel: 5
 
     steps:
+      - uses: actions/checkout@v2
       - name: Test with pytest
         run: |
           conda install pytest
