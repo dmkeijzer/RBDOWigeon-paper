@@ -30,6 +30,8 @@ jobs:
     steps:
       - name: Lint with pylint
         run: |
+          ls -ltr
+          pwd
           python -m pip install pylint
           pylint *.py -d C0301,C0103,R0801,C0116,C0114
 
