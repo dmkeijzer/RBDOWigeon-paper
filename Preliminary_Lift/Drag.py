@@ -3,6 +3,7 @@ import numpy as np
 #
 # From BOX WING FUNDAMENTALS - A DESIGN PERSPECTIVE
 # Oswald efficiency factor depending on the wing type
+# for initial estimation choose h/b = 0.2 so set h = 0.2, b = 1
 def e_factor(type,h, b, e_ref):
     """
     h = height difference between wings
