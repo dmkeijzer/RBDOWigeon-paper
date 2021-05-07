@@ -19,12 +19,16 @@ def e_factor(type,h, b, e_ref):
         return e_ref
 
 # Parasite Drag
+"""
+Cfe = 0.0045 for light twin wing aircraft ADSEE-I
+Swet_ratio = 4 estimation using ADSEE-I
+
+"""
 def CD0(Swet_ratio, Cf): # ADSEE-I
     return Swet_ratio * Cf
 
 
-#  Cfe = 0.0045 for light twin wing aircraft ADSEE-I
-# Swet_ratio = 4 estimation using ADSEE-I
+
 
 # Parabolic Drag
 def C_D(C_L, CD0, AR, e):
