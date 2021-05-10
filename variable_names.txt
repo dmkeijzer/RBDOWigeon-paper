@@ -1,36 +1,41 @@
 Preliminary estimations:
-    t_TO:       time spent hovering during take-off
-    t_land:     time spent hovering during landing
+    t_TO:       [s] time spent hovering during take-off
+    t_land:     [s] time spent hovering during landing
 
 Aerodynamics:
-    e:          Oswald factor
-    AR:         Aspect ratio
-    CD0:        Zero-lift drag coefficient
-    CLmax:      Maximum lift coefficient
+    e:          [-] Oswald factor
+    AR:         [-] Aspect ratio
+    CD0:        [-] Zero-lift drag coefficient
+    CLmax:      [-] Maximum lift coefficient
 
 Stability and Control
 
 Structures:
-    MTOW:       Maximum take-off weight
-    EOW:        Empty weight
+    MTOW:       [N] Maximum take-off weight
+    EOW:        [N] Empty weight
+    w_fus:      [m] Width of the fuselage
+    l_fus:      [m] Length of the fuselage
+    h_fus:      [m] Height of the fuselage
 
 Propulsion
-    eff_cruise: propulsive energy in cruise
-    eff_hover:  propulsive energy in hover
-    N_cruise:   Number of engines used in cruise
-    N_hover:    Number of dedicated hover engines
-    TA_ducted:  Estimated disk loading for ducted fans
-    TA_open:    Disk loading for open propellers
-    TA_hybrid:  Disk loading for a combination of ducted and open propellers
+    eff_cruise:     [-]     propulsive energy in cruise
+    eff_hover:      [-]     propulsive energy in hover
+    N_cruise:       [-]     Number of engines used in cruise
+    N_hover:        [-]     Number of dedicated hover engines
+    TA_ducted:      [N/m^2] Estimated disk loading for ducted fans
+    TA_open:        [N/m^2] Disk loading for open propellers
+    TA_hybrid:      [N/m^2] Disk loading for a combination of ducted and open propellers
+    max_T_engine:   [N]     Maximum thrust of the engine
 
 Requirements
-    V_stall:    Stall speed (sea level)
-    V_max:      Maximum speed
-    ROC:        Rate of climb
-    n_turn:     sustainable g forces in a turn (no speed loss)
+    V_stall:    [m/s]   Stall speed (sea level)
+    V_max:      [m/s]   Maximum speed
+    ROC:        [m/s]   Rate of climb
+    n_turn:     [-]     sustainable g forces in a turn (no speed loss)
 
 Flight performance
-    V_cruise:   Optimal cruise speed
-    h_cruise:   Cruising altitude
-    S:          Wing area
-    P:          brake power
+    V_cruise:   [m/s]   Optimal cruise speed
+    h_cruise:   [m]     Cruising altitude
+    S:          [m^2]   Wing area
+    P:          [W]     brake power
+    W/S:        [N/m^2] Wing loading
