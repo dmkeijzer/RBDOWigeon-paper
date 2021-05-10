@@ -20,7 +20,7 @@ def wing_planform(AR,S, sweepc4, taper):
 
 def wing_planform_double(AR, S1, sweepc41, taper1, S2, sweepc42, taper2):
     #Wing 1
-    b1 = np.sqrt(2* A * S1)
+    b1 = np.sqrt(2* AR * S1)
     c_r1 = 2 * S1 / ((1 + taper1) * b1)
     c_t1 = taper1 * c_r1
     c_MAC1 = (2 / 3) * c_r1 * ((1 + taper1 + taper1 ** 2) / (1 + taper1))
@@ -45,3 +45,9 @@ def wing_planform_double(AR, S1, sweepc41, taper1, S2, sweepc42, taper2):
     return wing1, wing2
 
 # Airfoil Selection
+
+def CL_des(rho, V, W, S ):
+    return W / S  / (0.5 * rho * V ** 2)  # no -ve lift contribution from tail trimming -> no 10% factor
+
+def Re( rho, V, MAC, mu):
+    return (rho * V * MAC)/mu
