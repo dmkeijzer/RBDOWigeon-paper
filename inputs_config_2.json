@@ -4,13 +4,24 @@
         "mTO": 1931,
         "mOE": 1565,
         "t_TO": 20,
-        "t_land": 20,
+        "t_land": 20
     },
+
     "Aerodynamics": {
         "e": 1,
         "AR": 1,
         "CD0": 1,
-        "CLmax": 1
+        "CLmax_front": 1,
+        "CLmax_back": 1,
+        "CLalpha_front": 1,
+        "CLalpha_back": 1,
+        "S_front": 1,
+        "S_back": 1,
+        "Sweep_front": 1,
+        "Sweep_back": 1,
+        "Cm_ac_front": 1,
+        "Cm_ac_back": 1,
+        "LD_ratio": 1
     },
 
     "Stability and Control": {
@@ -18,7 +29,10 @@
     },
 
     "Structures": {
-        "MTOW": 1
+        "MTOW": 1,
+        "w_fus": 1,
+        "h_fus": 1,
+        "l_fus": 1
     },
 
     "Propulsion": {
@@ -28,7 +42,8 @@
         "N_hover": 1,
         "TA_ducted": 1,
         "TA_open": 1,
-        "TA_hybrid": 1
+        "TA_hybrid": 1,
+        "Max_T_engine": 1
     },
 
     "Requirements": {
@@ -42,7 +57,9 @@
         "V_cruise": 1,
         "h_cruise": 1,
         "S": 1,
-        "P": 1
+        "P": 1,
+        "V_stall": 1,
+        "W/S": 1
     }
 
 }
