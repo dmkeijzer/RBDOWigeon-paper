@@ -1,4 +1,5 @@
 import numpy as np
+import constants as c
 # WING PLANFORM
 """"
 b =span
