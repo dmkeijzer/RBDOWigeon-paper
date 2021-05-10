@@ -25,7 +25,7 @@ Cfe = 0.0045 for light twin wing aircraft ADSEE-I
 Swet_ratio = 4 estimation using ADSEE-I
 
 """
-def CD0(Swet_ratio, Cf): # ADSEE-I
+def C_D_0(Swet_ratio, Cf): # ADSEE-I
     return Swet_ratio * Cf
 
 
