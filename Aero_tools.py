@@ -14,6 +14,7 @@ class ISA:
         self.rho_SL = 1.225  # [kg/m^3]  Sea level density
         self.p_SL = 101325  # [Pa]      Sea level pressure
         self.T_SL = 288.15 + T_offset  # [K]       Sea level temperature
+        self.mu_SL = 1.7894E-5 # [kg/m/s] Sea Level Dynamic Viscosity
 
         # Constants
         self.a = -0.0065  # [K/m]     Temperature lapse rate
@@ -38,3 +39,7 @@ class ISA:
     def density(self):
         rho = self.rho_SL * (self.T / self.T_SL) ** (-self.g0 / (self.a * self.R) - 1)
         return rho
+
+    def viscosity_dyn(self):
+        mu = self.mu_SL * (self.T / self.T_SL) ** (1.5) * (self.T * 110.4) / (self.T_SL * 110.4)# Sutherland Law, using Sutherland's constant S_mu = 110.4 for air
+        return mu

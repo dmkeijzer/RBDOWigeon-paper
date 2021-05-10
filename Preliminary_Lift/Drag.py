@@ -29,23 +29,21 @@ def CD0(Swet_ratio, Cf): # ADSEE-I
     return Swet_ratio * Cf
 
 
-
-
 # Parabolic Drag
 def C_D(C_L, CD0, AR, e):
     return CD0 + C_L ** 2 / (np.pi * AR * e)
 
 # LD ratio from ADSEE-I
-def LD_ratio(phase, CD0, A, e):
+def LD_ratio(phase, CD0, AR, e):
     if phase == 'cruise':
-        return np.sqrt((np.pi * A * e)/(4 * CD0))
+        return np.sqrt((np.pi * AR * e)/(4 * CD0))
     if phase == 'loiter':
-        return np.sqrt((3 * np.pi * A * e)/(16* CD0))
+        return np.sqrt((3 * np.pi * AR * e)/(16* CD0))
 
 # C_L from ADSEE-I
-def C_L(phase, CD0, A, e):
+def C_L(phase, CD0, AR, e):
     if phase == 'cruise':
-        return np.sqrt(np.pi * A * e * CD0)
+        return np.sqrt(np.pi * AR * e * CD0)
     if phase == 'loiter':
-        return np.sqrt(3 * np.pi * A * e * CD0)
+        return np.sqrt(3 * np.pi * AR * e * CD0)
 

@@ -7,9 +7,9 @@ b =span
 
 
 """
-def wing_planform(A,S, sweepc4, taper):
+def wing_planform(AR,S, sweepc4, taper):
 
-    b = np.sqrt(A*S)
+    b = np.sqrt(AR*S)
     c_r = 2*S/((1+taper)*b)
     c_t = taper * c_r
     c_MAC = (2/3)*c_r*((1+taper+taper**2)/(1+ taper))
@@ -20,7 +20,7 @@ def wing_planform(A,S, sweepc4, taper):
 
     return b,c_r,c_t,c_MAC, y_MAC, X_LEMAC
 
-def wing_planform_double(A, S1, sweepc41, taper1, S2, sweepc42, taper2):
+def wing_planform_double(AR, S1, sweepc41, taper1, S2, sweepc42, taper2):
     #Wing 1
     b1 = np.sqrt(2* A * S1)
     c_r1 = 2 * S1 / ((1 + taper1) * b1)
@@ -33,7 +33,7 @@ def wing_planform_double(A, S1, sweepc41, taper1, S2, sweepc42, taper2):
 
     #Wing 2
 
-    b2 = np.sqrt(2* A * S2)
+    b2 = np.sqrt(2* AR * S2)
     c_r2 = 2 * S2 / ((1 + taper2) * b2)
     c_t2 = taper2 * c_r2
     c_MAC2 = (2 / 3) * c_r2 * ((1 + taper2 + taper2 ** 2) / (1 + taper2))
