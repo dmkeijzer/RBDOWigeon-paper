@@ -49,6 +49,11 @@ def sweep_atx(x, c_r,b, taper,sweepc4):
     return sweep
 # Airfoil Selection
 
+
+def taper_opt(sweepc4):
+    return 0.45 * exp( -0.036 * sweepc4) # Eq. 7.4 Conceptual Design of a Medium Range Box Wing Aircraft
+
+
 def CL_des(rho, V, W, S ):
     return W / S  / (0.5 * rho * V ** 2)  # no -ve lift contribution from tail trimming -> no 10% factor
 
