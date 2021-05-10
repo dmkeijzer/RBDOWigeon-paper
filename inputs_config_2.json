@@ -8,20 +8,20 @@
     },
 
     "Aerodynamics": {
-        "e": 1,
-        "AR": 1,
-        "CD0": 1,
-        "CLmax_front": 1,
-        "CLmax_back": 1,
-        "CLalpha_front": 1,
-        "CLalpha_back": 1,
-        "S_front": 1,
-        "S_back": 1,
-        "Sweep_front": 1,
-        "Sweep_back": 1,
+        "e": 1.188,
+        "AR": 8,
+        "CD0": 0.0202,
+        "CLmax_front": 1.5,
+        "CLmax_back": 1.5,
+        "CLalpha_front": 5.332,
+        "CLalpha_back": 4.799,
+        "S_front": 17.190,
+        "S_back": 17.190,
+        "Sweep_front": 0,
+        "Sweep_back": 0,
         "Cm_ac_front": 1,
         "Cm_ac_back": 1,
-        "LD_ratio": 1
+        "LD_ratio": 20.371
     },
 
     "Stability and Control": {
