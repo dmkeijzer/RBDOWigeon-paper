@@ -3,7 +3,37 @@
         "hc": 1110,
         "rho": 1.1,
         "mTO": 1931,
-        "mOE": 1565,
-        "CLmax": 1.5
+        "mOE": 1565
+    },
+    "Aerodynamics": {
+        "e": 1,
+        "AR": 1,
+        "CD0": 1,
+        "CLmax": 1
+    },
+
+    "Propulsion": {
+        "eff_cruise": 1,
+        "eff_hover": 1,
+        "N_cruise": 1,
+        "N_hover": 1,
+        "TA_ducted": 1,
+        "TA_open": 1,
+        "TA_hybrid": 1
+    },
+
+    "Requirements": {
+        "V_stall": 50,
+        "V_max": 100,
+        "ROC": 10
+        "n_turn": 2
+    },
+
+    "Flight performance": {
+        "V_cruise": 1,
+        "h_cruise": 1,
+        "S": 1,
+        "P": 1
     }
+
 }
