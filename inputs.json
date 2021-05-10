@@ -1,15 +1,24 @@
 {
-    "Preliminary Sizing": {
-        "hc": 1110,
-        "rho": 1.1,
+    "Preliminary estimations": {
+
         "mTO": 1931,
-        "mOE": 1565
+        "mOE": 1565,
+        "t_TO": 20,
+        "t_land": 20,
     },
     "Aerodynamics": {
         "e": 1,
         "AR": 1,
         "CD0": 1,
         "CLmax": 1
+    },
+
+    "Stability and Control": {
+        "Placeholder": 1
+    },
+
+    "Structures": {
+        "MTOW": 1
     },
 
     "Propulsion": {
@@ -25,7 +34,7 @@
     "Requirements": {
         "V_stall": 50,
         "V_max": 100,
-        "ROC": 10
+        "ROC": 10,
         "n_turn": 2
     },
 
