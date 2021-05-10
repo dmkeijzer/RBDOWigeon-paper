@@ -7,8 +7,10 @@ from Aero_tools import ISA
 
 
 # A/C
-W = mTO * 9.81 #[N]
+W = mTO*9.81 #[N]
 Vcruise = 70 #[m/s]
+
+Wing_loading = 551
 # ISA
 h = h_cruise # cruise height[m]
 atm_flight  = ISA(h)
@@ -16,15 +18,17 @@ rho = atm_flight.density() # cte.rho
 mu = atm_flight.viscosity_dyn()
 a = atm_flight.soundspeed()
 # Wing Planform Parameter
-S = 15 #[m**2] PLACEHOLDER
-AR = 9   #PLACEHOLDER
+S = W/Wing_loading #[m**2] PLACEHOLDER
+AR = 14**2/S   #PLACEHOLDER
 taper = 0.4
 sweepc4 =0
 # For double wing configurations
-S1 = 7.5 #[m**2]  PLACEHOLDER
-S2= 7.5 #[m**2]  PLACEHOLDER
-s1 = S1/(S1+S2)
-s2 = 1-s1
+s1=0.5
+s2=1-s1
+
+S1 = S*s1 #[m**2]  PLACEHOLDER
+S2= S*s2 #[m**2]  PLACEHOLDER
+
 sweepc41= 0
 sweepc42=0
 taper1= 0.4
@@ -63,3 +67,8 @@ sweepc2 = sweep_atx(0.5,Wing_planform_params_single[1],Wing_planform_params_sing
 
 Clda_conv = liftslope('normal', AR, sweepc2, Mach(Vcruise,a), 2*np.pi, s1, s2, deda) # 2pi airfoil slope assumed as placeholder
 Clda_double = liftslope('double', AR, sweepc2, Mach(Vcruise,a), 2*np.pi, s1, s2, deda) # includes in order: total clda, clda wing1, clda wing 2
+
+print(AR)
+
+print(Clda_conv)
+print(Clda_double)
