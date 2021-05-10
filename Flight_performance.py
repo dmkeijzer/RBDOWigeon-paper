@@ -1,11 +1,25 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from Aero_tools import ISA
+#from constants import*
+import json
 
+datafile = open("inputs.json", "r")
 
 
 class initial_sizing:
-    def __init__(self, h, MTOW):
+    def __init__(self, h, MTOW, datafile):
+
+        # Read data from json file
+        data = json.load(datafile)
+        datafile.close()
+
+        # Extracting aerodynamic data
+        aero        = data["Aerodynamics"]
+        self.CLmax  = aero["CLmax"]
+        self.A      = aero["AR"]
+        self.e      = aero["e"]
+        self.CD0    = aero["CD0"]
 
         # Atmospherics
         atm_flight  = ISA(h)    # atmospheric conditions during flight
@@ -14,28 +28,31 @@ class initial_sizing:
         self.rho_LTO    = atm_LTO.density()
 
         # Requirements, and others
-        self.Vs     = 50
-        self.Vmax   = 100
-        self.ROC    = 10
-        self.nmax   = 2
+        reqs        = data["Requirements"]
+        self.Vs     = reqs["V_stall"]
+        self.Vmax   = reqs["V_max"]
+        self.ROC    = reqs["ROC"]
+        self.nmax   = reqs["n_turn"]
         self.Vcr    = 70
         self.MTOW   = MTOW  # [N] Maximum take-off weight in newtons
 
-        # Aerodynamic constants
-        self.CLmax  = 1.5
-        self.A      = 10
-        self.e      = 0.75
-        self.CD0    = 0.05
+        # # Aerodynamic constants
+        # self.CLmax  = 1.5
+        # self.A      = 10
+        # self.e      = 0.75
+        # self.CD0    = 0.05
 
         # Propulsion constants
-        self.eff_prop   = 0.8   # [-] Propeller efficiency during normal flight
-        self.eff_hover  = 0.6   # [-] Propeller efficiency during hover
-        self.Ncr        = 4     # [-] Number of engines used in cruise
-        self.Nho        = 2     # [-] Number of dedicated hover engines
-        self.TA_duct    = 1000  # [kg/m^2]  Disk loading for ducted fans
-        self.TA_open    = 200   # [kg/m^2]  Disk loading for open props
-        self.TA_hybrid  = 80    # [kg/m^2]  Disk loading for hybrid rotating-fixed propellers
+        prop            = data["Propulsion"]
+        self.eff_prop   = prop["eff_cruise"]   # [-] Propeller efficiency during normal flight
+        self.eff_hover  = prop["eff_hover"]  # [-] Propeller efficiency during hover
+        self.Ncr        = prop["N_cruise"]     # [-] Number of engines used in cruise
+        self.Nho        = prop["N_hover"]     # [-] Number of dedicated hover engines
+        self.TA_duct    = prop["TA_ducted"]  # [kg/m^2]  Disk loading for ducted fans
+        self.TA_open    = prop["TA_open"]   # [kg/m^2]  Disk loading for open props
+        self.TA_hybrid  = prop["TA_hybrid"]    # [kg/m^2]  Disk loading for hybrid rotating-fixed propellers
 
+        # Preparing matplotlib
         fig = plt.figure()
         self.ax1 = fig.add_subplot(111)
         self.ax2 = self.ax1.twiny()
@@ -163,7 +180,7 @@ h = 1000
 MTOW = 20000
 
 # Test run
-perf = initial_sizing(h, MTOW)
+perf = initial_sizing(h, MTOW, datafile)
 perf.wing_loading()
 perf.disk_loading()
 perf.design_point()
@@ -174,29 +191,39 @@ class optimization:
 
         atm     = ISA(h_cruise)
         atm_TO  = ISA(0)
+
+        # Read data from json file
+        data = json.load(datafile)
+        datafile.close()
+
+        # Extracting aerodynamic data
+        aero        = data["Aerodynamics"]
+        self.A      = aero["AR"]
+        self.e      = aero["e"]
+        self.CD0    = aero["CD0"]
+
+
         self.rho_cruise = atm.density()
         self.rho_TO     = atm_TO.density()
         self.S      = MTOW/WS
-        self.A      = 10
-        self.e      = 0.75
-        self.CD0    = 0.05
-        self.TA     = 100
-        self.n_cruise = n_cruise
-        self.n_hover  = n_hover
-        self.duct = duct
-        self.ROC  = 10
-        self.ROD  = 10
 
-        self.t_TO   = 20
-        self.t_land = 30
+        # Propulsion data
+        prop            = data["Propulsion"]
+        self.TA         = prop[""]
+        self.n_cruise   = prop["N_cruise"]
+        self.n_hover    = prop["N_hover"]
+        self.duct       = duct
+        self.hover_eff  = prop["eff_hover"]
+        self.cruise_eff = prop["eff_cruise"]
+        self.climb_eff  = prop["eff_cruise"]    # Just a simplification, change when more data is available
+        self.desc_eff   = prop["eff_cruise"]    # Idem
 
-        self.hover_eff  = 0.6
-        self.cruise_eff = 0.95
-        self.climb_eff  = 0.8
-        self.desc_eff   = 0.8
+        prelim      = data["Preliminary Sizing"]
+        self.t_TO   = prelim["t_TO"]
+        self.t_land = prelim["t_land"]
 
-
-
+        reqs        = data["Requirements"]
+        self.ROC    = reqs["ROC"]
 
     def cruise_speed(self, W, h):
 
@@ -210,7 +237,6 @@ class optimization:
 
         # Get the optimal speed
         self.Vopt    = np.sqrt(2*W/(rho_cruise*self.S*CLopt))
-
 
     def hover_power(self):
 

@@ -1,8 +1,5 @@
 {
     "Preliminary estimations": {
-
-        "mTO": 1931,
-        "mOE": 1565,
         "t_TO": 20,
         "t_land": 20,
     },
@@ -18,7 +15,8 @@
     },
 
     "Structures": {
-        "MTOW": 1
+        "MTOW": 18933.3,
+        "EOW": 15352.7,
     },
 
     "Propulsion": {
