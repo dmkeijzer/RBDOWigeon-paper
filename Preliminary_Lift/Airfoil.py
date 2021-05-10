@@ -4,8 +4,6 @@ import numpy as np
 """"
 b =span
 
-
-
 """
 def wing_planform(AR,S, sweepc4, taper):
 
