@@ -1,7 +1,7 @@
 import sys
 sys.path.append("../")
 from Preliminary_Lift.Airfoil import *
-from Preliminary_Lift.Drag import e_factor, CD0, LD_ratio
+from Preliminary_Lift.Drag import e_factor, C_D_0, LD_ratio
 from constants import *
 from Aero_tools import ISA
 
@@ -10,7 +10,7 @@ from Aero_tools import ISA
 W = mTO * 9.81 #[N]
 Vcruise = 70 #[m/s]
 # ISA
-h = hc # cruise height[m]
+h = h_cruise # cruise height[m]
 atm_flight  = ISA(h)
 rho = atm_flight.density() # cte.rho
 mu = atm_flight.viscosity_dyn()
@@ -41,7 +41,7 @@ deda = 0.1 # 10%, from Daniel Schitanz, Scholtz
 
 
 #Preliminary Lift-Drag Results
-CD_0 = CD0(Cfe, Swet_ratio)
+CD_0 = C_D_0(Cfe, Swet_ratio)
 
 e_conv = e_factor('normal', h_d, b_d, e_ref)
 e_tan = e_factor('tandem', h_d,b_d,e_ref)
