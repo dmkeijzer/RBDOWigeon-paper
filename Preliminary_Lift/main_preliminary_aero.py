@@ -1,16 +1,16 @@
 from Preliminary_Lift.Airfoil import *
-from Preliminary_Lift.Drag import e_factor, CD0, C_D, LD_ratio, C_L
-import constants as c
+from Preliminary_Lift.Drag import e_factor, CD0, LD_ratio
+from constants import *
 from Aero_tools import ISA
 
 
 # A/C
-W = c.mTO
+W = mTO * 9.81
 
 # ISA
-h = c.hc
+h = hc # cruise height
 atm_flight  = ISA(h)
-rho = c.rho
+rho = atm_flight.density() # cte.rho
 mu = atm_flight.viscosity_dyn()
 
 # Wing Planform Parameter

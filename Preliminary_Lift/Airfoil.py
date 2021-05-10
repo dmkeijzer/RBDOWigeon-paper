@@ -1,5 +1,5 @@
 import numpy as np
-import constants as c
+# import constants as cte
 # WING PLANFORM
 """"
 b =span
@@ -30,6 +30,7 @@ def wing_planform_double(AR, S1, sweepc41, taper1, S2, sweepc42, taper2):
     tan_sweep_LE1 = 0.25 * (2 * c_r1 / b1) * (1 - taper1) + np.tan(sweepc41)
 
     X_LEMAC1 = y_MAC1 * tan_sweep_LE1
+    wing1 = [b1, c_r1, c_t1, c_MAC1, y_MAC1, X_LEMAC1]
 
     #Wing 2
 
@@ -41,7 +42,8 @@ def wing_planform_double(AR, S1, sweepc41, taper1, S2, sweepc42, taper2):
     tan_sweep_LE2 = 0.25 * (2 * c_r2 / b2) * (1 - taper2) + np.tan(sweepc42)
 
     X_LEMAC2 = y_MAC2 * tan_sweep_LE2
+    wing2 = [b2, c_r2, c_t2, c_MAC2, y_MAC2, X_LEMAC2]
 
-    return b1, c_r1, c_t1, c_MAC1, y_MAC1, X_LEMAC1, b2, c_r2, c_t2, c_MAC2, y_MAC2, X_LEMAC2
+    return wing1, wing2
 
 # Airfoil Selection
