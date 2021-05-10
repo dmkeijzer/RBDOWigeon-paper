@@ -7,6 +7,8 @@ class ISA:
     An offset in sea level temperature can be specified to allow for variations.
 
     Note: Since our aircraft probably doesn't fly too high, this is only valid in the troposphere
+
+    Verified by comparison to: https://www.digitaldutch.com/atmoscalc/
     """
 
     def __init__(self, h, T_offset=0):
@@ -24,7 +26,7 @@ class ISA:
         self.h = h  # [m]       Altitude
 
         # Throw an error if the specified altitude is outside of the troposphere
-        if h > 11000:
+        if np.any(h) > 11000:
             raise ValueError('The specified altitude is outside the range of this class')
 
         self.T = self.T_SL + self.a * self.h  # [K] Temperature at altitude h, done here because it is used everywhere
@@ -39,6 +41,8 @@ class ISA:
     def density(self):
         rho = self.rho_SL * (self.T / self.T_SL) ** (-self.g0 / (self.a * self.R) - 1)
         return rho
+
+
 
     def viscosity_dyn(self):
         mu = self.mu_SL * (self.T / self.T_SL) ** (1.5) * (self.T * 110.4) / (self.T_SL * 110.4)# Sutherland Law, using Sutherland's constant S_mu = 110.4 for air

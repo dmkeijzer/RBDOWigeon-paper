@@ -3,7 +3,6 @@ import numpy as np
 # WING PLANFORM
 """"
 b =span
-
 """
 def wing_planform(AR,S, sweepc4, taper):
 
