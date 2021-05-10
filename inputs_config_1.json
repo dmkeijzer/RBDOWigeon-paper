@@ -9,19 +9,19 @@
 
     "Aerodynamics": {
         "e": 1.145,
-        "AR": 8,
+        "AR": 5.701,
         "CD0": 0.0202,
         "CLmax_front": 1.5,
         "CLmax_back": 1.5,
-        "CLalpha_front": 5.332,
-        "CLalpha_back": 4.799,
+        "CLalpha_front": 5.094,
+        "CLalpha_back": 4.584,
         "S_front": 17.190,
         "S_back": 17.190,
         "Sweep_front": 0,
         "Sweep_back": 0,
         "Cm_ac_front": 1,
         "Cm_ac_back": 1,
-        "L_D_ratio": 19.991
+        "L_D_ratio": 15.910
     },
 
     "Stability and Control": {
