@@ -108,68 +108,46 @@ class initial_sizing:
         self.ax1.plot(self.WS, self.WP_hov, label = 'Vertical flight requirements')
         self.ax1.plot(np.ones(np.size(self.WS))*self.WS_stall, np.linspace(0, 0.1, np.size(self.WS)), label = 'Stall speed')
 
-
-    # def disk_loading(self):
-    #
-    #     # Range of disk loadings
-    #     TA  = np.arange(1, 1000, 1)
-    #
-    #     # Disk loading obtained from statistics, converted to N/m^2
-    #     TA_hover    = self.TA*9.81
-    #
-    #     # Range of power loadings used for disk loading plot
-    #     self.WP_hover        = (np.sqrt(TA/2*self.rho_LTO)**-1)*self.eff_hover
-    #
-    #     # Power loading requirement obtained from assumed disk loading
-    #     WP_hover            = (np.sqrt(self.TA*9.81/(2*self.rho_LTO))**-1)*self.eff_hover
-    #
-    #
-    #     self.ax1.plot(self.WS, np.ones(np.size(self.WS)) * WP_hover, label = 'hover ducted')
-    #
-    #     self.ax1.set_xlabel('Wing loading [N/m^2]')
-    #     self.ax1.set_ylabel('Power loading [N/W]')
-    #     self.ax1.set_ylim(0, 0.15)
-    #     self.ax1.grid()
-    #     self.ax1.legend()
-    #
-    #     self.WP_hover_crit = np.minimum(np.minimum(WP_hover_duct, WP_hover_open), WP_hover_hybrid)
-    #
-    #     """
-    #     # Find the required disk loading based on the design point found in wing_loading
-    #     self.des_TA  = ((self.des_WP/self.eff_hover)**-2)*2*self.rho_LTO
-    #     print('Disk loading:  ', np.round(self.des_TA, 1), ' N/m^2')
-    #     """
-    #
-    #     # Plot disk loading curve
-    #     self.ax2.plot(TA, self.WP_hover, '--', label = 'Hover')
-    #     self.ax2.set_xlabel('Disk loading ')
-    #     self.ax2.set_ylim(self.ax1.get_ylim())
-    #     self.ax2.legend(loc = 'lower right')
-
-
     def design_point(self):
+        """
+        Identifies the design space, and finds the optimal design point. Since not all hover engines work during cruise,
+        this is done twice, once including hover, and once without. It is assumed that the wing loading at stall will be
+        limiting, the most critical power loading corresponding to this is then found. It should be checked in the plot
+        whether this indeed corresponds to the most optimal design point.
+        """
 
         # Border of the design space
         crit = np.minimum(np.minimum(np.minimum(np.minimum(self.WP_speed, self.WP_turn_cruise), self.WP_turn_max_speed),
                           self.WP_climb), self.WP_hov)[self.WS < self.WS_stall]
 
+        crit_cruise = np.minimum(np.minimum(np.minimum(self.WP_speed, self.WP_turn_cruise), self.WP_turn_max_speed),
+                          self.WP_climb)[self.WS < self.WS_stall]
+
         # Range of wing loadings in the design space
         ws_crit = self.WS[self.WS < self.WS_stall]
 
-        # Select design point, this is assuming a smaller wing is always favored,
+        # Select design point.
         # !!! Check manually in the plot !!!
-        self.des_WS = ws_crit[-1]
-        self.des_WP = crit[-1]
+        self.des_WS         = ws_crit[-1]
+        self.des_WP         = crit[-1]          # Design power loading including hover
+        self.des_WP_cruise  = crit_cruise[-1]   # Design power loading considering only cruise
+
+        # Write the design point to the data file
         FP = self.data["Flight performance"]
-        FP["W/S"] = float(self.des_WS)
+
+        FP["W/S"]           = float(self.des_WS)
+        FP["W/P hover"]     = float(self.des_WP)
+        FP["W/P cruise"]    = float(self.des_WP_cruise)
+
         datfile = open("inputs_config_1.json", "w")
         json.dump(self.data, datfile)
         datfile.close()
 
         # Plot design space and point
         self.ax1.fill_between(ws_crit, np.zeros(np.size(crit)), crit, facecolor='green', alpha=0.2)
+        self.ax1.fill_between(ws_crit, np.zeros(np.size(crit_cruise)), crit_cruise, facecolor='limegreen', alpha=0.2)
         self.ax1.plot(self.des_WS, self.des_WP, 'D', label='Design point')
-        plt.legend()
+        self.ax1.legend()
         plt.show()
 
         # Print results
@@ -183,30 +161,28 @@ class initial_sizing:
         # Sizing the wing
         S  = self.MTOW/self.des_WS
 
-        # Power needed in horizontal flight, per engine
-        Pcr = self.MTOW/(self.des_WP*self.Ncr)
+        # Total power needed
+        P_tot       = self.MTOW/self.des_WP         # Including hover
+        P_cruise    = self.MTOW/self.des_WP_cruise  # Cruise only
 
+        # Store results to the data file
         FP = self.data["Flight performance"]
-        FP["S"] = S
-        FP["P"] = Pcr
+        FP["S"]         = S
+        FP["P tot"]     = P_tot
+        FP["P cruise"]  = P_cruise
         datfile = open("inputs_config_1.json", "w")
         json.dump(self.data, datfile)
         datfile.close()
 
         print()
         print('====== Initial sizing ======')
-        print('Wing area:                      ', np.round(S, 2))
-        print('Shaft power per cruise engine:  ', np.round(Pcr))
+        print('Wing area:                      ', np.round(S, 2), 'm^2')
+        print('Total shaft power (incl. hover):', np.round(P_tot, 0), 'W')
+        print('Total shaft power (cruise only):', np.round(P_tot, 0), 'W')
 
         return self.des_WS, self.des_WP
 
-h = 500
 
-# Test run
-perf = initial_sizing(h, datafile)
-perf.wing_loading()
-perf.design_point()
-WS, WP = perf.sizing()
 
 class optimization:
     def __init__(self, WS, h_cruise, duct, datafile):
@@ -391,7 +367,16 @@ class optimization:
         plt.show()
 
 
+
+
+# Run the initial sizing
+h_cruise = 500
+perf = initial_sizing(h_cruise, datafile)
+perf.wing_loading()
+perf.design_point()
+WS, WP = perf.sizing()
+
+# Estimate the power
 datafile = open("inputs_config_1.json", "r")
 opt = optimization(WS, 1000, True, datafile)
-#opt.optimize_profile()
 opt.simulate_missions()
