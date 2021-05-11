@@ -19,7 +19,7 @@ mu = atm_flight.viscosity_dyn()
 a = atm_flight.soundspeed()
 # Wing Planform Parameter
 S = W/Wing_loading #[m**2] PLACEHOLDER
-AR = 10   #PLACEHOLDER
+AR = 14**2/S   #PLACEHOLDER
 taper = 0.4
 sweepc4 =0
 # For double wing configurations
@@ -68,6 +68,7 @@ sweepc2 = sweep_atx(0.5,Wing_planform_params_single[1],Wing_planform_params_sing
 Clda_conv = liftslope('normal', AR, sweepc2, Mach(Vcruise,a), 2*np.pi, s1, s2, deda) # 2pi airfoil slope assumed as placeholder
 Clda_double = liftslope('double', AR, sweepc2, Mach(Vcruise,a), 2*np.pi, s1, s2, deda) # includes in order: total clda, clda wing1, clda wing 2
 
-print(Clda_conv)
+print(AR)
 
-print(S,S1,S2)
+print(Clda_conv)
+print(Clda_double)
