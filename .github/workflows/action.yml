@@ -50,5 +50,6 @@ jobs:
           conda install pytest
       - name: Test with pytest
         run: |
-          pytest test/ -v
+          cd test
+          pytest -v .
     
