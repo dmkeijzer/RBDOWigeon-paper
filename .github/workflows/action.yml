@@ -4,7 +4,7 @@ on: [push]
 
 jobs:
   Code-Verification:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     strategy:
       max-parallel: 5
 
@@ -28,7 +28,7 @@ jobs:
           pylint *.py -d C0301,C0103,R0801,C0116,C0114,C0115,R0902,W0201 --fail-under=8
 
   Calculation-Verification:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: Code-Verification
     strategy:
       max-parallel: 5
