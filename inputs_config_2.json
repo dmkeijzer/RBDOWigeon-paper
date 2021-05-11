@@ -21,7 +21,9 @@
         "Sweep_back": 0,
         "Cm_ac_front": 1,
         "Cm_ac_back": 1,
-        "LD_ratio": 16.214
+        "LD_ratio": 16.214,
+        "MAC1": 1.305 ,
+        "MAC2": 1.305
     },
 
     "Stability and Control": {
