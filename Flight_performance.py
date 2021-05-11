@@ -5,10 +5,13 @@ from Aero_tools import ISA
 import json
 #import scipy.optimize as optim
 
-datafile = open("inputs_config_1.json", "r")
+
 
 class initial_sizing:
-    def __init__(self, h, datafile):
+    def __init__(self, h, path):
+
+        self.path = path
+        datafile = open(self.path, "r")
 
         # Read data from json file
         self.data = json.load(datafile)
@@ -136,7 +139,7 @@ class initial_sizing:
         FP["W/P hover"]     = float(self.des_WP)
         FP["W/P cruise"]    = float(self.des_WP_cruise)
 
-        datfile = open("inputs_config_1.json", "w")
+        datfile = open(self.path, "w")
         json.dump(self.data, datfile)
         datfile.close()
 
@@ -167,7 +170,7 @@ class initial_sizing:
         FP["S"]         = S
         FP["P tot"]     = P_tot
         FP["P cruise"]  = P_cruise
-        datfile = open("inputs_config_1.json", "w")
+        datfile = open(self.path, "w")
         json.dump(self.data, datfile)
         datfile.close()
 
@@ -208,7 +211,10 @@ class initial_sizing:
 
 
 class optimization:
-    def __init__(self, WS, h_cruise, duct, datafile):
+    def __init__(self, WS, h_cruise, path):
+
+        self.path = path
+        datafile = open(self.path, "r")
 
         atm     = ISA(h_cruise)
         atm_TO  = ISA(0)
@@ -237,7 +243,6 @@ class optimization:
         self.TA         = prop["TA"]
         self.n_cruise   = prop["N_cruise"]
         self.n_hover    = prop["N_hover"]
-        self.duct       = duct
         self.hover_eff  = prop["eff_hover"]
         self.cruise_eff = prop["eff_cruise"]
         self.climb_eff  = prop["eff_cruise"]    # Just a simplification, change when more data is available
@@ -272,7 +277,7 @@ class optimization:
         # Store cruise speed
         FP = self.data["Flight performance"]
         FP["V_cruise"] = self.Vopt
-        datfile = open("inputs_config_1.json", "w")
+        datfile = open(self.path, "w")
         json.dump(self.data, datfile)
         datfile.close()
 
@@ -448,17 +453,18 @@ class optimization:
 
         plt.show()
 
+path = "inputs_config_3.json"
 
 # Run the initial sizing
 h_cruise = 500
-perf = initial_sizing(h_cruise, datafile)
+perf = initial_sizing(h_cruise, path)
 perf.wing_loading()
 perf.design_point()
 WS, WP = perf.sizing()
 perf.testing()
 
+
 # Estimate the power
-datafile = open("inputs_config_1.json", "r")
-opt = optimization(WS, 1000, True, datafile)
+opt = optimization(WS, 1000, path)
 #opt.simulate_missions()
 opt.analyze_mission(300, np.radians(5), 10, pie = True)
