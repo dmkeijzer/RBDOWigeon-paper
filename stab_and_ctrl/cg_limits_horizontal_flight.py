@@ -1,13 +1,36 @@
 import numpy as np
+from scipy.linalg import null_space
+from matplotlib import pyplot as plt
+from matplotlib import colors as mc
+import colorsys
+from dataclasses import dataclass
+from itertools import combinations
+import os
+import json
 
+root_path = os.path.join(os.getcwd(), os.pardir)
 b = 10
-
+L_c4 = 0
+def values_conf_1():
+    datafile = open(os.path.join(root_path, "inputs_config_1.json"), "r")
+    data = json.load(datafile)
+    datafile.close()
+    ma = data["Structures"]["MTOW"]
+    b_fwd = np.sqrt(data["Aerodynamics"]["AR"] * data["Aerodynamics"]["S_front"])
+    b_rear = np.sqrt(data["Aerodynamics"]["AR"] * data["Aerodynamics"]["S_back"])
+    CLa_fwd = data["Aerodynamics"]["CLalpha_back"]
+    CLa_rear = CLa_fwd
+    Cm_ac_fwd = data["Aerodynamics"]["Cm_ac_front"]
+    Cm_ac_rear = data["Aerodynamics"]["Cm_ac_back"]
+    CL_max_fwd = data["Aerodynamics"]["CLmax_front"]
+    CL_max_rear = data["Aerodynamics"]["CLmax_back"]
+    return
 def deps_da(Lambda_quarter_chord, lh, h_ht, A, CLaw):
     """
     Inputs:
     :param Lambda_quarter_chord: Sweep Angle at c/4 [RAD]
-    :param lh: tail arm
-    :param h_ht: distance between ac_w with ac_h
+    :param lh: distance between ac_w1 with ac_w2 (horizontal)
+    :param h_ht: distance between ac_w1 with ac_w2 (vertical)
     :param A: Aspect Ratio of wing
     :param CLaw: Wing Lift curve slope
     :return: de/dalpha
