@@ -43,10 +43,42 @@ def wing_planform_double(AR, S1, sweepc41, taper1, S2, sweepc42, taper2):
 
     return wing1, wing2
 
+def sweep_atx(x, c_r,b, taper,sweepc4):
+    tan_sweep_LE = 0.25 * (2 * c_r / b) * (1 - taper) + np.tan(sweepc4)
+    sweep = np.arctan(tan_sweep_LE - x * (2 * c_r / b) * (1 - taper) )
+    return sweep
 # Airfoil Selection
+
+
+def taper_opt(sweepc4):
+    return 0.45 * exp( -0.036 * sweepc4) # Eq. 7.4 Conceptual Design of a Medium Range Box Wing Aircraft
+
 
 def CL_des(rho, V, W, S ):
     return W / S  / (0.5 * rho * V ** 2)  # no -ve lift contribution from tail trimming -> no 10% factor
 
 def Re( rho, V, MAC, mu):
     return (rho * V * MAC)/mu
+
+#Wing performance
+
+def Mach(V,a):
+    return V/a
+
+def liftslope(type, AR, sweepc2, M, Clda_airfoil, s1, s2, deda):
+    b = np.sqrt(1-M**2)
+    SW = np.tan(sweepc2)
+    ref_slope = Clda_airfoil * (AR/(2+ np.sqrt(4+((AR*b/0.95)**2 )*((1+SW**2)/(b**2)))))
+
+    if type == 'normal':
+        return ref_slope
+
+    else:
+        ratio = 2*(2+ np.sqrt((AR**2)*(1+SW**2)+4))/(2+ np.sqrt((4*AR**2)*(1+0.25*SW**2)+4))
+
+        slope_iso = ratio*ref_slope
+        slope_1 = slope_iso
+        slope_2 = slope_iso *(1-deda)
+        slope_tot = slope_1 *s1 +slope_2 *s2
+        return slope_tot, slope_1, slope_2
+
