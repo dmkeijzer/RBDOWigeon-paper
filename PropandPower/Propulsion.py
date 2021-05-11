@@ -4,7 +4,12 @@ procedure obtained from "Architectural performance assessment of an electric
 vertical take-off and landing (e-VTOL) aircraft based on a ducted vectored thrust concept (2021)"
 """
 import numpy as np
+import os
+import json
 
+root_path = os.path.join(os.getcwd(), os.pardir)
+datafile = open(os.path.join(root_path, "inputs_config_1.json"), "r")
+from Aero_tools import ISA
 
 class PropulsionHover:
 
@@ -72,3 +77,40 @@ class PropulsionCruise:
 
     def P_cr(self):
         return self.drag * self.v_cruise / self.eff_cruise
+
+class ActuatorDisk:
+
+    def __init__(self,D_prop,n_prop,datafile):
+        """
+        :param D_prop: diameter of a propeller [m]
+        :param n_prop: number of propellers [-]
+        """
+
+        # Class specific data not (yet) in .json
+        self.D_prop = D.prop
+        self.n_prop = n.prop
+
+        # Read data from json file
+        self.data = json.load(datafile)
+        datafile.close()
+
+        # Extracting aerodynamic data
+        aero        = self.data["Aerodynamics"]
+        self.CD = aero["CD"]
+
+        # Extracting performance data
+        perf = self.data["Flight performance"]
+        self.S = perf["S"]
+        self.V_0 = perf["V_cruise"]
+        self.h = perf["h_cruise"]
+
+        # Atmospherics
+        atm_flight  = ISA(self.h)    # atmospheric conditions during flight   # Idk if this actually works
+        atm_LTO     = ISA(0)    # atmospheric conditions at landing and take-off (assumed sea-level)
+        self.rho_flight = atm_flight.density()
+        self.rho_LTO    = atm_LTO.density()
+
+    def V_e(self):
+        holder = np.pi * 0.25 * self.D_prop**2 * self.n_prop
+        return np.sqrt(self.V_0**2 * (self.S * self.CD + holder) / holder)
+
