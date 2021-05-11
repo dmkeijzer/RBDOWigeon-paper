@@ -7,7 +7,6 @@ import scipy.optimize as optim
 
 datafile = open("inputs_config_1.json", "r")
 
-
 class initial_sizing:
     def __init__(self, h, datafile):
 
@@ -40,7 +39,6 @@ class initial_sizing:
         self.Vcr    = 70
 
         self.ROC_ho = reqs["ROC_hover"]
-
 
         # Propulsion constants
         prop            = self.data["Propulsion"]
@@ -211,7 +209,7 @@ perf.design_point()
 WS, WP = perf.sizing()
 
 class optimization:
-    def __init__(self, WS, h_cruise, n_cruise, n_hover, duct, datafile):
+    def __init__(self, WS, h_cruise, duct, datafile):
 
         atm     = ISA(h_cruise)
         atm_TO  = ISA(0)
@@ -251,7 +249,6 @@ class optimization:
         self.t_TO   = prelim["t_TO"]
         self.t_land = prelim["t_land"]
 
-
         reqs        = data["Requirements"]
         self.ROC    = reqs["ROC"]
 
@@ -267,7 +264,6 @@ class optimization:
 
         # Get the optimal speed
         self.Vopt    = np.sqrt(2*W/(rho_cruise*self.S*CLopt))
-
     def hover_power(self):
 
         if self.duct:
@@ -299,72 +295,44 @@ class optimization:
         self.P_des   = np.maximum(self.MTOW*self.V_cl*((CLCD_cl**-1) - np.sin(gamma_descend))/self.climb_eff, 0)
         #print(self.P_des)
 
-    def analize_mission(self, h_cruise, gamma_descend, ROC_climb, mission_dist = 300):
+    def analize_mission(self, h_cruise, gamma_descend, ROC_climb, mission_dist = 300000):
 
-        # Time needed to climb to and descend from cruise altitude
+        rho_cl = ISA(h_cruise / 2).density()
+
+        # Optimal climb velocity
+        CL_cl = np.sqrt(np.pi * self.A * self.e * self.CD0 * 3)
+        V_cl = np.sqrt(2 * self.MTOW / (rho_cl * self.S * CL_cl))
+
+        # Climb angle and distance covered
+        gamma_climb = np.arcsin(ROC_climb / V_cl)
+        d_climb = h_cruise / np.tan(gamma_climb)
+
+        # Minimum descent angle needed to at least reach the cruising altitude
+        d_desc_min = mission_dist - d_climb
+        gamma_des_min = np.arctan(h_cruise / d_desc_min)
+
+        # Energy used during climb
         self.climb_desc_power(h_cruise / 2, gamma_descend, ROC_climb)
-        t_climb = h_cruise/self.ROC
-        t_desc  = h_cruise/(np.sin(gamma_descend*self.V_cl))
-        # Distance covered during climb and descend (assuming small angles)
-        d_climb = self.V_cl*t_climb
-        d_desc  = self.V_cl*t_desc
+        t_cl = h_cruise / ROC_climb
+        E_climb = self.P_cl * t_cl
 
-        # Time spent cruising
+        # Energy during descent
+        ROD = V_cl * np.sin(gamma_descend)
+        t_desc = h_cruise / ROD
+        E_desc = self.P_des * t_desc
+
+        # Energy during cruise
         self.cruise_speed(self.MTOW, h_cruise)
-        V_cruise = self.Vopt
-        t_cruise = (mission_dist - d_climb - d_desc)/V_cruise
-        t_cruise = np.where(t_cruise<0, np.nan, t_cruise)
-
-        # Total mission energy
-        self.hover_power()
         self.cruise_power()
-        E_mission = (self.t_TO + self.t_land)*self.P_h + t_cruise*self.P_cr + t_climb*self.P_cl + t_desc*self.P_des
-        t_mission = t_cruise + t_climb + t_desc + self.t_TO + self.t_land
+        d_desc = h_cruise / np.tan(gamma_descend)
+        d_cruise = mission_dist - d_climb - d_desc
+        t_cruise = d_cruise / self.Vopt
+        E_cruise = self.P_cr * t_cruise
 
-        E_ratio   = t_cruise*self.P_cr/(t_climb*self.P_cl + t_desc*self.P_des)
+        E_mission = np.where(d_cruise < 0, np.nan, E_climb + E_desc + E_cruise)
+        t_mission = np.where(d_cruise < 0, np.nan, t_cruise + t_cl + t_desc)
 
-        return E_mission, t_cruise, t_mission, E_ratio
-
-    def mission_energy(self, parameters):
-        # unpacking the parameters
-        h_cruise        = parameters[0]
-        gamma_descend   = parameters[1]
-        ROC_climb       = parameters[2]
-        mission_dist    = 300000
-
-        # Time needed to climb to and descend from cruise altitude
-        self.climb_desc_power(h_cruise / 2, gamma_descend, ROC_climb)
-        t_climb = h_cruise / self.ROC
-        t_desc = h_cruise / (np.sin(gamma_descend * self.V_cl))
-        # Distance covered during climb and descend (assuming small angles)
-        d_climb = self.V_cl * t_climb
-        d_desc = self.V_cl * t_desc
-
-        # Time spent cruising
-        self.cruise_speed(self.MTOW, h_cruise)
-        V_cruise = self.Vopt
-        t_cruise = (mission_dist - d_climb - d_desc) / V_cruise
-        t_cruise = np.where(t_cruise < 0, np.nan, t_cruise)
-
-        # Total mission energy
-        self.hover_power()
-        self.cruise_power()
-        E_mission = (self.t_TO + self.t_land) * self.P_h + t_cruise * self.P_cr + t_climb * self.P_cl + t_desc * self.P_des
-
-        return E_mission
-
-
-    def optimize_profile(self):
-
-        param_0 = np.array([1000, np.radians(5), 10])
-
-        param_f = optim.minimize(self.mission_energy, param_0, bounds = ((300, 3000), (0, None), (0, None)))
-        print(param_f.x)
-        print("==== optimized mission profile ====")
-        # print("Cruising altitude: ", param_f[0])
-        # print("Descent angle:     ", param_f[1])
-        # print("Rate-of-climb:     ", param_f[2])
-
+        return E_mission, t_mission
 
 
     def simulate_missions(self):
@@ -375,35 +343,26 @@ class optimization:
 
         # Go through all mission ranges, and plot the energy consumption vs the flying altitude
         for d in distances:
-            E, t_cruise, t_miss, E_ratio = self.analize_mission(cruise_alts, self.ROC, np.radians(5), d*1000)
+
+            E, t_miss = self.analize_mission(cruise_alts, np.radians(5), self.ROC, mission_dist = d*1000)
             label = 'Dist = ' + str(d) + 'km'
 
-            plt.subplot(221)
-            plt.plot(cruise_alts, E*2.77778e-7, label = label)
+            plt.subplot(211)
+            plt.plot(cruise_alts, E * 2.77778e-7, label=label)
             plt.xlabel('Cruising altitude [m]')
             plt.ylabel('Energy consumption [kWh]')
+            plt.grid()
 
-            plt.subplot(222)
-            plt.plot(cruise_alts, t_cruise/3600, label = label)
-            plt.xlabel("Cruising altitude [m]")
-            plt.ylabel("Time in Cruise [h]")
-
-            plt.subplot(223)
-            plt.plot(cruise_alts, t_miss/3600, label = label)
+            plt.subplot(212)
+            plt.plot(cruise_alts, t_miss / 3600, label=label)
             plt.xlabel("Cruising altitude [m]")
             plt.ylabel("Mission time [h]")
+            plt.grid()
 
-
-            plt.subplot(224)
-            plt.plot(cruise_alts, E_ratio, label = label)
-            plt.xlabel("Cruising altitude [m]")
-            plt.ylabel("$E_{cruise}$/$E_{climb}$")
 
         plt.legend()
         plt.tight_layout()
-        plt.grid()
         plt.show()
-
 
         # Optimization of the descent angle (assuming maximum range)
         gamma_descend   = np.array([7, 5, 3, 2, 1])
@@ -411,35 +370,28 @@ class optimization:
         for gam in gamma_descend:
 
             label = 'gamma = ' + str(gam)
-            E, t_cruise, t_miss, E_ratio = self.analize_mission(cruise_alts, self.ROC, np.radians(gam), 300000)
-            plt.subplot(221)
+            E, t_miss = self.analize_mission(cruise_alts, np.radians(gam), self.ROC,  mission_dist = 300000)
+            plt.subplot(211)
             plt.plot(cruise_alts, E * 2.77778e-7, label=label)
             plt.xlabel('Cruising altitude [m]')
             plt.ylabel('Energy consumption [kWh]')
+            plt.grid()
 
-            plt.subplot(222)
-            plt.plot(cruise_alts, t_cruise / 3600, label=label)
-            plt.xlabel("Cruising altitude [m]")
-            plt.ylabel("Time in Cruise [h]")
-
-            plt.subplot(223)
+            plt.subplot(212)
             plt.plot(cruise_alts, t_miss / 3600, label=label)
             plt.xlabel("Cruising altitude [m]")
             plt.ylabel("Mission time [h]")
+            plt.grid()
 
-            plt.subplot(224)
-            plt.plot(cruise_alts, E_ratio, label = label)
-            plt.xlabel("Cruising altitude [m]")
-            plt.ylabel("$E_{cruise}$/$E_{climb}$")
 
 
         plt.legend()
         plt.tight_layout()
-        plt.grid()
+
         plt.show()
 
 
 datafile = open("inputs_config_1.json", "r")
-opt = optimization(WS, 1000, 4, 2, True, datafile)
-opt.optimize_profile()
-#opt.simulate_missions()
+opt = optimization(WS, 1000, True, datafile)
+#opt.optimize_profile()
+opt.simulate_missions()
