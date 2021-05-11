@@ -1,6 +1,10 @@
 from pandas import read_excel
 import numpy as np
 import json
+
+import sys
+sys.path.append('../')
+
 from constants import *
 from analysis import get_data
 
@@ -188,7 +192,8 @@ def Weight(Fused):
     return masses[0] if num else np.array(masses)
 
 if __name__ == '__main__':
-    from pandas import DataFrame
+    #from pandas import DataFrame
+    
 
     # cessna = Plane.read('../Data/flightdata.xlsx') # Load Reference Data. Includes Mass of Passengers, Pilots, Baggage and Fuel.
     # dcg = lambda cog1, cog2: f'Difference in c.o.g: {abs(cog2 - cog1)} m towards the {"tail" if cog2 > cog1 else "nose"} of the aircraft'
@@ -208,11 +213,11 @@ if __name__ == '__main__':
     # cessna.move(person, position=cessna.seats[seat-1], inches=True)
     # print(f'After moving the {person} to seat {seat}:\n{cessna = }\n{dcg(cog2, cessna.cg())}\n{dm(m2, cessna.mass())}', end='\n\n')
     # print(f'See History (fuel and aircraft mass in kg, c.o.g. in m):\n{DataFrame(cessna.history)}')
-    plane = Plane.test()
-    print(f'{plane.BEM() * kg, (plane.cgBEM()+plane.lw) / inch = }')
-    print(f'{plane.ZFM() * kg, (plane.cgZFM()+plane.lw) / inch = }')
-    print(f'{plane.fuel = }')
-    print(f'Ramp: {plane.mass() * kg, (plane.cg()+plane.lw) / inch = }')
-    ppl = {p: Mass(m.w*kg, m.a/inch, True, False) for p, m in zip(plane.people.keys(), plane.people.values())}
-    print({p: ppl[p].moment() for p in ppl})
-    print(f'Payload: {ppl}\nsums:{sum([m.w for m in ppl.values()])} lbs {sum([m.moment() for m in ppl.values()])} lbs-inch')
+#     plane = Plane.test()
+#     print(f'{plane.BEM() * kg, (plane.cgBEM()+plane.lw) / inch = }')
+#     print(f'{plane.ZFM() * kg, (plane.cgZFM()+plane.lw) / inch = }')
+#     print(f'{plane.fuel = }')
+#     print(f'Ramp: {plane.mass() * kg, (plane.cg()+plane.lw) / inch = }')
+#     ppl = {p: Mass(m.w*kg, m.a/inch, True, False) for p, m in zip(plane.people.keys(), plane.people.values())}
+#     print({p: ppl[p].moment() for p in ppl})
+#     print(f'Payload: {ppl}\nsums:{sum([m.w for m in ppl.values()])} lbs {sum([m.moment() for m in ppl.values()])} lbs-inch')
