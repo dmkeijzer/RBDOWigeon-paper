@@ -18,6 +18,5 @@ def test_hexacopter_example():
 
     rotors = [hc.Rotor(x[i], y[i], K, ku, eta, ccw[i]) for i in range(6)]
     ac = hc.Aircraft(Jx, Jy, Jz, ma, rotors)
-    gugu = hc.controllable(ac, g=g)
 
-    assert abs(gugu - 1.4861) < 1E-4
+    assert hc.controllable(ac, g=g) and abs(hc.acai(ac, g=g) - 1.4861) < 1E-4
