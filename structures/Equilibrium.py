@@ -23,12 +23,11 @@ class PointLoad:
 class Moment:
     def __init__(self, value=[]):
         self.m = np.array(value)
+
     force, moment = lambda self: np.array([0, 0, 0]), lambda self: self.m
 
 class RunningLoad:
     def __init__(self, values=[], positions=[], axis=0):
-        pass
-
 
 class EquilibriumEquation:
     def __init__(self, kloads=[], ukloads=[]):
