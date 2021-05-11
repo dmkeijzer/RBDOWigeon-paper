@@ -15,7 +15,7 @@ class initial_sizing:
         datafile.close()
 
         # Estimation for ratio between wing area and total area projected from above
-        self.StotSw = 1.4
+
 
         # Extracting aerodynamic data
         aero        = self.data["Aerodynamics"]
@@ -23,6 +23,7 @@ class initial_sizing:
         self.A      = aero["AR"]
         self.e      = aero["e"]
         self.CD0    = aero["CD0"]
+        self.StotSw = aero["Stot/Sw"]
 
         # Atmospherics
         atm_flight  = ISA(h)    # atmospheric conditions during flight
@@ -178,7 +179,7 @@ class initial_sizing:
         print('====== Initial sizing ======')
         print('Wing area:                      ', np.round(S, 2), 'm^2')
         print('Total shaft power (incl. hover):', np.round(P_tot, 0), 'W')
-        print('Total shaft power (cruise only):', np.round(P_tot, 0), 'W')
+        print('Total shaft power (cruise only):', np.round(P_cruise, 0), 'W')
 
         return self.des_WS, self.des_WP
 
@@ -199,6 +200,7 @@ class optimization:
         self.A      = aero["AR"]
         self.e      = aero["e"]
         self.CD0    = aero["CD0"]
+        self.StotSw = aero["Stot/Sw"]
 
         # Structures data
         struc       = data["Structures"]
@@ -227,6 +229,8 @@ class optimization:
 
         reqs        = data["Requirements"]
         self.ROC    = reqs["ROC"]
+        self.ROC_ho = reqs["ROC_hover"]
+        self.ROD_ho = reqs["ROD_hover"]
 
     def cruise_speed(self, W, h):
 
@@ -240,76 +244,104 @@ class optimization:
 
         # Get the optimal speed
         self.Vopt    = np.sqrt(2*W/(rho_cruise*self.S*CLopt))
-    def hover_power(self):
 
-        if self.duct:
-            self.P_h  = 0.5*self.MTOW*np.sqrt(self.TA)/(np.sqrt(self.rho_TO*(self.n_cruise + self.n_hover))*self.hover_eff)
+    def climb_speed(self, h):
 
-        else:
-            self.P_h  = self.MTOW*np.sqrt(self.TA/(2*self.rho_TO*(self.n_cruise + self.n_hover)))
-
-    def cruise_power(self):
-
-        self.P_cr    = self.MTOW*self.Vopt*self.CDCL_cr/self.cruise_eff
-
-    def climb_desc_power(self, h, gamma_descend, ROC_climb):
-
-        rho_cl      = ISA(h).density()
-
-        # Optimal climb velocity
-        CL_cl       = np.sqrt(np.pi*self.A*self.e*self.CD0*3)
-        self.V_cl   = np.sqrt(2*self.MTOW/(rho_cl*self.S*CL_cl))
-
-        # Climb CLCD
-        CD_cl       = self.CD0 + CL_cl*CL_cl/(np.pi*self.A*self.e)
-        CLCD_cl     = CL_cl/CD_cl
-
-        # Climb power
-        self.P_cl   = (self.MTOW*self.V_cl*(CLCD_cl**-1) + self.MTOW*ROC_climb)/self.climb_eff
-
-        # Optimal power during descent is the same as during climb
-        self.P_des   = np.maximum(self.MTOW*self.V_cl*((CLCD_cl**-1) - np.sin(gamma_descend))/self.climb_eff, 0)
-        #print(self.P_des)
-
-    def analize_mission(self, h_cruise, gamma_descend, ROC_climb, mission_dist = 300000):
-
-        rho_cl = ISA(h_cruise / 2).density()
+        rho_cl = ISA(h).density()
 
         # Optimal climb velocity
         CL_cl = np.sqrt(np.pi * self.A * self.e * self.CD0 * 3)
-        V_cl = np.sqrt(2 * self.MTOW / (rho_cl * self.S * CL_cl))
+        self.V_cl = np.sqrt(2 * self.MTOW / (rho_cl * self.S * CL_cl))
+
+        # Climb CLCD
+        CD_cl = self.CD0 + CL_cl * CL_cl / (np.pi * self.A * self.e)
+        self.CLCD_cl = CL_cl / CD_cl
+    # def hover_power(self):
+    #
+    #     if self.duct:
+    #         self.P_h  = 0.5*self.MTOW*np.sqrt(self.TA)/(np.sqrt(self.rho_TO*(self.n_cruise + self.n_hover))*self.hover_eff)
+    #
+    #     else:
+    #         self.P_h  = self.MTOW*np.sqrt(self.TA/(2*self.rho_TO*(self.n_cruise + self.n_hover)))
+
+    def hover_power(self, ROC):
+
+        TWR = 1.2 * (1 + ((ROC ** 2) * self.rho_TO * self.StotSw / WS))
+
+        P_hov = TWR * self.MTOW * np.sqrt(self.TA / (self.rho_TO * 2)) / self.hover_eff
+
+        return P_hov
+
+    def cruise_power(self):
+
+        P_cr    = self.MTOW*self.Vopt*self.CDCL_cr/self.cruise_eff
+
+        return P_cr
+
+    def climb_power(self, ROC_climb):
+
+        # Climb power
+        P_cl   = (self.MTOW*self.V_cl*(self.CLCD_cl**-1) + self.MTOW*ROC_climb)/self.climb_eff
+
+        return P_cl
+
+    def descent_power(self, gamma_descend):
+
+        # Optimal power during descent is the same as during climb
+        P_des   = np.maximum(self.MTOW*self.V_cl*((self.CLCD_cl**-1) - np.sin(gamma_descend))/self.climb_eff, 0)
+
+        return P_des
+
+
+    def analize_mission(self, h_cruise, gamma_descend, ROC_climb, mission_dist = 300000):
+
+
+        # rho_cl = ISA(h_cruise / 2).density()
+        #
+        # # Optimal climb velocity
+        # CL_cl = np.sqrt(np.pi * self.A * self.e * self.CD0 * 3)
+        # V_cl = np.sqrt(2 * self.MTOW / (rho_cl * self.S * CL_cl))
+        #
+
+        self.climb_speed(h_cruise/2)
 
         # Climb angle and distance covered
-        gamma_climb = np.arcsin(ROC_climb / V_cl)
+        gamma_climb = np.arcsin(ROC_climb / self.V_cl)
         d_climb = h_cruise / np.tan(gamma_climb)
 
         # Minimum descent angle needed to at least reach the cruising altitude
-        d_desc_min = mission_dist - d_climb
-        gamma_des_min = np.arctan(h_cruise / d_desc_min)
+        d_desc_min      = mission_dist - d_climb
+        gamma_des_min   = np.arctan(h_cruise / d_desc_min)
+
+        # Energy during hover
+        P_hov_to        = self.hover_power(self.ROC_ho) # Take-off
+        E_hover_to      = P_hov_to*self.t_TO
+
+        P_hov_land      = self.hover_power(self.ROD_ho) # Landing
+        E_hover_land    = P_hov_land*self.t_land
 
         # Energy used during climb
-        self.climb_desc_power(h_cruise / 2, gamma_descend, ROC_climb)
-        t_cl = h_cruise / ROC_climb
-        E_climb = self.P_cl * t_cl
+        P_cl    = self.climb_power(ROC_climb)
+        t_cl    = h_cruise / ROC_climb
+        E_climb = P_cl * t_cl
 
         # Energy during descent
-        ROD = V_cl * np.sin(gamma_descend)
-        t_desc = h_cruise / ROD
-        E_desc = self.P_des * t_desc
+        ROD     = self.V_cl * np.sin(gamma_descend)
+        P_des   = self.descent_power(gamma_descend)
+        t_desc  = h_cruise / ROD
+        E_desc  = P_des * t_desc
 
         # Energy during cruise
         self.cruise_speed(self.MTOW, h_cruise)
-        self.cruise_power()
-        d_desc = h_cruise / np.tan(gamma_descend)
-        d_cruise = mission_dist - d_climb - d_desc
-        t_cruise = d_cruise / self.Vopt
-        E_cruise = self.P_cr * t_cruise
-
-        E_mission = np.where(d_cruise < 0, np.nan, E_climb + E_desc + E_cruise)
-        t_mission = np.where(d_cruise < 0, np.nan, t_cruise + t_cl + t_desc)
+        P_cr        = self.cruise_power()
+        d_desc      = h_cruise / np.tan(gamma_descend)
+        d_cruise    = mission_dist - d_climb - d_desc
+        t_cruise    = d_cruise / self.Vopt
+        E_cruise    = P_cr * t_cruise
+        E_mission   = np.where(d_cruise < 0, np.nan, E_climb + E_desc + E_cruise + E_hover_to + E_hover_land)
+        t_mission   = np.where(d_cruise < 0, np.nan, t_cruise + t_cl + t_desc)
 
         return E_mission, t_mission
-
 
     def simulate_missions(self):
 
@@ -358,8 +390,6 @@ class optimization:
             plt.xlabel("Cruising altitude [m]")
             plt.ylabel("Mission time [h]")
             plt.grid()
-
-
 
         plt.legend()
         plt.tight_layout()

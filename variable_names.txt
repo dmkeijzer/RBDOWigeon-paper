@@ -7,6 +7,7 @@ Aerodynamics:
     AR:         [-] Aspect ratio
     CD0:        [-] Zero-lift drag coefficient
     CLmax:      [-] Maximum lift coefficient
+    Stot/Sw:    [-] Ratio between total projected area and wing area (as in a top view)
 
 Stability and Control
 
@@ -33,6 +34,8 @@ Requirements
     V_max:      [m/s]   Maximum speed
     ROC:        [m/s]   Rate of climb
     n_turn:     [-]     sustainable g forces in a turn (no speed loss)
+    ROC hover:  [m/s]   Rate-of-climb during ascent hover
+    ROD hover:  [m/s]   Rate-of-descent during landing hover
 
 Flight performance
     V_cruise:   [m/s]   Optimal cruise speed
