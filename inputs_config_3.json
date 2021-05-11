@@ -21,7 +21,8 @@
         "Sweep_back": 0,
         "Cm_ac_front": 1,
         "Cm_ac_back": 1,
-        "LD_ratio": 13.709
+        "LD_ratio": 13.709,
+        "MAC1": 2.61
     },
 
     "Stability and Control": {
@@ -39,8 +40,8 @@
     "Propulsion": {
         "eff_cruise": 1,
         "eff_hover": 1,
-        "N_cruise": 1,
-        "N_hover": 1,
+        "N_cruise": 6,
+        "N_hover": 6,
         "TA": 2000,
         "Max_T_engine": 1
     },

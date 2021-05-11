@@ -26,14 +26,17 @@ class Moment:
 
     force, moment = lambda self: np.array([0, 0, 0]), lambda self: self.m
 
+    momentx, momenty, momentz = [lambda self: self.moment()[i] for i in range(3)]
+
     __neg__ = lambda self: Moment(-self.m)
     __mul__, __add__ = lambda self, other: Moment(self.m * other), lambda self, other: Moment(self.m + other.m)
     __rmul__, __radd__ = __mul__, __add__
     __repr__ = __str__ = lambda self: f"Moment({self.m} Nm)"
 
 class RunningLoad:
-    def __init__(self, values=[], positions=[], axis=0):
+    def __init__(self, values=[], positions=[], axis=0, point=0):
         self.v, self.p, self.a = np.array(values), np.array(positions), axis
+        self.z = point
         self.oa = list(range(3))
         self.oa.remove(axis)
 
@@ -53,6 +56,8 @@ class RunningLoad:
         load1[self.oa[0]], load2[self.oa[1]] = load[0], load[1]
         l1, l2 = PointLoad(load1, poa1), PointLoad(load2, poa2)
         return l1.moment() + l2.moment()
+    
+    momentx, momenty, momentz = [lambda self: self.moment()[i] for i in range(3)]
 
 
 class EquilibriumEquation:
@@ -74,16 +79,17 @@ class EquilibriumEquation:
 
 if __name__ == '__main__':
     load1 = PointLoad([1, 0, 0], [0, 1, 0])
-    load2 = PointLoad(np.array([1, 0, 0]), np.array([-1, 0, 0]))
-    load3 = PointLoad(np.array([0, 1, 0]), np.array([0, 1, 0]))
+    load2 = PointLoad([1, 0, 0], [-1, 0, 0])
+    load3 = PointLoad([0, 1, 0], [0, 1, 0])
 
-    F1 = PointLoad(np.array([0, 1, 0]), np.array([0, 1, 0]))
-    F2 = PointLoad(np.array([1, 0, 0]), np.array([-1, 0, 0]))
-    F3 = PointLoad(np.array([0, -1, 0]), np.array([1, 0, 0]))
+    F1 = PointLoad([0, 1, 0], [0, 1, 0])
+    F2 = PointLoad([1, 0, 0], [-1, 0, 0])
+    F3 = PointLoad([0, -1, 0], [1, 0, 0])
 
     Eql = EquilibriumEquation(kloads=[load1, load2, load3], ukloads=[F1, F2, F3])
     Eql.SetupEquation()
     print(Eql.SolveEquation())
+    print(F1 * Eql.SolveEquation()[0])
     q = RunningLoad([[1]*5, [2]*5], range(5), 0)
     print(q.force())
     print(q.moment())
