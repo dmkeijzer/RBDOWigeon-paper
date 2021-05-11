@@ -24,6 +24,37 @@ root_path = os.path.join(os.getcwd(), os.pardir)
 n_states = 8  # x = [h, phi, theta, psi, vh, p, q, r]
 n_ctrl = 4  # u = F - G = [T, L, M, N] - [ma*g, 0, 0, 0]
 
+# parameters used for sensitivity analyses
+# for each parameter: [best estimate, low bound, high bound]
+config1_params = {
+    "ku": [0.1, 0, 0.5],
+    "Jx": [1000, 500, 1E6],
+    "Jy": [1000, 500, 1E6],
+    "Jz": [1000, 500, 1E6],
+    "x_cg_l_fus": [0.5, -0.2, 0.8]
+}
+
+config2_params = {
+    "ku": [0.1, 0, 0.5],
+    "Jx": [1000, 500, 1E6],
+    "Jy": [1000, 500, 1E6],
+    "Jz": [1000, 500, 1E6],
+    "x_cg_l_fus": [0.5, 0.2, 0.8]
+}
+
+config3_params = {
+    "ku_fus": [0.1, 0, 0.5],
+    "ku_w": [0.1, 0, 0.5],
+    "Jx": [1000, 500, 1E6],
+    "Jy": [1000, 500, 1E6],
+    "Jz": [1000, 500, 1E6],
+    "x_cg_l_fus": [0.5, 0.2, 0.8],
+    "y_fus_b": [0.1, 0.05, 0.3],
+    "x_w_l_fus": [0.5, 0.3, 0.7],
+    "y_w_b": [0.15, 0.05, 0.35]
+}
+
+params = [config1_params, config2_params, config3_params]
 
 @dataclass
 class Rotor:
@@ -178,7 +209,7 @@ def config3(ku_fus, ku_w, Jx, Jy, Jz, x_cg_l_fus, y_fus_b, x_w_l_fus, y_w_b, fai
 
     ma = data["Structures"]["MTOW"]
 
-    b = np.sqrt(data["Aerodynamics"]["AR"] * data["Aerodynamics"]["S"])
+    b = np.sqrt(data["Aerodynamics"]["AR"] * data["Aerodynamics"]["S_front"])
     l_fus = data["Structures"]["l_fus"]
     w_fus = data["Structures"]["w_fus"]
     if y_w_b*b < w_fus/2 or y_fus_b*b < w_fus/2:
@@ -217,31 +248,221 @@ def config3(ku_fus, ku_w, Jx, Jy, Jz, x_cg_l_fus, y_fus_b, x_w_l_fus, y_w_b, fai
     return Aircraft(Jx, Jy, Jz, ma, rotors)
 
 
+def plot_sensitivities(config, res=20, failed=None, vmin=-0.1, vmax=1.1):
+    p = params[config]
+
+    if config == 0:
+        ac_generator = config1
+    elif config == 1:
+        ac_generator = config2
+    else:
+        ac_generator = config3
+
+    Jx_range = np.linspace(p["Jx"][1], p["Jx"][2], res)
+    Jy_range = np.linspace(p["Jy"][1], p["Jy"][2], res)
+    Jz_range = np.linspace(p["Jz"][1], p["Jz"][2], res)
+    x_cg_l_fus_range = np.linspace(p["x_cg_l_fus"][1], p["x_cg_l_fus"][2], res)
+
+    if config == 0 or config == 1:
+        ku_range = np.linspace(p["ku"][1], p["ku"][2], res)
+
+        # vary Jx
+        plt.subplot(311)
+        rhos = []
+        for Jx in Jx_range:
+            ac = ac_generator(p["ku"][0], Jx, p["Jy"][0], p["Jz"][0],
+                              p["x_cg_l_fus"][0], failed=failed)
+            rhos.append(acai(ac))
+        plt.xlabel(r"J$_x$")
+        plt.ylabel("ACAI")
+        plt.ylim(vmin, vmax)
+        plt.plot(Jx_range, rhos)
+
+        # vary Jy
+        plt.subplot(312)
+        rhos = []
+        for Jy in Jy_range:
+            ac = ac_generator(p["ku"][0], p["Jx"][0], Jy, p["Jz"][0],
+                              p["x_cg_l_fus"][0], failed=failed)
+            rhos.append(acai(ac))
+        plt.xlabel(r"J$_y$")
+        plt.ylabel("ACAI")
+        plt.ylim(vmin, vmax)
+        plt.plot(Jy_range, rhos)
+
+        # vary Jz
+        plt.subplot(313)
+        rhos = []
+        for Jz in Jz_range:
+            ac = ac_generator(p["ku"][0], p["Jx"][0], p["Jy"][0], Jz,
+                              p["x_cg_l_fus"][0], failed=failed)
+            rhos.append(acai(ac))
+        plt.xlabel(r"J$_z$")
+        plt.ylabel("ACAI")
+        plt.ylim(vmin, vmax)
+        plt.plot(Jz_range, rhos)
+
+        plt.tight_layout()
+
+        # vary x_cg_l_fus
+        plt.figure()
+        rhos = []
+        for x_cg_l_fus in x_cg_l_fus_range:
+            ac = ac_generator(p["ku"][0], p["Jx"][0], p["Jy"][0], p["Jz"][0],
+                              x_cg_l_fus, failed=failed)
+            rhos.append(acai(ac))
+        plt.xlabel(r"x$_{cg}$/l$_{fus}$")
+        plt.ylabel("ACAI")
+        plt.ylim(vmin, vmax)
+        plt.plot(x_cg_l_fus_range, rhos)
+
+        # vary ku
+        plt.figure()
+        rhos = []
+        for ku in ku_range:
+            ac = ac_generator(ku, p["Jx"][0], p["Jy"][0], p["Jz"][0],
+                              p["x_cg_l_fus"][0], failed=failed)
+            rhos.append(acai(ac))
+        plt.xlabel(r"k$_{\mu}$")
+        plt.ylabel("ACAI")
+        plt.ylim(vmin, vmax)
+        plt.plot(ku_range, rhos)
+
+    else:
+        ku_fus_range = np.linspace(p["ku_fus"][1], p["ku_fus"][2], res)
+        ku_w_range = np.linspace(p["ku_w"][1], p["ku_w"][2], res)
+        y_fus_b_range = np.linspace(p["y_fus_b"][1], p["y_fus_b"][2], res)
+        x_w_l_fus_range = np.linspace(p["x_w_l_fus"][1], p["x_w_l_fus"][2], res)
+        y_w_b_range = np.linspace(p["y_w_b"][1], p["y_w_b"][2], res)
+
+        # vary Jx
+        plt.subplot(311)
+        rhos = []
+        for Jx in Jx_range:
+            ac = ac_generator(p["ku_fus"][0], p["ku_w"][0], Jx, p["Jy"][0],
+                              p["Jz"][0], p["x_cg_l_fus"][0], p["y_fus_b"][0],
+                              p["x_w_l_fus"][0], p["y_w_b"][0], failed=failed)
+            rhos.append(acai(ac))
+        plt.xlabel(r"J$_x$")
+        plt.ylabel("ACAI")
+        plt.ylim(vmin, vmax)
+        plt.plot(Jx_range, rhos)
+
+        # vary Jy
+        plt.subplot(312)
+        rhos = []
+        for Jy in Jy_range:
+            ac = ac_generator(p["ku_fus"][0], p["ku_w"][0], p["Jx"][0], Jy,
+                              p["Jz"][0], p["x_cg_l_fus"][0], p["y_fus_b"][0],
+                              p["x_w_l_fus"][0], p["y_w_b"][0], failed=failed)
+            rhos.append(acai(ac))
+        plt.xlabel(r"J$_y$")
+        plt.ylabel("ACAI")
+        plt.ylim(vmin, vmax)
+        plt.plot(Jy_range, rhos)
+
+        # vary Jz
+        plt.subplot(313)
+        rhos = []
+        for Jz in Jz_range:
+            ac = ac_generator(p["ku_fus"][0], p["ku_w"][0], p["Jx"][0],
+                              p["Jy"][0], Jz, p["x_cg_l_fus"][0],
+                              p["y_fus_b"][0], p["x_w_l_fus"][0],
+                              p["y_w_b"][0], failed=failed)
+            rhos.append(acai(ac))
+        plt.xlabel(r"J$_z$")
+        plt.ylabel("ACAI")
+        plt.ylim(vmin, vmax)
+        plt.plot(Jz_range, rhos)
+
+        plt.tight_layout()
+
+        # vary x_cg_l_fus
+        plt.figure()
+        rhos = []
+        for x_cg_l_fus in x_cg_l_fus_range:
+            ac = ac_generator(p["ku_fus"][0], p["ku_w"][0], p["Jx"][0],
+                              p["Jy"][0], p["Jz"][0], x_cg_l_fus,
+                              p["y_fus_b"][0], p["x_w_l_fus"][0],
+                              p["y_w_b"][0], failed=failed)
+            rhos.append(acai(ac))
+        plt.xlabel(r"x$_{cg}$/l$_{fus}$")
+        plt.ylabel("ACAI")
+        plt.ylim(vmin, vmax)
+        plt.plot(x_cg_l_fus_range, rhos)
+
+        # vary ku_fus
+        plt.figure()
+        plt.subplot(211)
+        rhos = []
+        for ku_fus in ku_fus_range:
+            ac = ac_generator(ku_fus, p["ku_w"][0], p["Jx"][0], p["Jy"][0],
+                              p["Jz"][0], p["x_cg_l_fus"][0], p["y_fus_b"][0],
+                              p["x_w_l_fus"][0], p["y_w_b"][0], failed=failed)
+            rhos.append(acai(ac))
+        plt.xlabel(r"k$_{\mu, fus}$")
+        plt.ylabel("ACAI")
+        plt.ylim(vmin, vmax)
+        plt.plot(ku_fus_range, rhos)
+
+        # vary ku_w
+        plt.subplot(212)
+        rhos = []
+        for ku_w in ku_w_range:
+            ac = ac_generator(p["ku_fus"][0], ku_w, p["Jx"][0], p["Jy"][0],
+                              p["Jz"][0], p["x_cg_l_fus"][0], p["y_fus_b"][0],
+                              p["x_w_l_fus"][0], p["y_w_b"][0], failed=failed)
+            rhos.append(acai(ac))
+        plt.xlabel(r"k$_{\mu, w}$")
+        plt.ylabel("ACAI")
+        plt.ylim(vmin, vmax)
+        plt.plot(ku_w_range, rhos)
+
+        # vary y_fus_b
+        plt.figure()
+        plt.subplot(211)
+        rhos = []
+        for y_fus_b in y_fus_b_range:
+            ac = ac_generator(p["ku_fus"][0], p["ku_w"][0], p["Jx"][0],
+                              p["Jy"][0], p["Jz"][0], p["x_cg_l_fus"][0],
+                              y_fus_b, p["x_w_l_fus"][0], p["y_w_b"][0],
+                              failed=failed)
+            rhos.append(acai(ac))
+        plt.xlabel(r"y$_{fus}$/b")
+        plt.ylabel("ACAI")
+        plt.ylim(vmin, vmax)
+        plt.plot(y_fus_b_range, rhos)
+
+        # vary y_w_b
+        plt.subplot(212)
+        rhos = []
+        for y_w_b in y_w_b_range:
+            ac = ac_generator(p["ku_fus"][0], p["ku_w"][0], p["Jx"][0],
+                              p["Jy"][0], p["Jz"][0], p["x_cg_l_fus"][0],
+                              p["y_fus_b"][0], p["x_w_l_fus"][0], y_w_b,
+                              failed=failed)
+            rhos.append(acai(ac))
+        plt.xlabel(r"y$_{w}$/b")
+        plt.ylabel("ACAI")
+        plt.ylim(vmin, vmax)
+        plt.plot(y_w_b_range, rhos)
+
+        # vary x_w_l_fus
+        plt.figure()
+        plt.subplot(211)
+        rhos = []
+        for x_w_l_fus in x_w_l_fus_range:
+            ac = ac_generator(p["ku_fus"][0], p["ku_w"][0], p["Jx"][0],
+                              p["Jy"][0], p["Jz"][0], p["x_cg_l_fus"][0],
+                              p["y_fus_b"][0], x_w_l_fus, p["y_w_b"][0],
+                              failed=failed)
+            rhos.append(acai(ac))
+        plt.xlabel(r"x$_w$/l$_{fus}$")
+        plt.ylabel("ACAI")
+        plt.ylim(vmin, vmax)
+        plt.plot(x_w_l_fus_range, rhos)
+
+
 if __name__ == "__main__":
-    config1_params = {
-        "ku": [0, 0.5],
-        "Jx": [500, 1E6],
-        "Jy": [500, 1E6],
-        "Jz": [500, 1E6],
-        "x_cg_l_fus": [0.2, 0.8]
-    }
-
-    config2_params = {
-        "ku": [0, 0.5],
-        "Jx": [500, 1E6],
-        "Jy": [500, 1E6],
-        "Jz": [500, 1E6],
-        "x_cg_l_fus": [0.2, 0.8]
-    }
-
-    config3_params = {
-        "ku_fus": [0, 0.5],
-        "ku_w": [0, 0.5],
-        "Jx": [500, 1E6],
-        "Jy": [500, 1E6],
-        "Jz": [500, 1E6],
-        "x_cg_l_fus": [0.2, 0.8],
-        "y_fus_b": [0.05, 0.3],
-        "x_w_l_fus": [0.3, 0.7],
-        "y_w_b": [0.05, 0.35]
-    }
+    plot_sensitivities(1)
+    plt.show()
