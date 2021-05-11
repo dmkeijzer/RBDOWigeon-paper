@@ -71,9 +71,9 @@ class EquilibriumEquation:
         return self.A, self.b
 
     SolveEquation = lambda self: np.linalg.inv(self.A) @ self.b
-    
+
 if __name__ == '__main__':
-    load1 = PointLoad(np.array([1, 0, 0]), np.array([0, 1, 0]))
+    load1 = PointLoad([1, 0, 0], [0, 1, 0])
     load2 = PointLoad(np.array([1, 0, 0]), np.array([-1, 0, 0]))
     load3 = PointLoad(np.array([0, 1, 0]), np.array([0, 1, 0]))
 
