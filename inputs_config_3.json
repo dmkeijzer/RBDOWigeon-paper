@@ -29,7 +29,8 @@
     },
 
     "Structures": {
-        "MTOW": 1,
+        "MTOW": 18943.1,
+        "EOW": 15352.7,
         "w_fus": 1,
         "h_fus": 1,
         "l_fus": 1
@@ -40,9 +41,7 @@
         "eff_hover": 1,
         "N_cruise": 1,
         "N_hover": 1,
-        "TA_ducted": 1,
-        "TA_open": 1,
-        "TA_hybrid": 1,
+        "TA": 2000,
         "Max_T_engine": 1
     },
 
@@ -50,7 +49,8 @@
         "V_stall": 50,
         "V_max": 100,
         "ROC": 10,
-        "n_turn": 2
+        "n_turn": 2,
+        "ROC_hover": 1.5
     },
 
     "Flight performance": {
