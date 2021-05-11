@@ -64,7 +64,7 @@ class EquilibriumEquation:
     def __init__(self, kloads=[], ukloads=[]):
         self.k, self.uk = kloads, ukloads
         self.A, self.b = None, None
-    
+
     def SetupEquation(self):
         b = np.concatenate([-sum([k.force() for k in self.k]), -sum([l.moment() for l in self.k])]).reshape(-1, 1)
         Forces = np.concatenate([l.force().reshape(-1, 1) for l in self.uk], axis=1)
