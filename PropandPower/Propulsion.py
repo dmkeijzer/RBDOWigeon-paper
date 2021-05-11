@@ -10,9 +10,9 @@ class PropulsionHover:
 
     def __init__(self, MTOM, n, A, eff_bat_el, eff_el_mo, eff_mo_sha, eff_sha_flo, eff_flo_jet, vj, m_dot_h, rho):
         """
-        :param MTOM: Maximum take off mass [kg]
-        :param n: Number of engines
-        :param A: Area per engine [m^2]8
+        :param MTOM:        Maximum take off mass [kg]
+        :param n:           Number of engines
+        :param A:           Area per engine [m^2]8
         :param eff_bat_el:  Efficiency from battery to electronics
         :param eff_el_mo:   Efficiency from electronics to motors
         :param eff_mo_sha:  Efficiency from motors to shaft
