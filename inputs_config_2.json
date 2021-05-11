@@ -39,8 +39,8 @@
     "Propulsion": {
         "eff_cruise": 1,
         "eff_hover": 1,
-        "N_cruise": 1,
-        "N_hover": 1,
+        "N_cruise": 24,
+        "N_hover": 24,
         "TA_hybrid": 2000,
         "Max_T_engine": 1
     },
