@@ -26,6 +26,8 @@ class Moment:
 
     force, moment = lambda self: np.array([0, 0, 0]), lambda self: self.m
 
+    momentx, momenty, momentz = [lambda self: self.moment()[i] for i in range(3)]
+
     __neg__ = lambda self: Moment(-self.m)
     __mul__, __add__ = lambda self, other: Moment(self.m * other), lambda self, other: Moment(self.m + other.m)
     __rmul__, __radd__ = __mul__, __add__
@@ -53,6 +55,8 @@ class RunningLoad:
         load1[self.oa[0]], load2[self.oa[1]] = load[0], load[1]
         l1, l2 = PointLoad(load1, poa1), PointLoad(load2, poa2)
         return l1.moment() + l2.moment()
+    
+    momentx, momenty, momentz = [lambda self: self.moment()[i] for i in range(3)]
 
 
 class EquilibriumEquation:
@@ -84,6 +88,7 @@ if __name__ == '__main__':
     Eql = EquilibriumEquation(kloads=[load1, load2, load3], ukloads=[F1, F2, F3])
     Eql.SetupEquation()
     print(Eql.SolveEquation())
+    print(F1 * Eql.SolveEquation()[0])
     q = RunningLoad([[1]*5, [2]*5], range(5), 0)
     print(q.force())
     print(q.moment())
