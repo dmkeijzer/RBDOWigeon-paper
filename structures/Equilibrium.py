@@ -1,9 +1,10 @@
 import numpy as np
+from scipy.integrate import quad, dblquad
 
 class PointLoad:
-    def __init__(self, force, point, known=True):
-        self.p, self.k = np.array(point), known
-        self.f = np.array(force) / (np.linalg.norm(force) if not known else 1)
+    def __init__(self, force, point):
+        self.p = np.array(point)
+        self.f = np.array(force)
 
     moment = lambda self: np.cross(self.p, self.f)
 
@@ -11,14 +12,13 @@ class PointLoad:
 
     force = lambda self: self.f
 
-    def __add__(self, other):
-        return PointLoad(self.f + other.f, np.divide(self.p * self.f + other.p * other.f, self.f + other.f), self.k)
+    __neg__ = lambda self: PointLoad(-self.f, self.p)
+    
+    __mul__ = lambda self, other: PointLoad(self.f * other, self.p)
 
-    def __neg__(self):
-        return PointLoad(-self.f, self.p, self.k)
-
-    def __str__(self):
-        return f"Pointload(Force={str(self.f)}, Point={str(self.p)})"
+    __repr__ = __str__ = lambda self: f"Pointload(Force={str(self.f)}, Point={str(self.p)})"
+    
+    __rmul__ = __mul__
 
 class Moment:
     def __init__(self, value=[]):
@@ -26,8 +26,34 @@ class Moment:
 
     force, moment = lambda self: np.array([0, 0, 0]), lambda self: self.m
 
+    __neg__ = lambda self: Moment(-self.m)
+    __mul__, __add__ = lambda self, other: Moment(self.m * other), lambda self, other: Moment(self.m + other.m)
+    __rmul__, __radd__ = __mul__, __add__
+    __repr__ = __str__ = lambda self: f"Moment({self.m} Nm)"
+
 class RunningLoad:
     def __init__(self, values=[], positions=[], axis=0):
+        self.v, self.p, self.a = np.array(values), np.array(positions), axis
+        self.oa = list(range(3))
+        self.oa.remove(axis)
+
+    def force(self):
+        forces = [quad(lambda x: np.interp(x, self.p, self.v[i, :]), self.p[0], self.p[-1])[0] for i in range(2)]
+        f = list(range(3))
+        f[self.a], (f[self.oa[0]], f[self.oa[1]]) = 0, forces
+        return np.array(f)
+    
+    def moment(self):
+        moi = [quad(lambda x: x * np.interp(x, self.p, self.v[i, :]), self.p[0], self.p[-1])[0] for i in range(2)]
+        load = [quad(lambda x: np.interp(x, self.p, self.v[i, :]), self.p[0], self.p[-1])[0] for i in range(2)]
+        poa = [moi[i] / load[i] for i in range(2)]
+        poa1, poa2 = [0] * 3, [0] * 3
+        load1, load2 = [0] * 3, [0] * 3
+        poa1[self.a], poa2[self.a] = poa[0], poa[1]
+        load1[self.oa[0]], load2[self.oa[1]] = load[0], load[1]
+        l1, l2 = PointLoad(load1, poa1), PointLoad(load2, poa2)
+        return l1.moment() + l2.moment()
+
 
 class EquilibriumEquation:
     def __init__(self, kloads=[], ukloads=[]):
@@ -35,7 +61,7 @@ class EquilibriumEquation:
         self.A, self.b = None, None
     
     def SetupEquation(self):
-        b = np.concatenate([-np.sum(self.k).force(), -sum([l.moment() for l in self.k])]).reshape(-1, 1)
+        b = np.concatenate([-sum([k.force() for k in self.k]), -sum([l.moment() for l in self.k])]).reshape(-1, 1)
         Forces = np.concatenate([l.force().reshape(-1, 1) for l in self.uk], axis=1)
         Moments = np.concatenate([l.moment().reshape(-1, 1) for l in self.uk], axis=1)
         
@@ -51,10 +77,13 @@ if __name__ == '__main__':
     load2 = PointLoad(np.array([1, 0, 0]), np.array([-1, 0, 0]))
     load3 = PointLoad(np.array([0, 1, 0]), np.array([0, 1, 0]))
 
-    F1 = PointLoad(np.array([0, 1, 0]), np.array([0, 1, 0]), False)
-    F2 = PointLoad(np.array([1, 0, 0]), np.array([-1, 0, 0]), False)
-    F3 = PointLoad(np.array([0, -1, 0]), np.array([1, 0, 0]), False)
+    F1 = PointLoad(np.array([0, 1, 0]), np.array([0, 1, 0]))
+    F2 = PointLoad(np.array([1, 0, 0]), np.array([-1, 0, 0]))
+    F3 = PointLoad(np.array([0, -1, 0]), np.array([1, 0, 0]))
 
     Eql = EquilibriumEquation(kloads=[load1, load2, load3], ukloads=[F1, F2, F3])
     Eql.SetupEquation()
     print(Eql.SolveEquation())
+    q = RunningLoad([[1]*5, [2]*5], range(5), 0)
+    print(q.force())
+    print(q.moment())
