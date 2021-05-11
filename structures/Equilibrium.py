@@ -34,8 +34,9 @@ class Moment:
     __repr__ = __str__ = lambda self: f"Moment({self.m} Nm)"
 
 class RunningLoad:
-    def __init__(self, values=[], positions=[], axis=0):
+    def __init__(self, values=[], positions=[], axis=0, point=0):
         self.v, self.p, self.a = np.array(values), np.array(positions), axis
+        self.z = point
         self.oa = list(range(3))
         self.oa.remove(axis)
 
@@ -78,12 +79,12 @@ class EquilibriumEquation:
 
 if __name__ == '__main__':
     load1 = PointLoad([1, 0, 0], [0, 1, 0])
-    load2 = PointLoad(np.array([1, 0, 0]), np.array([-1, 0, 0]))
-    load3 = PointLoad(np.array([0, 1, 0]), np.array([0, 1, 0]))
+    load2 = PointLoad([1, 0, 0], [-1, 0, 0])
+    load3 = PointLoad([0, 1, 0], [0, 1, 0])
 
-    F1 = PointLoad(np.array([0, 1, 0]), np.array([0, 1, 0]))
-    F2 = PointLoad(np.array([1, 0, 0]), np.array([-1, 0, 0]))
-    F3 = PointLoad(np.array([0, -1, 0]), np.array([1, 0, 0]))
+    F1 = PointLoad([0, 1, 0], [0, 1, 0])
+    F2 = PointLoad([1, 0, 0], [-1, 0, 0])
+    F3 = PointLoad([0, -1, 0], [1, 0, 0])
 
     Eql = EquilibriumEquation(kloads=[load1, load2, load3], ukloads=[F1, F2, F3])
     Eql.SetupEquation()
