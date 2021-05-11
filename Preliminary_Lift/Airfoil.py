@@ -51,7 +51,7 @@ def sweep_atx(x, c_r,b, taper,sweepc4):
 
 
 def taper_opt(sweepc4):
-    return 0.45 * exp( -0.036 * sweepc4) # Eq. 7.4 Conceptual Design of a Medium Range Box Wing Aircraft
+    return 0.45 * np.exp( -0.036 * sweepc4) # Eq. 7.4 Conceptual Design of a Medium Range Box Wing Aircraft
 
 
 def CL_des(rho, V, W, S ):
