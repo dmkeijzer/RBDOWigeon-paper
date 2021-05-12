@@ -4,12 +4,9 @@ procedure obtained from "Architectural performance assessment of an electric
 vertical take-off and landing (e-VTOL) aircraft based on a ducted vectored thrust concept (2021)"
 """
 import numpy as np
-import os
+from constants import *
 import json
-
 from Aero_tools import ISA
-
-root_path = os.path.join(os.getcwd(), os.pardir)
 
 class PropulsionHover:
 
@@ -47,7 +44,6 @@ class PropulsionHover:
     def P_h_open(self):
         return self.T_h**(3/2) / np.sqrt(2 * self.rho * self.n * self.A)
 
-
 class PropulsionCruise:
 
     def __init__(self, MTOM, n, A, eff_bat_el, eff_el_mo, eff_mo_sha, eff_sha_flo, eff_flo_jet, eff_jet_air,
@@ -80,7 +76,7 @@ class PropulsionCruise:
 
 class ActuatorDisk:
 
-    def __init__(self,D_prop_outer, D_prop_inner,n_prop,path):
+    def __init__(self, D_prop_outer, D_prop_inner, n_prop):
         """
         :param D_prop_outer: diameter of a propeller [m]
         :param D_prop_inner: diameter of a propeller [m]
@@ -92,24 +88,13 @@ class ActuatorDisk:
         self.D_prop_inner = D_prop_inner
         self.n_prop = n_prop
 
-
-        self.path = path
-        datafile = open(os.path.join(path, "inputs_config_1.json"), "r")
-
-
-        # Read data from json file
-        self.data = json.load(datafile)
-        datafile.close()
-
         # Extracting aerodynamic data
-        aero = self.data["Aerodynamics"]
-        self.CD = 0.02 #aero["CD"]
+        self.CD = 0.02  # CD
 
         # Extracting performance data
-        perf = self.data["Flight performance"]
-        self.S = 25 #perf["S"]
-        self.V_0 = 50 # perf["V_cruise"]
-        self.h = 1000 #perf["h_cruise"]
+        self.S = S
+        self.V_0 = V_cruise
+        self.h = h_cruise
 
         # Atmospherics
         atm_flight  = ISA(self.h)    # atmospheric conditions during flight   # Idk if this actually works
@@ -127,7 +112,17 @@ class ActuatorDisk:
     def P_ideal(self):
         return 0.25 * self.rho_flight * self.V_0**3 * self.S * self.CD * (np.sqrt(self.CD * self.S / self.A_prop() + 1) + 1)
 
-print("Exit speed:", ActuatorDisk(0.50,0.49,10,root_path).V_e(), "[m/s]")
+    def eff(self):
+        return 2 / (1+ self.V_e()/self.V_0)
 
-print(ActuatorDisk(0.50,0.1,10,root_path).P_ideal())
 
+# Define values for parameters
+D_outer = 0.50  # outer diameter propeller
+D_inner = 0.10*D_outer  # inner diameter propeller
+n_prop = 24  # number of propellers
+
+ActDisk = ActuatorDisk(D_outer, D_inner, n_prop)
+print("Total area:", ActDisk.A_prop(), "[m**2]")
+print("Exit speed:", ActDisk.V_e(), "[m/s]")
+print("Ideal power:", ActDisk.P_ideal(), "[W]")
+print("Efficiency:", ActDisk.eff(), "[W]")

@@ -39,7 +39,7 @@ solid_st = {"Specific energy density": 600,
             "Volumetric energy density": 1000,
             "Power density": 1000,
             "Safety score": 5,
-            "Operational life": 1,
+            "Operational life": 800,
             "Cost": 10}
 
 GH2_fuelcell = {"Specific energy density": 1,
