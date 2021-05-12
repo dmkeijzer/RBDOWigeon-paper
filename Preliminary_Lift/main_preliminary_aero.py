@@ -92,7 +92,7 @@ C_L_max_conv = 0.9* EPPLER335[1]  # From ADSEE-II L2
 C_L_max_double = s1*0.9* NASA_LANGLEY[1]+ s2*0.9*1.930  #Due to downwash Clmax for second wing is lower
 
 print("AR= ", AR)
-print(S1)
+print("C_r,C_t, MAC=", Wing_planform_params_single[1:4])
 print("LE sweep=", sweep_atx(0,Wing_planform_params_single[1],b,taper,sweepc4)*180/np.pi)
 
 print("Lift slope conv =", Clda_conv)

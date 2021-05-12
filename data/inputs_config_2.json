@@ -14,11 +14,11 @@
         "Cm_ac_front": 1,
         "Cm_ac_back": 1,
         "LoD_ratio": 16.214,
-        "MAC1": 1.305,
-        "MAC2": 1.305,
+        "MAC1": 0.869,
+        "MAC2": 0.869,
         "Stot/Sw": 1.4,
-        "c_r": 1,
-        "c_t": 1
+        "c_r": 2.340,
+        "c_t": 0.936
     },
     "Stability and Control": {
         "Placeholder": 1
