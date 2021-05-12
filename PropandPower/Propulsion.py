@@ -80,29 +80,31 @@ class PropulsionCruise:
 
 class ActuatorDisk:
 
-    def __init__(self,D_prop,n_prop,datafile):
+    def __init__(self,D_prop_outer, D_prop_inner,n_prop,datafile):
         """
-        :param D_prop: diameter of a propeller [m]
+        :param D_prop_outer: diameter of a propeller [m]
+        :param D_prop_inner: diameter of a propeller [m]
         :param n_prop: number of propellers [-]
         """
 
         # Class specific data not (yet) in .json
-        self.D_prop = D.prop
-        self.n_prop = n.prop
+        self.D_prop_outer = D_prop_outer
+        self.D_prop_inner = D_prop_inner
+        self.n_prop = n_prop
 
         # Read data from json file
         self.data = json.load(datafile)
         datafile.close()
 
         # Extracting aerodynamic data
-        aero        = self.data["Aerodynamics"]
-        self.CD = aero["CD"]
+        aero = self.data["Aerodynamics"]
+        self.CD = 0.02 #aero["CD"]
 
         # Extracting performance data
         perf = self.data["Flight performance"]
-        self.S = perf["S"]
-        self.V_0 = perf["V_cruise"]
-        self.h = perf["h_cruise"]
+        self.S = 25 #perf["S"]
+        self.V_0 = 50 # perf["V_cruise"]
+        self.h = 1000 #perf["h_cruise"]
 
         # Atmospherics
         atm_flight  = ISA(self.h)    # atmospheric conditions during flight   # Idk if this actually works
@@ -110,7 +112,17 @@ class ActuatorDisk:
         self.rho_flight = atm_flight.density()
         self.rho_LTO    = atm_LTO.density()
 
+    def A_prop(self):
+        return np.pi / 4 * (self.D_prop_outer**2 - self.D_prop_inner**2)
+
     def V_e(self):
-        holder = np.pi * 0.25 * self.D_prop**2 * self.n_prop
-        return np.sqrt(self.V_0**2 * (self.S * self.CD + holder) / holder)
+        A_tot = self.A_prop() * self.n_prop
+        return np.sqrt(self.V_0**2 * (self.S * self.CD + A_tot) / A_tot)
+
+    def P_ideal(self):
+        return 0.25 * self.rho_flight * self.V_0**3 * self.S * self.CD * (np.sqrt(self.CD * self.S / self.A_prop() + 1) + 1)
+
+# print("Exit speed:", ActuatorDisk(0.50,0.49,10,datafile).V_e(), "[m/s]")
+#
+# print(ActuatorDisk(0.50,0.1,10,datafile).P_ideal())
 
