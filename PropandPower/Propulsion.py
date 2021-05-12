@@ -113,7 +113,7 @@ class ActuatorDisk:
 
         # Atmospherics
         atm_flight  = ISA(self.h)    # atmospheric conditions during flight   # Idk if this actually works
-        atm_LTO     = ISA(0)    # atmospheric conditions at landing and take-off (assumed sea-level)
+        atm_LTO     = ISA(0)         # atmospheric conditions at landing and take-off (assumed sea-level)
         self.rho_flight = atm_flight.density()
         self.rho_LTO    = atm_LTO.density()
 
