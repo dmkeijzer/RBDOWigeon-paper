@@ -7,9 +7,9 @@ import numpy as np
 import os
 import json
 
-root_path = os.path.join(os.getcwd(), os.pardir)
-datafile = open(os.path.join(root_path, "inputs_config_1.json"), "r")
 from Aero_tools import ISA
+
+root_path = os.path.join(os.getcwd(), os.pardir)
 
 class PropulsionHover:
 
@@ -80,7 +80,7 @@ class PropulsionCruise:
 
 class ActuatorDisk:
 
-    def __init__(self,D_prop_outer, D_prop_inner,n_prop,datafile):
+    def __init__(self,D_prop_outer, D_prop_inner,n_prop,path):
         """
         :param D_prop_outer: diameter of a propeller [m]
         :param D_prop_inner: diameter of a propeller [m]
@@ -91,6 +91,11 @@ class ActuatorDisk:
         self.D_prop_outer = D_prop_outer
         self.D_prop_inner = D_prop_inner
         self.n_prop = n_prop
+
+
+        self.path = path
+        datafile = open(os.path.join(path, "inputs_config_1.json"), "r")
+
 
         # Read data from json file
         self.data = json.load(datafile)
@@ -122,7 +127,7 @@ class ActuatorDisk:
     def P_ideal(self):
         return 0.25 * self.rho_flight * self.V_0**3 * self.S * self.CD * (np.sqrt(self.CD * self.S / self.A_prop() + 1) + 1)
 
-# print("Exit speed:", ActuatorDisk(0.50,0.49,10,datafile).V_e(), "[m/s]")
-#
-# print(ActuatorDisk(0.50,0.1,10,datafile).P_ideal())
+print("Exit speed:", ActuatorDisk(0.50,0.49,10,root_path).V_e(), "[m/s]")
+
+print(ActuatorDisk(0.50,0.1,10,root_path).P_ideal())
 
