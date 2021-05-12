@@ -36,9 +36,6 @@ class Wing:
         if self.congif == 3:
             return self.wweight*self.pos
 
-
-
-
 class Fuselage:
     # Roskam method (not accurate because does not take into account density of material but good enough for comparison
     def __init__(self, mtom, Pmax, lf, npax, pos, config = None):
@@ -149,6 +146,7 @@ class Weight:
         for k, v in d.items():
             mass, oem_frac, mtom_frac = v
             print("{:<15} {:<20} {:<25} {:<15}".format(k, mass, oem_frac, mtom_frac))
+        print('')
         print(f'Where OEM is {self.oem}kg with CG of {self.oem_cg}m, and MTOM is {self.mtom}kg with CG of {self.mtom_cg}m')
 
 if __name__ == '__main__':
