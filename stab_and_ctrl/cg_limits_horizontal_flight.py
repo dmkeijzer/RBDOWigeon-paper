@@ -43,62 +43,6 @@ V1 = Speeds(1)
 V2 = Speeds(2)
 V3 = Speeds(3)
 
-xacfwd = 0.25*1.305
-lfus = 4
-xacrear = lfus-(1-0.25)*1.305
-
-
-# def values_conf_1():
-#     datafile = open(os.path.join(root_path, "data/inputs_config_%.0f.json"%(1)), "r")
-#     data = json.load(datafile)
-#     datafile.close()
-#     lfus = data["Structures"]["l_fus"]
-#     hfus = data["Structures"]["h_fus"]
-#     wfus =data["Structures"]["w_fus"]
-#     Afwd = data["Aerodynamics"]["AR"]*2
-#     b_fwd = np.sqrt(data["Aerodynamics"]["AR"] * data["Aerodynamics"]["S_front"])
-#     b_rear = np.sqrt(data["Aerodynamics"]["AR"] * data["Aerodynamics"]["S_back"])
-#     S_fwd = data["Aerodynamics"]["S_front"]
-#     S_rear = data["Aerodynamics"]["S_back"]
-#     CLa_fwd = data["Aerodynamics"]["CLalpha_back"]
-#     CLa_rear = CLa_fwd
-#     Cm_ac_fwd = data["Aerodynamics"]["Cm_ac_front"]
-#     Cm_ac_rear = data["Aerodynamics"]["Cm_ac_back"]
-#     CL_max_fwd = data["Aerodynamics"]["CLmax_front"]
-#     CL_max_rear = data["Aerodynamics"]["CLmax_back"]
-#     c_fwd = data["Aerodynamics"]["MAC1"]
-#     c_rear = data["Aerodynamics"]["MAC2"]
-#     xacfwd = 0.25 * c_fwd
-#     xacrear = lfus - (1 - 0.25) * c_rear
-#     values = [CL_max_fwd, CL_max_rear, Cm_ac_fwd, Cm_ac_rear, CLa_fwd, CLa_rear, S_fwd, S_rear, Afwd, c_fwd,c_rear,
-#               b_fwd,b_rear,xacfwd,xacrear,lfus,hfus,wfus]
-#     return values
-#
-#
-
-
-# def values_conf_2():
-#     datafile = open(os.path.join(root_path, "data/inputs_config_2.json"), "r")
-#     data = json.load(datafile)
-#     datafile.close()
-#     ma = data["Structures"]["MTOW"]
-#     Afwd = data["Aerodynamics"]["AR"]*2
-#     b_fwd = np.sqrt(data["Aerodynamics"]["AR"] * data["Aerodynamics"]["S_front"])
-#     b_rear = np.sqrt(data["Aerodynamics"]["AR"] * data["Aerodynamics"]["S_back"])
-#     S_fwd = data["Aerodynamics"]["S_front"]
-#     S_rear = data["Aerodynamics"]["S_back"]
-#     CLa_fwd = data["Aerodynamics"]["CLalpha_back"]
-#     CLa_rear = CLa_fwd
-#     Cm_ac_fwd = data["Aerodynamics"]["Cm_ac_front"]
-#     Cm_ac_rear = data["Aerodynamics"]["Cm_ac_back"]
-#     CL_max_fwd = data["Aerodynamics"]["CLmax_front"]
-#     CL_max_rear = data["Aerodynamics"]["CLmax_back"]
-#     c_fwd = data["Aerodynamics"]["MAC1"]
-#     c_rear = data["Aerodynamics"]["MAC2"]
-#     values = [CL_max_fwd, CL_max_rear, Cm_ac_fwd, Cm_ac_rear, CLa_fwd, CLa_rear, S_fwd, S_rear, Afwd, c_fwd,c_rear,b_fwd,b_rear]
-#     return values
-
-
 def values_conf_3():
     datafile = open(os.path.join(root_path, "data/inputs_config_3.json"), "r")
     data = json.load(datafile)
@@ -156,10 +100,7 @@ def cg_range_conf_1_2(conf):
         wfus = data["Structures"]["w_fus"]
         CD0 = data["Aerodynamics"]["CD0"]
         e = data["Aerodynamics"]["e"]
-        if conf == 1 or conf == 2:
-            Afwd = data["Aerodynamics"]["AR"] * 2
-        else:
-            Afwd = data["Aerodynamics"]["AR"]
+        Afwd = data["Aerodynamics"]["AR"] * 2
         Sweep_c4_fwd = data["Aerodynamics"]["Sweep_front"]
         Sweep_c4_rear = data["Aerodynamics"]["Sweep_back"]
         b_fwd = np.sqrt(data["Aerodynamics"]["AR"] * data["Aerodynamics"]["S_front"])
@@ -182,6 +123,7 @@ def cg_range_conf_1_2(conf):
     values = values_conf_1_2(conf)
     CLfwd,CLrear,Cmacfwd,Cmacrear,CLafwd, CLarear,Sfwd,Srear,Afwd,cfwd,crear,b_fwd,b_rear,\
     xacfwd,xacrear,e, CD0,lfus,hfus,wfus,Sweep_c4_fwd,Sweep_c4_rear = values
+    print("Values: ",values)
     deda = deps_da(Sweep_c4_fwd, b_fwd,lh(xacfwd,xacrear), hfus, Afwd, CLafwd,conf)
     xacfwd_stab = 0.25*cfwd
     xacfwd_control = 0.25 * cfwd
