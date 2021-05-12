@@ -15,25 +15,56 @@ taper_ratio = 0.4
 AR_1_2 = 11.4
 AR_3 = 5.701
 a = 340
-V_s = 30
-V_c = 46.01469067334079
-V_c_3 = 53.64138948890874
-M_s = V_s/a
-M_c =V_c/a
-beta_s = np.sqrt(1-M_s**2)
-beta_c = np.sqrt(1-M_c**2)
-Lambda_b = 0
+def Speeds(conf):
+    a = 340
+    if conf==1:
+        datafile = open(os.path.join(root_path, "data/inputs_config_1.json"), "r")
+        data = json.load(datafile)
+        datafile.close()
+        Afwd = data["Aerodynamics"]["AR"] * 2
+    if conf==2:
+        datafile = open(os.path.join(root_path, "data/inputs_config_2.json"), "r")
+        data = json.load(datafile)
+        datafile.close()
+        Afwd = data["Aerodynamics"]["AR"] * 2
+    if conf==3:
+        datafile = open(os.path.join(root_path, "data/inputs_config_3.json"), "r")
+        data = json.load(datafile)
+        datafile.close()
+        Afwd = data["Aerodynamics"]["AR"]
+    V_c = data["Flight performance"]["V_cruise"]
+    V_s = data["Requirements"]["V_stall"]
+    M_s = V_s/a
+    M_c = V_c/a
+    beta_s = np.sqrt(1 - M_s ** 2)
+    beta_c = np.sqrt(1 - M_c ** 2)
+    print("Configuration %.0f at STALL beta*AR = %.3f"%(conf,beta_s * Afwd))
+    print("Configuration %.0f at CRUISE beta*AR = %.3f "%(conf,beta_c * Afwd))
+    return V_c, V_s, M_c,M_s
+
+V1 = Speeds(1)
+V2 = Speeds(2)
+V3 = Speeds(3)
+
+# V_s = 30
+# V_c = 46.01469067334079
+# V_c_3 = 53.64138948890874
+# M_s = Speeds(1)[1]/a
+# M_c =V_c/a
+# beta_s = np.sqrt(1-M_s**2)
+# beta_c = np.sqrt(1-M_c**2)
+# Lambda_b = 0
 xacfwd = 0.25*1.305
 lfus = 4
 xacrear = lfus-(1-0.25)*1.305
 
-print("Configuration 1-2 at STALL beta*AR:", beta_s*AR_1_2)
-print("Configuration 1-2 at CRUISE beta*AR:", beta_c*AR_1_2)
-print("Configuration 3 at STALL beta*AR:", beta_s*AR_3)
-print("Configuration 3 at CRUISE beta*AR:", beta_c*AR_3)
+# print("Configuration 1-2 at STALL beta*AR:", beta_s*AR_1_2)
+# print("Configuration 1-2 at CRUISE beta*AR:", beta_c*AR_1_2)
+# print("Configuration 3 at STALL beta*AR:", beta_s*AR_3)
+# print("Configuration 3 at CRUISE beta*AR:", beta_c*AR_3)
 
 def values_conf_1():
-    datafile = open(os.path.join(root_path, "inputs_config_1.json"), "r")
+    datafile = open(os.path.join(root_path, "data/inputs_config_1.json"), "r")
     data = json.load(datafile)
     datafile.close()
     ma = data["Structures"]["MTOW"]
@@ -48,16 +79,14 @@ def values_conf_1():
     Cm_ac_rear = data["Aerodynamics"]["Cm_ac_back"]
     CL_max_fwd = data["Aerodynamics"]["CLmax_front"]
     CL_max_rear = data["Aerodynamics"]["CLmax_back"]
-    c_fwd = 1.305
-    c_rear = 1.305
-    #cfwd = data["Aerodynamics"]["MAC1"]
-    #crear = data["Aerodynamics"]["MAC2"]
+    c_fwd = data["Aerodynamics"]["MAC1"]
+    c_rear = data["Aerodynamics"]["MAC2"]
     values = [CL_max_fwd, CL_max_rear, Cm_ac_fwd, Cm_ac_rear, CLa_fwd, CLa_rear, S_fwd, S_rear, Afwd, c_fwd,c_rear,b_fwd,b_rear]
     return values
 
 
 def values_conf_2():
-    datafile = open(os.path.join(root_path, "inputs_config_2.json"), "r")
+    datafile = open(os.path.join(root_path, "data/inputs_config_2.json"), "r")
     data = json.load(datafile)
     datafile.close()
     ma = data["Structures"]["MTOW"]
@@ -72,14 +101,14 @@ def values_conf_2():
     Cm_ac_rear = data["Aerodynamics"]["Cm_ac_back"]
     CL_max_fwd = data["Aerodynamics"]["CLmax_front"]
     CL_max_rear = data["Aerodynamics"]["CLmax_back"]
-    c_fwd = 1.305
-    c_rear = 1.305
+    c_fwd = data["Aerodynamics"]["MAC1"]
+    c_rear = data["Aerodynamics"]["MAC2"]
     values = [CL_max_fwd, CL_max_rear, Cm_ac_fwd, Cm_ac_rear, CLa_fwd, CLa_rear, S_fwd, S_rear, Afwd, c_fwd,c_rear,b_fwd,b_rear]
     return values
 
 
 def values_conf_3():
-    datafile = open(os.path.join(root_path, "inputs_config_3.json"), "r")
+    datafile = open(os.path.join(root_path, "data/inputs_config_3.json"), "r")
     data = json.load(datafile)
     datafile.close()
     ma = data["Structures"]["MTOW"]
@@ -119,7 +148,9 @@ def deps_da(Lambda_quarter_chord, b,lh, h_ht, A, CLaw):
     de_da = Keps / Keps0 * CLaw / (np.pi * A) * (
             r / (r ** 2 + mtv ** 2) * 0.4876 / (np.sqrt(r ** 2 + 0.6319 + mtv ** 2)) + v * (
             1 - np.sqrt(mtv ** 2 / (1 + mtv ** 2))))
+    print("de/da = ", de_da)
     return de_da
+
 def lh(xacfwd,xacrear):
     return abs(xacfwd-xacrear)
 
