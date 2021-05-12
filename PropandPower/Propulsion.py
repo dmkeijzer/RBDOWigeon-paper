@@ -119,7 +119,7 @@ class ActuatorDisk:
 
 D_outer = 0.50 # outer diameter propeller
 D_inner = 0.10*D_outer # inner diamtere propeller
-n_prop = 24 # number of propellers
+n_prop = 24 # number of p ropellers
 
 ActDisk = ActuatorDisk(D_outer,D_inner,n_prop)
 print("Total area:",ActDisk.A_prop(), "[m**2]")
