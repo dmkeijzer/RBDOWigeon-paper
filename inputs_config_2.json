@@ -48,7 +48,8 @@
         "ROC": 10,
         "n_turn": 2,
         "ROC_hover": 1.5,
-        "ROD_hover": -0.5
+        "ROD_hover": -0.5,
+        "Loiter time": 900
     },
     "Flight performance": {
         "V_cruise": 46.01469067334079,
@@ -59,6 +60,7 @@
         "W/P hover": 0.029031044941885197,
         "W/S": 826.0,
         "P tot": 652511.8209806293,
-        "P cruise": 320770.8152539571
+        "P cruise": 320770.8152539571,
+        "Gamma descent": 5
     }
 }

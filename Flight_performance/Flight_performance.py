@@ -1,10 +1,11 @@
+import sys
 import numpy as np
 import matplotlib.pyplot as plt
 from Aero_tools import ISA
-#from constants import*
 import json
-#import scipy.optimize as optim
 
+
+sys.path.append("../")
 
 
 class initial_sizing:
@@ -211,7 +212,7 @@ class initial_sizing:
 
 
 class optimization:
-    def __init__(self, WS, h_cruise, path):
+    def __init__(self, h_cruise, path):
 
         self.path = path
         datafile = open(self.path, "r")
@@ -256,12 +257,16 @@ class optimization:
         self.ROC    = reqs["ROC"]
         self.ROC_ho = reqs["ROC_hover"]
         self.ROD_ho = reqs["ROD_hover"]
+        self.loit   = reqs["Loiter time"]
 
         FP          = self.data["Flight performance"]
         self.WP_cr  = FP["W/P cruise"]
         self.WP_ho  = FP["W/P hover"]
+        self.WS     = FP["W/S"]
 
-    def cruise_speed(self, W, h):
+        self.h_cruise = h_cruise
+
+    def cruise_speed(self, W, h, Save = True):
 
         rho_cruise = ISA(h).density()
 
@@ -272,62 +277,66 @@ class optimization:
         self.CDCL_cr    = self.CD0/CLopt + CLopt/(np.pi*self.A*self.e)
 
         # Get the optimal speed
-        self.Vopt    = np.sqrt(2*W/(rho_cruise*self.S*CLopt))
+        Vopt    = np.sqrt(2*W/(rho_cruise*self.S*CLopt))
 
-        # Store cruise speed
-        FP = self.data["Flight performance"]
-        FP["V_cruise"] = self.Vopt
-        datfile = open(self.path, "w")
-        json.dump(self.data, datfile)
-        datfile.close()
+        if Save:
+            # Store cruise speed
+            FP = self.data["Flight performance"]
+            FP["V_cruise"] = Vopt
+            datfile = open(self.path, "w")
+            json.dump(self.data, datfile)
+            datfile.close()
+        return Vopt
 
-    def climb_speed(self, h):
+    def climb_speed(self, h, W):
 
         rho_cl = ISA(h).density()
 
         # Optimal climb velocity
         CL_cl = np.sqrt(np.pi * self.A * self.e * self.CD0 * 3)
-        self.V_cl = np.sqrt(2 * self.MTOW / (rho_cl * self.S * CL_cl))
+        V_cl = np.sqrt(2 * W / (rho_cl * self.S * CL_cl))
 
         # Climb CLCD
         CD_cl = self.CD0 + CL_cl * CL_cl / (np.pi * self.A * self.e)
         self.CLCD_cl = CL_cl / CD_cl
-    # def hover_power(self):
-    #
-    #     if self.duct:
-    #         self.P_h  = 0.5*self.MTOW*np.sqrt(self.TA)/(np.sqrt(self.rho_TO*(self.n_cruise + self.n_hover))*self.hover_eff)
-    #
-    #     else:
-    #         self.P_h  = self.MTOW*np.sqrt(self.TA/(2*self.rho_TO*(self.n_cruise + self.n_hover)))
 
-    def hover_power(self, ROC):
+        return V_cl
 
-        TWR = 1.2 * (1 + ((ROC ** 2) * self.rho_TO * self.StotSw / WS))
+    def hover_power(self, ROC, W):
 
-        P_hov = TWR * self.MTOW * np.sqrt(self.TA / (self.rho_TO * 2)) / self.hover_eff
+        TWR = 1.2 * (1 + ((ROC ** 2) * self.rho_TO * self.StotSw / self.WS))
+
+        P_hov = TWR * W * np.sqrt(self.TA / (self.rho_TO * 2)) / self.hover_eff
 
         if np.any(P_hov < 0):
             print("hover power implemented incorrectly")
 
-        if np.any(np.abs(self.MTOW/P_hov - self.WP_ho)>1e-4):
+        if np.any(self.MTOW/P_hov < self.WP_ho):
             print("More power is used than is available")
             print(self.MTOW/P_hov)
 
         return P_hov
 
-    def cruise_power(self):
+    def cruise_power(self, W):
 
-        P_cr    = self.MTOW*self.Vopt*self.CDCL_cr/self.cruise_eff
+        Vopt    = self.cruise_speed(W, self.h_cruise)
+
+        P_cr    = W*Vopt*self.CDCL_cr/self.cruise_eff
 
         if np.any(P_cr < 0):
             print("Cruise power implemented incorrectly")
 
         return P_cr
 
-    def climb_power(self, ROC_climb):
+    def climb_power(self, ROC_climb, V_climb, W):
+
+        # Climb CLCD
+        CL_cl = np.sqrt(np.pi * self.A * self.e * self.CD0 * 3)
+        CD_cl = self.CD0 + CL_cl * CL_cl / (np.pi * self.A * self.e)
+        self.CLCD_cl = CL_cl / CD_cl
 
         # Climb power
-        P_cl   = (self.MTOW*self.V_cl*(self.CLCD_cl**-1) + self.MTOW*ROC_climb)/self.climb_eff
+        P_cl   = (W*V_climb*(self.CLCD_cl**-1) + W*ROC_climb)/self.climb_eff
 
         if np.any(P_cl < 0):
             print("Climb power implemented incorrectly")
@@ -337,22 +346,27 @@ class optimization:
 
         return P_cl
 
-    def descent_power(self, gamma_descend):
+    def descent_power(self, gamma_descend, V_desc, W):
+
+        # Climb CLCD
+        CL_cl = np.sqrt(np.pi * self.A * self.e * self.CD0 * 3)
+        CD_cl = self.CD0 + CL_cl * CL_cl / (np.pi * self.A * self.e)
+        self.CLCD_cl = CL_cl / CD_cl
 
         # Optimal power during descent is the same as during climb
-        P_des   = np.maximum(self.MTOW*self.V_cl*((self.CLCD_cl**-1) - np.sin(gamma_descend))/self.climb_eff, 0)
+        P_des   = np.maximum(W*V_desc*((self.CLCD_cl**-1) - np.sin(gamma_descend))/self.climb_eff, 0)
 
         if np.any(P_des<0):
             print("Descent power implemented incorrectly or descent angle too steep to maintain speed (use brakes/HLD)")
 
         return P_des
 
-    def analyze_mission(self, h_cruise, gamma_descend, ROC_climb, mission_dist = 300000, pie = False):
+    def analyze_mission(self, h_cruise, gamma_descend, ROC_climb, W, mission_dist = 300000, pie = False):
 
-        self.climb_speed(h_cruise/2)
+        V_cl = self.climb_speed(h_cruise/2, W)
 
         # Climb angle and distance covered
-        gamma_climb = np.arcsin(ROC_climb / self.V_cl)
+        gamma_climb = np.arcsin(ROC_climb / V_cl)
         d_climb = h_cruise / np.tan(gamma_climb)
 
         # Minimum descent angle needed to at least reach the cruising altitude
@@ -360,45 +374,52 @@ class optimization:
         gamma_des_min   = np.arctan(h_cruise / d_desc_min)
 
         # Energy during hover
-        P_hov_to        = self.hover_power(self.ROC_ho)     # Take-off
+        P_hov_to        = self.hover_power(self.ROC_ho, W)     # Take-off
         E_hover_to      = P_hov_to*self.t_TO
 
-        P_hov_land      = self.hover_power(self.ROD_ho)     # Landing
+        P_hov_land      = self.hover_power(self.ROD_ho, W)     # Landing
         E_hover_land    = P_hov_land*self.t_land
 
         # Energy used during climb
-        P_cl    = self.climb_power(ROC_climb)
+        P_cl    = self.climb_power(ROC_climb, V_cl, W)
         t_cl    = h_cruise / ROC_climb
         E_climb = P_cl * t_cl
 
         # Energy during descent
-        ROD     = self.V_cl * np.sin(gamma_descend)
-        P_des   = self.descent_power(gamma_descend)
+        ROD     = V_cl * np.sin(gamma_descend)
+        P_des   = self.descent_power(gamma_descend, V_cl, W)
         t_desc  = h_cruise / ROD
         E_desc  = P_des * t_desc
 
+        # Loiter energy
+        V_loiter    = self.climb_speed(h_cruise, W)
+        P_loiter    = self.climb_power(0, V_loiter, W)
+        E_loiter    = P_loiter*self.loit
+
         # Energy during cruise
-        self.cruise_speed(self.MTOW, h_cruise)
-        P_cr        = self.cruise_power()
+        Vopt        = self.cruise_speed(self.MTOW, h_cruise, Save = False)
+        P_cr        = self.cruise_power(W)
         d_desc      = h_cruise / np.tan(gamma_descend)
         d_cruise    = mission_dist - d_climb - d_desc
-        t_cruise    = d_cruise / self.Vopt
+        t_cruise    = d_cruise / Vopt
         E_cruise    = P_cr * t_cruise
-        E_mission   = np.where(d_cruise < 0, np.nan, E_climb + E_desc + E_cruise + E_hover_to + E_hover_land)
-        t_mission   = np.where(d_cruise < 0, np.nan, t_cruise + t_cl + t_desc)
+        E_mission   = np.where(d_cruise < 0, np.nan, E_climb + E_desc + E_cruise + E_hover_to + E_hover_land + E_loiter)
+        t_mission   = np.where(d_cruise < 0, np.nan, t_cruise + t_cl + t_desc + self.t_TO + self.t_land)
 
-        if np.any(E_climb<0) or np.any(E_desc<0) or np.any(E_cruise<0) or np.any(E_hover_to<0) or np.any(E_hover_land<0):
+        if np.any(E_climb<0) or np.any(E_desc<0) or np.any(E_cruise<0) or np.any(E_hover_to<0) or np.any(E_hover_land<0) or np.any(E_loiter<0):
             print("Negative energy required, check implementation")
 
+        cruise_frac   = E_cruise/E_mission
+
         if pie:
-            labels    = ['Take-off', 'Climb', 'Cruise', 'Descent', 'Land']
-            fractions = [E_hover_to, E_climb, E_cruise, E_desc, E_hover_land]
+            labels    = ['Take-off', 'Climb', 'Cruise', 'Descent', 'Land', 'Loiter']
+            fractions = [E_hover_to, E_climb, E_cruise, E_desc, E_hover_land, E_loiter]
 
             plt.pie(fractions, labels = labels, autopct='%1.1f%%')
             plt.legend()
             plt.show()
 
-        return E_mission, t_mission
+        return E_mission, t_mission, cruise_frac
 
     def simulate_missions(self):
 
@@ -409,7 +430,7 @@ class optimization:
         # Go through all mission ranges, and plot the energy consumption vs the flying altitude
         for d in distances:
 
-            E, t_miss = self.analyze_mission(cruise_alts, np.radians(5), self.ROC, mission_dist = d*1000)
+            E, t_miss, _  = self.analyze_mission(cruise_alts, np.radians(5), self.ROC, self.MTOW, mission_dist = d*1000)
             label = 'Dist = ' + str(d) + 'km'
 
             plt.subplot(211)
@@ -435,7 +456,7 @@ class optimization:
         for gam in gamma_descend:
 
             label = 'gamma = ' + str(gam)
-            E, t_miss = self.analyze_mission(cruise_alts, np.radians(gam), self.ROC,  mission_dist = 300000)
+            E, t_miss, _ = self.analyze_mission(cruise_alts, np.radians(gam),self.ROC, self.MTOW, mission_dist = 300000)
             plt.subplot(211)
             plt.plot(cruise_alts, E * 2.77778e-7, label=label)
             plt.xlabel('Cruising altitude [m]')
@@ -453,18 +474,18 @@ class optimization:
 
         plt.show()
 
-path = "inputs_config_3.json"
+
+path = "inputs_config_1.json"
 
 # Run the initial sizing
-h_cruise = 500
+h_cruise = 400
 perf = initial_sizing(h_cruise, path)
 perf.wing_loading()
 perf.design_point()
 WS, WP = perf.sizing()
 perf.testing()
 
-
 # Estimate the power
-opt = optimization(WS, 1000, path)
-#opt.simulate_missions()
-opt.analyze_mission(300, np.radians(5), 10, pie = True)
+opt = optimization(300, path)
+# opt.simulate_missions()
+opt.analyze_mission(300, np.radians(5), 10, W = 18943.1, pie = True)
