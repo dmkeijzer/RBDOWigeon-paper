@@ -2,6 +2,9 @@ import numpy as np
 from scipy.integrate import quad, dblquad
 
 class PointLoad:
+    """
+    Point load object.
+    """
     def __init__(self, force, point):
         self.p = np.array(point)
         self.f = np.array(force)
@@ -49,13 +52,15 @@ class RunningLoad:
     def moment(self):
         moi = [quad(lambda x: x * np.interp(x, self.p, self.v[i, :]), self.p[0], self.p[-1])[0] for i in range(2)]
         load = [quad(lambda x: np.interp(x, self.p, self.v[i, :]), self.p[0], self.p[-1])[0] for i in range(2)]
-        poa = [moi[i] / load[i] for i in range(2)]
+        poa = [0 if load[i] == 0 else moi[i] / load[i] for i in range(2)]
         poa1, poa2 = [0] * 3, [0] * 3
         load1, load2 = [0] * 3, [0] * 3
         poa1[self.a], poa2[self.a] = poa[0], poa[1]
         load1[self.oa[0]], load2[self.oa[1]] = load[0], load[1]
         l1, l2 = PointLoad(load1, poa1), PointLoad(load2, poa2)
         return l1.moment() + l2.moment()
+    
+    __repr__ = __str__ = lambda self: f"RunningLoad(\nvals={self.v},\naxis={['x', 'y', 'z'][self.a]}\n)"
     
     momentx, momenty, momentz = [lambda self: self.moment()[i] for i in range(3)]
 

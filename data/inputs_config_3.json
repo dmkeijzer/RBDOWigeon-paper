@@ -11,13 +11,14 @@
         "S_back": 0,
         "Sweep_front": 0,
         "Sweep_back": 0,
-        "Cm_ac_front": 1,
-        "Cm_ac_back": 1,
+        "Cm_ac_front": 0.0463,
+        "Cm_ac_back": 0,
         "LoD_ratio": 13.709,
         "MAC1": 1.738,
         "Stot/Sw": 1.4,
         "c_r": 2.340,
-        "c_t": 0.936
+        "c_t": 0.936,
+        "xoc_ac": 0.263
     },
     "Stability and Control": {
         "Placeholder": 1
