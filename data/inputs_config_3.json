@@ -1,33 +1,27 @@
 {
-    "Preliminary estimations": {
-
-        "mTO": 1931,
-        "mOE": 1565,
-        "t_TO": 20,
-        "t_land": 20
-    },
-
     "Aerodynamics": {
         "e": 0.85,
         "AR": 5.701,
         "CD0": 0.0202,
-        "CLmax_front": 1.5,
+        "CLmax_front": 1.452,
         "CLmax_back": 0,
-        "CLalpha_front": 4.294,
+        "CLalpha_front": 4.754,
         "CLalpha_back": 0,
-        "S_front": 34.380,
+        "S_front": 22.933535108958836,
         "S_back": 0,
         "Sweep_front": 0,
         "Sweep_back": 0,
         "Cm_ac_front": 1,
         "Cm_ac_back": 1,
-        "LD_ratio": 13.709
+        "LoD_ratio": 13.709,
+        "MAC1": 1.738,
+        "Stot/Sw": 1.4,
+        "c_r": 2.340,
+        "c_t": 0.936
     },
-
     "Stability and Control": {
         "Placeholder": 1
     },
-
     "Structures": {
         "MTOW": 18943.1,
         "EOW": 15352.7,
@@ -35,31 +29,31 @@
         "h_fus": 1,
         "l_fus": 1
     },
-
     "Propulsion": {
         "eff_cruise": 1,
         "eff_hover": 1,
-        "N_cruise": 1,
-        "N_hover": 1,
+        "N_cruise": 6,
+        "N_hover": 6,
         "TA": 2000,
         "Max_T_engine": 1
     },
-
     "Requirements": {
-        "V_stall": 50,
+        "V_stall": 30,
         "V_max": 100,
         "ROC": 10,
         "n_turn": 2,
-        "ROC_hover": 1.5
+        "ROC_hover": 1.5,
+        "ROD_hover": -0.5
     },
-
     "Flight performance": {
-        "V_cruise": 1,
+        "V_cruise": 50.031772097842634,
         "h_cruise": 1,
-        "S": 1,
+        "S": 22.933535108958836,
         "P": 1,
-        "V_stall": 1,
-        "W/S": 1
+        "WoP_cruise": 0.059054936107583784,
+        "WoP_hover": 0.029031044941885197,
+        "WoS": 826.0,
+        "P_tot": 652511.8209806293,
+        "P_cruise": 320770.8152539571
     }
-
 }
