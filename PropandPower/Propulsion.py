@@ -76,7 +76,7 @@ class PropulsionCruise:
 
 class ActuatorDisk:
 
-    def __init__(self,D_prop_outer, D_prop_inner,n_prop):
+    def __init__(self, D_prop_outer, D_prop_inner, n_prop):
         """
         :param D_prop_outer: diameter of a propeller [m]
         :param D_prop_inner: diameter of a propeller [m]
@@ -89,7 +89,7 @@ class ActuatorDisk:
         self.n_prop = n_prop
 
         # Extracting aerodynamic data
-        self.CD = 0.02 #CD
+        self.CD = 0.02  # CD
 
         # Extracting performance data
         self.S = S
@@ -115,14 +115,14 @@ class ActuatorDisk:
     def eff(self):
         return 2 / (1+ self.V_e()/self.V_0)
 
+
 # Define values for parameters
+D_outer = 0.50  # outer diameter propeller
+D_inner = 0.10*D_outer  # inner diameter propeller
+n_prop = 24  # number of propellers
 
-D_outer = 0.50 # outer diameter propeller
-D_inner = 0.10*D_outer # inner diamtere propeller
-n_prop = 24 # number of p ropellers
-
-ActDisk = ActuatorDisk(D_outer,D_inner,n_prop)
-print("Total area:",ActDisk.A_prop(), "[m**2]")
-print("Exit speed:",ActDisk.V_e(), "[m/s]")
-print("Ideal power:",ActDisk.P_ideal(), "[W]")
-print("Efficiency:",ActDisk.eff(), "[W]")
+ActDisk = ActuatorDisk(D_outer, D_inner, n_prop)
+print("Total area:", ActDisk.A_prop(), "[m**2]")
+print("Exit speed:", ActDisk.V_e(), "[m/s]")
+print("Ideal power:", ActDisk.P_ideal(), "[W]")
+print("Efficiency:", ActDisk.eff(), "[W]")
