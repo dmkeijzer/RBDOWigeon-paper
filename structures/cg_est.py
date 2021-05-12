@@ -103,9 +103,10 @@ class Weight:
 
     def __init__(self, m_pax, wing, fuselage, landing_gear, propulsion, cargo_m, cargo_p, battery_m, battery_p, p_pax = []):
         self.w_pax = m_pax
+        self.wing = wing
         # weights of components
         self.tot_pax_w = self.w_pax * 5
-        self.wweight = np.sum(wing.get_weight()) if tuple else wing.get_moment()
+        self.wweight = np.sum(wing.get_weight()) if type(wing.get_weight()) is tuple else wing.get_weight()
         self.fweight = fuselage.get_weight()
         self.lweight = landing_gear.get_weight()
         self.pweight = propulsion.get_weight()
@@ -113,7 +114,7 @@ class Weight:
         self.bweight = battery_m
         #moments of components
         self.moment_pax = np.sum(self.w_pax * np.array(p_pax))
-        self.moment_w = np.sum(np.array(wing.get_moment())) if tuple else wing.get_moment()
+        self.moment_w = np.sum(np.array(wing.get_moment())) if type(wing.get_moment()) is tuple else wing.get_moment()
         self.moment_f = fuselage.get_moment()
         self.moment_l = landing_gear.get_moment()
         self.moment_p = propulsion.get_moment()
@@ -128,6 +129,27 @@ class Weight:
         #masses
         self.oem = (self.wweight + self.pweight + self.lweight + self.fweight + self.bweight)
         self.mtom = (self.wweight + self.pweight + self.lweight + self.fweight + self.cweight + self.bweight + self.tot_pax_w)
+
+    def print_weight_fractions(self):
+        d = {}
+        if type(self.wing.get_weight()) is tuple:
+            d["Front wing"] = [self.wing.get_weight()[0], self.wing.get_weight()[0]/self.oem, self.wing.get_weight()[0]/self.mtom]
+            d["Back wing"] = [self.wing.get_weight()[1], self.wing.get_weight()[1]/self.oem, self.wing.get_weight()[1]/self.mtom]
+        else:
+            d["Wing"] = [self.wing.get_weight(), self.wing.get_weight()/self.oem, self.wing.get_weight()/self.mtom]
+        d['Fuselage'] = [self.fweight, self.fweight/self.oem, self.fweight/self.mtom]
+        d['Landing gear'] = [self.lweight, self.lweight/self.oem, self.lweight/self.mtom]
+        d['Propulsion'] = [self.pweight, self.pweight/self.oem, self.pweight/self.mtom]
+        d['Cargo'] = [self.cweight, 0.0, self.cweight/self.mtom]
+        d['Battery'] = [self.bweight, self.bweight/self.oem, self.bweight/self.mtom]
+        d['Payload'] = [self.tot_pax_w, 0.0, self.tot_pax_w/self.oem]
+
+        print("{:<15} {:<20} {:<25} {:<15}".format('Component', 'Mass[kg]', 'fraction of OEM', 'fraction of MTOM'))
+        print('--------------------------------------------------------------------------------')
+        for k, v in d.items():
+            mass, oem_frac, mtom_frac = v
+            print("{:<15} {:<20} {:<25} {:<15}".format(k, mass, oem_frac, mtom_frac))
+        print(f'Where OEM is {self.oem}kg with CG of {self.oem_cg}m, and MTOM is {self.mtom}kg with CG of {self.mtom_cg}m')
 
 if __name__ == '__main__':
     mtom = 1930
@@ -146,7 +168,8 @@ if __name__ == '__main__':
     lgear = LandingGear(mtom, 1.5)
     props = Propulsion(n_prop, m_prop, pos_prop)
     weight = Weight(m_pax, wing, fuselage, lgear, props, 85, 3, 400, 2, p_pax = [0.8, 1.3, 1.3, 2.5, 2.5])
-    print(weight.oem, weight.mtom, weight.mtom_cg, weight.oem_cg)
+    # print(weight.oem, weight.mtom, weight.mtom_cg, weight.oem_cg)
+    weight.print_weight_fractions()
     # print(wing.get_moment())
     # # (mtom, S1, S2, n_ult, A, pos, config = None)
     # print(wing.get_weight())
