@@ -1,30 +1,24 @@
 {
-    "Preliminary estimations": {
-        "mTO": 1931,
-        "mOE": 1565,
-        "t_TO": 20,
-        "t_land": 20
-    },
     "Aerodynamics": {
         "e": 1.188,
-        "AR": 5.701,
+        "AR": 8.546,
         "CD0": 0.0202,
-        "CLmax_front": 1.5,
-        "CLmax_back": 1.5,
-        "CLalpha_front": 5.094,
-        "CLalpha_back": 4.584,
-        "S_front": 17.19,
-        "S_back": 17.19,
+        "CLmax_front": 1.781,
+        "CLmax_back": 1.737,
+        "CLalpha_front": 5.289,
+        "CLalpha_back": 4.760,
+        "S_front": 11.466767554479418,
+        "S_back": 11.466767554479418,
         "Sweep_front": 0,
         "Sweep_back": 0,
         "Cm_ac_front": 1,
         "Cm_ac_back": 1,
-        "LD_ratio": 16.214,
-        "MAC1": 1.305,
-        "MAC2": 1.305,
+        "LoD_ratio": 16.214,
+        "MAC1": 0.869,
+        "MAC2": 0.869,
         "Stot/Sw": 1.4,
-        "c_r": 1,
-        "c_t": 1
+        "c_r": 2.340,
+        "c_t": 0.936
     },
     "Stability and Control": {
         "Placeholder": 1
@@ -57,10 +51,10 @@
         "h_cruise": 1,
         "S": 22.933535108958836,
         "P": 1,
-        "W/P cruise": 0.059054936107583784,
-        "W/P hover": 0.029031044941885197,
-        "W/S": 826.0,
-        "P tot": 652511.8209806293,
-        "P cruise": 320770.8152539571
+        "WoP_cruise": 0.059054936107583784,
+        "WoP_hover": 0.029031044941885197,
+        "WoS": 826.0,
+        "P_tot": 652511.8209806293,
+        "P_cruise": 320770.8152539571
     }
 }
