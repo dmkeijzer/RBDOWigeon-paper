@@ -5,7 +5,6 @@ from Preliminary_Lift.Drag import e_factor, C_D_0, LD_ratio, C_L
 from constants import *
 from Aero_tools import ISA
 
-
 # A/C
 W = mTO*9.81 #[N]
 Vcruise = 69.444 #[m/s]

@@ -1,10 +1,4 @@
 {
-    "Preliminary estimations": {
-        "mTO": 1931,
-        "mOE": 1565,
-        "t_TO": 20,
-        "t_land": 20
-    },
     "Aerodynamics": {
         "e": 0.85,
         "AR": 5.701,

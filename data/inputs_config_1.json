@@ -1,10 +1,4 @@
 {
-    "Preliminary estimations": {
-        "mTO": 1931,
-        "mOE": 1565,
-        "t_TO": 20,
-        "t_land": 20
-    },
     "Aerodynamics": {
         "e": 1.188,
         "AR": 5.701,
@@ -52,7 +46,7 @@
     },
     "Flight performance": {
         "V_cruise": 46.01469067334079,
-        "h_cruise": 305,
+        "h_cruise": 1,
         "S": 22.933535108958836,
         "P": 1,
         "W/P cruise": 0.059054936107583784,
