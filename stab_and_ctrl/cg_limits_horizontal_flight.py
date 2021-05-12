@@ -166,7 +166,8 @@ def cg_range_conf_1(values=values_conf_1(),deda=deps_da(L_c4,values_conf_1()[11]
     oo = CLfwd * xacfwd_control + CLrear * (lfus-0.75*crear) * Srear / Sfwd -Cmacfwd-Cmacrear*Srear/Sfwd*crear
     pp = CLfwd * 1 + CLrear * 1 * Srear / Sfwd
     xcg_min = oo/pp
-    print("Range: %.4f < x_cg < %.4f"%(xcg_min,xcg_max))
+    print("Configuration 1 range: %.4f < x_cg < %.4f"%(xcg_min,xcg_max))
+    print("CG Range =%.3f" % (abs(xcg_max - xcg_min)))
     return abs(xcg_max-xcg_min)
 
 
@@ -182,7 +183,8 @@ def cg_range_conf_2(values=values_conf_2(),deda=deps_da(L_c4,values_conf_2()[11]
     oo = CLfwd * xacfwd_control + CLrear * (lfus-0.75*crear) * Srear / Sfwd -Cmacfwd-Cmacrear*Srear/Sfwd*crear
     pp = CLfwd * 1 + CLrear * 1 * Srear / Sfwd
     xcg_min = oo/pp
-    print("Range: %.4f < x_cg < %.4f"%(xcg_min,xcg_max))
+    print("Configuration 2 range: %.4f < x_cg < %.4f"%(xcg_min,xcg_max))
+    print("CG Range =%.3f" % (abs(xcg_max - xcg_min)))
     return abs(xcg_max-xcg_min)
 
 
@@ -190,13 +192,14 @@ def cg_range_conf_3(values=values_conf_3(),eta=5):
     CLfwd, CLrear, Cmacfwd, Cmacrear, CLafwd, CLarear, Sfwd, Srear, Afwd, cfwd, bfwd,e,CD0 = values
     lfus = 4
     hfus = 1.6
-    xacfwd_stab = 0.24*cfwd
-    xacfwd_control = 0.24 * cfwd
+    xacfwd_stab = lfus/2-cfwd/2 + 0.24*cfwd
+    xacfwd_control = lfus/2-cfwd/2 +  0.24*cfwd
     CD = CD0 + CLfwd**2/(np.pi*Afwd*e)
     zaccg = eta/100*hfus
     xcg_max = xacfwd_stab
     xcg_min = xacfwd_control-Cmacfwd/CLfwd*cfwd-CD/CLfwd*zaccg
-    print("Range: %.4f < x_cg < %.4f"%(xcg_min,xcg_max))
+    print("Configuration 3 range: %.4f < x_cg < %.4f"%(xcg_min,xcg_max))
+    print("CG Range =%.3f"%(abs(xcg_max-xcg_min)))
     return abs(xcg_max-xcg_min)
 
 cg1 = cg_range_conf_1()
