@@ -76,53 +76,61 @@ class PropulsionCruise:
 
 class ActuatorDisk:
 
-    def __init__(self, D_prop_outer, D_prop_inner, n_prop):
+    def __init__(self, D_inner_ratio, n_prop, TWratio, V_e_LTO):
         """
-        :param D_prop_outer: diameter of a propeller [m]
         :param D_prop_inner: diameter of a propeller [m]
         :param n_prop: number of propellers [-]
+        :param TWratio: Thurst-to-weight ratio [-]
+        :param V_e_LTO: Exit speed at LTO conditions [m/s]
         """
 
         # Class specific data not (yet) in .json
-        self.D_prop_outer = D_prop_outer
-        self.D_prop_inner = D_prop_inner
+        self.D_inner_ratio = D_inner_ratio
         self.n_prop = n_prop
+        self.TWratio = TWratio
+        self.V_e_LTO = V_e_LTO
 
         # Extracting aerodynamic data
-        self.CD = 0.02  # CD
+        self.CD = 0.01808  # CD
 
         # Extracting performance data
         self.S = S
-        self.V_0 = V_cruise
-        self.h = h_cruise
+        self.V_cruise = V_cruise
+        self.h_cruise = h_cruise
 
         # Atmospherics
-        atm_flight  = ISA(self.h)    # atmospheric conditions during flight   # Idk if this actually works
+        atm_flight  = ISA(self.h_cruise)    # atmospheric conditions during flight   # Idk if this actually works
         atm_LTO     = ISA(0)         # atmospheric conditions at landing and take-off (assumed sea-level)
         self.rho_flight = atm_flight.density()
         self.rho_LTO    = atm_LTO.density()
 
-    def A_prop(self):
-        return np.pi / 4 * (self.D_prop_outer**2 - self.D_prop_inner**2)
+    def D_prop_outer(self):
+        A_indiv = self.A_hover() / self.n_prop
+        return np.sqrt ( 4 * A_indiv / (np.pi * (1 - self.D_inner_ratio)) )
 
-    def V_e(self):
-        A_tot = self.A_prop() * self.n_prop
-        return np.sqrt(self.V_0**2 * (self.S * self.CD + A_tot) / A_tot)
+    def V_e_cruise(self):
+        A_tot = self.A_hover()
+        return np.sqrt(self.V_cruise**2 * (self.S * self.CD + A_tot) / A_tot)
 
     def P_ideal(self):
-        return 0.25 * self.rho_flight * self.V_0**3 * self.S * self.CD * (np.sqrt(self.CD * self.S / self.A_prop() + 1) + 1)
+        return 0.25 * self.rho_flight * self.V_cruise**3 * self.S * self.CD * (np.sqrt(self.CD * self.S / self.A_hover() + 1) + 1)
 
     def eff(self):
-        return 2 / (1+ self.V_e()/self.V_0)
+        return 2 / (1+ self.V_e_cruise() / self.V_cruise)
+
+    def A_hover(self):
+        return MTOW * self.TWratio * 2 / (self.rho_LTO * self.V_e_LTO**2)
 
 
 # Define values for parameters
-D_outer = 0.50  # outer diameter propeller
-D_inner = 0.10*D_outer  # inner diameter propeller
+D_inner_ratio = 0.10  # ratio of inner diameter compared to outer diameter
 n_prop = 24  # number of propellers
+TWRatio = 1.4
+V_e_LTO = 240/3.6
 
-ActDisk = ActuatorDisk(D_outer, D_inner, n_prop)
-print("Total area:", ActDisk.A_prop(), "[m**2]")
-print("Exit speed:", ActDisk.V_e(), "[m/s]")
-print("Ideal power:", ActDisk.P_ideal(), "[W]")
-print("Efficiency:", ActDisk.eff(), "[W]")
+ActDisk = ActuatorDisk(D_inner_ratio, n_prop,TWRatio,V_e_LTO)
+print("Required total area for hover", ActDisk.A_hover(), "[m**2]")
+print("Required diameter per prop is", ActDisk.D_prop_outer(),"[m] for", n_prop,"propellers" )
+print("Exit speed in cruise:", ActDisk.V_e_cruise(), "[m/s]")
+print("Ideal power for cruise:", ActDisk.P_ideal(), "[W]")
+print("Efficiency in cruise:", ActDisk.eff(), "[W]")
