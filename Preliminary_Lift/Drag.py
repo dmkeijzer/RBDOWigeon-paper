@@ -1,4 +1,5 @@
 import numpy as np
+from math import *
 
 #
 # From BOX WING FUNDAMENTALS - A DESIGN PERSPECTIVE
@@ -47,3 +48,24 @@ def C_L(phase, CD0, AR, e):
     if phase == 'loiter':
         return np.sqrt(3 * np.pi * AR * e * CD0)
 
+# CD0 component build up
+
+class componentdrag:
+    def __init__(self):
+
+
+Cf = 1.328 / np.sqrt(Re)
+Cf = 0.455 / ( (log10(Re) ** 2.58) * (1 + 0.144 * M * M) ** 0.65 )
+
+Re = min( (rho * V * l / viscosity_dyn), 38.21 * ( l / 0.634E-5) ** 1.053 ) # assuming smooth paint
+
+FFwing = ( 1 + 0.6 / tmax_pos * tc_ratio + 100 * tc_ratio ** 4) * (1.34 * M ** 0.18 * (cos(sweep_tmaxpos)) ** 0.28)
+f = (l / sqrt( wfus * hfus)) # wfus = 1.2 hfus = 1.6
+FFfus = 1 + 60 / f ** 3 + f / 400
+FFnacelle = 1 + 0.35/ f
+
+
+def CD0():
+
+    #
+    return 1
