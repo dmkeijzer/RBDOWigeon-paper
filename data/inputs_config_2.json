@@ -16,7 +16,9 @@
         "LD_ratio": 16.214,
         "MAC1": 1.305,
         "MAC2": 1.305,
-        "Stot/Sw": 1.4
+        "Stot/Sw": 1.4,
+        "c_r": 1,
+        "c_t": 1
     },
     "Stability and Control": {
         "Placeholder": 1
