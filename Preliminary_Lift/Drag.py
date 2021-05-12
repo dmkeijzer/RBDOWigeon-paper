@@ -51,21 +51,96 @@ def C_L(phase, CD0, AR, e):
 # CD0 component build up
 
 class componentdrag:
-    def __init__(self):
+    def __init__(self, type, S_ref, l1, l2, l3, d, V_cr, rho, MAC, AR, e, M_cr, k, frac_lam_f, frac_lam_w, mu, tc,xcm,sweepm, u, c_t,h, IF_f, IF_w, C_L, C_L_minD):
+        self.S_ref = S_ref
+        self.l1 = l1
+        self.l2 = l2
+        self.l3 = l3
+        self.d = d
+        self.V = V_cr
+        self.rho = rho
+        self.c = MAC
+        self.AR = AR
+        self.e = e
+        self.M = M_cr
+        self.k = k
+        self.frac_lamf = frac_lam_f
+        self.frac_lamw = frac_lam_w
+        self.mu = mu
+        self.l = self.l1+self.l2+self.l3
+        self.toc = tc
+        self.xcm = xcm
+        self.sweepm = sweepm
+        self.u = u
+        self.type = type
+        self.IF_w = IF_w
+        self.IF_f = IF_f
+        self.C_L = C_L
+        self.C_L_minD = C_L_minD
+        if self.type == 'box':
+            self.S_v = c_t*h
+    def Swet_f(self):
+
+        return (np.pi * self.d/4)* ((1/(3*self.l1**2))*((4*self.l1**2 +((self.d**2)/4)**1.5 -((self.d**3)/8))) ) -self.d + 4*self.l2 + 2 * np.sqrt(self.l3**2 + (self.d**2)/4 )
+
+    def Swet_w(self):
+
+        if self.type =='box':
+            return (self.S_ref+self.S_v) *2.1
+
+        else:
+
+            return self.S_ref*2.1
+
+    def Re_f(self):
+
+        return min((self.rho * self.V * (self.l) / self.mu), 38.21 * (self.l / self.k) ** 1.053)
+
+    def Re_w(self):
+
+        return min((self.rho * self.V * (self.c) / self.mu), 38.21 * (self.c / self.k) ** 1.053)
+
+    def Cf_f(self):
+
+        Cflam = 1.328/np.sqrt(self.Re_f())
+        Cfturb = 0.455/(((np.log10(self.Re_f()))**2.58)*(1 + 0.144 * self.M * self.M) ** 0.65 )
+
+        return self.frac_lamf*Cflam + (1-self.frac_lamf)*Cfturb
+
+    def Cf_w(self):
+        Cflam = 1.328 / np.sqrt(self.Re_w())
+        Cfturb = 0.455 / (((np.log10(self.Re_w())) ** 2.58) * (1 + 0.144 * self.M * self.M) ** 0.65)
+
+        return self.frac_lamw * Cflam + (1-self.frac_lamw) * Cfturb
+
+    def FF_f(self):
+        f = self.l/self.d
+        return 1+60/(f**3)+f/400
+    def FF_w(self):
+        return (1+0.6*self.toc/(self.xcm) + 100*self.toc**4) * (1.34*(self.M**0.18 ) *(np.cos(self.sweepm))**0.28)
+
+    def CD0(self):
+
+        self.CD0_f = (1/self.S_ref) * (self.Cf_f() *self.FF_f()*self.IF_f* self.Swet_f())
+        self.CD0_w = (1 / self.S_ref) * (self.Cf_w() * self.FF_w() * self.IF_w * self.Swet_w())
+        CD0 = self.CD0_w + self.CD0_f
+        return CD0
+
+    def CD_upsweep(self):
+
+        return 3.83*(self.u**2.5)*np.pi*self.d**2/(4*self.S_ref)
+
+    def CD_base(self):
+
+        return (0.139 + 0.419*(self.M-0.161)**2) * np.pi*self.d**2/(4*self.S_ref)
+
+    def CDi(self):
+
+        return ((self.C_L-self.C_L_minD)**2)/(np.pi *self.AR *self.e)
+
+    def CD(self):
+
+        return self.CD0()+self.CDi() + self.CD_base() +self.CD_upsweep()
 
 
-Cf = 1.328 / np.sqrt(Re)
-Cf = 0.455 / ( (log10(Re) ** 2.58) * (1 + 0.144 * M * M) ** 0.65 )
 
-Re = min( (rho * V * l / viscosity_dyn), 38.21 * ( l / 0.634E-5) ** 1.053 ) # assuming smooth paint
-
-FFwing = ( 1 + 0.6 / tmax_pos * tc_ratio + 100 * tc_ratio ** 4) * (1.34 * M ** 0.18 * (cos(sweep_tmaxpos)) ** 0.28)
-f = (l / sqrt( wfus * hfus)) # wfus = 1.2 hfus = 1.6
-FFfus = 1 + 60 / f ** 3 + f / 400
-FFnacelle = 1 + 0.35/ f
-
-
-def CD0():
-
-    #
-    return 1
