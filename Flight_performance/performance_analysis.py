@@ -8,29 +8,31 @@ sys.path.append("../")
 
 
 class mission_analysis:
-    def __init__(self, path, h_cruise, m_pl, ac_energy):
+    def __init__(self, path, h_cruise, m_pl, ac_energy, save_data = False):
 
         # Import aircraft data
-        self.path   = path
-        datafile    = open(self.path, "r")
-        data        = json.load(datafile)
+        self.path       = path
+        datafile        = open(self.path, "r")
+        self.data       = json.load(datafile)
         datafile.close()
 
         # Structural data
-        self.struc  = data["Structures"]
+        self.struc  = self.data["Structures"]
         self.EOW    = self.struc["EOW"]
         self.MTOW   = self.struc["MTOW"]
 
         # Flight performance data
-        self.FP             = data["Flight performance"]
+        self.FP             = self.data["Flight performance"]
         self.S              = self.FP["S"]
         self.WS             = self.FP["W/S"]
-        self.gamma_descent  = self.FP["Gamma descent"]
+        self.gamma_descent  = np.radians(self.FP["Gamma descent"])
         self.WP_ho          = self.FP["W/P hover"]
         self.WP_cr          = self.FP["W/P cruise"]
+        self.t_to           = self.FP["t_TO"]
+        self.t_la           = self.FP["t_land"]
 
         # Requirements
-        self.req    = data["Requirements"]
+        self.req    = self.data["Requirements"]
         self.ROC    = self.req["ROC"]
         self.ROC_ho = self.req["ROC_hover"]
         self.ROD_ho = self.req["ROD_hover"]
@@ -38,21 +40,17 @@ class mission_analysis:
         self.V_st   = self.req["V_stall"]
 
         # Aerodynamic data
-        self.aero   = data["Aerodynamics"]
+        self.aero   = self.data["Aerodynamics"]
         self.A      = self.aero["AR"]
         self.e      = self.aero["e"]
         self.CD0    = self.aero["CD0"]
         self.StotSw = self.aero["Stot/Sw"]
 
         # Propulsion data
-        self.prop       = data["Propulsion"]
+        self.prop       = self.data["Propulsion"]
         self.TA         = self.prop["TA"]
         self.hover_eff  = self.prop["eff_hover"]
         self.cruise_eff = self.prop["eff_cruise"]
-
-        # Preliminary estimations
-        self.t_to   = self.FP["t_TO"]
-        self.t_la   = self.FP["t_land"]
 
         # Atmospheric properties
         ISA_cr  = ISA(h_cruise)
@@ -75,6 +73,7 @@ class mission_analysis:
         self.h_climb        = h_climb       # [m] Average climbing altitude
         self.capacity       = ac_energy     # [J] Aircraft energy
         self.h_tr           = 100           # [m] Transition altitude
+        self.save           = save_data     # Boolean to see if data has to be saved or not
 
         # Warn if the aircraft is overweight
         if np.any(self.W > self.MTOW):
@@ -82,13 +81,25 @@ class mission_analysis:
             print("Aircraft is too heavy, reduce payload weight")
             print()
 
-    def optimal_speeds(self):
+    def optimal_speeds(self, save = False):
 
         # Optimal climb speed
         V_climb     = np.sqrt(2*self.W/(self.rho_cl*self.S*np.sqrt(self.A*self.e*np.pi*3*self.CD0)))
 
         # Optimal cruise speed
         V_cruise    = np.sqrt(2*self.W/(self.rho_cr*self.S*np.sqrt(np.pi * self.A * self.e * self.CD0)))
+
+        # If the input is not an array, store the optimal speed
+        if save:
+
+            # Store cruise speed
+            FP = self.data["Flight performance"]
+            FP["V_cruise"] = V_cruise
+            datfile = open(self.path, "w")
+            json.dump(self.data, datfile)
+            datfile.close()
+            print()
+            print("Optimal cruise speed (", np.round(V_cruise), "m/s) stored")
 
         return V_climb, V_cruise
 
@@ -218,6 +229,31 @@ class mission_analysis:
 
         return E_desc
 
+    def cruise_energy(self, mission_range):
+
+        # Cruise power
+        P_cr    = self.cruise_power(self.W)
+
+        V_cl, V_cr = self.optimal_speeds(save = self.save)
+
+        # Calculate the total distance spent in cruise (Assuming the transition distance is negligible)
+        t_climb = (self.h_cruise - self.h_tr)/self.ROC
+        d_climb = np.sqrt((V_cl**2) - (self.ROC**2))*t_climb
+        d_desc  = (self.h_cruise - self.h_tr)/np.tan(self.gamma_descent)
+
+        d_cruise = mission_range - d_desc - d_climb
+
+        # Check if climb and descent don't take more space than the mission
+        if np.any(d_cruise < 0):
+            print("Cruise distance needed for climb and descent longer than mission time, reduce cruise altitude")
+
+        # Time spent in cruise (Assuming the aircraft flies at optimal speed)
+        t_cruise = d_cruise/V_cr
+
+        E_cruise = P_cr*t_cruise
+
+        return E_cruise
+
     def range(self):
 
         E_hover_to  = self.to_hover_energy()
@@ -257,8 +293,8 @@ class mission_analysis:
 
     def climb_perf_chart(self):
 
-
-        h = np.arange(300, 3000, 500)
+        # Range of altitudes
+        h = np.arange(300, 3000, 800)
 
         for alt in h:
             # Calculate the density to reduce the stall speed with altitude
@@ -275,15 +311,43 @@ class mission_analysis:
         plt.legend()
         plt.show()
 
+    def total_energy(self, mission_range, pie = False):
 
-data_path       = "../data/inputs_config_1.json"
+        # Energy needed in each flight phase (Ignoring transition for now, as this is juts used for comparison)
+        E_hover_to  = self.to_hover_energy()
+        E_hover_la  = self.la_hover_energy()
+        E_climb     = self.climb_energy(self.ROC)
+        E_descent   = self.descent_energy()
+        E_loiter    = self.loiter_energy()
+        E_cruise    = self.cruise_energy(mission_range)
+
+        # Pie chart with all the energies
+        if pie:
+            labels    = ['Take-off', 'Climb', 'Cruise', 'Descent', 'Land', 'Loiter']
+            fractions = [E_hover_to, E_climb, E_cruise, E_descent, E_hover_la, E_loiter]
+
+            plt.pie(fractions, labels = labels, autopct='%1.1f%%')
+            plt.legend(loc = 'lower left')
+            plt.show()
+
+        # Total energy needed for the mission
+        E_tot   = E_hover_to + E_hover_la + E_climb + E_descent + E_loiter + E_cruise
+
+        return E_tot
+
+
+data_path       = "../data/inputs_config_3.json"
 
 cruising_alt    = 400           # [m] Estimated cruising altitude
 energy          = 100*3.6e6     # [J] Energy capacity of the aircraft
 
 # ======================== Climb chart =========================
-climb_analysis = mission_analysis(data_path, cruising_alt, 360, energy)
+climb_analysis  = mission_analysis(data_path, cruising_alt, 360, energy)
 climb_analysis.climb_perf_chart()
+
+# ===== Energy needed and distribution for normal mission ======
+Energy_analysis  = mission_analysis(data_path, cruising_alt, 360, energy, save_data = True)
+Energy_analysis.total_energy(300e3, pie = True)
 
 # ================= Payload range diagram ======================
 # Range of payloads
