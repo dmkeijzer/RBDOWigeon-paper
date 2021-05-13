@@ -7,7 +7,7 @@
     "CLmax_back": 1.737,
     "CLalpha_front": 5.289,
     "CLalpha_back": 4.76,
-    "S_front": 111.467,
+    "S_front": 11.466,
     "S_back": 11.466,
     "Sweep_front": 0,
     "Sweep_back": 0,
@@ -28,7 +28,7 @@
     "EOW": 15352.7,
     "w_fus": 1.3,
     "h_fus": 1.6,
-    "l_fus": 1
+    "l_fus": 4
   },
   "Propulsion": {
     "eff_cruise": 1,
