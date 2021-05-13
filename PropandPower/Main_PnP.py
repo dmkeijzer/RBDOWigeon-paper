@@ -3,6 +3,8 @@ import Propulsion as prop
 from constants import *
 import ActuatorDisk as AD
 import numpy as np
+import Propulsion_trade_off as PTO
+import Aero_tools as AT
 
 g0 = 9.80665
 
@@ -47,3 +49,45 @@ print("Jet speed cruise:", disk.v_e_cr(), "[m/s]")
 print("Cruise propulsive efficiency:", disk.eff_cruise(), "[-]")
 print("Ideal power for cruise:", disk.P_ideal(), "[W]")
 print("Actual power for cruise:", disk.P_actual(), "[W]")
+print(" ")
+
+print("Effects of distributed propulsion:")
+# Formulas used for trade-off
+if Prop_config == 1:
+    LE_prop = PTO.LE_prop(disk.v_e_cr(), V_cruise, MTOW, S_front)
+    print("The initial area was:", LE_prop.S, "[m^2]")
+    print("With leading edge distributed propulsion, this area can be reduced to", LE_prop.S1(), "[m^2]")
+    print("This corresponds to a ratio of", LE_prop.S_ratio())
+
+ISA = AT.ISA(h_cruise)
+# This needs to be checked and added to the json files
+b = np.sqrt(AR*S_front)
+xc_prop = 0.7
+xb_prop_start = 0.2
+# End is start + number of engines in half the wing times diameter times factor for clearance,
+# divided by b/2 to get % of half span
+xb_prop_end = 0.2 + (N_hover/4 * 2*r_out * 1.1)/(b/2)
+print("The propulsion goes from", xb_prop_start, "to", xb_prop_end, "of the half wing, which has a span of", b/2, "[m]")
+
+if Prop_config == 2:
+    BLI_lam = PTO.BL(S_front, b, V_cruise, xc_prop, c_r, c_t/c_r, ISA.viscosity_dyn(), ISA.density(), r_out*2)
+    BLI_tur = PTO.BL(S_front, b, V_cruise, xc_prop, c_r, c_t/c_r, ISA.viscosity_dyn(), ISA.density(), r_out*2,
+                     laminar=False)
+
+    BL_height_lam_inb = BLI_lam.BL_height(xb_prop_start * b/2)
+    # print(BLI_lam.c(xb_prop_start * b/2))
+    BL_height_lam_outb = BLI_lam.BL_height(xb_prop_end * b/2)
+    # print(BLI_lam.c(xb_prop_end * b/2))
+    BL_height_tur_inb = BLI_tur.BL_height(xb_prop_start * b/2)
+    # print(BLI_tur.c(xb_prop_start * b/2))
+    BL_height_tur_outb = BLI_tur.BL_height(xb_prop_end * b/2)
+    # print(BLI_tur.c(xb_prop_end * b/2))
+
+    print("The height of the (fully laminar) BL at the engine closest to the fuselage is", BL_height_lam_inb,
+          "[m], which corresponds to BL/D ratio of", BL_height_lam_inb/(2*r_out), "for a fan diameter of", 2*r_out, "[m]")
+    print("The height of the (fully laminar) BL at the engine furthest from the fuselage is", BL_height_lam_outb,
+          "[m], which corresponds to BL/D ratio of", BL_height_lam_outb/(2*r_out), "for a fan diameter of", 2*r_out, "[m]")
+    print("The height of the (fully turbulent) BL at the engine closest to the fuselage is", BL_height_tur_inb,
+          "[m], which corresponds to BL/D ratio of", BL_height_tur_inb/(2*r_out), "for a fan diameter of", 2*r_out, "[m]")
+    print("The height of the (fully turbulent) BL at the engine furthest from the fuselage is", BL_height_tur_outb,
+          "[m], which corresponds to BL/D ratio of", BL_height_tur_outb/(2*r_out), "for a fan diameter of", 2*r_out, "[m]")

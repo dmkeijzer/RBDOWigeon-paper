@@ -42,7 +42,8 @@
     "V_e_LTO": 66.6666667,
     "TW_ratio" : 2.5,
     "D_inner_ratio" : 0.4,
-    "D_loading" : 1000
+    "D_loading" : 1000,
+    "Prop_config" : 2
   },
   "Requirements": {
     "V_stall": 40,
