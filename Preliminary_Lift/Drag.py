@@ -48,6 +48,8 @@ def C_L(phase, CD0, AR, e):
     if phase == 'loiter':
         return np.sqrt(3 * np.pi * AR * e * CD0)
 
+def e_OS(AR):
+    return 1.78 * (1-0.045*AR**0.68)-0.64
 # CD0 component build up
 
 class componentdrag:
@@ -142,5 +144,7 @@ class componentdrag:
 
         return self.CD0()+self.CDi() + self.CD_base() +self.CD_upsweep()
 
+    def Drag(self):
 
+        return self.CD() *0.5*self.rho* (self.V**2)*self.S_ref
 
