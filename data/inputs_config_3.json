@@ -39,7 +39,8 @@
     "TA": 2000,
     "Max_T_engine": 1,
     "V_e_LTO": 22.222222222,
-    "TW_ratio" : 2.5
+    "TW_ratio" : 2.5,
+    "D_inner_ratio" : 0.1
   },
   "Requirements": {
     "V_stall": 40,
