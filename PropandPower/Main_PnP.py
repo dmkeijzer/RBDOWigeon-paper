@@ -27,7 +27,7 @@ g0 = 9.80665
 # print("Actual power for cruise:", ActDisk.P_actual(), "[W]")
 # print("Efficiency in cruise:", ActDisk.eff(), "[-]")
 
-disk = AD.ActDisk(TW_ratio, MTOW/g0, V_e_LTO, V_cruise, MTOW/LD_ratio, D_loading)
+disk = AD.ActDisk(TW_ratio, MTOW/g0, V_e_LTO, V_cruise, MTOW/LoD_ratio, D_loading)
 
 # print("Max take-off mass:", MTOW/g0)
 # print("Total disk area:", disk.A_disk(), "[m^2]")

@@ -13,7 +13,7 @@
     "Sweep_back": 0,
     "Cm_ac_front": -0.0645,
     "Cm_ac_back": -0.0645,
-    "LoD_ratio": 16.214,
+    "LD_ratio": 16.214,
     "MAC1": 0.869,
     "MAC2": 0.869,
     "Stot/Sw": 1.4,
