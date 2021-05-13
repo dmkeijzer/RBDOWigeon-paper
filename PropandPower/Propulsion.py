@@ -8,13 +8,14 @@ from constants import *
 import json
 from Aero_tools import ISA
 
+
 class PropulsionHover:
 
     def __init__(self, MTOM, n, A, eff_bat_el, eff_el_mo, eff_mo_sha, eff_sha_flo, eff_flo_jet, vj, m_dot_h, rho):
         """
         :param MTOM:        Maximum take off mass [kg]
         :param n:           Number of engines
-        :param A:           Area per engine [m^2]8
+        :param A:           Area per engine [m^2]
         :param eff_bat_el:  Efficiency from battery to electronics
         :param eff_el_mo:   Efficiency from electronics to motors
         :param eff_mo_sha:  Efficiency from motors to shaft
@@ -43,6 +44,7 @@ class PropulsionHover:
 
     def P_h_open(self):
         return self.T_h**(3/2) / np.sqrt(2 * self.rho * self.n * self.A)
+
 
 class PropulsionCruise:
 
@@ -74,6 +76,7 @@ class PropulsionCruise:
     def P_cr(self):
         return self.drag * self.v_cruise / self.eff_cruise
 
+
 class ActuatorDisk:
 
     def __init__(self, D_inner_ratio, D_prop_pure_hover_ratio):
@@ -81,7 +84,7 @@ class ActuatorDisk:
         :param D_prop_inner: diameter of a propeller [m]
         :param TWratio: Thurst-to-weight ratio [-]
         :param V_e_LTO: Exit speed at LTO conditions [m/s]
-        :param D_prop_pure_hover: diameter of propeller for pure hover (config 3) [m]
+        :param D_prop_pure_hover_ratio: diameter of propeller for pure hover (config 3) [m]
         """
 
         # Class specific data not in .json
@@ -128,6 +131,10 @@ class ActuatorDisk:
 
     def P_ideal(self):
         return 0.25 * self.rho_flight * self.V_cruise**3 * self.S * self.CD * (np.sqrt(self.CD * self.S / self.A_hover() + 1) + 1)
+
+    # Actual power usually 15% greater [https://web.mit.edu/16.unified/www/FALL/thermodynamics/notes/node86.html]
+    def P_actual(self):
+        return 1.15*self.P_ideal()
 
     def eff(self):
         return 2 / (1 + self.V_e_cruise()/self.V_cruise)
