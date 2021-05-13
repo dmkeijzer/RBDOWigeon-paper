@@ -76,19 +76,23 @@ class PropulsionCruise:
 
 class ActuatorDisk:
 
-    def __init__(self, D_inner_ratio, n_prop, TWratio, V_e_LTO):
+    def __init__(self, D_inner_ratio, TWratio, V_e_LTO,D_prop_pure_hover):
         """
         :param D_prop_inner: diameter of a propeller [m]
-        :param n_prop: number of propellers [-]
         :param TWratio: Thurst-to-weight ratio [-]
         :param V_e_LTO: Exit speed at LTO conditions [m/s]
+        :param D_prop_pure_hover: diameter of propeller for pure hover (config 3) [m]
         """
 
         # Class specific data not (yet) in .json
         self.D_inner_ratio = D_inner_ratio
-        self.n_prop = n_prop
         self.TWratio = TWratio
         self.V_e_LTO = V_e_LTO
+        self.D_prop_pure_hover = D_prop_pure_hover
+
+        # Extracting Propulsion data
+        self.n_prop_cruise = N_cruise
+        self.n_prop_hover = N_hover
 
         # Extracting aerodynamic data
         self.CD = 0.01808  # CD
@@ -104,9 +108,18 @@ class ActuatorDisk:
         self.rho_flight = atm_flight.density()
         self.rho_LTO    = atm_LTO.density()
 
+
     def D_prop_outer(self):
-        A_indiv = self.A_hover() / self.n_prop
-        return np.sqrt ( 4 * A_indiv / (np.pi * (1 - self.D_inner_ratio)) )
+        if self.n_prop_cruise == self.n_prop_hover:
+            A_indiv = self.A_hover() / self.n_prop_hover
+            D_prop_outer = np.sqrt ( 4 * A_indiv / (np.pi * (1 - self.D_inner_ratio)) )
+        else:
+            N_prop_pure_hover = self.n_prop_hover - self.n_prop_cruise
+            A_pure_hover = N_prop_pure_hover * np.pi / 4 * self.D_prop_pure_hover * (1 - self.D_inner_ratio)
+            A_remain = self.A_hover() - A_pure_hover
+            A_indiv = A_remain/ self.n_prop_cruise
+            D_prop_outer = np.sqrt ( 4 * A_indiv / (np.pi * (1 - self.D_inner_ratio)) )
+        return D_prop_outer
 
     def V_e_cruise(self):
         A_tot = self.A_hover()
@@ -120,17 +133,3 @@ class ActuatorDisk:
 
     def A_hover(self):
         return MTOW * self.TWratio * 2 / (self.rho_LTO * self.V_e_LTO**2)
-
-
-# Define values for parameters
-D_inner_ratio = 0.10  # ratio of inner diameter compared to outer diameter
-n_prop = 24  # number of propellers
-TWRatio = 1.4
-V_e_LTO = 240/3.6
-
-ActDisk = ActuatorDisk(D_inner_ratio, n_prop,TWRatio,V_e_LTO)
-print("Required total area for hover", ActDisk.A_hover(), "[m**2]")
-print("Required diameter per prop is", ActDisk.D_prop_outer(),"[m] for", n_prop,"propellers" )
-print("Exit speed in cruise:", ActDisk.V_e_cruise(), "[m/s]")
-print("Ideal power for cruise:", ActDisk.P_ideal(), "[W]")
-print("Efficiency in cruise:", ActDisk.eff(), "[-]")
