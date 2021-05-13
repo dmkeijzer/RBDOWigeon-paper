@@ -76,7 +76,7 @@ class PropulsionCruise:
 
 class ActuatorDisk:
 
-    def __init__(self, D_inner_ratio, TWratio, V_e_LTO,D_prop_pure_hover):
+    def __init__(self, D_inner_ratio, D_prop_pure_hover_ratio):
         """
         :param D_prop_inner: diameter of a propeller [m]
         :param TWratio: Thurst-to-weight ratio [-]
@@ -84,18 +84,19 @@ class ActuatorDisk:
         :param D_prop_pure_hover: diameter of propeller for pure hover (config 3) [m]
         """
 
-        # Class specific data not (yet) in .json
+        # Class specific data not in .json
         self.D_inner_ratio = D_inner_ratio
-        self.TWratio = TWratio
-        self.V_e_LTO = V_e_LTO
-        self.D_prop_pure_hover = D_prop_pure_hover
+        self.D_prop_pure_hover_ratio = D_prop_pure_hover_ratio
 
         # Extracting Propulsion data
         self.n_prop_cruise = N_cruise
         self.n_prop_hover = N_hover
+        self.TWratio = TW_ratio
+        self.V_e_LTO = V_e_LTO
 
         # Extracting aerodynamic data
         self.CD = 0.01808  # CD
+        self.c_r = c_r
 
         # Extracting performance data
         self.S = S
@@ -108,14 +109,14 @@ class ActuatorDisk:
         self.rho_flight = atm_flight.density()
         self.rho_LTO    = atm_LTO.density()
 
-
     def D_prop_outer(self):
         if self.n_prop_cruise == self.n_prop_hover:
             A_indiv = self.A_hover() / self.n_prop_hover
             D_prop_outer = np.sqrt ( 4 * A_indiv / (np.pi * (1 - self.D_inner_ratio)) )
         else:
             N_prop_pure_hover = self.n_prop_hover - self.n_prop_cruise
-            A_pure_hover = N_prop_pure_hover * np.pi / 4 * self.D_prop_pure_hover * (1 - self.D_inner_ratio)
+            D_prop_pure_hover = self.D_prop_pure_hover_ratio * self.c_r
+            A_pure_hover = N_prop_pure_hover * np.pi / 4 * D_prop_pure_hover * (1 - self.D_inner_ratio)
             A_remain = self.A_hover() - A_pure_hover
             A_indiv = A_remain/ self.n_prop_cruise
             D_prop_outer = np.sqrt ( 4 * A_indiv / (np.pi * (1 - self.D_inner_ratio)) )

@@ -37,7 +37,9 @@
     "N_cruise": 4,
     "N_hover": 6,
     "TA": 2000,
-    "Max_T_engine": 1
+    "Max_T_engine": 1,
+    "V_e_LTO": 22.222222222,
+    "TW_ratio" : 1.4
   },
   "Requirements": {
     "V_stall": 40,
