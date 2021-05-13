@@ -112,7 +112,7 @@ class ActuatorDisk:
     def D_prop_outer(self):
         if self.n_prop_cruise == self.n_prop_hover:
             A_indiv = self.A_hover() / self.n_prop_hover
-            D_prop_outer = np.sqrt ( 4 * A_indiv / (np.pi * (1 - self.D_inner_ratio)) )
+            D_prop_outer = np.sqrt(4 * A_indiv / (np.pi * (1 - self.D_inner_ratio)))
         else:
             N_prop_pure_hover = self.n_prop_hover - self.n_prop_cruise
             D_prop_pure_hover = self.D_prop_pure_hover_ratio * self.c_r
@@ -130,7 +130,7 @@ class ActuatorDisk:
         return 0.25 * self.rho_flight * self.V_cruise**3 * self.S * self.CD * (np.sqrt(self.CD * self.S / self.A_hover() + 1) + 1)
 
     def eff(self):
-        return 2 / (1+ self.V_e_cruise() / self.V_cruise)
+        return 2 / (1 + self.V_e_cruise()/self.V_cruise)
 
     def A_hover(self):
         return MTOW * self.TWratio * 2 / (self.rho_LTO * self.V_e_LTO**2)
