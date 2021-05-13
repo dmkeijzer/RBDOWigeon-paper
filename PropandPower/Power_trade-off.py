@@ -14,7 +14,7 @@ weights = {"Specific energy density": 1,
 li_ion = {"Specific energy density": 250,
           "Volumetric energy density": 650,
           "Power density": 1000,
-          "Safety score": 1,
+          "Safety score": 3,
           "Operational life": 1000,
           "Cost": 80}  # we expect the price of an average battery pack to be around $94/kWh by 2024 and $62/kWh by 2030
 # https://about.bnef.com/blog/behind-scenes-take-lithium-ion-battery-prices/
@@ -23,47 +23,47 @@ li_ion = {"Specific energy density": 250,
 li_S = {"Specific energy density": 550,
         "Volumetric energy density": 650,
         "Power density": 11000,
-        "Safety score": 1,
+        "Safety score": 3,
         "Operational life": 800,
         "Cost": 87}  # with Li-S potentially available at about €72 per kWh – 30% less than comparable Li-ion technology
 # https://horizon-magazine.eu/article/cheaper-lighter-and-more-energy-dense-promise-lithium-sulphur-batteries.html
 
-li_metal = {"Specific energy density": 450,
+li_metal = {"Specific energy density": 500,
             "Volumetric energy density": 1000,
-            "Power density": 1,
-            "Safety score": 5,
-            "Operational life": 1,
-            "Cost": 1}
+            "Power density": 1000,
+            "Safety score": 4,
+            "Operational life": 800,
+            "Cost": 100}
 
-solid_st = {"Specific energy density": 1,
-            "Volumetric energy density": 1,
-            "Power density": 1,
-            "Safety score": 1,
-            "Operational life": 1,
-            "Cost": 1}
+solid_st = {"Specific energy density": 600,
+            "Volumetric energy density": 1000,
+            "Power density": 1000,
+            "Safety score": 5,
+            "Operational life": 800,
+            "Cost": 10}
 
 GH2_fuelcell = {"Specific energy density": 1,
                 "Volumetric energy density": 1,
-                "Power density": 1,
+                "Power density": 750,
                 "Safety score": 1,
                 "Operational life": 1,
-                "Cost": 1}
+                "Cost": 10}
 
 LH2_fuelcell = {"Specific energy density": 1500,
                 "Volumetric energy density": 1000,
-                "Power density": 1,
+                "Power density": 850,
                 "Safety score": 1,
                 "Operational life": 1,
                 "Cost": 10}  # $/kWh
 
 
 def score(system):
-    return weights["Specific energy density"]*system["Specific energy density"] / li_ion["Specific energy density"] + \
-           weights["Volumetric energy density"]*system["Volumetric energy density"] / li_ion["Volumetric energy density"] + \
-           weights["Power density"]*system["Power density"] / li_ion["Power density"] + \
-           weights["Safety score"]*system["Safety score"] / li_ion["Safety score"] + \
-           weights["Operational life"]*system["Operational life"] / li_ion["Operational life"] + \
-           weights["Cost"]*(1/system["Cost"]) / (1/li_ion["Cost"])
+    return (weights["Specific energy density"]*system["Specific energy density"] / li_ion["Specific energy density"] +
+            weights["Volumetric energy density"]*system["Volumetric energy density"] / li_ion["Volumetric energy density"] +
+            weights["Power density"]*system["Power density"] / li_ion["Power density"] +
+            weights["Safety score"]*system["Safety score"] / li_ion["Safety score"] +
+            weights["Operational life"]*system["Operational life"] / li_ion["Operational life"] +
+            weights["Cost"]*(1/system["Cost"]) * li_ion["Cost"]) / sum(weights.values())
 
 
 print("Trade-off scores:")

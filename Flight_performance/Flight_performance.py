@@ -249,9 +249,10 @@ class optimization:
         self.climb_eff  = prop["eff_cruise"]    # Just a simplification, change when more data is available
         self.desc_eff   = prop["eff_cruise"]    # Idem
 
-        prelim      = self.data["Preliminary estimations"]
-        self.t_TO   = prelim["t_TO"]
-        self.t_land = prelim["t_land"]
+        FP = self.data["Flight performance"]
+        self.t_TO   = FP["t_TO"]
+        self.t_land = FP["t_land"]
+
 
         reqs        = self.data["Requirements"]
         self.ROC    = reqs["ROC"]
@@ -475,7 +476,7 @@ class optimization:
         plt.show()
 
 
-path = "inputs_config_1.json"
+path = "data/inputs_config_3.json"
 
 # Run the initial sizing
 h_cruise = 400

@@ -51,9 +51,8 @@ class mission_analysis:
         self.cruise_eff = self.prop["eff_cruise"]
 
         # Preliminary estimations
-        self.prelim = data["Preliminary estimations"]
-        self.t_to   = self.prelim["t_TO"]
-        self.t_la   = self.prelim["t_land"]
+        self.t_to   = self.FP["t_TO"]
+        self.t_la   = self.FP["t_land"]
 
         # Atmospheric properties
         ISA_cr  = ISA(h_cruise)
@@ -258,10 +257,14 @@ class mission_analysis:
 
     def climb_perf_chart(self):
 
-        V = np.arange(self.V_st, 400, 0.1)
+
         h = np.arange(300, 3000, 500)
 
         for alt in h:
+            # Calculate the density to reduce the stall speed with altitude
+            rho = ISA(alt).density()
+            V = np.arange(self.V_st*np.sqrt(self.rho_sl/rho), 400, 0.1)
+
             RC = self.climb_performance(alt, V)
             label = 'height: ' + str(alt) + ' [m]'
             plt.plot(V, RC, label = label)
@@ -273,7 +276,7 @@ class mission_analysis:
         plt.show()
 
 
-data_path       = "../inputs_config_1.json"
+data_path       = "../data/inputs_config_1.json"
 
 cruising_alt    = 400           # [m] Estimated cruising altitude
 energy          = 100*3.6e6     # [J] Energy capacity of the aircraft

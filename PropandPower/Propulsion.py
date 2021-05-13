@@ -4,7 +4,9 @@ procedure obtained from "Architectural performance assessment of an electric
 vertical take-off and landing (e-VTOL) aircraft based on a ducted vectored thrust concept (2021)"
 """
 import numpy as np
-
+from constants import *
+import json
+from Aero_tools import ISA
 
 class PropulsionHover:
 
@@ -42,7 +44,6 @@ class PropulsionHover:
     def P_h_open(self):
         return self.T_h**(3/2) / np.sqrt(2 * self.rho * self.n * self.A)
 
-
 class PropulsionCruise:
 
     def __init__(self, MTOM, n, A, eff_bat_el, eff_el_mo, eff_mo_sha, eff_sha_flo, eff_flo_jet, eff_jet_air,
@@ -72,3 +73,64 @@ class PropulsionCruise:
 
     def P_cr(self):
         return self.drag * self.v_cruise / self.eff_cruise
+
+class ActuatorDisk:
+
+    def __init__(self, D_inner_ratio, n_prop, TWratio, V_e_LTO):
+        """
+        :param D_prop_inner: diameter of a propeller [m]
+        :param n_prop: number of propellers [-]
+        :param TWratio: Thurst-to-weight ratio [-]
+        :param V_e_LTO: Exit speed at LTO conditions [m/s]
+        """
+
+        # Class specific data not (yet) in .json
+        self.D_inner_ratio = D_inner_ratio
+        self.n_prop = n_prop
+        self.TWratio = TWratio
+        self.V_e_LTO = V_e_LTO
+
+        # Extracting aerodynamic data
+        self.CD = 0.01808  # CD
+
+        # Extracting performance data
+        self.S = S
+        self.V_cruise = V_cruise
+        self.h_cruise = h_cruise
+
+        # Atmospherics
+        atm_flight  = ISA(self.h_cruise)    # atmospheric conditions during flight   # Idk if this actually works
+        atm_LTO     = ISA(0)         # atmospheric conditions at landing and take-off (assumed sea-level)
+        self.rho_flight = atm_flight.density()
+        self.rho_LTO    = atm_LTO.density()
+
+    def D_prop_outer(self):
+        A_indiv = self.A_hover() / self.n_prop
+        return np.sqrt ( 4 * A_indiv / (np.pi * (1 - self.D_inner_ratio)) )
+
+    def V_e_cruise(self):
+        A_tot = self.A_hover()
+        return np.sqrt(self.V_cruise**2 * (self.S * self.CD + A_tot) / A_tot)
+
+    def P_ideal(self):
+        return 0.25 * self.rho_flight * self.V_cruise**3 * self.S * self.CD * (np.sqrt(self.CD * self.S / self.A_hover() + 1) + 1)
+
+    def eff(self):
+        return 2 / (1+ self.V_e_cruise() / self.V_cruise)
+
+    def A_hover(self):
+        return MTOW * self.TWratio * 2 / (self.rho_LTO * self.V_e_LTO**2)
+
+
+# Define values for parameters
+D_inner_ratio = 0.10  # ratio of inner diameter compared to outer diameter
+n_prop = 24  # number of propellers
+TWRatio = 1.4
+V_e_LTO = 240/3.6
+
+ActDisk = ActuatorDisk(D_inner_ratio, n_prop,TWRatio,V_e_LTO)
+print("Required total area for hover", ActDisk.A_hover(), "[m**2]")
+print("Required diameter per prop is", ActDisk.D_prop_outer(),"[m] for", n_prop,"propellers" )
+print("Exit speed in cruise:", ActDisk.V_e_cruise(), "[m/s]")
+print("Ideal power for cruise:", ActDisk.P_ideal(), "[W]")
+print("Efficiency in cruise:", ActDisk.eff(), "[-]")
