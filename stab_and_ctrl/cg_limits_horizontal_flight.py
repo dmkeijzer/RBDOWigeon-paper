@@ -133,7 +133,7 @@ def cg_range_conf_1_2(conf):
     o = CLafwd*xacfwd_stab+CLarear*(lfus-0.75*cfwd)*Srear/Sfwd*(1-deda)
     p =CLafwd*1+CLarear*1*Srear/Sfwd*(1-deda)
     xcg_max = o/p
-    # CLrear = 0.8*CLfwd
+    CLrear = 0.8*CLfwd
     oo = CLfwd * xacfwd_control + CLrear * xacrear * Srear / Sfwd -Cmacfwd-Cmacrear*Srear/Sfwd*crear
     pp = CLfwd * 1 + CLrear * 1 * Srear / Sfwd
     xcg_min = oo/pp
