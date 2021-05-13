@@ -1,10 +1,213 @@
-import sys
 import numpy as np
 import matplotlib.pyplot as plt
 from Aero_tools import ISA
 import json
 
-sys.path.append("../")
+
+class initial_sizing:
+    def __init__(self, h, path):
+
+        self.path = path
+        datafile = open(self.path, "r")
+
+        # Read data from json file
+        self.data = json.load(datafile)
+        datafile.close()
+
+        # Extracting aerodynamic data
+        aero        = self.data["Aerodynamics"]
+        self.CLmax  = aero["CLmax_front"]
+        self.A      = aero["AR"]
+        self.e      = aero["e"]
+        self.CD0    = aero["CD0"]
+        self.StotSw = aero["Stot/Sw"]
+
+        # Atmospherics
+        atm_flight  = ISA(h)    # atmospheric conditions during flight
+        atm_LTO     = ISA(0)    # atmospheric conditions at landing and take-off (assumed sea-level)
+        self.rho_flight = atm_flight.density()
+        self.rho_LTO    = atm_LTO.density()
+
+        # Requirements, and others
+        reqs        = self.data["Requirements"]
+        self.Vs     = reqs["V_stall"]
+        self.Vmax   = reqs["V_max"]
+        self.ROC    = reqs["ROC"]
+        self.nmax   = reqs["n_turn"]
+        self.Vcr    = 70
+
+        self.ROC_ho = reqs["ROC_hover"]
+
+        # Propulsion constants
+        prop            = self.data["Propulsion"]
+        self.eff_prop   = prop["eff_cruise"]    # [-] Propeller efficiency during normal flight
+        self.eff_hover  = prop["eff_hover"]     # [-] Propeller efficiency during hover
+        self.Ncr        = prop["N_cruise"]      # [-] Number of engines used in cruise
+        self.Nho        = prop["N_hover"]       # [-] Number of dedicated hover engines
+        self.TA         = prop["TA"]            # [kg/m^2]  Disk loading for ducted fans
+
+        # Structures data
+        struc           = self.data["Structures"]
+        self.MTOW       = struc["MTOW"]  # [N] Maximum take-off weight in newtons
+
+        # Preparing matplotlib
+        fig = plt.figure()
+        self.ax1 = fig.add_subplot(111)
+        self.ax2 = self.ax1.twiny()
+
+    def stall(self, V_stall):
+        # Stall speed (assuming low altitude)
+        return 0.5*self.rho_LTO*(V_stall**2)*self.CLmax
+
+    def max_speed(self, WS):
+        # Max speed (Reduction of power with altitude was neglected, as no combustion is involved (revise this for H2))
+        return self.eff_prop*((self.CD0*0.5*self.rho_flight*(self.Vmax**3)/WS +
+                               WS/(np.pi*self.A*self.e*0.5*self.rho_flight*self.Vmax))**-1)
+
+    def climb(self, WS, climb_rate):
+        # Climb performance
+        return ((climb_rate + np.sqrt(2*WS)*(self.CD0**0.25)/(1.345*((self.A*self.e)**0.75)))**-1)/self.eff_prop
+
+    def turn(self, WS, V, n_turn):
+        # Turning performance (at high altitude and max speed)
+        return self.eff_prop*((self.CD0*0.5*self.rho_flight*(V**3)/WS +
+                               WS*n_turn*n_turn/(np.pi*self.A*self.e*0.5*self.rho_flight*V))**-1)
+
+    def vertical_flight(self, WS, ROC_hover):
+        # Most of the equations used here come from:
+        # Comprehensive preliminary sizing/resizing method for a fixed wing – VTOL electric UAV
+
+        # Thrust-to-weight required to allow for a sufficient rate of climb, plus a safety factor for acceleration
+        TWR = 1.2*(1 + ((ROC_hover**2)*self.rho_LTO*self.StotSw/WS))
+
+        # Obtaining Power to weight based on the TWR required
+        return (TWR*np.sqrt(self.TA/(2*self.rho_LTO))/self.eff_hover)**-1
+
+    def wing_loading(self):
+
+        # Range of wing loadings to plot the power loadings
+        self.WS = np.arange(100, 4000, 1)
+
+        # Produce lines for the WS, WP diagram
+        self.WS_stall           = self.stall(self.Vs)
+        self.WP_speed           = self.max_speed(self.WS)
+        self.WP_climb           = self.climb(self.WS, self.ROC)
+        self.WP_turn_max_speed  = self.turn(self.WS, self.Vmax, self.nmax)
+        self.WP_turn_cruise     = self.turn(self.WS, self.Vcr, self.nmax)
+        self.WP_hov             = self.vertical_flight(self.WS, self.ROC_ho)
+
+        # Plot wing and thrust loading diagrams
+        self.ax1.plot(self.WS, self.WP_speed, label = 'Maximum speed')
+        self.ax1.plot(self.WS, self.WP_climb, label = 'Rate of climb')
+        self.ax1.plot(self.WS, self.WP_turn_max_speed,  label = 'Turn performance @ $V_{max}$')
+        self.ax1.plot(self.WS, self.WP_turn_cruise,     label='Turn performance @ $V_{cr}$')
+        self.ax1.plot(self.WS, self.WP_hov, label = 'Vertical flight requirements')
+        self.ax1.plot(np.ones(np.size(self.WS))*self.WS_stall, np.linspace(0, 0.1, np.size(self.WS)), label = 'Stall speed')
+
+    def design_point(self):
+        """
+        Identifies the design space, and finds the optimal design point. Since not all hover engines work during cruise,
+        this is done twice, once including hover, and once without. It is assumed that the wing loading at stall will be
+        limiting, the most critical power loading corresponding to this is then found. It should be checked in the plot
+        whether this indeed corresponds to the most optimal design point.
+        """
+
+        # Border of the design space
+        crit = np.minimum(np.minimum(np.minimum(np.minimum(self.WP_speed, self.WP_turn_cruise), self.WP_turn_max_speed),
+                          self.WP_climb), self.WP_hov)[self.WS < self.WS_stall]
+
+        crit_cruise = np.minimum(np.minimum(np.minimum(self.WP_speed, self.WP_turn_cruise), self.WP_turn_max_speed),
+                          self.WP_climb)[self.WS < self.WS_stall]
+
+        # Range of wing loadings in the design space
+        ws_crit = self.WS[self.WS < self.WS_stall]
+
+        # Select design point.
+        # !!! Check manually in the plot !!!
+        self.des_WS         = ws_crit[-1]
+        self.des_WP         = crit[-1]          # Design power loading including hover
+        self.des_WP_cruise  = crit_cruise[-1]   # Design power loading considering only cruise
+
+        # Write the design point to the data file
+        FP = self.data["Flight performance"]
+
+        FP["W/S"]           = float(self.des_WS)
+        FP["W/P hover"]     = float(self.des_WP)
+        FP["W/P cruise"]    = float(self.des_WP_cruise)
+
+        datfile = open(self.path, "w")
+        json.dump(self.data, datfile)
+        datfile.close()
+
+        # Plot design space and point
+        self.ax1.fill_between(ws_crit, np.zeros(np.size(crit)), crit, facecolor='green', alpha=0.2)
+        self.ax1.fill_between(ws_crit, np.zeros(np.size(crit_cruise)), crit_cruise, facecolor='limegreen', alpha=0.2)
+        self.ax1.plot(self.des_WS, self.des_WP, 'D', label='Design point')
+        self.ax1.legend()
+        plt.show()
+
+        # Print results
+        print()
+        print('====== Design point ====== ')
+        print('Wing loading:  ', np.round(self.des_WS, 4), '  N/m^2')
+        print('Power loading: ', np.round(self.des_WP, 4), 'N/W')
+
+    def sizing(self):
+
+        # Run wing and power loading
+        self.wing_loading()
+        self.design_point()
+
+        # Sizing the wing
+        S  = self.MTOW/self.des_WS
+
+        # Total power needed
+        P_tot       = self.MTOW/self.des_WP         # Including hover
+        P_cruise    = self.MTOW/self.des_WP_cruise  # Cruise only
+
+        # Store results to the data file
+        FP = self.data["Flight performance"]
+        FP["S"]         = S
+        FP["P tot"]     = P_tot
+        FP["P cruise"]  = P_cruise
+        datfile = open(self.path, "w")
+        json.dump(self.data, datfile)
+        datfile.close()
+
+        print()
+        print('====== Initial sizing ======')
+        print('Wing area:                      ', np.round(S, 2), 'm^2')
+        print('Total shaft power (incl. hover):', np.round(P_tot, 0), 'W')
+        print('Total shaft power (cruise only):', np.round(P_cruise, 0), 'W')
+
+        return self.des_WS, self.des_WP
+
+    def testing(self):
+
+        # Just some random inputs for testing
+        WS_test     = 500
+        V_test      = 100
+
+        # If n = 1, the max speed line should equal that of the turning requirement
+        WP_turn  = self.turn(WS_test, V_test, 1)
+        WP_speed = self.max_speed(WS_test)
+
+        if abs(WP_turn - WP_speed) > 1e-3:
+            print("Turning or speed equations implemented incorrectly")
+
+        # Testing the climb requirement
+        descent = self.climb(WS_test, -10)
+        climb   = self.climb(WS_test, 10)
+
+        if descent > climb:
+            print("Climb equation implemented incorrectly")
+
+        # Hover test
+        descent_ho  = self.vertical_flight(WS_test, -10)
+        ascent_ho   = self.vertical_flight(WS_test, 10)
+
+        if descent_ho > ascent_ho:
+            print("Hover implemented incorrectly")
 
 
 class mission_analysis:
@@ -334,45 +537,3 @@ class mission_analysis:
         E_tot   = E_hover_to + E_hover_la + E_climb + E_descent + E_loiter + E_cruise
 
         return E_tot
-
-
-data_path       = "../data/inputs_config_3.json"
-
-cruising_alt    = 400           # [m] Estimated cruising altitude
-energy          = 100*3.6e6     # [J] Energy capacity of the aircraft
-
-# ======================== Climb chart =========================
-climb_analysis  = mission_analysis(data_path, cruising_alt, 360, energy)
-climb_analysis.climb_perf_chart()
-
-# ===== Energy needed and distribution for normal mission ======
-Energy_analysis  = mission_analysis(data_path, cruising_alt, 360, energy, save_data = True)
-Energy_analysis.total_energy(300e3, pie = True)
-
-# ================= Payload range diagram ======================
-# Range of payloads
-m_PL        = np.arange(0, 400, 10)
-analysis    = mission_analysis(data_path, cruising_alt, m_PL, energy)
-
-# Different weight breakdowns
-tot_weight      = analysis.W
-empty_weight    = analysis.EOW
-max_weight      = analysis.MTOW
-payload_weight  = m_PL*9.81
-
-ranges = analysis.range()/1e3
-
-plt.plot(ranges, tot_weight)
-plt.plot(ranges, np.ones(np.size(tot_weight))*empty_weight, color = 'black')
-plt.plot(ranges, np.ones(np.size(tot_weight))*max_weight, color = 'black')
-plt.fill_between(ranges, np.ones(np.size(tot_weight))*empty_weight, np.zeros(np.size(tot_weight)), color = 'red',
-                 alpha = 0.5)
-plt.fill_between(ranges, np.ones(np.size(tot_weight))*max_weight, np.ones(np.size(tot_weight))*1e9, color = 'red',
-                 alpha = 0.5)
-
-plt.ylim(0.98*empty_weight, 1.02*max_weight)
-plt.xlim(min(ranges), max(ranges))
-plt.ylabel('Aircraft weight [N]')
-plt.xlabel('Cruise range [km]')
-plt.grid()
-plt.show()
