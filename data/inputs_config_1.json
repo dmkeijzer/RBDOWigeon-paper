@@ -1,24 +1,25 @@
 {
   "Aerodynamics": {
-    "e": 1.188,
-    "AR": 8.546,
-    "CD0": 0.0202,
+    "e": 1.1302,
+    "AR": 7,
+    "CLforCDmin": 0.2927,
+    "CDmin": 0.03163,
     "CLmax_front": 1.781,
     "CLmax_back": 1.737,
-    "CLalpha_front": 5.289,
-    "CLalpha_back": 4.76,
-    "S_front": 11.466,
-    "S_back": 11.466,
+    "CLalpha_front": 5.1685,
+    "CLalpha_back": 4.6517,
+    "S_front": 5.4278,
+    "S_back": 5.4278,
     "Sweep_front": 0,
     "Sweep_back": 0,
     "Cm_ac_front": -0.0645,
     "Cm_ac_back": -0.0645,
-    "LD_ratio": 16.214,
-    "MAC1": 0.869,
-    "MAC2": 0.869,
+    "LD_ratio": 17.157,
+    "MAC1": 0.661,
+    "MAC2": 0.661,
     "Stot/Sw": 1.4,
-    "c_r": 2.34,
-    "c_t": 0.936
+    "c_r": 0.8895,
+    "c_t": 0.3558
   },
   "Stability and Control": {
     "Placeholder": 1

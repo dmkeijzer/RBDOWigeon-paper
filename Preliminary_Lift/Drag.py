@@ -35,7 +35,7 @@ def C_D(C_L, CD0, AR, e):
     return CD0 + C_L ** 2 / (np.pi * AR * e)
 
 # LD ratio from ADSEE-I
-def LD_ratio(phase, CD0, AR, e):
+def LoD_ratio(phase, CD0, AR, e):
     if phase == 'cruise':
         return np.sqrt((np.pi * AR * e)/(4 * CD0))
     if phase == 'loiter':
@@ -147,4 +147,9 @@ class componentdrag:
     def Drag(self):
 
         return self.CD() *0.5*self.rho* (self.V**2)*self.S_ref
+
+    def Drag_polar(self):
+        CDmin = self.CD0()+ self.CD_base() +self.CD_upsweep()
+        K = 1/(np.pi*self.AR*self.e)
+        return CDmin, K
 

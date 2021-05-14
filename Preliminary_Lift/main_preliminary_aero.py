@@ -7,7 +7,7 @@ from Aero_tools import ISA
 import os
 import json
 root_path = os.path.join(os.getcwd(), os.pardir)
-conf =2
+conf =3
 
 if conf == 1:
     datafile = open(os.path.join(root_path, "data/inputs_config_1.json"), "r")
@@ -80,9 +80,9 @@ e_conv = e_factor('normal', h_d, b_d, e_ref)
 e_tan = e_factor('tandem', h_d,b_d,e_ref)
 e_box = e_factor('box', h_d, b_d, e_ref)
 
-LD_conv = LD_ratio('cruise', CD_0, AR, e_conv), LD_ratio('loiter', CD_0, AR, e_conv)
-LD_tan = LD_ratio('cruise', CD_0, AR, e_tan), LD_ratio('loiter', CD_0, AR, e_tan)
-LD_box = LD_ratio('cruise', CD_0, AR, e_box), LD_ratio('loiter', CD_0, AR, e_box)
+LD_conv = LoD_ratio('cruise', CD_0, AR, e_conv), LoD_ratio('loiter', CD_0, AR, e_conv)
+LD_tan = LoD_ratio('cruise', CD_0, AR, e_tan), LoD_ratio('loiter', CD_0, AR, e_tan)
+LD_box = LoD_ratio('cruise', CD_0, AR, e_box), LoD_ratio('loiter', CD_0, AR, e_box)
 
 Wing_planform_params_single = wing_planform(AR,S_ref,sweepc4,taper)
 Wing_planform_params_double =  wing_planform_double(AR, S1, sweepc41, taper1, S2, sweepc42, taper2)
@@ -111,7 +111,7 @@ Cl_des_box = C_L_des/(np.cos(sweep_atx(0,Wing_planform_params_double[0][1],b,tap
 Cl_des_tan = C_L_des/(np.cos(sweep_atx(0,Wing_planform_params_double[0][1],b,taper,sweepc4)))**2
 
 Re_Number = Re( rho, Vcruise, Wing_planform_params_single[3], mu), Re( rho, Vcruise, Wing_planform_params_double[0][3], mu), Re( rho, Vcruise, Wing_planform_params_double[1][3], mu)
-
+print('Reynolds number',Re_Number)
 #Wing performance
 sweepc2_single = sweep_atx(0.5,Wing_planform_params_single[1],Wing_planform_params_single[0],taper,sweepc4)
 sweepc2_double = sweep_atx(0.5,Wing_planform_params_double[0][1],Wing_planform_params_double[0][0],taper,sweepc4)
@@ -134,25 +134,48 @@ sweep_xcm_double = sweep_atx(NASA_LANGLEY[6],Wing_planform_params_double[0][1],W
 
 LEsweep_single = sweep_atx(0,Wing_planform_params_single[1],b,taper,sweepc4)
 LEsweep_double = sweep_atx(0,Wing_planform_params_double[0][1],b,taper,sweepc4)
-C_L_finite_single = EPPLER335[4]/(np.cos(LEsweep_single)**2)
-C_L_finite_double = NASA_LANGLEY[4]/(np.cos(LEsweep_double)**2)
-
+C_L_finite_single = EPPLER335[4]*(np.cos(LEsweep_single)**2)
+C_L_finite_double = NASA_LANGLEY[4]*(np.cos(LEsweep_double)**2)
+print("e_conv",e_conv)
 class2drag_box = componentdrag('box',S_ref,2,0,2,np.sqrt(1.2*1.6),Vcruise,rho,MAC*0.5,AR,e_box,Mach(Vcruise,a),k,flamf,flamw,mu,NASA_LANGLEY[5],NASA_LANGLEY[6],0,u,c_t_double,h_d,IF_f,IF_w,C_L_des,C_L_finite_double)
 
 class2drag_tan = componentdrag('tandem',S_ref,2,0,2,np.sqrt(1.2*1.6),Vcruise,rho,MAC*0.5,AR,e_tan,Mach(Vcruise,a),k,flamf,flamw,mu,NASA_LANGLEY[5],NASA_LANGLEY[6],0,u,c_t_double,h_d,IF_f,IF_w,C_L_des,C_L_finite_double)
 
-class2drag_wing = componentdrag('wing',S_ref,2,0,2,np.sqrt(1.2*1.6),Vcruise,rho,MAC,AR,e_ref,Mach(Vcruise,a),k,flamf,flamw,mu,EPPLER335[5],EPPLER335[6],0,u,0,0,IF_f,IF_w,C_L_des,C_L_finite_single)
+class2drag_wing = componentdrag('wing',S_ref,2,0,2,np.sqrt(1.2*1.6),Vcruise,rho,MAC,AR,e_conv,Mach(Vcruise,a),k,flamf,flamw,mu,EPPLER335[5],EPPLER335[6],0,u,0,0,IF_f,IF_w,C_L_des,C_L_finite_single)
 
 if conf == 1:
     C_D = class2drag_tan.CD()
+    C_Dpolar = class2drag_tan.Drag_polar()
+    Drag = class2drag_tan.Drag()
+    AR_final = AR
+    e_final = e_tan
+    C_r, C_t, MAC = Wing_planform_params_double[0][1:4]
+    LE_sweep = LEsweep_double
+    LoD = C_L_des/ C_D
 if conf == 2:
     C_D = class2drag_box.CD()
+    C_Dpolar = class2drag_box.Drag_polar()
+    Drag = class2drag_box.Drag()
+    AR_final = AR
+    e_final = e_box
+    C_r, C_t, MAC = Wing_planform_params_double[0][1:4]
+    LE_sweep = LEsweep_double
+    LoD = C_L_des / C_D
 if conf == 3:
     C_D = class2drag_wing.CD()
+    C_Dpolar = class2drag_wing.Drag_polar()
+    Drag = class2drag_wing.Drag()
+    AR_final = AR
+    e_final = e_conv
+    C_r, C_t , MAC = Wing_planform_params_single[1:4]
+    LE_sweep = LEsweep_single
+    LoD = C_L_des / C_D
+
+print(e_conv)
 print("AR= ", AR)
-print("e_OS", e_conv, e_box,e_tan)
-print("C_r,C_t, MAC=", Wing_planform_params_single[1:4])
-print("LE sweep=", sweep_atx(0,Wing_planform_params_single[1],b,taper,sweepc4)*180/np.pi)
+print("e_OS", e_final)
+print("C_r,C_t, MAC=", C_r, C_t, MAC)
+print("LE sweep=", LE_sweep)
 
 print("Lift slope conv =", Clda_conv)
 print("Lift slope double =", Clda_double)
@@ -161,5 +184,7 @@ print("C_L_max_single=", C_L_max_conv)
 print("C_L_max_double=", 0.9* NASA_LANGLEY[1],  0.9*1.930)
 
 print("C_D", C_D)
-
-print("C_L", C_L_finite_single, C_L_finite_double)
+print("Drag polar", C_Dpolar)
+print("Cruise Drag [N]", Drag)
+print("C_L for minimum drag", C_L_finite_single, C_L_finite_double)
+print("Lift over drag", LoD)
