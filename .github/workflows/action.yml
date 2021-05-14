@@ -9,6 +9,7 @@ jobs:
     runs-on: self-hosted
     strategy:
       max-parallel: 5
+
     steps:
       - uses: actions/checkout@v2
 #       - name: Set up Python 3.9
@@ -33,6 +34,7 @@ jobs:
     needs: Code-Verification
     strategy:
       max-parallel: 5
+
     steps:
       - uses: actions/checkout@v2
 #       - name: Set up Python 3.9
