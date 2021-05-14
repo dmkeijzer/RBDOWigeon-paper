@@ -19,7 +19,8 @@
     "Stot/Sw": 1.4,
     "c_r": 1.64884,
     "c_t": 0.65953,
-    "xoc_ac": 0.263
+    "xoc_ac": 0.263,
+    "t/c": 0.126
   },
   "Stability and Control": {
     "Placeholder": 1

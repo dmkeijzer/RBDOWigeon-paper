@@ -20,7 +20,8 @@
     "c_r": 0.8895,
     "c_t": 0.3558,
     "xoc_ac1": 0.25,
-    "xoc_ac2": 0.25
+    "xoc_ac2": 0.25,
+    "t/c": 0.17
   },
   "Stability and Control": {
     "Placeholder": 1

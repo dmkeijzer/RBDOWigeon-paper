@@ -5,7 +5,9 @@ inp = configuration['Settings']['inputconfig']
 
 consts = (lambda f: {co: c[co] for c in load(open(f, 'r')).values() for co in c})(f'../data/inputs_config_{inp}.json')
 
-globals().update(consts | configuration['Preliminary estimations'])
+consts.update(configuration['Preliminary estimations'])
+
+globals().update(consts)
 del consts
 del inp
 del configuration
