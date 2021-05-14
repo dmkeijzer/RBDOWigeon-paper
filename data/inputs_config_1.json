@@ -40,7 +40,7 @@
     "N_cruise": 16,
     "N_hover": 16,
     "TA": 2000,
-    "Max_T_engine": 1,
+    "Max_T_engine": 2959.86,
     "V_e_LTO": 33.3333333,
     "TW_ratio" : 2.5,
     "D_inner_ratio" : 0.2,
