@@ -34,6 +34,17 @@
     "l_fus": 4
   },
   "Propulsion": {
+    "eff_P_cr": 0.94,
+    "eff_D_cr": 0.92,
+    "eff_F_cr": 0.83,
+    "eff_M_cr": 0.95,
+    "eff_PE_cr": 0.98,
+    "eff_B_cr": 0.98,
+    "eff_D_h": 0.96,
+    "eff_F_h": 0.88,
+    "eff_M_h": 0.92,
+    "eff_PE_h": 0.95,
+    "eff_B_h": 0.8,
     "eff_cruise": 1,
     "eff_hover": 1,
     "N_cruise": 24,
