@@ -1,8 +1,7 @@
 import unittest
 import pytest
 import sys
-sys.path.append('./')
-sys.path.append('structures/')
+sys.path.append('../structures/')
 
 from SolveLoads import *
 
