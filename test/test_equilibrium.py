@@ -1,7 +1,7 @@
 import unittest
 import pytest
 import sys
-sys.path.append('structures/')
+sys.path.append('../structures/')
 
 from Equilibrium import PointLoad, Moment, RunningLoad, EquilibriumEquation
 

@@ -1,5 +1,5 @@
 import sys
-sys.path.append('stab_and_ctrl/')
+sys.path.append('../stab_and_ctrl/')
 
 import numpy as np
 from hover_controllability import *
