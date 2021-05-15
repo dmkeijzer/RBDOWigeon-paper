@@ -1,4 +1,3 @@
-import battery as bat
 import Propulsion as prop
 from constants import *
 import ActuatorDisk as AD
@@ -7,10 +6,11 @@ import Propulsion_trade_off as PTO
 import Aero_tools as AT
 
 g0 = 9.80665
+MTOM = MTOW/g0
+ISA = AT.ISA(h_cruise)
+rho = ISA.density()
 
-# Li_ion = bat.Battery(300, 200, 1)
-
-# Define values for parameters
+# # Define values for parameters
 # # D_inner_ratio = 0.10  # ratio of inner diameter compared to outer diameter
 # D_prop_pure_hover = 0.6  # ratio of pure hover prop (just config 3) compared to root chord.
 #
@@ -31,6 +31,7 @@ g0 = 9.80665
 
 disk = AD.ActDisk(TW_ratio, MTOW/g0, V_e_LTO, V_cruise, MTOW/LD_ratio, D_loading)
 
+print("--- ACTUATOR DISK THEORY ---")
 # print("Max take-off mass:", MTOW/g0)
 # print("Total disk area:", disk.A_disk(), "[m^2]")
 print("Total disk area from DL:", disk.A, "[m^2]")
@@ -39,8 +40,9 @@ print("Equivalent radius for one propeller (from Disk Loading):", np.sqrt(disk.A
 print("Propeller exit speed at hover:", disk.v_e_hover(), "[m/s]")
 # print("Disk area per propeller:", disk.A_disk()/N_hover, "[m^2]")
 # r_out = np.sqrt((disk.A_disk()/N_hover) / (np.pi*(1-D_inner_ratio**2)))
-print("Disk area per propeller:", disk.A/N_hover, "[m^2]")
-r_out = np.sqrt((disk.A/N_hover) / (np.pi*(1-D_inner_ratio**2)))
+disk_A_per_prop = disk.A/N_hover
+print("Disk area per propeller:", disk_A_per_prop, "[m^2]")
+r_out = np.sqrt(disk_A_per_prop / (np.pi*(1-D_inner_ratio**2)))
 print("Outer radius of the propellers:", r_out, "[m]")
 print("Hub radius of propellers:", r_out*D_inner_ratio, "[m]")
 print("Cruise speed:", V_cruise, "[m/s]")
@@ -51,7 +53,23 @@ print("Ideal power for cruise:", disk.P_ideal(), "[W]")
 print("Actual power for cruise:", disk.P_actual(), "[W]")
 print(" ")
 
-print("Effects of distributed propulsion:")
+print("--- Power ---")
+P_cr = prop.PropulsionCruise(MTOM, N_cruise, disk_A_per_prop, eff_P_cr, eff_D_cr, eff_F_cr, eff_M_cr, eff_PE_cr,
+                             eff_B_cr, rho, V_cruise, MTOW/LD_ratio)
+P_h = prop.PropulsionHover(MTOM, N_hover, disk_A_per_prop, eff_D_h, eff_F_h, eff_M_h, eff_PE_h, eff_B_h,
+                           disk.v_e_hover(), 0, rho, Ducted)
+
+print("The power needed for cruise is:", P_cr.P_cr(), "[W]")
+print("The power needed for hover is:", P_h.P_hover(), "[W]")
+print(" ")
+
+print("--- Energy ---")
+print("Energy for hover (assuming 4 minutes in total for a flight):", P_h.P_hover() * (4/60) / 1000, "[kWh]")
+time_cruise = 300*1000/V_cruise
+print("Energy for cruise (assuming 300 km of flight at V_Cruise):", P_cr.P_cr() * (time_cruise/3600) / 1000, "[kWh]")
+print(" ")
+
+print("--- Effects of distributed propulsion ---")
 # Formulas used for trade-off
 if Prop_config == 1:
     LE_prop = PTO.LE_prop(disk.v_e_cr(), V_cruise, MTOW, S_front)
@@ -59,7 +77,6 @@ if Prop_config == 1:
     print("With leading edge distributed propulsion, this area can be reduced to", LE_prop.S1(), "[m^2]")
     print("This corresponds to a ratio of", LE_prop.S_ratio())
 
-ISA = AT.ISA(h_cruise)
 # This needs to be checked and added to the json files
 b = np.sqrt(AR*S_front)
 xc_prop = 0.7
@@ -70,8 +87,8 @@ xb_prop_end = 0.2 + (N_hover/4 * 2*r_out * 1.1)/(b/2)
 print("The propulsion goes from", xb_prop_start, "to", xb_prop_end, "of the half wing, which has a span of", b/2, "[m]")
 
 if Prop_config == 2:
-    BLI_lam = PTO.BL(S_front, b, V_cruise, xc_prop, c_r, c_t/c_r, ISA.viscosity_dyn(), ISA.density(), r_out*2)
-    BLI_tur = PTO.BL(S_front, b, V_cruise, xc_prop, c_r, c_t/c_r, ISA.viscosity_dyn(), ISA.density(), r_out*2,
+    BLI_lam = PTO.BL(S_front, b, V_cruise, xc_prop, c_r, c_t/c_r, ISA.viscosity_dyn(), rho, r_out*2)
+    BLI_tur = PTO.BL(S_front, b, V_cruise, xc_prop, c_r, c_t/c_r, ISA.viscosity_dyn(), rho, r_out*2,
                      laminar=False)
 
     BL_height_lam_inb = BLI_lam.BL_height(xb_prop_start * b/2)
