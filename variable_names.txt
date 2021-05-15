@@ -28,6 +28,8 @@ Propulsion
     TA_hybrid:      [N/m^2] Disk loading for a combination of ducted and open propellers
     max_T_engine:   [N]     Maximum thrust of the engine
     duct:           [-]     Boolean indicating if the cruise engines are ducted or not
+    V_e_LTO         [m/s]   exit velocity of flow during hover
+    TW_ratio        [-]     Estimate of T/W ratio
 
 Requirements
     V_stall:    [m/s]   Stall speed (sea level)

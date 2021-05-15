@@ -29,8 +29,4 @@ def SolveWingLoads(MAC, b, Lwing, Dwing, mWing, TpE, nE):
     wingequation = EquilibriumEquation(kloads=[WingWeight, Lift, Drag, MomentAC] + Thrust,
                                        ukloads=[Fixedx, Fixedy, Fixedz, FixedMomentx, FixedMomenty, FixedMomentz])
     wingequation.SetupEquation()
-    return list(wingequation.SolveEquation())
-
-if __name__ == '__main__':
-    print(ACLoads := SolveACLoads(1.95, 0.5, 3.5))
-    print(WingLoads := SolveWingLoads(0.2, 11.2, ACLoads[0], 800, mTO / 8, 100, 3))
+    return wingequation

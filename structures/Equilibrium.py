@@ -63,6 +63,8 @@ class RunningLoad:
         
         return l1.moment() + l2.moment()
     
+    __call__ = lambda self, z: [np.interp(z, self.p, self.v[i, :]) for i in range(2)]
+    
     __repr__ = __str__ = lambda self: f"RunningLoad(\nvals={self.v},\naxis={['x', 'y', 'z'][self.a]}\n)"
     
     momentx, momenty, momentz = [lambda self: self.moment()[i] for i in range(3)]

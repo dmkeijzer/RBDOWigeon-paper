@@ -115,25 +115,29 @@ def cg_range_conf_1_2(conf):
         CL_max_rear = data["Aerodynamics"]["CLmax_back"]
         c_fwd = data["Aerodynamics"]["MAC1"]
         c_rear = data["Aerodynamics"]["MAC2"]
+        cr =  data["Aerodynamics"]["c_r"]
         xacfwd = 0.25 * c_fwd
         xacrear = lfus - (1 - 0.25) * c_rear
         values = [CL_max_fwd, CL_max_rear, Cm_ac_fwd, Cm_ac_rear, CLa_fwd, CLa_rear, S_fwd, S_rear, Afwd, c_fwd, c_rear,
-                  b_fwd, b_rear, xacfwd, xacrear, e, CD0, lfus, hfus, wfus,Sweep_c4_fwd,Sweep_c4_rear]
+                  b_fwd, b_rear, xacfwd, xacrear, e, CD0, lfus, hfus, wfus,Sweep_c4_fwd,Sweep_c4_rear,cr]
         return values
     values = values_conf_1_2(conf)
     CLfwd,CLrear,Cmacfwd,Cmacrear,CLafwd, CLarear,Sfwd,Srear,Afwd,cfwd,crear,b_fwd,b_rear,\
-    xacfwd,xacrear,e, CD0,lfus,hfus,wfus,Sweep_c4_fwd,Sweep_c4_rear = values
+    xacfwd,xacrear,e, CD0,lfus,hfus,wfus,Sweep_c4_fwd,Sweep_c4_rear,cr = values
     print("Values: ",values)
+    CDafwd = 2*CLafwd*CLfwd/(np.pi*Afwd*e)
+    CDarear = 2*CLarear*CLrear/(np.pi*Afwd*e)
     deda = deps_da(Sweep_c4_fwd, b_fwd,lh(xacfwd,xacrear), hfus, Afwd, CLafwd,conf)
     xacfwd_stab = 0.25*cfwd
     xacfwd_control = 0.25 * cfwd
-    o = CLafwd*xacfwd_stab+CLarear*(lfus-0.75*crear)*Srear/Sfwd*(1-deda)
+    o = CLafwd*xacfwd_stab+CLarear*(lfus-0.75*cfwd)*Srear/Sfwd*(1-deda)
     p =CLafwd*1+CLarear*1*Srear/Sfwd*(1-deda)
     xcg_max = o/p
-    oo = CLfwd * xacfwd_control + CLrear * (lfus-0.75*crear) * Srear / Sfwd -Cmacfwd-Cmacrear*Srear/Sfwd*crear
+    CLrear = 0.8*CLfwd
+    oo = CLfwd * xacfwd_control + CLrear * xacrear * Srear / Sfwd -Cmacfwd-Cmacrear*Srear/Sfwd*crear
     pp = CLfwd * 1 + CLrear * 1 * Srear / Sfwd
     xcg_min = oo/pp
-    print("Configuration 1 range: %.4f < x_cg < %.4f"%(xcg_min,xcg_max))
+    print("Configuration %.0f range: %.4f < x_cg < %.4f"%(conf,xcg_min,xcg_max))
     print("CG Range =%.3f" % (abs(xcg_max - xcg_min)))
     return abs(xcg_max-xcg_min)
 

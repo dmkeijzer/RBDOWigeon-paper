@@ -8,13 +8,14 @@ from constants import *
 import json
 from Aero_tools import ISA
 
+
 class PropulsionHover:
 
-    def __init__(self, MTOM, n, A, eff_bat_el, eff_el_mo, eff_mo_sha, eff_sha_flo, eff_flo_jet, vj, m_dot_h, rho):
+    def __init__(self, MTOM, n, A, eff_D_h, eff_F_h, eff_M_h, eff_PE_h, eff_B_h, vj, m_dot_h, rho, ducted):
         """
         :param MTOM:        Maximum take off mass [kg]
         :param n:           Number of engines
-        :param A:           Area per engine [m^2]8
+        :param A:           Area per engine [m^2]
         :param eff_bat_el:  Efficiency from battery to electronics
         :param eff_el_mo:   Efficiency from electronics to motors
         :param eff_mo_sha:  Efficiency from motors to shaft
@@ -22,76 +23,96 @@ class PropulsionHover:
         :param eff_flo_jet: Efficiency from flow to jet
         :param vj:          Jet speed [m/s]
         :param m_dot_h:     Mass flow at hover [kg/s]
+        eff_D_h, eff_F_h, eff_M_h, eff_PE_h, eff_B_h
         """
         self.MTOM = MTOM
         self.n = n
         self.A = A
-        self.eta_B = eff_bat_el
-        self.eta_PE = eff_el_mo
-        self.eta_M = eff_mo_sha
-        self.eta_F = eff_sha_flo
-        self.eta_D = eff_flo_jet
-        self.eff_hover = eff_bat_el * eff_el_mo * eff_mo_sha * eff_sha_flo * eff_flo_jet
+        self.eta_B = eff_B_h
+        self.eta_PE = eff_PE_h
+        self.eta_M = eff_M_h
+        self.eta_F = eff_F_h
+        self.eta_D = eff_D_h
+        self.eff_hover = eff_D_h * eff_F_h * eff_M_h * eff_PE_h * eff_B_h
         self.vj = vj
         self.m_dot = m_dot_h
         self.rho = rho
         self.g = 9.80665
         self.T_h = self.g*self.MTOM
+        self.ducted = ducted
 
-    def P_h_ducted(self):
-        return (0.5*self.T_h**(3/2) / np.sqrt(self.rho * self.n * self.A)) / self.eff_hover
+    def P_hover(self):
 
-    def P_h_open(self):
-        return self.T_h**(3/2) / np.sqrt(2 * self.rho * self.n * self.A)
+        if self.ducted == 1:
+            return (0.5*self.T_h**(3/2) / np.sqrt(self.rho * self.n * self.A)) / self.eff_hover
+        if self.ducted == 0:
+            return self.T_h**(3/2) / np.sqrt(2 * self.rho * self.n * self.A)
+        else:
+            print("Check json file: Ducted must be 0 or 1")
+            print("Ducted:", self.ducted)
+
+    # def P_h_ducted(self):
+    #     return (0.5*self.T_h**(3/2) / np.sqrt(self.rho * self.n * self.A)) / self.eff_hover
+    #
+    # def P_h_open(self):
+    #     return self.T_h**(3/2) / np.sqrt(2 * self.rho * self.n * self.A)
+
 
 class PropulsionCruise:
 
-    def __init__(self, MTOM, n, A, eff_bat_el, eff_el_mo, eff_mo_sha, eff_sha_flo, eff_flo_jet, eff_jet_air,
-                 rho, v_cruise, drag):
+    def __init__(self, MTOM, n, A, eff_P_cr, eff_D_cr, eff_F_cr, eff_M_cr, eff_PE_cr, eff_B_cr, rho, v_cruise, drag):
         """
         :param MTOM: Maximum take off mass [kg]
         :param n: Number of engines
-        :param A: Area per engine [m^2]8
+        :param A: Area per engine [m^2]
         :param eff_bat_el:  Efficiency from battery to electronics
         :param eff_el_mo:   Efficiency from electronics to motors
         :param eff_mo_sha:  Efficiency from motors to shaft
         :param eff_sha_flo: Efficiency from shaft to flow
         :param eff_flo_jet: Efficiency from flow to jet
         :param eff_jet_air: Efficiency from jet to aircraft
+        eff_P_cr,eff_D_cr,eff_F_cr,eff_M_cr,eff_PE_cr,eff_B_cr,
+        eff_D_h, eff_F_h, eff_M_h, eff_PE_h, eff_B_h
         """
         self.MTOM = MTOM
         self.n = n
         self.A = A
-        self.eta_B = eff_bat_el
-        self.eta_PE = eff_el_mo
-        self.eta_M = eff_mo_sha
-        self.eta_F = eff_sha_flo
-        self.eta_D = eff_flo_jet
-        self.eff_cruise = eff_bat_el * eff_el_mo * eff_mo_sha * eff_sha_flo * eff_flo_jet * eff_jet_air
+        self.eta_B = eff_B_cr
+        self.eta_PE = eff_PE_cr
+        self.eta_M = eff_M_cr
+        self.eta_F = eff_F_cr
+        self.eta_D = eff_D_cr
+        self.eff_cruise = eff_P_cr * eff_D_cr * eff_F_cr * eff_M_cr * eff_PE_cr * eff_B_cr
         self.v_cruise = v_cruise
         self.drag = drag
 
     def P_cr(self):
         return self.drag * self.v_cruise / self.eff_cruise
 
+
 class ActuatorDisk:
 
-    def __init__(self, D_inner_ratio, n_prop, TWratio, V_e_LTO):
+    def __init__(self, D_inner_ratio, D_prop_pure_hover_ratio):
         """
         :param D_prop_inner: diameter of a propeller [m]
-        :param n_prop: number of propellers [-]
         :param TWratio: Thurst-to-weight ratio [-]
         :param V_e_LTO: Exit speed at LTO conditions [m/s]
+        :param D_prop_pure_hover_ratio: diameter of propeller for pure hover (config 3) [m]
         """
 
-        # Class specific data not (yet) in .json
+        # Class specific data not in .json
         self.D_inner_ratio = D_inner_ratio
-        self.n_prop = n_prop
-        self.TWratio = TWratio
+        self.D_prop_pure_hover_ratio = D_prop_pure_hover_ratio
+
+        # Extracting Propulsion data
+        self.n_prop_cruise = N_cruise
+        self.n_prop_hover = N_hover
+        self.TWratio = TW_ratio
         self.V_e_LTO = V_e_LTO
 
         # Extracting aerodynamic data
         self.CD = 0.01808  # CD
+        self.c_r = c_r
 
         # Extracting performance data
         self.S = S
@@ -105,8 +126,17 @@ class ActuatorDisk:
         self.rho_LTO    = atm_LTO.density()
 
     def D_prop_outer(self):
-        A_indiv = self.A_hover() / self.n_prop
-        return np.sqrt ( 4 * A_indiv / (np.pi * (1 - self.D_inner_ratio)) )
+        if self.n_prop_cruise == self.n_prop_hover:
+            A_indiv = self.A_hover() / self.n_prop_hover
+            D_prop_outer = np.sqrt(4 * A_indiv / (np.pi * (1 - self.D_inner_ratio)))
+        else:
+            N_prop_pure_hover = self.n_prop_hover - self.n_prop_cruise
+            D_prop_pure_hover = self.D_prop_pure_hover_ratio * self.c_r
+            A_pure_hover = N_prop_pure_hover * np.pi / 4 * D_prop_pure_hover * (1 - self.D_inner_ratio)
+            A_remain = self.A_hover() - A_pure_hover
+            A_indiv = A_remain / self.n_prop_cruise
+            D_prop_outer = np.sqrt(4 * A_indiv / (np.pi * (1 - self.D_inner_ratio)))
+        return D_prop_outer
 
     def V_e_cruise(self):
         A_tot = self.A_hover()
@@ -115,22 +145,12 @@ class ActuatorDisk:
     def P_ideal(self):
         return 0.25 * self.rho_flight * self.V_cruise**3 * self.S * self.CD * (np.sqrt(self.CD * self.S / self.A_hover() + 1) + 1)
 
+    # Actual power usually 15% greater [https://web.mit.edu/16.unified/www/FALL/thermodynamics/notes/node86.html]
+    def P_actual(self):
+        return 1.15*self.P_ideal()
+
     def eff(self):
-        return 2 / (1+ self.V_e_cruise() / self.V_cruise)
+        return 2 / (1 + self.V_e_cruise()/self.V_cruise)
 
     def A_hover(self):
         return MTOW * self.TWratio * 2 / (self.rho_LTO * self.V_e_LTO**2)
-
-
-# Define values for parameters
-D_inner_ratio = 0.10  # ratio of inner diameter compared to outer diameter
-n_prop = 24  # number of propellers
-TWRatio = 1.4
-V_e_LTO = 240/3.6
-
-ActDisk = ActuatorDisk(D_inner_ratio, n_prop,TWRatio,V_e_LTO)
-print("Required total area for hover", ActDisk.A_hover(), "[m**2]")
-print("Required diameter per prop is", ActDisk.D_prop_outer(),"[m] for", n_prop,"propellers" )
-print("Exit speed in cruise:", ActDisk.V_e_cruise(), "[m/s]")
-print("Ideal power for cruise:", ActDisk.P_ideal(), "[W]")
-print("Efficiency in cruise:", ActDisk.eff(), "[-]")

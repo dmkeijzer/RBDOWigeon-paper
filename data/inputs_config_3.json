@@ -1,25 +1,26 @@
 {
   "Aerodynamics": {
-    "e": 0.85,
-    "AR": 5.701,
-    "CD0": 0.0202,
+    "e": 0.7566,
+    "AR": 10,
+    "CDmin": 0.02667,
     "CLmax_front": 1.452,
     "CLmax_back": 0,
-    "CLalpha_front": 4.754,
+    "CLalpha_front": 4.908,
     "CLalpha_back": 0,
-    "S_front": 22.933535108958836,
+    "S_front": 13.321448663853726,
     "S_back": 0,
     "Sweep_front": 0,
     "Sweep_back": 0,
     "Cm_ac_front": 0.0463,
     "Cm_ac_back": 0,
-    "LoD_ratio": 13.709,
-    "MAC1": 1.738,
+    "LD_ratio": 16.953,
+    "MAC1": 1.22485,
     "MAC2": 0,
     "Stot/Sw": 1.4,
-    "c_r": 2.34,
-    "c_t": 0.936,
-    "xoc_ac": 0.263
+    "c_r": 1.64884,
+    "c_t": 0.65953,
+    "xoc_ac": 0.263,
+    "t/c": 0.126
   },
   "Stability and Control": {
     "Placeholder": 1
@@ -32,12 +33,29 @@
     "l_fus": 4
   },
   "Propulsion": {
+    "eff_P_cr": 0.94,
+    "eff_D_cr": 0.92,
+    "eff_F_cr": 0.83,
+    "eff_M_cr": 0.95,
+    "eff_PE_cr": 0.98,
+    "eff_B_cr": 0.98,
+    "eff_D_h": 0.96,
+    "eff_F_h": 0.88,
+    "eff_M_h": 0.92,
+    "eff_PE_h": 0.95,
+    "eff_B_h": 0.8,
     "eff_cruise": 1,
     "eff_hover": 1,
-    "N_cruise": 6,
+    "N_cruise": 4,
     "N_hover": 6,
     "TA": 2000,
-    "Max_T_engine": 1
+    "Max_T_engine": 7892.96,
+    "V_e_LTO": 22.222222222,
+    "TW_ratio" : 2.5,
+    "D_inner_ratio" : 0.1,
+    "D_loading" : 80,
+    "Prop_config" : 3,
+    "Ducted" : 0
   },
   "Requirements": {
     "V_stall": 40,

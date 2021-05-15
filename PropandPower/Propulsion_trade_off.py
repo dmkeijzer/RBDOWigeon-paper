@@ -51,19 +51,19 @@ class BL:
 
 class LE_prop:
 
-    def __init__(self, ve, v0, L, Sw, WS):
+    def __init__(self, ve, v0, L, Sw):
         """
         :param ve: Fan exit speed [m/s]
         :param v0:
         :param L: Lift in the wing without propulsion effects [N]
         :param Sw: Surface area of the wing [m^2]
-        :param WS: Wing loading [N/m^2]
+        # :param WS: Wing loading [N/m^2]
         """
         self.ve = ve
         self.v0 = v0
         self.L = L
         self.S = Sw
-        self.WS = WS
+        # self.WS = WS
 
     def S1(self):
         return self.S * (self.v0/self.ve)**2
