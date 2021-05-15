@@ -63,6 +63,12 @@ print("The power needed for cruise is:", P_cr.P_cr(), "[W]")
 print("The power needed for hover is:", P_h.P_hover(), "[W]")
 print(" ")
 
+print("--- Energy ---")
+print("Energy for hover (assuming 4 minutes in total for a flight):", P_h.P_hover() * (4/60) / 1000, "[kWh]")
+time_cruise = 300*1000/V_cruise
+print("Energy for cruise (assuming 300 km of flight at V_Cruise):", P_cr.P_cr() * (time_cruise/3600) / 1000, "[kWh]")
+print(" ")
+
 print("--- Effects of distributed propulsion ---")
 # Formulas used for trade-off
 if Prop_config == 1:
