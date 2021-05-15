@@ -56,7 +56,8 @@
     "TW_ratio" : 2.5,
     "D_inner_ratio" : 0.2,
     "D_loading" : 200,
-    "Prop_config" : 1
+    "Prop_config" : 1,
+    "Ducted" : 0
   },
   "Requirements": {
     "V_stall": 40,

@@ -11,7 +11,7 @@ from Aero_tools import ISA
 
 class PropulsionHover:
 
-    def __init__(self, MTOM, n, A, eff_bat_el, eff_el_mo, eff_mo_sha, eff_sha_flo, eff_flo_jet, vj, m_dot_h, rho):
+    def __init__(self, MTOM, n, A, eff_D_h, eff_F_h, eff_M_h, eff_PE_h, eff_B_h, vj, m_dot_h, rho, ducted):
         """
         :param MTOM:        Maximum take off mass [kg]
         :param n:           Number of engines
@@ -23,53 +23,66 @@ class PropulsionHover:
         :param eff_flo_jet: Efficiency from flow to jet
         :param vj:          Jet speed [m/s]
         :param m_dot_h:     Mass flow at hover [kg/s]
+        eff_D_h, eff_F_h, eff_M_h, eff_PE_h, eff_B_h
         """
         self.MTOM = MTOM
         self.n = n
         self.A = A
-        self.eta_B = eff_bat_el
-        self.eta_PE = eff_el_mo
-        self.eta_M = eff_mo_sha
-        self.eta_F = eff_sha_flo
-        self.eta_D = eff_flo_jet
-        self.eff_hover = eff_bat_el * eff_el_mo * eff_mo_sha * eff_sha_flo * eff_flo_jet
+        self.eta_B = eff_B_h
+        self.eta_PE = eff_PE_h
+        self.eta_M = eff_M_h
+        self.eta_F = eff_F_h
+        self.eta_D = eff_D_h
+        self.eff_hover = eff_D_h * eff_F_h * eff_M_h * eff_PE_h * eff_B_h
         self.vj = vj
         self.m_dot = m_dot_h
         self.rho = rho
         self.g = 9.80665
         self.T_h = self.g*self.MTOM
+        self.ducted = ducted
 
-    def P_h_ducted(self):
-        return (0.5*self.T_h**(3/2) / np.sqrt(self.rho * self.n * self.A)) / self.eff_hover
+    def P_hover(self):
 
-    def P_h_open(self):
-        return self.T_h**(3/2) / np.sqrt(2 * self.rho * self.n * self.A)
+        if self.ducted == 1:
+            return (0.5*self.T_h**(3/2) / np.sqrt(self.rho * self.n * self.A)) / self.eff_hover
+        if self.ducted == 0:
+            return self.T_h**(3/2) / np.sqrt(2 * self.rho * self.n * self.A)
+        else:
+            print("Check json file: Ducted must be 0 or 1")
+            print("Ducted:", self.ducted)
+
+    # def P_h_ducted(self):
+    #     return (0.5*self.T_h**(3/2) / np.sqrt(self.rho * self.n * self.A)) / self.eff_hover
+    #
+    # def P_h_open(self):
+    #     return self.T_h**(3/2) / np.sqrt(2 * self.rho * self.n * self.A)
 
 
 class PropulsionCruise:
 
-    def __init__(self, MTOM, n, A, eff_bat_el, eff_el_mo, eff_mo_sha, eff_sha_flo, eff_flo_jet, eff_jet_air,
-                 rho, v_cruise, drag):
+    def __init__(self, MTOM, n, A, eff_P_cr, eff_D_cr, eff_F_cr, eff_M_cr, eff_PE_cr, eff_B_cr, rho, v_cruise, drag):
         """
         :param MTOM: Maximum take off mass [kg]
         :param n: Number of engines
-        :param A: Area per engine [m^2]8
+        :param A: Area per engine [m^2]
         :param eff_bat_el:  Efficiency from battery to electronics
         :param eff_el_mo:   Efficiency from electronics to motors
         :param eff_mo_sha:  Efficiency from motors to shaft
         :param eff_sha_flo: Efficiency from shaft to flow
         :param eff_flo_jet: Efficiency from flow to jet
         :param eff_jet_air: Efficiency from jet to aircraft
+        eff_P_cr,eff_D_cr,eff_F_cr,eff_M_cr,eff_PE_cr,eff_B_cr,
+        eff_D_h, eff_F_h, eff_M_h, eff_PE_h, eff_B_h
         """
         self.MTOM = MTOM
         self.n = n
         self.A = A
-        self.eta_B = eff_bat_el
-        self.eta_PE = eff_el_mo
-        self.eta_M = eff_mo_sha
-        self.eta_F = eff_sha_flo
-        self.eta_D = eff_flo_jet
-        self.eff_cruise = eff_bat_el * eff_el_mo * eff_mo_sha * eff_sha_flo * eff_flo_jet * eff_jet_air
+        self.eta_B = eff_B_cr
+        self.eta_PE = eff_PE_cr
+        self.eta_M = eff_M_cr
+        self.eta_F = eff_F_cr
+        self.eta_D = eff_D_cr
+        self.eff_cruise = eff_P_cr * eff_D_cr * eff_F_cr * eff_M_cr * eff_PE_cr * eff_B_cr
         self.v_cruise = v_cruise
         self.drag = drag
 
