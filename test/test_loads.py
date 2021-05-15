@@ -16,3 +16,5 @@ class TestLoads(unittest.TestCase):
         calced = [-500, -8603.3291, 0, 24089.3216, -560, 830.3329]
         for j in range(len(calced)):
             self.assertAlmostEqual(calced[j], WLoads[j], places=3)
+    def test_beam_deflection(self):
+        pass
