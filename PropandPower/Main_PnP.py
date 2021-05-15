@@ -4,6 +4,7 @@ import ActuatorDisk as AD
 import numpy as np
 import Propulsion_trade_off as PTO
 import Aero_tools as AT
+import battery as bat
 
 g0 = 9.80665
 MTOM = MTOW/g0
@@ -59,14 +60,21 @@ P_cr = prop.PropulsionCruise(MTOM, N_cruise, disk_A_per_prop, eff_P_cr, eff_D_cr
 P_h = prop.PropulsionHover(MTOM, N_hover, disk_A_per_prop, eff_D_h, eff_F_h, eff_M_h, eff_PE_h, eff_B_h,
                            disk.v_e_hover(), 0, rho, Ducted)
 
-print("The power needed for cruise is:", P_cr.P_cr(), "[W]")
-print("The power needed for hover is:", P_h.P_hover(), "[W]")
+print("The power needed for cruise is:", P_cr.P_cr() * 1.2, "[W]")
+print("The power needed for hover is:", P_h.P_hover() * 1.2, "[W]")
 print(" ")
 
 print("--- Energy ---")
-print("Energy for hover (assuming 4 minutes in total for a flight):", P_h.P_hover() * (4/60) / 1000, "[kWh]")
+print("Energy for hover (assuming 4 minutes in total for a flight):", P_h.P_hover() * 1.2 * (4/60) / 1000, "[kWh]")
 time_cruise = 300*1000/V_cruise
-print("Energy for cruise (assuming 300 km of flight at V_Cruise):", P_cr.P_cr() * (time_cruise/3600) / 1000, "[kWh]")
+print("Energy for cruise (assuming 300 km of flight at V_Cruise):", P_cr.P_cr() * 1.2 * (time_cruise/3600) / 1000, "[kWh]")
+req_energy = P_h.P_hover() * 1.2 * (4/60) / 1000 + P_cr.P_cr() * 1.2 * (time_cruise/3600) / 1000
+print("Total energy for the mission:", req_energy, "[kWh]")
+print(" ")
+
+battery = bat.Battery(500, 1000, req_energy*1000, 1)
+print("The required battery mass is:", battery.mass(), "[kg]")
+print("The required battery volume is:", battery.volume(), "[m^3]")
 print(" ")
 
 print("--- Effects of distributed propulsion ---")
