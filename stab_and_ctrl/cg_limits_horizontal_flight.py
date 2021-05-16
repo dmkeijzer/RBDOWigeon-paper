@@ -247,7 +247,7 @@ plt.show()
 AR = np.linspace(1,14,100)
 CLa = C_L_a(1,True,AR,0)
 plt.plot(AR,CLa)
-plt.xlabel("Increase in AR [%]")
+plt.xlabel(" AR [-]")
 plt.ylabel(r"$C_{L_{\alpha}}$ [1/rad]")
 plt.show()
 
@@ -319,7 +319,7 @@ def est_Cnbeta(conf):
     CL_max_fwd, CL_max_rear, CLdes, Cm_ac_fwd, Cm_ac_rear, CLa_fwd, CLa_rear, S_fwd, S_rear, Afwd, Arear, c_fwd, c_rear,\
     b_fwd, b_rear, xacfwd, xacrear, e, CD0, lfus, hfus, wfus, Sweep_c4_fwd, Sweep_c4_rear, cr,Sref = values_conf_1_2(conf)
     V_fus = 4*np.pi/3*wfus*lfus*hfus
-    V_fus = wfus*lfus*hfus
+    # V_fus = wfus*lfus*hfus
     if conf == 3:
         Cnb_w_rear = 0
         Cnb_fus_rear = 0
@@ -328,6 +328,7 @@ def est_Cnbeta(conf):
         Cnb_fus_rear = -1.3 * (V_fus * lfus / wfus) * (1 / (S_rear * b_rear))
     Cnb_fus_fwd = -1.3*(V_fus*lfus/wfus)*(1/(S_fwd*b_fwd))*3/4
     Cnb_fus = (Cnb_fus_fwd+Cnb_fus_rear)/2
+    Cnb_fus=Cnb_fus/100
     Cnb_w_fwd = CLdes**2*(1/(4*np.pi*Afwd)) #assumes 0 sweep
     Cnb_w = Cnb_w_fwd+Cnb_w_rear
     Cnb = Cnb_w+Cnb_fus
@@ -341,3 +342,6 @@ def est_Cnbeta(conf):
 est_Cnbeta(1)
 est_Cnbeta(2)
 est_Cnbeta(3)
+print("-----------------------------------------------------------------")
+print("--------------------PULL-UP MANOEUVRE----------------------------")
+print("-----------------------------------------------------------------")
