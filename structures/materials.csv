@@ -1,0 +1,109 @@
+,Material,Condition,Class,YS,US,E,EM,D,PR
+0,AISI 1020,Hot Rolled,Carbon Steel,32.0,50.0,25.0,29000000.0,0.283,0.32
+1,AISI 1020,Cold Worked,Carbon Steel,60.0,70.0,5.0,29000000.0,0.283,0.32
+2,AISI 1020,Stress Relieved,Carbon Steel,50.0,65.0,10.0,29000000.0,0.283,0.32
+3,AISI 1020,Annealed,Carbon Steel,28.0,48.0,30.0,29000000.0,0.283,0.32
+4,AISI 1020,Normalized,Carbon Steel,34.0,55.0,22.0,29000000.0,0.283,0.32
+5,AISI 1045,Hot Rolled,Carbon Steel,45.0,75.0,15.0,29000000.0,0.283,0.32
+6,AISI 1045,Cold Worked,Carbon Steel,80.0,90.0,5.0,29000000.0,0.283,0.32
+7,AISI 1045,Stress Relieved,Carbon Steel,70.0,80.0,8.0,29000000.0,0.283,0.32
+8,AISI 1045,Annealed,Carbon Steel,35.0,65.0,20.0,29000000.0,0.283,0.32
+9,AISI 1045,Normalized,Carbon Steel,48.0,75.0,15.0,29000000.0,0.283,0.32
+10,ASTM A36,,Carbon Steel,36.0,58.0,21.0,29000000.0,0.283,0.3
+11,ASTM A516,Grade 70,Carbon Steel,38.0,70.0,17.0,29000000.0,0.283,0.3
+0,AISI 4130,Hot Rolled,Alloy Steel,70.0,90.0,20.0,29000000.0,0.283,0.32
+1,AISI 4130,Stress Relieved,Alloy Steel,85.0,105.0,10.0,29000000.0,0.283,0.32
+2,AISI 4130,Annealed,Alloy Steel,55.0,75.0,30.0,29000000.0,0.283,0.32
+3,AISI 4130,Normalized,Alloy Steel,60.0,90.0,20.0,29000000.0,0.283,0.32
+4,AISI 4140,Hot Rolled,Alloy Steel,90.0,120.0,15.0,29700000.0,0.283,0.32
+5,AISI 4140,Stress Relieved,Alloy Steel,100.0,120.0,10.0,29700000.0,0.283,0.32
+6,AISI 4140,Annealed,Alloy Steel,60.0,80.0,25.0,29700000.0,0.283,0.32
+7,AISI 4140,Normalized,Alloy Steel,90.0,120.0,20.0,29700000.0,0.283,0.32
+8,ASTM A242,,Alloy Steel,46.0,67.0,18.0,30000000.0,0.282,0.3
+9,ASTM A302,Grade A,Alloy Steel,45.0,75.0,15.0,29000000.0,0.282,0.29
+10,ASTM A302,Grade C,Alloy Steel,50.0,80.0,17.0,29000000.0,0.282,0.29
+11,ASTM A514,Quenched & Tempered,Alloy Steel,100.0,110.0,18.0,29000000.0,0.283,0.3
+12,ASTM A517,Grade F,Alloy Steel,100.0,115.0,16.0,29000000.0,0.28,0.29
+13,ASTM A533,Class 1,Alloy Steel,50.0,80.0,18.0,29000000.0,0.282,0.29
+14,ASTM A533,Class 2,Alloy Steel,70.0,90.0,16.0,29000000.0,0.282,0.29
+15,ASTM A533,Class 3,Alloy Steel,83.0,100.0,16.0,29000000.0,0.282,0.29
+16,ASTM A572,Grade 50,Alloy Steel,50.0,65.0,18.0,30000000.0,0.283,0.3
+17,ASTM A588,,Alloy Steel,50.0,70.0,18.0,29700000.0,0.28,0.28
+18,ASTM A633,Grade E,Alloy Steel,55.0,75.0,18.0,29700000.0,0.28,0.28
+19,ASTM A656,Grade 50,Alloy Steel,50.0,60.0,20.0,29000000.0,0.282,0.29
+20,ASTM A656,Grade 60,Alloy Steel,60.0,70.0,17.0,29000000.0,0.282,0.29
+21,ASTM A656,Grade 70,Alloy Steel,70.0,80.0,14.0,29000000.0,0.282,0.29
+22,ASTM A656,Grade 80,Alloy Steel,80.0,90.0,12.0,29000000.0,0.282,0.29
+23,ASTM A656,Grade 100,Alloy Steel,100.0,110.0,12.0,29000000.0,0.282,0.29
+24,ASTM A710,Grade A,Alloy Steel,80.0,85.0,20.0,29700000.0,0.28,0.3
+25,HY-80,,Alloy Steel,80.0,,18.0,29700000.0,0.28,0.3
+26,HY-100,,Alloy Steel,100.0,,16.0,29700000.0,0.284,0.3
+0,AISI 201,Annealed,Stainless Steel,40.0,75.0,40.0,28000000.0,0.289,0.27
+1,AISI 202,Annealed,Stainless Steel,40.0,75.0,40.0,28000000.0,0.289,0.27
+2,AISI 302,Annealed,Stainless Steel,30.0,75.0,40.0,28000000.0,0.289,0.27
+3,AISI 304,Annealed,Stainless Steel,30.0,75.0,40.0,28000000.0,0.289,0.29
+4,AISI 304L,Annealed,Stainless Steel,25.0,70.0,40.0,28000000.0,0.289,0.28
+5,AISI 316,Annealed,Stainless Steel,30.0,75.0,40.0,28000000.0,0.289,0.26
+6,AISI 316L,Annealed,Stainless Steel,25.0,70.0,40.0,28000000.0,0.289,0.26
+7,AISI 405,,Stainless Steel,25.0,60.0,20.0,29000000.0,0.282,0.28
+8,AISI 410,Annealed,Stainless Steel,40.0,70.0,16.0,29000000.0,0.282,0.28
+9,AISI 410,Quenched & Tempered,Stainless Steel,80.0,100.0,12.0,29000000.0,0.282,0.28
+10,AISI 430,,Stainless Steel,30.0,60.0,20.0,29000000.0,0.282,0.28
+11,AISI 446,Annealed,Stainless Steel,40.0,65.0,16.0,29000000.0,0.282,0.28
+12,15-5PH,H900,Stainless Steel,170.0,190.0,10.0,28500000.0,0.283,0.27
+13,15-5PH,H1025,Stainless Steel,145.0,155.0,12.0,28500000.0,0.283,0.27
+14,15-5PH,H1150,Stainless Steel,105.0,135.0,16.0,28500000.0,0.283,0.27
+15,17-4PH,H900,Stainless Steel,170.0,190.0,10.0,28500000.0,0.282,0.27
+16,17-4PH,H1025,Stainless Steel,145.0,155.0,12.0,28500000.0,0.282,0.27
+17,17-4PH,H1150,Stainless Steel,105.0,135.0,16.0,28500000.0,0.282,0.27
+18,17-7PH,TH1050,Stainless Steel,150.0,177.0,6.0,29000000.0,0.276,0.28
+19,A-286,,Stainless Steel,95.0,140.0,15.0,29100000.0,0.287,0.31
+20,Alloy 2205,,Stainless Steel,65.0,95.0,25.0,28500000.0,0.287,0.27
+21,Ferrallium 255,,Stainless Steel,80.0,110.0,15.0,28500000.0,0.287,0.27
+0,ASTM A159,G1800,Cast Iron,,18.0,,,0.264,0.26
+1,ASTM A159,G2500,Cast Iron,,25.0,,,0.264,0.26
+2,ASTM A159,G3000,Cast Iron,,30.0,,,0.264,0.26
+3,ASTM A159,G3500,Cast Iron,,35.0,,,0.264,0.26
+4,ASTM A159,G4000,Cast Iron,,40.0,,,0.264,0.26
+5,ASTM A536,Grade 60-40-18,Cast Iron,40.0,60.0,18.0,24500000.0,0.256,0.29
+6,ASTM A536,Grade 65-45-12,Cast Iron,45.0,65.0,12.0,24500000.0,0.256,0.3
+7,ASTM A536,Grade 80-55-06,Cast Iron,55.0,80.0,6.0,24500000.0,0.256,0.31
+8,ASTM A536,Grade 100-70-03,Cast Iron,70.0,100.0,3.0,24500000.0,0.256,0.3
+9,ASTM A536,Grade 120-90-02,Cast Iron,90.0,120.0,2.0,23800000.0,0.256,0.28
+0,Al 2014,"T6, T651",Aluminum Alloys,59.0,67.0,7.0,10.5,0.101,0.33
+1,Al 2024,T4,Aluminum Alloys,40.0,62.0,10.0,10.5,0.1,0.33
+2,Al 5052,H32,Aluminum Alloys,23.0,38.0,9.0,10.1,0.097,0.33
+3,Al 5083,"H116, H321",Aluminum Alloys,31.0,44.0,10.0,10.3,0.096,0.33
+4,Al 5083,H32,Aluminum Alloys,31.0,56.0,12.0,10.3,0.096,0.33
+5,Al 6061,T4,Aluminum Alloys,16.0,26.0,16.0,9.9,0.098,0.33
+6,Al 6061,T6,Aluminum Alloys,35.0,38.0,8.0,9.9,0.098,0.33
+7,Al 7075,"T6, T651",Aluminum Alloys,68.0,78.0,6.0,10.3,0.101,0.33
+0,Hastelloy C-276,Solution annealed,Nickel Alloys,41.0,100.0,40.0,29.8,0.321,0.28
+1,Inconel 625,Grade 1,Nickel Alloys,55.0,110.0,30.0,29.8,0.305,0.28
+2,Inconel 625,Grade 2,Nickel Alloys,40.0,100.0,30.0,29.8,0.305,0.28
+3,Inconel 686,Grade 1,Nickel Alloys,85.0,120.0,20.0,29.8,0.315,0.28
+4,Inconel 686,Grade 2,Nickel Alloys,125.0,135.0,20.0,29.8,0.315,0.28
+5,Inconel 686,Grade 3,Nickel Alloys,150.0,160.0,20.0,29.8,0.315,0.28
+6,Inconel 718,Solution annealed & aged,Nickel Alloys,120.0,150.0,20.0,29.4,0.297,0.29
+7,Inconel 718,Solution heat treated,Nickel Alloys,150.0,180.0,10.0,29.4,0.297,0.29
+8,Inconel 725,Solution annealed,Nickel Alloys,40.0,75.0,45.0,29.6,0.3,0.31
+9,Inconel 725,Solution annealed & aged,Nickel Alloys,120.0,150.0,20.0,29.6,0.3,0.31
+10,Monel 400,Annealed,Nickel Alloys,25.0,70.0,35.0,26.0,0.319,0.32
+11,Monel 400,Hot worked,Nickel Alloys,40.0,75.0,30.0,26.0,0.319,0.32
+12,Monel 400,"Cold worked, stress relieved",Nickel Alloys,50.0,80.0,20.0,26.0,0.319,0.32
+13,Monel K-500,Annealed & aged,Nickel Alloys,85.0,130.0,20.0,26.0,0.306,0.32
+14,Monel K-500,Cold worked & aged,Nickel Alloys,100.0,140.0,15.0,26.0,0.306,0.32
+0,70/30 Copper-Nickel,Annealed,Copper Alloys,18.0,45.0,30.0,21.8,0.323,0.3
+1,70/30 Copper-Nickel,Cold worked,Copper Alloys,50.0,65.0,10.0,21.8,0.323,0.3
+2,90/10 Copper-Nickel,Annealed,Copper Alloys,15.0,38.0,30.0,20.3,0.323,0.3
+3,90/10 Copper-Nickel,Cold worked,Copper Alloys,30.0,50.0,15.0,20.3,0.323,0.3
+4,Aluminum Bronze,,Copper Alloys,32.0,85.0,12.0,15.5,0.269,0.316
+5,Beryllium Copper,Solution heat treated,Copper Alloys,75.0,85.0,8.0,18.5,0.298,0.27
+6,Beryllium Copper,Precipitation heat treated,Copper Alloys,140.0,165.0,3.0,18.5,0.298,0.27
+7,Nickel Aluminum Bronze 632,Annealed,Copper Alloys,34.0,90.0,10.0,16.7,0.274,0.32
+8,Nickel Aluminum Bronze 632,Quench hardened,Copper Alloys,50.0,90.0,15.0,16.7,0.274,0.32
+0,Commercially Pure,Grade 2,Titanium Alloys,40.0,50.0,20.0,14.8,0.163,0.34
+1,Ti-5Al-2.5Sn,Annealed,Titanium Alloys,110.0,115.0,10.0,15.5,0.162,0.31
+2,Ti-6Al-4V,Grade 5,Titanium Alloys,120.0,130.0,10.0,16.0,0.16,0.31
+3,"Ti-6Al-4V, ELI",Grade 23,Titanium Alloys,110.0,120.0,10.0,16.5,0.16,0.31
+4,Ti-5-1-1-1,Grade 32,Titanium Alloys,85.0,100.0,10.0,16.0,0.16,0.31
