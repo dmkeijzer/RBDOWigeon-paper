@@ -43,28 +43,6 @@ def Speeds(conf):
 # V2 = Speeds(2)
 # V3 = Speeds(3)
 
-def values_conf_3():
-    datafile = open(os.path.join(root_path, "data/inputs_config_3.json"), "r")
-    data = json.load(datafile)
-    datafile.close()
-    CD0 = data["Aerodynamics"]["CDmin"]
-    e = data["Aerodynamics"]["e"]
-    Afwd = data["Aerodynamics"]["AR"]
-    b_fwd = np.sqrt(data["Aerodynamics"]["AR"] * data["Aerodynamics"]["S_front"])
-    b_rear = np.sqrt(data["Aerodynamics"]["AR"] * data["Aerodynamics"]["S_back"])
-    S_fwd = data["Aerodynamics"]["S_front"]
-    S_rear = data["Aerodynamics"]["S_back"]
-    CLa_fwd = data["Aerodynamics"]["CLalpha_back"]
-    CLa_rear = CLa_fwd
-    Cm_ac_fwd = data["Aerodynamics"]["Cm_ac_front"]
-    Cm_ac_rear = data["Aerodynamics"]["Cm_ac_back"]
-    CL_max_fwd = data["Aerodynamics"]["CLmax_front"]
-    CL_max_rear = data["Aerodynamics"]["CLmax_back"]
-    c = data["Aerodynamics"]["MAC1"]
-    values = [CL_max_fwd, CL_max_rear, Cm_ac_fwd, Cm_ac_rear, CLa_fwd, CLa_rear, S_fwd, S_rear, Afwd, c, b_fwd,e,CD0]
-    return values
-
-
 def deps_da(Lambda_quarter_chord, b,lh, h_ht, A, CLaw,conf):
     """
     Inputs:
@@ -143,7 +121,7 @@ def values_conf_1_2(conf,sens,sens_value):
                       b_fwd, b_rear, xacfwd, xacrear, e, CD0, lfus, hfus, wfus,Sweep_c4_fwd,Sweep_c4_rear,cr]
     return values
 
-def values_sens_1_2(conf,cruise,sens,sens_value):
+def values_sens_1_2(conf,cruise,sens,sens_value,AR_t,AR):
     datafile = open(os.path.join(root_path, "data/inputs_config_%.0f.json" % (conf)), "r")
     data = json.load(datafile)
     datafile.close()
@@ -156,6 +134,10 @@ def values_sens_1_2(conf,cruise,sens,sens_value):
         Afwd = data["Aerodynamics"]["AR"] * 2
     else:
         Afwd = data["Aerodynamics"]["AR"] * 2*(1+sens_value/100)
+    if AR_t == True:
+        Afwd = AR
+    else:
+        Afwd = Afwd
     Sweep_c4_fwd = data["Aerodynamics"]["Sweep_front"]
     Sweep_c4_rear = data["Aerodynamics"]["Sweep_back"]
     taper = 0.4
@@ -183,16 +165,16 @@ def values_sens_1_2(conf,cruise,sens,sens_value):
                       b_fwd, b_rear, xacfwd, xacrear, e, CD0, lfus, hfus, wfus,Sweep_c4_fwd,Sweep_c4_rear,c_r_fwd]
     return values
 
-def cg_range_conf_1_2(conf,s,s_value):
+def cg_range_conf_1_2(conf,s,s_value,AR_t,AR):
     conf = conf
-    values_c = values_sens_1_2(conf,True,s,s_value)
+    values_c = values_sens_1_2(conf,True,s,s_value,AR_t,AR)
     CLfwd,CLrear,Cmacfwd,Cmacrear,CLafwd, CLarear,Sfwd,Srear,Afwd,cfwd,crear,b_fwd,b_rear,\
     xacfwd,xacrear,e, CD0,lfus,hfus,wfus,Sweep_c4_fwd,Sweep_c4_rear,cr = values_c
     # print("Values at cruise: ",values_c)
     #CDafwd = 2*CLafwd*CLfwd/(np.pi*Afwd*e)
     #CDarear = 2*CLarear*CLrear/(np.pi*Afwd*e)
     deda = deps_da(Sweep_c4_fwd, b_fwd,lh(xacfwd,xacrear), hfus, Afwd, CLafwd,conf)
-    print("de/da = ",deda)
+    # print("de/da = ",deda)
     xacfwd_stab = 0.25*cfwd
     xacfwd_control = 0.25 * cfwd
     o = CLafwd*xacfwd_stab+CLarear*(lfus-0.75*cfwd)*Srear/Sfwd*(1-deda)
@@ -205,46 +187,121 @@ def cg_range_conf_1_2(conf,s,s_value):
     oo = 1/cfwd*(CLfwd * xacfwd_control + CLrear * xacrear * Srear / Sfwd -Cmacrear*Srear/Sfwd*crear)-Cmacfwd
     pp = 1/cfwd*(CLfwd * 1 + CLrear * 1 * Srear / Sfwd)
     xcg_min = oo/pp
-    # print("Configuration %.0f range: %.4f < x_cg < %.4f"%(conf,xcg_min,xcg_max))
-    # print("CG Range =%.3f" % (abs(xcg_max - xcg_min)))
-    return abs(xcg_max-xcg_min)
+    if AR_t ==False:
+        print("Configuration %.0f range: %.4f < x_cg < %.4f"%(conf,xcg_min,xcg_max))
+        print("CG Range =%.3f" % ((xcg_max - xcg_min)))
+    return xcg_max-xcg_min
 
+def values_conf_3(sens,sens_value, AR_t,AR):
+    datafile = open(os.path.join(root_path, "data/inputs_config_3.json"), "r")
+    data = json.load(datafile)
+    datafile.close()
+    CD0 = data["Aerodynamics"]["CDmin"]
+    e = data["Aerodynamics"]["e"]
+    CLa_fwd = data["Aerodynamics"]["CLalpha_back"]
+    lfus = data["Structures"]["l_fus"]
+    hfus = data["Structures"]["h_fus"]
+    wfus = data["Structures"]["w_fus"]
+    CD0 = data["Aerodynamics"]["CDmin"]
+    e = data["Aerodynamics"]["e"]
+    if sens == False:
+        Afwd = data["Aerodynamics"]["AR"] * 2
+    else:
+        Afwd = data["Aerodynamics"]["AR"] * 2 * (1 + sens_value / 100)
 
-def cg_range_conf_3(values=values_conf_3(),eta=5):
+    if AR_t == True:
+        Afwd = AR
+    else:
+        Afwd = Afwd
+    Sweep_c4_fwd = data["Aerodynamics"]["Sweep_front"]
+    Sweep_c4_rear = data["Aerodynamics"]["Sweep_back"]
+    taper = 0.4
+    S_fwd = data["Aerodynamics"]["S_front"]
+    S_rear = data["Aerodynamics"]["S_back"]
+    S = S_rear + S_fwd
+    b_fwd = np.sqrt(Afwd * data["Aerodynamics"]["S_front"])
+    b_rear = np.sqrt(Afwd * data["Aerodynamics"]["S_back"])
+    c_r_fwd = 2 * S_fwd / ((1 + taper) * b_fwd)
+    c = (2 / 3) * c_r_fwd * ((1 + taper + taper ** 2) / (1 + taper))
+    cruise=True
+    if cruise:
+        CLa_fwd = C_L_a(3, True, Afwd, Sweep_c4_fwd)
+    else:
+        CLa_fwd = C_L_a(3, False, Afwd, Sweep_c4_fwd)
+    CLa_rear = CLa_fwd
+    Cm_ac_fwd = data["Aerodynamics"]["Cm_ac_front"]
+    Cm_ac_rear = data["Aerodynamics"]["Cm_ac_back"]
+    CL_max_fwd = data["Aerodynamics"]["CLmax_front"]
+    CL_max_rear = data["Aerodynamics"]["CLmax_back"]
+    # c = data["Aerodynamics"]["MAC1"]
+    values = [CL_max_fwd, CL_max_rear, Cm_ac_fwd, Cm_ac_rear, CLa_fwd, CLa_rear, S_fwd, S_rear, Afwd, c, b_fwd,e,CD0]
+    return values
+
+def cg_range_conf_3(sens,sens_value, AR_t,AR,eta=5):
+    values = values_conf_3(sens,sens_value,AR_t,AR)
     CLfwd, CLrear, Cmacfwd, Cmacrear, CLafwd, CLarear, Sfwd, Srear, Afwd, cfwd, bfwd,e,CD0 = values
     lfus = 4
     hfus = 1.6
+    if sens==False:
+        Afwd = Afwd
+    else:
+        Afwd = Afwd*(1+sens_value/100)
+
+    if AR_t == True:
+        Afwd = AR
+    else:
+        Afwd = Afwd
     xacfwd_stab = lfus/2-cfwd/2 + 0.24*cfwd
     xacfwd_control = lfus/2-cfwd/2 +  0.24*cfwd
     CD = CD0 + CLfwd**2/(np.pi*Afwd*e)
     zaccg = eta/100*hfus
     xcg_max = xacfwd_stab
     xcg_min = xacfwd_control-Cmacfwd/CLfwd*cfwd-CD/CLfwd*zaccg
-    print("Configuration 3 range: %.4f < x_cg < %.4f"%(xcg_min,xcg_max))
-    print("CG Range =%.3f"%(abs(xcg_max-xcg_min)))
-    return abs(xcg_max-xcg_min)
+    if AR_t == False:
+        print("Configuration 3 range: %.4f < x_cg < %.4f"%(xcg_min,xcg_max))
+        print("CG Range =%.3f"%((xcg_max-xcg_min)))
+    return xcg_max-xcg_min
 
-cg1 = cg_range_conf_1_2(1,s=False,s_value=0)
-sense_value = np.linspace(0,1,100)
-cg1_1 = cg_range_conf_1_2(1,s=True,s_value=sense_value)
-plt.plot(sense_value*100,cg1_1)
-plt.xlabel("Increase in AR [%]")
-plt.ylabel("CG range [m]")
-plt.show()
+AR = np.linspace(1,15,100)
 
-cg1_1 = cg_range_conf_1_2(1,s=True,s_value=-sense_value)
-plt.plot(sense_value*100,cg1_1)
-plt.xlabel("Decrease in AR [%]")
-plt.ylabel("CG range [m]")
-plt.show()
+cg1 = cg_range_conf_1_2(1,s=False,s_value=0,AR_t =False,AR=AR)
+cg2 = cg_range_conf_1_2(2,s=False,s_value=0,AR_t =False,AR=AR)
+cg3 = cg_range_conf_3(sens=False,sens_value=0,AR_t =False,AR=AR)
 
-CLa = C_L_a(1,True,values_sens_1_2(1,True,True,sense_value)[8],0)
+sense_value = np.linspace(0.001,1,100)
+# cg1_1 = cg_range_conf_1_2(1,s=True,s_value=sense_value,AR_t =False,AR=AR)
+# plt.plot(sense_value*100,cg1_1)
+# plt.xlabel("Increase in AR [%]")
+# plt.ylabel("CG range [m]")
+# plt.show()
+
+# cg1_1 = cg_range_conf_1_2(1,s=True,s_value=-sense_value)
+# plt.plot(sense_value*100,cg1_1)
+# plt.xlabel("Decrease in AR [%]")
+# plt.ylabel("CG range [m]")
+# plt.show()
+
+CLa = C_L_a(1,True,values_sens_1_2(1,True,True,sense_value,AR_t =False,AR=AR)[8],0)
 plt.plot(sense_value*100,CLa)
 plt.xlabel("Increase in AR [%]")
 plt.ylabel(r"$C_{L_{\alpha}}$ [1/rad]")
 plt.show()
 
-AR = np.linspace(1,14,100)
+AR = np.linspace(1,20,100)
+cgAR = cg_range_conf_1_2(1,s=True,s_value=0,AR_t =True,AR=AR)
+plt.plot(AR,cgAR)
+plt.hlines(0,min(AR),max(AR))
+plt.xlabel("AR [-]")
+plt.ylabel("CG range [m]")
+plt.show()
+
+cgAR_3 = cg_range_conf_3(sens=True,sens_value=0,AR_t =True,AR=AR)
+plt.plot(AR,cgAR_3)
+plt.hlines(0,min(AR),max(AR))
+plt.xlabel("AR [-]")
+plt.ylabel("CG range [m]")
+plt.show()
+
 CLa = C_L_a(1,True,AR,0)
 plt.plot(AR,CLa)
 plt.xlabel(" AR [-]")
