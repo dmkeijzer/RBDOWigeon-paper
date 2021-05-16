@@ -39,15 +39,15 @@ def Speeds(conf):
     print("Configuration %.0f at CRUISE beta*AR = %.3f "%(conf,beta_c * Afwd))
     return V_c, V_s, M_c,M_s
 
-V1 = Speeds(1)
-V2 = Speeds(2)
-V3 = Speeds(3)
+# V1 = Speeds(1)
+# V2 = Speeds(2)
+# V3 = Speeds(3)
 
 def values_conf_3():
     datafile = open(os.path.join(root_path, "data/inputs_config_3.json"), "r")
     data = json.load(datafile)
     datafile.close()
-    CD0 = data["Aerodynamics"]["CD0"]
+    CD0 = data["Aerodynamics"]["CDmin"]
     e = data["Aerodynamics"]["e"]
     Afwd = data["Aerodynamics"]["AR"]
     b_fwd = np.sqrt(data["Aerodynamics"]["AR"] * data["Aerodynamics"]["S_front"])
@@ -83,24 +83,213 @@ def deps_da(Lambda_quarter_chord, b,lh, h_ht, A, CLaw,conf):
     de_da = Keps / Keps0 * CLaw / (np.pi * A) * (
             r / (r ** 2 + mtv ** 2) * 0.4876 / (np.sqrt(r ** 2 + 0.6319 + mtv ** 2)) + v * (
             1 - np.sqrt(mtv ** 2 / (1 + mtv ** 2))))
-    print("Configuration %.0f de/da = %.4f "%(conf,de_da))
+    #print("Configuration %.0f de/da = %.4f "%(conf,de_da))
     return de_da
 
 def lh(xacfwd,xacrear):
     return abs(xacfwd-xacrear)
 
-def cg_range_conf_1_2(conf):
+def C_L_a(conf, cruise,A, Lambda_half, eta=0.95):
+    """
+    Inputs:
+    :param M: Mach number
+    :param b: wing span
+    :param S: wing area
+    :param Lambda_half: Sweep angle at 0.5*chord
+    :param eta: =0.95
+    :return: Lift curve slope for tail AND wing using DATCOM method
+    """
+    if cruise==True:
+        M = Speeds(conf)[-1]
+    else:
+        M= Speeds(conf)[2]
+    beta = np.sqrt(1 - M ** 2)
+    value = 2 * np.pi * A / (2 + np.sqrt(4 + ((A * beta / eta) ** 2) * (1 + (np.tan(Lambda_half) / beta) ** 2)))
+    return value
+
+
+def values_conf_1_2(conf,sens,sens_value):
+    datafile = open(os.path.join(root_path, "data/inputs_config_%.0f.json" % (conf)), "r")
+    data = json.load(datafile)
+    datafile.close()
+    lfus = data["Structures"]["l_fus"]
+    hfus = data["Structures"]["h_fus"]
+    wfus = data["Structures"]["w_fus"]
+    CD0 = data["Aerodynamics"]["CDmin"]
+    e = data["Aerodynamics"]["e"]
+    if sens==False:
+        Afwd = data["Aerodynamics"]["AR"] * 2
+    else:
+        Afwd = data["Aerodynamics"]["AR"] * 2*(1+sens_value/100)
+    Sweep_c4_fwd = data["Aerodynamics"]["Sweep_front"]
+    Sweep_c4_rear = data["Aerodynamics"]["Sweep_back"]
+    b_fwd = np.sqrt(Afwd * data["Aerodynamics"]["S_front"])
+    b_rear = np.sqrt(Afwd * data["Aerodynamics"]["S_back"])
+    S_fwd = data["Aerodynamics"]["S_front"]
+    S_rear = data["Aerodynamics"]["S_back"]
+
+    CLa_fwd = data["Aerodynamics"]["CLalpha_back"]
+    CLa_rear = CLa_fwd
+    Cm_ac_fwd = data["Aerodynamics"]["Cm_ac_front"]
+    Cm_ac_rear = data["Aerodynamics"]["Cm_ac_back"]
+    CL_max_fwd = data["Aerodynamics"]["CLmax_front"]
+    CL_max_rear = data["Aerodynamics"]["CLmax_back"]
+    c_fwd = data["Aerodynamics"]["MAC1"]
+    c_rear = data["Aerodynamics"]["MAC2"]
+    cr =  data["Aerodynamics"]["c_r"]
+    xacfwd = 0.25 * c_fwd
+    xacrear = lfus - (1 - 0.25) * c_rear
+    values = [CL_max_fwd, CL_max_rear, Cm_ac_fwd, Cm_ac_rear, CLa_fwd, CLa_rear, S_fwd, S_rear, Afwd, c_fwd, c_rear,
+                      b_fwd, b_rear, xacfwd, xacrear, e, CD0, lfus, hfus, wfus,Sweep_c4_fwd,Sweep_c4_rear,cr]
+    return values
+
+def values_sens_1_2(conf,cruise,sens,sens_value):
+    datafile = open(os.path.join(root_path, "data/inputs_config_%.0f.json" % (conf)), "r")
+    data = json.load(datafile)
+    datafile.close()
+    lfus = data["Structures"]["l_fus"]
+    hfus = data["Structures"]["h_fus"]
+    wfus = data["Structures"]["w_fus"]
+    CD0 = data["Aerodynamics"]["CDmin"]
+    e = data["Aerodynamics"]["e"]
+    if sens==False:
+        Afwd = data["Aerodynamics"]["AR"] * 2
+    else:
+        Afwd = data["Aerodynamics"]["AR"] * 2*(1+sens_value/100)
+    Sweep_c4_fwd = data["Aerodynamics"]["Sweep_front"]
+    Sweep_c4_rear = data["Aerodynamics"]["Sweep_back"]
+    taper = 0.4
+    S_fwd = data["Aerodynamics"]["S_front"]
+    S_rear = data["Aerodynamics"]["S_back"]
+    S = S_rear+S_fwd
+    b_fwd = np.sqrt(Afwd * data["Aerodynamics"]["S_front"])
+    b_rear = np.sqrt(Afwd * data["Aerodynamics"]["S_back"])
+    c_r_fwd = 2 * S_fwd / ((1 + taper) * b_fwd)
+    c_r_rear = 2 * S_rear / ((1 + taper) * b_rear)
+    c_fwd = (2 / 3) * c_r_fwd * ((1 + taper + taper ** 2) / (1 + taper))
+    c_rear = (2 / 3) * c_r_rear * ((1 + taper + taper ** 2) / (1 + taper))
+    if cruise:
+        CLa_fwd = C_L_a(conf,True,Afwd,Sweep_c4_fwd)
+    else:
+        CLa_fwd = C_L_a(conf, False, Afwd, Sweep_c4_fwd)
+    CLa_rear = CLa_fwd # ASSUMES EQUAL TO AR
+    Cm_ac_fwd = data["Aerodynamics"]["Cm_ac_front"]
+    Cm_ac_rear = data["Aerodynamics"]["Cm_ac_back"]
+    CL_max_fwd = data["Aerodynamics"]["CLmax_front"]
+    CL_max_rear = data["Aerodynamics"]["CLmax_back"]
+    xacfwd = 0.25 * c_fwd
+    xacrear = lfus - (1 - 0.25) * c_rear
+    values = [CL_max_fwd, CL_max_rear, Cm_ac_fwd, Cm_ac_rear, CLa_fwd, CLa_rear, S_fwd, S_rear, Afwd, c_fwd, c_rear,
+                      b_fwd, b_rear, xacfwd, xacrear, e, CD0, lfus, hfus, wfus,Sweep_c4_fwd,Sweep_c4_rear,c_r_fwd]
+    return values
+
+def cg_range_conf_1_2(conf,s,s_value):
     conf = conf
+    values_c = values_sens_1_2(conf,True,s,s_value)
+    CLfwd,CLrear,Cmacfwd,Cmacrear,CLafwd, CLarear,Sfwd,Srear,Afwd,cfwd,crear,b_fwd,b_rear,\
+    xacfwd,xacrear,e, CD0,lfus,hfus,wfus,Sweep_c4_fwd,Sweep_c4_rear,cr = values_c
+    # print("Values at cruise: ",values_c)
+    #CDafwd = 2*CLafwd*CLfwd/(np.pi*Afwd*e)
+    #CDarear = 2*CLarear*CLrear/(np.pi*Afwd*e)
+    deda = deps_da(Sweep_c4_fwd, b_fwd,lh(xacfwd,xacrear), hfus, Afwd, CLafwd,conf)
+    print("de/da = ",deda)
+    xacfwd_stab = 0.25*cfwd
+    xacfwd_control = 0.25 * cfwd
+    o = CLafwd*xacfwd_stab+CLarear*(lfus-0.75*cfwd)*Srear/Sfwd*(1-deda)
+    p =CLafwd*1+CLarear*1*Srear/Sfwd*(1-deda)
+    xcg_max = o/p
+    # CLfwd, CLrear, Cmacfwd, Cmacrear, CLafwd, CLarear, Sfwd, Srear, Afwd, cfwd, crear, b_fwd, b_rear, \
+    # xacfwd, xacrear, e, CD0, lfus, hfus, wfus, Sweep_c4_fwd, Sweep_c4_rear, cr = values_s
+    # # print("Values at stall: ",values_s)
+    #CLrear = 0.8*CLfwd
+    oo = 1/cfwd*(CLfwd * xacfwd_control + CLrear * xacrear * Srear / Sfwd -Cmacrear*Srear/Sfwd*crear)-Cmacfwd
+    pp = 1/cfwd*(CLfwd * 1 + CLrear * 1 * Srear / Sfwd)
+    xcg_min = oo/pp
+    # print("Configuration %.0f range: %.4f < x_cg < %.4f"%(conf,xcg_min,xcg_max))
+    # print("CG Range =%.3f" % (abs(xcg_max - xcg_min)))
+    return abs(xcg_max-xcg_min)
+
+
+def cg_range_conf_3(values=values_conf_3(),eta=5):
+    CLfwd, CLrear, Cmacfwd, Cmacrear, CLafwd, CLarear, Sfwd, Srear, Afwd, cfwd, bfwd,e,CD0 = values
+    lfus = 4
+    hfus = 1.6
+    xacfwd_stab = lfus/2-cfwd/2 + 0.24*cfwd
+    xacfwd_control = lfus/2-cfwd/2 +  0.24*cfwd
+    CD = CD0 + CLfwd**2/(np.pi*Afwd*e)
+    zaccg = eta/100*hfus
+    xcg_max = xacfwd_stab
+    xcg_min = xacfwd_control-Cmacfwd/CLfwd*cfwd-CD/CLfwd*zaccg
+    print("Configuration 3 range: %.4f < x_cg < %.4f"%(xcg_min,xcg_max))
+    print("CG Range =%.3f"%(abs(xcg_max-xcg_min)))
+    return abs(xcg_max-xcg_min)
+
+cg1 = cg_range_conf_1_2(1,s=False,s_value=0)
+sense_value = np.linspace(0,1,100)
+cg1_1 = cg_range_conf_1_2(1,s=True,s_value=sense_value)
+plt.plot(sense_value*100,cg1_1)
+plt.xlabel("Increase in AR [%]")
+plt.ylabel("CG range [m]")
+plt.show()
+
+cg1_1 = cg_range_conf_1_2(1,s=True,s_value=-sense_value)
+plt.plot(sense_value*100,cg1_1)
+plt.xlabel("Decrease in AR [%]")
+plt.ylabel("CG range [m]")
+plt.show()
+
+CLa = C_L_a(1,True,values_sens_1_2(1,True,True,sense_value)[8],0)
+plt.plot(sense_value*100,CLa)
+plt.xlabel("Increase in AR [%]")
+plt.ylabel(r"$C_{L_{\alpha}}$ [1/rad]")
+plt.show()
+
+AR = np.linspace(1,14,100)
+CLa = C_L_a(1,True,AR,0)
+plt.plot(AR,CLa)
+plt.xlabel("Increase in AR [%]")
+plt.ylabel(r"$C_{L_{\alpha}}$ [1/rad]")
+plt.show()
+
+
+# cg1_1 = cg_range_conf_1_2(1,s=True,s_value=12)
+
+# cg2 = cg_range_conf_1_2(2,s=False,s_value=0)
+# # cg2 = cg_range_conf_1_2(2,s=True,s_value=5)
+# cg3 = cg_range_conf_3()
+# cg3_1 = cg_range_conf_3(eta=0)
+
+def sensitivity(in1,in2):
+    return (in1-in2)/in1*100
+
+# print("-----------------------------------------------------------------")
+# print("--------------------SENSITIVITY ANALYSIS-------------------------")
+# print("-----------------------------------------------------------------")
+
+# print("Configuration 1: Initial sensitivity analysis on CG range for change in AR", sensitivity(cg1,cg1_1))
+# print("Configuration 3: Initial sensitivity analysis on CG range for change in eta", sensitivity(cg1,cg3_1))
+
+
+print("-----------------------------------------------------------------")
+print("--------------------LATERAL STABILITY----------------------------")
+print("-----------------------------------------------------------------")
+def est_Cnbeta(conf):
     def values_conf_1_2(conf):
         datafile = open(os.path.join(root_path, "data/inputs_config_%.0f.json" % (conf)), "r")
         data = json.load(datafile)
         datafile.close()
+        MTOW = data["Structures"]["MTOW"]
         lfus = data["Structures"]["l_fus"]
         hfus = data["Structures"]["h_fus"]
         wfus = data["Structures"]["w_fus"]
-        CD0 = data["Aerodynamics"]["CD0"]
+        CD0 = data["Aerodynamics"]["CDmin"]
         e = data["Aerodynamics"]["e"]
-        Afwd = data["Aerodynamics"]["AR"] * 2
+        if conf==3:
+            Afwd = data["Aerodynamics"]["AR"]
+            Arear = data["Aerodynamics"]["AR"]
+        else:
+            Afwd = data["Aerodynamics"]["AR"]*2
+            Arear = data["Aerodynamics"]["AR"]*2
         Sweep_c4_fwd = data["Aerodynamics"]["Sweep_front"]
         Sweep_c4_rear = data["Aerodynamics"]["Sweep_back"]
         b_fwd = np.sqrt(data["Aerodynamics"]["AR"] * data["Aerodynamics"]["S_front"])
@@ -118,66 +307,37 @@ def cg_range_conf_1_2(conf):
         cr =  data["Aerodynamics"]["c_r"]
         xacfwd = 0.25 * c_fwd
         xacrear = lfus - (1 - 0.25) * c_rear
-        values = [CL_max_fwd, CL_max_rear, Cm_ac_fwd, Cm_ac_rear, CLa_fwd, CLa_rear, S_fwd, S_rear, Afwd, c_fwd, c_rear,
-                  b_fwd, b_rear, xacfwd, xacrear, e, CD0, lfus, hfus, wfus,Sweep_c4_fwd,Sweep_c4_rear,cr]
+        if conf==3:
+            Sref = S_fwd
+        else:
+            Sref = S_fwd+S_rear
+        CLdes = MTOW/(0.5*1.2*Speeds(conf)[0]**2*Sref)
+        values = [CL_max_fwd, CL_max_rear, CLdes, Cm_ac_fwd, Cm_ac_rear, CLa_fwd, CLa_rear, S_fwd, S_rear, Afwd, Arear,c_fwd, c_rear,
+                  b_fwd, b_rear, xacfwd, xacrear, e, CD0, lfus, hfus, wfus,Sweep_c4_fwd,Sweep_c4_rear,cr,Sref]
         return values
-    values = values_conf_1_2(conf)
-    CLfwd,CLrear,Cmacfwd,Cmacrear,CLafwd, CLarear,Sfwd,Srear,Afwd,cfwd,crear,b_fwd,b_rear,\
-    xacfwd,xacrear,e, CD0,lfus,hfus,wfus,Sweep_c4_fwd,Sweep_c4_rear,cr = values
-    print("Values: ",values)
-    CDafwd = 2*CLafwd*CLfwd/(np.pi*Afwd*e)
-    CDarear = 2*CLarear*CLrear/(np.pi*Afwd*e)
-    deda = deps_da(Sweep_c4_fwd, b_fwd,lh(xacfwd,xacrear), hfus, Afwd, CLafwd,conf)
-    xacfwd_stab = 0.25*cfwd
-    xacfwd_control = 0.25 * cfwd
-    o = CLafwd*xacfwd_stab+CLarear*(lfus-0.75*cfwd)*Srear/Sfwd*(1-deda)
-    p =CLafwd*1+CLarear*1*Srear/Sfwd*(1-deda)
-    xcg_max = o/p
-    CLrear = 0.8*CLfwd
-    oo = CLfwd * xacfwd_control + CLrear * xacrear * Srear / Sfwd -Cmacfwd-Cmacrear*Srear/Sfwd*crear
-    pp = CLfwd * 1 + CLrear * 1 * Srear / Sfwd
-    xcg_min = oo/pp
-    print("Configuration %.0f range: %.4f < x_cg < %.4f"%(conf,xcg_min,xcg_max))
-    print("CG Range =%.3f" % (abs(xcg_max - xcg_min)))
-    return abs(xcg_max-xcg_min)
 
-
-# def cg_range_conf_2(values=values_conf_2(),deda=deps_da(L_c4,values_conf_2()[11],lh(xacfwd,xacrear),h_ht = 1.6,A=values_conf_2()[8],CLaw=values_conf_2()[4])):
-#     CLfwd,CLrear,Cmacfwd,Cmacrear,CLafwd, CLarear,Sfwd,Srear,Afwd,cfwd,crear,b_fwd,b_rear = values
-#     lfus = 4
-#     hfus = 1.6
-#     xacfwd_stab = 0.25*cfwd
-#     xacfwd_control = 0.25 * cfwd
-#     o = CLafwd*xacfwd_stab+CLarear*(lfus-0.75*crear)*Srear/Sfwd*(1-deda)
-#     p =CLafwd*1+CLarear*1*Srear/Sfwd*(1-deda)
-#     xcg_max = o/p
-#     oo = CLfwd * xacfwd_control + CLrear * (lfus-0.75*crear) * Srear / Sfwd -Cmacfwd-Cmacrear*Srear/Sfwd*crear
-#     pp = CLfwd * 1 + CLrear * 1 * Srear / Sfwd
-#     xcg_min = oo/pp
-#     print("Configuration 2 range: %.4f < x_cg < %.4f"%(xcg_min,xcg_max))
-#     print("CG Range =%.3f" % (abs(xcg_max - xcg_min)))
-#     return abs(xcg_max-xcg_min)
-
-def cg_range_conf_3(values=values_conf_3(),eta=5):
-    CLfwd, CLrear, Cmacfwd, Cmacrear, CLafwd, CLarear, Sfwd, Srear, Afwd, cfwd, bfwd,e,CD0 = values
-    lfus = 4
-    hfus = 1.6
-    xacfwd_stab = lfus/2-cfwd/2 + 0.24*cfwd
-    xacfwd_control = lfus/2-cfwd/2 +  0.24*cfwd
-    CD = CD0 + CLfwd**2/(np.pi*Afwd*e)
-    zaccg = eta/100*hfus
-    xcg_max = xacfwd_stab
-    xcg_min = xacfwd_control-Cmacfwd/CLfwd*cfwd-CD/CLfwd*zaccg
-    print("Configuration 3 range: %.4f < x_cg < %.4f"%(xcg_min,xcg_max))
-    print("CG Range =%.3f"%(abs(xcg_max-xcg_min)))
-    return abs(xcg_max-xcg_min)
-
-cg1 = cg_range_conf_1_2(1)
-cg2 = cg_range_conf_1_2(2)
-cg3 = cg_range_conf_3()
-cg3_1 = cg_range_conf_3(eta=0)
-
-def sensitivity(in1,in2):
-    return (in1-in2)/in1*100
-
-print("Initial sensitivity analysis on CG range:", sensitivity(cg3,cg3_1))
+    CL_max_fwd, CL_max_rear, CLdes, Cm_ac_fwd, Cm_ac_rear, CLa_fwd, CLa_rear, S_fwd, S_rear, Afwd, Arear, c_fwd, c_rear,\
+    b_fwd, b_rear, xacfwd, xacrear, e, CD0, lfus, hfus, wfus, Sweep_c4_fwd, Sweep_c4_rear, cr,Sref = values_conf_1_2(conf)
+    V_fus = 4*np.pi/3*wfus*lfus*hfus
+    V_fus = wfus*lfus*hfus
+    if conf == 3:
+        Cnb_w_rear = 0
+        Cnb_fus_rear = 0
+    else:
+        Cnb_w_rear = CLdes ** 2 * (1 / (4 * np.pi * Arear))
+        Cnb_fus_rear = -1.3 * (V_fus * lfus / wfus) * (1 / (S_rear * b_rear))
+    Cnb_fus_fwd = -1.3*(V_fus*lfus/wfus)*(1/(S_fwd*b_fwd))*3/4
+    Cnb_fus = (Cnb_fus_fwd+Cnb_fus_rear)/2
+    Cnb_w_fwd = CLdes**2*(1/(4*np.pi*Afwd)) #assumes 0 sweep
+    Cnb_w = Cnb_w_fwd+Cnb_w_rear
+    Cnb = Cnb_w+Cnb_fus
+    lv = lfus/2
+    bv = np.sqrt(2*abs(Cnb)*S_fwd*b_fwd/(np.pi*lv))
+    print("Wing: Cnb_w = %.6f 1/rad"%(Cnb_w))
+    print("Fuselage: Cnb_w = %.6f 1/rad" % (Cnb_fus))
+    print("Total: Cnb = %.6f 1/rad" % (Cnb))
+    print("Required vertical stabiliser bv = %.4f [m]"%(bv))
+    return Cnb
+est_Cnbeta(1)
+est_Cnbeta(2)
+est_Cnbeta(3)
