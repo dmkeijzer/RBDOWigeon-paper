@@ -86,12 +86,12 @@ if Prop_config == 1:
     print("This corresponds to a ratio of", LE_prop.S_ratio())
 
 # This needs to be checked and added to the json files
-b = np.sqrt(AR*S_front)
+b = np.sqrt(2*AR*S_front)
 xc_prop = 0.7
-xb_prop_start = 0.2
+xb_prop_start = 0.17
 # End is start + number of engines in half the wing times diameter times factor for clearance,
 # divided by b/2 to get % of half span
-xb_prop_end = 0.2 + (N_hover/4 * 2*r_out * 1.1)/(b/2)
+xb_prop_end = xb_prop_start + (N_hover/4 * 2*r_out * 1.08)/(b/2)
 print("The propulsion goes from", xb_prop_start, "to", xb_prop_end, "of the half wing, which has a span of", b/2, "[m]")
 
 if Prop_config == 2:
