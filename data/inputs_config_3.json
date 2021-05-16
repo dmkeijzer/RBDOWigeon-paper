@@ -44,7 +44,7 @@
     "eff_M_h": 0.92,
     "eff_PE_h": 0.95,
     "eff_B_h": 0.8,
-    "eff_cruise": 1,
+    "eff_cruise": 0.9957,
     "eff_hover": 1,
     "N_cruise": 4,
     "N_hover": 6,
@@ -55,7 +55,16 @@
     "D_inner_ratio" : 0.1,
     "D_loading" : 80,
     "Prop_config" : 3,
-    "Ducted" : 0
+    "Ducted" : 0,
+    "DA_per_prop" : 4.0243,
+    "P_cr_ideal_ADT" : 74886.1697,
+    "P_cr_estim" : 134849.2483,
+    "P_hover_estim" : 406794.8431,
+    "E_hover" : 27.1197,
+    "E_cr" : 170.62197,
+    "E_tot" : 197.7416,
+    "Bat_mass" : 395.4833,
+    "Bat_volume" : 0.19774
   },
   "Requirements": {
     "V_stall": 40,
