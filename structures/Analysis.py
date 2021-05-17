@@ -1,3 +1,4 @@
+import numpy as np
 from MathFunctions.Trigonometry import pi
 from MathFunctions.Mechanics import StepFunction
 import pandas as pd
@@ -76,14 +77,14 @@ class WingStructure:
 
     def compute_loading(self):
         self.N = StepFunction([[self.RFz, 0, 0]])
-        qxzcoef = list(np.polyfit(self.W.p, self.W.v[0] + self.D.v[0] + self.L.v[0], 4))
-        qyzcoef = list(np.polyfit(self.W.p, self.W.v[1] + self.D.v[1] + self.L.v[1], 4))
+        qxzcoef = list(np.polyfit(self.W.p, self.W.v[0] + self.D.v[0] + self.L.v[0], 4))[::-1]
+        qyzcoef = list(np.polyfit(self.W.p, self.W.v[1] + self.D.v[1] + self.L.v[1], 4))[::-1]
         qxz = StepFunction([[xi, 0, i] for i, xi in enumerate(qxzcoef)])
         qyz = StepFunction([[yi, 0, i] for i, yi in enumerate(qyzcoef)])
         self.Vx = StepFunction([[self.RFx, 0, 0]] + [[T.f[0], T.p[2], 0] for T in self.T]) + qxz.integral()
         self.Vy = StepFunction([[self.RFy, 0, 0]] + [[T.f[1], T.p[2], 0] for T in self.T]) + qyz.integral()
-        self.Mz = self.L.pa[0] * qyz.integral() - self.L.pa[1] * qxz.integral() # Fix
-        self.My, self.Mx = self.Vx.integral(), self.Vy.integral()
+        self.Mz = self.L.pa[0] * qyz.integral() - self.L.pa[1] * qxz.integral() + self.RMz
+        self.My, self.Mx = self.Vx.integral(-self.RMy), self.Vy.integral(self.RMx)
         return [self.N, self.Vx, self.Vy, self.Mx, self.My, self.Mz]
 
     def compute_deflections(self, E, Ixx, Iyy=None):

@@ -16,9 +16,9 @@ def SolveACLoads(cg, acf, acb):
 def SolveWingLoads(MAC, b, Lwing, Dwing, mWing, TpE, nE):
     pos = np.linspace(0, b / 2)
     WingWeight = RunningLoad([[0]*len(pos), [- mWing * 9.81 / b]*len(pos)], pos, axis=2)
-    Lift = RunningLoad([[0]*len(pos), [Lwing * 2 / b] * len(pos)], pos, axis=2)
-    Drag = RunningLoad([[Dwing * 2 / b] * len(pos), [0]*len(pos)], pos, axis=2)
-    Thrust = [PointLoad([-TpE, 0, 0], [0, 0, i]) for i in np.linspace(0, b, nE)]
+    Lift = RunningLoad([[0]*len(pos), [Lwing / b] * len(pos)], pos, axis=2)
+    Drag = RunningLoad([[Dwing / b] * len(pos), [0]*len(pos)], pos, axis=2)
+    Thrust = [PointLoad([-TpE, 0, 0], [0, 0, i]) for i in np.linspace(0, b/2, nE)]
     MomentAC = Moment(value=[0, 0, 30])
 
     Fixedx = PointLoad([1, 0, 0], [0.5 * MAC, 0, 0])

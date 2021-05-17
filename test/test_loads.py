@@ -15,6 +15,6 @@ class TestLoads(unittest.TestCase):
     def test_WingLoads(self):
         wingEquation = SolveWingLoads(0.2, 11.2, self.L1, 800, (self.L1 + self.L2) / (8*9.81), 100, 3)
         Fx, Fy, Fz, Mx, My, Mz = WLoads = wingEquation.SolveEquation()
-        calced = [-500, -8603.3291, 0, 24089.3216, -560, 830.3329]
+        calced = [-100, -8603.3291, 0, 24089.3216, -560, 830.3329]
         for j in range(len(calced)):
             self.assertAlmostEqual(calced[j], WLoads[j], places=3)
