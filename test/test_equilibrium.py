@@ -37,7 +37,7 @@ class TestEquilibrium(unittest.TestCase):
         q = RunningLoad([[1]*5, [2]*5], range(5), 0)
         self.assertListEqual(list(q.force()), [0, 4, 8])
         self.assertListEqual(list(q.moment()), [0, -16, 8])
-    
+
     def test_equilibrium(self):
         load1 = PointLoad([1, 0, 0], [0, 1, 0])
         load2 = PointLoad([1, 0, 0], [-1, 0, 0])
