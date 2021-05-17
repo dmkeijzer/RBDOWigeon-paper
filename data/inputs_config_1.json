@@ -50,7 +50,7 @@
     "eff_hover": 1,
     "N_cruise": 16,
     "N_hover": 16,
-    "TA": 2000,
+    "TA": 2500,
     "Max_T_engine": 2959.86,
     "Max_T_wing_engine": 2959.86,
     "V_e_LTO": 63.267,
@@ -83,12 +83,13 @@
     "h_cruise": 1,
     "S": 10.8556446991404,
     "WP cruise": 0.07778873138164696,
-    "WP hover": 0.02910231219835984,
+    "WP hover": 0.02602989935118158,
     "WS": 1745.0,
-    "P tot": 650913.9160794104,
+    "P tot": 727743.8819270775,
     "t_TO": 20,
     "t_land": 45,
     "P cruise": 243519.84745787134,
-    "Gamma descent": 5
+    "Gamma descent": 5,
+    "TWR": 1
   }
 }
