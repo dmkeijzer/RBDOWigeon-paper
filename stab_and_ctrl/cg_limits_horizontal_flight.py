@@ -121,7 +121,7 @@ def values_conf_1_2(conf,sens,sens_value):
                       b_fwd, b_rear, xacfwd, xacrear, e, CD0, lfus, hfus, wfus,Sweep_c4_fwd,Sweep_c4_rear,cr]
     return values
 
-def values_sens_1_2(conf,cruise,sens,sens_value,AR_t,AR):
+def values_sens_1_2(conf,cruise,sens,sens_value,AR_t,AR,CL_t):
     datafile = open(os.path.join(root_path, "data/inputs_config_%.0f.json" % (conf)), "r")
     data = json.load(datafile)
     datafile.close()
@@ -158,6 +158,11 @@ def values_sens_1_2(conf,cruise,sens,sens_value,AR_t,AR):
     Cm_ac_fwd = data["Aerodynamics"]["Cm_ac_front"]
     Cm_ac_rear = data["Aerodynamics"]["Cm_ac_back"]
     CL_max_fwd = data["Aerodynamics"]["CLmax_front"]
+
+    if CL_t == True:
+        CL_max_fwd *= (1+sense_value/100)
+    else:
+        CL_max_fwd = CL_max_fwd
     CL_max_rear = data["Aerodynamics"]["CLmax_back"]
     xacfwd = 0.25 * c_fwd
     xacrear = lfus - (1 - 0.25) * c_rear
@@ -165,12 +170,12 @@ def values_sens_1_2(conf,cruise,sens,sens_value,AR_t,AR):
                       b_fwd, b_rear, xacfwd, xacrear, e, CD0, lfus, hfus, wfus,Sweep_c4_fwd,Sweep_c4_rear,c_r_fwd]
     return values
 
-def cg_range_conf_1_2(conf,s,s_value,AR_t,AR):
+def cg_range_conf_1_2(conf,s,s_value,AR_t,AR,CL_t):
     conf = conf
-    values_c = values_sens_1_2(conf,True,s,s_value,AR_t,AR)
+    values_c = values_sens_1_2(conf,True,s,s_value,AR_t,AR,CL_t)
     CLfwd,CLrear,Cmacfwd,Cmacrear,CLafwd, CLarear,Sfwd,Srear,Afwd,cfwd,crear,b_fwd,b_rear,\
     xacfwd,xacrear,e, CD0,lfus,hfus,wfus,Sweep_c4_fwd,Sweep_c4_rear,cr = values_c
-    # print("Values at cruise: ",values_c)
+    # CLfwd = CLfwd*1.1
     #CDafwd = 2*CLafwd*CLfwd/(np.pi*Afwd*e)
     #CDarear = 2*CLarear*CLrear/(np.pi*Afwd*e)
     deda = deps_da(Sweep_c4_fwd, b_fwd,lh(xacfwd,xacrear), hfus, Afwd, CLafwd,conf)
@@ -180,17 +185,14 @@ def cg_range_conf_1_2(conf,s,s_value,AR_t,AR):
     o = CLafwd*xacfwd_stab+CLarear*(lfus-0.75*cfwd)*Srear/Sfwd*(1-deda)
     p =CLafwd*1+CLarear*1*Srear/Sfwd*(1-deda)
     xcg_max = o/p
-    # CLfwd, CLrear, Cmacfwd, Cmacrear, CLafwd, CLarear, Sfwd, Srear, Afwd, cfwd, crear, b_fwd, b_rear, \
-    # xacfwd, xacrear, e, CD0, lfus, hfus, wfus, Sweep_c4_fwd, Sweep_c4_rear, cr = values_s
-    # # print("Values at stall: ",values_s)
     #CLrear = 0.8*CLfwd
     oo = 1/cfwd*(CLfwd * xacfwd_control + CLrear * xacrear * Srear / Sfwd -Cmacrear*Srear/Sfwd*crear)-Cmacfwd
     pp = 1/cfwd*(CLfwd * 1 + CLrear * 1 * Srear / Sfwd)
     xcg_min = oo/pp
-    if AR_t ==False:
+    if AR_t ==False and CL_t==False:
         print("Configuration %.0f range: %.4f < x_cg < %.4f"%(conf,xcg_min,xcg_max))
         print("CG Range =%.3f" % ((xcg_max - xcg_min)))
-    return xcg_max-xcg_min
+    return xcg_min, (xcg_max)
 
 def values_conf_3(sens,sens_value, AR_t,AR):
     datafile = open(os.path.join(root_path, "data/inputs_config_3.json"), "r")
@@ -237,7 +239,7 @@ def values_conf_3(sens,sens_value, AR_t,AR):
     values = [CL_max_fwd, CL_max_rear, Cm_ac_fwd, Cm_ac_rear, CLa_fwd, CLa_rear, S_fwd, S_rear, Afwd, c, b_fwd,e,CD0]
     return values
 
-def cg_range_conf_3(sens,sens_value, AR_t,AR,eta=5):
+def cg_range_conf_3(sens,sens_value, AR_t,AR,eta):
     values = values_conf_3(sens,sens_value,AR_t,AR)
     CLfwd, CLrear, Cmacfwd, Cmacrear, CLafwd, CLarear, Sfwd, Srear, Afwd, cfwd, bfwd,e,CD0 = values
     lfus = 4
@@ -251,29 +253,45 @@ def cg_range_conf_3(sens,sens_value, AR_t,AR,eta=5):
         Afwd = AR
     else:
         Afwd = Afwd
-    xacfwd_stab = lfus/2-cfwd/2 + 0.24*cfwd
-    xacfwd_control = lfus/2-cfwd/2 +  0.24*cfwd
+    xacfwd_stab = lfus/2-cfwd/2 + 0.263*cfwd
+    xacfwd_control = lfus/2-cfwd/2 +  0.263*cfwd
     CD = CD0 + CLfwd**2/(np.pi*Afwd*e)
     zaccg = eta/100*hfus
     xcg_max = xacfwd_stab
     xcg_min = xacfwd_control-Cmacfwd/CLfwd*cfwd-CD/CLfwd*zaccg
-    if AR_t == False:
-        print("Configuration 3 range: %.4f < x_cg < %.4f"%(xcg_min,xcg_max))
-        print("CG Range =%.3f"%((xcg_max-xcg_min)))
-    return xcg_max-xcg_min
+    if AR_t == False and eta[0] ==0:
+        print("Configuration 3 range: %.4f < x_cg < %.4f"%(xcg_min[0],xcg_max))
+        # print("CG Range =%.3f"%((xcg_max-xcg_min)))
+    return xcg_min, (xcg_max)
 
 AR = np.linspace(1,15,100)
 
-cg1 = cg_range_conf_1_2(1,s=False,s_value=0,AR_t =False,AR=AR)
-cg2 = cg_range_conf_1_2(2,s=False,s_value=0,AR_t =False,AR=AR)
-cg3 = cg_range_conf_3(sens=False,sens_value=0,AR_t =False,AR=AR)
+eta = np.linspace(0,50,1000)
+cg1 = cg_range_conf_1_2(1,s=False,s_value=0,AR_t =False,AR=AR,CL_t = False)
+cg2 = cg_range_conf_1_2(2,s=False,s_value=0,AR_t =False,AR=AR,CL_t = False)
+cg3 = cg_range_conf_3(sens=False,sens_value=0,AR_t =False,AR=AR,eta=np.array([0]))
+cg3_1 = cg_range_conf_3(sens=False,sens_value=0,AR_t =False,AR=AR,eta=eta)[0]
 
-sense_value = np.linspace(0.001,1,100)
-# cg1_1 = cg_range_conf_1_2(1,s=True,s_value=sense_value,AR_t =False,AR=AR)
+print("-----------------------------------------------------------------")
+print("---------------------------GRAPHS--------------------------------")
+print("-----------------------------------------------------------------")
+plt.plot(eta,cg3_1)
+plt.xlabel(r"$\eta$ [%]",fontsize=14)
+plt.ylabel(r"$x_{cg_{min}}$ [m]",fontsize=14)
+plt.show()
+
+sense_value = np.linspace(0.001,100,1e3)
+# cg1_1 = cg_range_conf_1_2(1,s=True,s_value=sense_value,AR_t =False,AR=AR,CL_t = False)
 # plt.plot(sense_value*100,cg1_1)
 # plt.xlabel("Increase in AR [%]")
 # plt.ylabel("CG range [m]")
 # plt.show()
+
+cg_CL = cg_range_conf_1_2(1,s=True,s_value=sense_value,AR_t =False,AR=AR,CL_t = True)[0]
+plt.plot(sense_value,cg_CL)
+plt.xlabel(r"Increase in $C_{L_{fwd}}$ [%]",fontsize=14)
+plt.ylabel(r"$x_{cg_{min}}$ [m]",fontsize=14)
+plt.show()
 
 # cg1_1 = cg_range_conf_1_2(1,s=True,s_value=-sense_value)
 # plt.plot(sense_value*100,cg1_1)
@@ -281,32 +299,30 @@ sense_value = np.linspace(0.001,1,100)
 # plt.ylabel("CG range [m]")
 # plt.show()
 
-CLa = C_L_a(1,True,values_sens_1_2(1,True,True,sense_value,AR_t =False,AR=AR)[8],0)
-plt.plot(sense_value*100,CLa)
+CLa = C_L_a(1,True,values_sens_1_2(1,True,True,sense_value,AR_t =False,AR=AR,CL_t = False)[8],0)
+plt.plot(sense_value,CLa)
 plt.xlabel("Increase in AR [%]")
 plt.ylabel(r"$C_{L_{\alpha}}$ [1/rad]")
 plt.show()
 
-AR = np.linspace(1,20,100)
-cgAR = cg_range_conf_1_2(1,s=True,s_value=0,AR_t =True,AR=AR)
+AR = np.linspace(1,20,1000)
+cgAR = cg_range_conf_1_2(1,s=True,s_value=0,AR_t =True,AR=AR,CL_t = False)[1]
 plt.plot(AR,cgAR)
-plt.hlines(0,min(AR),max(AR))
-plt.xlabel("AR [-]")
-plt.ylabel("CG range [m]")
+plt.xlabel("AR [-]",fontsize=14)
+plt.ylabel(r"$x_{cg_{max}}$ [m]",fontsize=14)
 plt.show()
 
-cgAR_3 = cg_range_conf_3(sens=True,sens_value=0,AR_t =True,AR=AR)
+cgAR_3 = cg_range_conf_3(sens=True,sens_value=0,AR_t =True,AR=AR,eta=0)[1]
 plt.plot(AR,cgAR_3)
-plt.hlines(0,min(AR),max(AR))
-plt.xlabel("AR [-]")
-plt.ylabel("CG range [m]")
+plt.xlabel("AR [-]",fontsize=14)
+plt.ylabel(r"$x_{cg_{max}}$ [m]",fontsize=14)
 plt.show()
 
-CLa = C_L_a(1,True,AR,0)
-plt.plot(AR,CLa)
-plt.xlabel(" AR [-]")
-plt.ylabel(r"$C_{L_{\alpha}}$ [1/rad]")
-plt.show()
+# CLa = C_L_a(1,True,AR,0)
+# plt.plot(AR,CLa)
+# plt.xlabel(" AR [-]")
+# plt.ylabel(r"$C_{L_{\alpha}}$ [1/rad]")
+# plt.show()
 
 
 # cg1_1 = cg_range_conf_1_2(1,s=True,s_value=12)
@@ -396,9 +412,48 @@ def est_Cnbeta(conf):
     print("Total: Cnb = %.6f 1/rad" % (Cnb))
     print("Required vertical stabiliser bv = %.4f [m]"%(bv))
     return Cnb
+
 est_Cnbeta(1)
 est_Cnbeta(2)
 est_Cnbeta(3)
+
 print("-----------------------------------------------------------------")
 print("--------------------PULL-UP MANOEUVRE----------------------------")
 print("-----------------------------------------------------------------")
+
+def CmqCzq(conf,sens,sens_value,AR_t,AR):
+    CL_t = False
+    xcg = 2
+    if conf == 1 or conf ==2:
+        cruise = True
+        values = values_sens_1_2(conf,cruise,sens,sens_value,AR_t,AR,CL_t)
+        CLfwd, CLrear, Cmacfwd, Cmacrear, CLafwd, CLarear, Sfwd, Srear, Afwd, cfwd, crear, b_fwd, b_rear, \
+        xacfwd, xacrear, e, CD0, lfus, hfus, wfus, Sweep_c4_fwd, Sweep_c4_rear, cr = values
+        Czq = (CLafwd*(xcg-xacfwd)/cfwd)-CLarear*Srear/Sfwd*(xacrear-xcg)/cfwd
+        Cmq = -(CLafwd*(xcg-xacfwd)**2/cfwd**2+CLarear*Srear/Sfwd*(xacrear-xcg)**2/cfwd**2)
+    else:
+        values = values_conf_3(sens,sens_value,AR_t,AR)
+        CL_max_fwd, CL_max_rear, Cm_ac_fwd, Cm_ac_rear, CLa_fwd, CLa_rear, S_fwd, S_rear, Afwd, c, b_fwd, e, CD0 = values
+        lfus = 4
+        hfus = 1.6
+        if sens == False:
+            Afwd = Afwd
+        else:
+            Afwd = Afwd * (1 + sens_value / 100)
+
+        if AR_t == True:
+            Afwd = AR
+        else:
+            Afwd = Afwd
+        xacfwd = lfus / 2 - c/ 2 + 0.26 * c
+        Czq = -CLa_fwd*(xacfwd-xcg)/c
+        Cmq = -Czq*(xacfwd-xcg)/c
+    print("Configuration %.0f: C_Z_q = %.3f 1/rad and C_m_q = %.3f 1/rad"%(conf,Czq,Cmq))
+    return Czq,Cmq
+
+CmqCzq(1,sens=True,sens_value=0,AR_t=False,AR=AR)
+CmqCzq(2,sens=True,sens_value=0,AR_t=False,AR=AR)
+CmqCzq(3,sens=True,sens_value=0,AR_t=False,AR=AR)
+
+
+
