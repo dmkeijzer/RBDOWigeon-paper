@@ -2,12 +2,13 @@ import sys
 import matplotlib.pyplot as plt
 import numpy as np
 from performance_analysis import mission_analysis, initial_sizing
+import json
 
 sys.path.append("../data/")
 
 # Initial data
 cruising_alt    = 400           # [m] Estimated cruising altitude
-energy          = 100*3.6e6     # [J] Energy capacity of the aircraft
+energy          = 110*3.6e6     # [J] Energy capacity of the aircraft
 data_path       = "../data/inputs_config_1.json"
 
 # ================== Run the initial sizing ====================
@@ -23,9 +24,25 @@ climb_analysis.climb_perf_chart()
 Energy_analysis  = mission_analysis(data_path, cruising_alt, 360, energy, save_data = True)
 E_tot = Energy_analysis.total_energy(300e3, pie = True)
 print("Total energy needed: ", E_tot, "J")
+
 # ================= Payload range diagram ======================
+# Maximum payload weight
+datafile = open(data_path, "r")
+
+# Read data from json file
+data = json.load(datafile)
+datafile.close()
+
+# Read weight data
+weights = data["Structures"]
+MTOM    = weights["MTOW"]/9.81
+EOM     = weights["EOW"]/9.81
+
+# Maximum payload mass
+m_PL_max    = MTOM - EOM
+
 # Range of payloads
-m_PL        = np.arange(0, 400, 10)
+m_PL        = np.linspace(0, m_PL_max, 100)
 analysis    = mission_analysis(data_path, cruising_alt, m_PL, energy)
 
 # Different weight breakdowns

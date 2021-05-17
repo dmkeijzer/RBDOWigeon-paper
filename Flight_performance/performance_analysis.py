@@ -170,9 +170,9 @@ class initial_sizing:
         # Write the design point to the data file
         FP = self.data["Flight performance"]
 
-        FP["W/S"]           = float(self.des_WS)
-        FP["W/P hover"]     = float(self.des_WP)
-        FP["W/P cruise"]    = float(self.des_WP_cruise)
+        FP["WS"]           = float(self.des_WS)
+        FP["WP hover"]     = float(self.des_WP)
+        FP["WP cruise"]    = float(self.des_WP_cruise)
 
         datfile = open(self.path, "w")
         json.dump(self.data, datfile)
@@ -267,10 +267,10 @@ class mission_analysis:
         # Flight performance data
         self.FP             = self.data["Flight performance"]
         self.S              = self.FP["S"]
-        self.WS             = self.FP["W/S"]
+        self.WS             = self.FP["WS"]
         self.gamma_descent  = np.radians(self.FP["Gamma descent"])
-        self.WP_ho          = self.FP["W/P hover"]
-        self.WP_cr          = self.FP["W/P cruise"]
+        self.WP_ho          = self.FP["WP hover"]
+        self.WP_cr          = self.FP["WP cruise"]
         self.t_to           = self.FP["t_TO"]
         self.t_la           = self.FP["t_land"]
 
@@ -535,11 +535,17 @@ class mission_analysis:
                 trans   = transition_EOM(weight, self.path)
 
                 # Transition energy
-                E_trans = trans.simulate(plotting = False)
+                plotting = False
+                if weight > 18500:
+                    plotting = True
+                E_trans = trans.simulate(plotting = plotting)
 
                 W_lst.append(E_trans)
 
+
             E_transition = np.array(W_lst)
+            plt.plot(self.W, E_transition)
+            plt.show()
 
         else:
             # Call the transition class
