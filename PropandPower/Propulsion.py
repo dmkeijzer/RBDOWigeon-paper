@@ -9,6 +9,10 @@ import json
 from Aero_tools import ISA
 
 
+def c(c_r, taper, b, y):
+    return c_r * (1 - (1 - taper) / b * 2 * y)
+
+
 class PropulsionHover:
 
     def __init__(self, MTOM, n, A, eff_D_h, eff_F_h, eff_M_h, eff_PE_h, eff_B_h, vj, m_dot_h, rho, ducted):
