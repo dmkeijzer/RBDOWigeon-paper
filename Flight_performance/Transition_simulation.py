@@ -22,7 +22,6 @@ class transition_EOM:
 
 
         self.m = self.W/9.81
-        self.A_prop = 10
 
         # Aerodynamic data
         aero = self.data["Aerodynamics"]
@@ -30,8 +29,23 @@ class transition_EOM:
         self.CLmin  = aero["CLforCDmin"]
         self.A      = aero["AR"]
         self.e      = aero["e"]
+        self.StotSw = aero["Stot/Sw"]
 
-        FP = self.data["Flight performance"]
+        FP          = self.data["Flight performance"]
+        struc       = self.data["Structures"]
+        prop        = self.data["Propulsion"]
+        req         = self.data["Requirements"]
+        self.MTOW   = struc["MTOW"]
+        self.ROC_hover = req["ROC_hover"]
+        self.WS     = FP["WS"]
+
+        TWR = 1.2 * (1 + ((self.ROC_hover ** 2) * self.rho * self.StotSw / self.WS))
+        self.T_max  = TWR*self.MTOW
+        self.TA     = prop["TA"]
+        self.A_prop = self.T_max/self.TA
+
+
+        #FP = self.data["Flight performance"]
         self.S = FP["S"]
         self.P_max = FP["P tot"]
 
