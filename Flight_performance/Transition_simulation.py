@@ -4,26 +4,36 @@ import json
 from Aero_tools import ISA
 import scipy.optimize as optimize
 
+
 class transition_EOM:
-    def __init__(self, W):
-        #self.V = V
-        self.k = 0.9
-        self.TA = 200
+    def __init__(self, W, path):
+
+        self.path = path
+        datafile = open(self.path, "r")
+
+        # Read data from json file
+        self.data = json.load(datafile)
+        datafile.close()
+
+        self.k = 1.2 # See Tilt-wing evtol takeoff optimization
         self.rho = ISA(0).density()
-        #self.a_T0 = a_T0
-        #self.V_perp = np.cos(a_T0)*V
         self.CL = 1.0
-        #self.q  = 0.5*self.rho*V*V
         self.W  = W
-        self.S = 20
-        self.T_h = 0
-        self.P_max = 700000
-        self.CD0 = 0.05
-        self.A  = 10
-        self.e = 0.98
-        self.g_force = 0.5
+
+
         self.m = self.W/9.81
         self.A_prop = 10
+
+        # Aerodynamic data
+        aero = self.data["Aerodynamics"]
+        self.CDmin  = aero["CDmin"]
+        self.CLmin  = aero["CLforCDmin"]
+        self.A      = aero["AR"]
+        self.e      = aero["e"]
+
+        FP = self.data["Flight performance"]
+        self.S = FP["S"]
+        self.P_max = FP["P tot"]
 
     def disk_power(self, T, P_in, a_T, V):
 
@@ -43,8 +53,11 @@ class transition_EOM:
 
     def horizontal_equilibrium(self, motor_angle, speed, thrust):
 
+        # Drag coefficient
+        CD  = self.CDmin + (((self.CL - self.CLmin) ** 2) * self.k)
+
         # Drag force
-        D = 0.5*self.rho*(speed**2)*self.S*(self.CD0 + ((self.CL**2)/(self.A*self.e*np.pi)))
+        D   = 0.5*self.rho*(speed**2)*self.S*CD
 
 
         # Acceleration in x (positive in direction of V)
@@ -73,14 +86,17 @@ class transition_EOM:
 
     def thrust_horizontal(self, motor_angle, speed):
 
+        # Drag coefficient
+        CD = self.CDmin + (((self.CL - self.CLmin) ** 2) * self.k)
+
         # Drag force
-        D       = 0.5 * self.rho * speed * speed * self.S * (self.CD0 + ((self.CL ** 2) / (self.A * self.e * np.pi)))
+        D       = 0.5 * self.rho * speed * speed * self.S * CD
 
         thrust  = D/np.cos(motor_angle)
 
         return thrust
 
-    def simulate(self):
+    def simulate(self, plotting = False):
 
         # Initial values
         t   = 0.
@@ -114,13 +130,17 @@ class transition_EOM:
             # Engine thrust setting for vertical equilibrium, or to maintain speed
             T_vert  = self.thrust_vertical(i_T, V)
             T_hor   = self.thrust_horizontal(i_T, V)
+            T_req   = np.maximum(T_vert, T_hor)
 
-            T_req   = T_vert
 
-            # In the beginning op transition the motors are rotated with a constant speed
-            if T_vert < T_max:
-                T   = T_vert
+            # In the beginning op transition the motors are rotated with a constant speed, correct for future rotation
+            if 1.01*T_req < T_max:
                 i_T -= 2*np.pi*dt/180
+
+                # Recalculate the thrust for the rotated engines
+                T_vert = self.thrust_vertical(i_T, V)
+                T_hor = self.thrust_horizontal(i_T, V)
+                T   = max(T_vert, T_hor)
 
             # If the required thrust is higher than the maximum thrust, wait for the speed to increase
             else:
@@ -132,8 +152,7 @@ class transition_EOM:
             i_T     = max(i_T, 0)
 
             # Numerical integration
-            print('T', T)
-            ax = self.horizontal_equilibrium(i_T, v, T)
+            ax = self.horizontal_equilibrium(i_T, V, T)
             ay = self.vertical_equilibrium(i_T, V, T)
 
             vx += ax*dt
@@ -147,8 +166,6 @@ class transition_EOM:
             alpha   = np.arctan(vy/(vx+1e-9))
             a_T     = i_T + alpha
 
-
-
             # Store everything
             V_lst.append(V)
             t_lst.append(t)
@@ -157,25 +174,28 @@ class transition_EOM:
             i_lst.append(i_T)
             E_lst.append(P*dt)
 
-
-            if t > 100 or i_T == 0:
+            # Stop the simulation if the engines are rotated enough and climb begins
+            if t > 100 or i_T < 2e-1:
                 running = False
 
-        plt.subplot(311)
-        plt.plot(t_lst, x_lst)
-        plt.grid()
+        if plotting:
+            plt.subplot(311)
+            plt.plot(x_lst, y_lst)
+            plt.grid()
 
-        plt.subplot(312)
-        plt.plot(t_lst, V_lst)
-        plt.grid()
+            plt.subplot(312)
+            plt.plot(t_lst, V_lst)
+            plt.grid()
 
-        plt.subplot(313)
-        plt.plot(t_lst, i_lst)
-        plt.grid()
+            plt.subplot(313)
+            plt.plot(t_lst, i_lst)
+            plt.grid()
 
-        plt.show()
-        print("Total energy needed: ", sum(E_lst))
+            plt.show()
 
-
-trans = transition_EOM(18000)
-trans.simulate()
+        # Return the total energy
+        return sum(E_lst)
+#
+#
+# trans = transition_EOM(18000, "../data/inputs_config_1.json")
+# trans.simulate(plotting = True)
