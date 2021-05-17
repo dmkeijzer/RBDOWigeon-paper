@@ -21,8 +21,8 @@ climb_analysis.climb_perf_chart()
 
 # ===== Energy needed and distribution for normal mission ======
 Energy_analysis  = mission_analysis(data_path, cruising_alt, 360, energy, save_data = True)
-Energy_analysis.total_energy(300e3, pie = True)
-
+E_tot = Energy_analysis.total_energy(300e3, pie = True)
+print("Total energy needed: ", E_tot, "J")
 # ================= Payload range diagram ======================
 # Range of payloads
 m_PL        = np.arange(0, 400, 10)
