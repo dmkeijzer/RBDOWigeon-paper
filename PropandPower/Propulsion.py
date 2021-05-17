@@ -50,7 +50,7 @@ class PropulsionHover:
         if self.ducted == 1:
             return (0.5*self.T_h**(3/2) / np.sqrt(self.rho * self.n * self.A)) / self.eff_hover
         if self.ducted == 0:
-            return self.T_h**(3/2) / np.sqrt(2 * self.rho * self.n * self.A)
+            return (self.T_h**(3/2) / np.sqrt(2 * self.rho * self.n * self.A)) / self.eff_hover
         else:
             print("Check json file: Ducted must be 0 or 1")
             print("Ducted:", self.ducted)

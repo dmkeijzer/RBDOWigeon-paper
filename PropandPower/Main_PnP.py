@@ -40,6 +40,8 @@ if Prop_config == 1 or Prop_config == 2:
     # print("Equivalent radius for one propeller:", np.sqrt(disk.A_disk()/np.pi), "[m]")
     print("Equivalent radius for one propeller (from Disk Loading):", np.sqrt(disk.A/np.pi), "[m]")
     print("Propeller exit speed at hover:", disk.v_e_hover(), "[m/s]")
+    print(" ")
+
     # print("Disk area per propeller:", disk.A_disk()/N_hover, "[m^2]")
     # r_out = np.sqrt((disk.A_disk()/N_hover) / (np.pi*(1-D_inner_ratio**2)))
     disk_A_per_prop = disk.A/N_hover
@@ -47,16 +49,22 @@ if Prop_config == 1 or Prop_config == 2:
     r_out = np.sqrt(disk_A_per_prop / (np.pi*(1-D_inner_ratio**2)))
     print("Outer radius of the propellers:", r_out, "[m]")
     print("Hub radius of propellers:", r_out*D_inner_ratio, "[m]")
+    print(" ")
+
     print("Cruise speed:", V_cruise, "[m/s]")
-    # print("v0 for hover:", disk.v_0_hover(), "[m/s]")
     print("Jet speed cruise:", disk.v_e_cr(), "[m/s]")
     print("Cruise propulsive efficiency:", disk.eff_cruise(), "[-]")
+    print(" ")
+
     print("Ideal power for cruise:", disk.P_ideal(), "[W]")
     print("Actual power for cruise:", disk.P_actual(), "[W]")
     print(" ")
 
+    print("Max thrust per engine:", MTOW*2.5/N_hover)
+    print(" ")
+
     print("--- Power ---")
-    area_ratio_tilt = 4 * area_tilt_eng / disk.A
+    # area_ratio_tilt = 4 * area_tilt_eng / disk.A
 
     P_cr = prop.PropulsionCruise(MTOM, N_cruise, disk_A_per_prop, eff_P_cr, eff_D_cr, eff_F_cr, eff_M_cr, eff_PE_cr,
                                  eff_B_cr, rho, V_cruise, MTOW / LD_ratio)

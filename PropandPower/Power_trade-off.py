@@ -22,7 +22,7 @@ li_ion = {"Specific energy density": 250,
 
 li_S = {"Specific energy density": 550,
         "Volumetric energy density": 650,
-        "Power density": 11000,
+        "Power density": 10000,
         "Safety score": 3,
         "Operational life": 800,
         "Cost": 87}  # with Li-S potentially available at about €72 per kWh – 30% less than comparable Li-ion technology
