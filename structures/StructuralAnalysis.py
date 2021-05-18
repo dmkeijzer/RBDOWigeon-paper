@@ -50,21 +50,33 @@ aluminum = Material.load(file='materials.csv', material='Al 6061', Condition='T6
 N = aluminum.ParisFatigueN(stresses.flatten()[am], box.b, 2*1e-3, box.t/2)
 # aluminum.StressConcentration(aluminum.beta(0.01), 50e-3, 100*1e6)
 
-v, w = wingS.compute_deflections(aluminum.E, box.Ixx(), box.Iyy())
+xd, yd = wingS.compute_deflections(aluminum.E, box.Ixx(), box.Iyy())
 
 critBuckling = aluminum.buckling(box.h, box.t)*1e-6
 
 output = dict(config = config, WingLoading = WoS, maxPerimeter = Pmax, mPropellers = mProp, weightFractions = wf,
-              MaxNormalStress=omax, MaxShearStress=taumax, critBucklingStress=critBuckling, fatigueLife=N, deflectionX = v(b/2),
-             deflectionY = w(b/2), maxVonMises = Ymax, Passed = bool(omax < critBuckling and N > 365 * 3 * 15 and Ymax < aluminum.oyield))
+              MaxNormalStress=omax, MaxShearStress=taumax, critBucklingStress=critBuckling, fatigueLife=N, deflectionX = xd(b/2),
+             deflectionY = yd(b/2), maxVonMises = Ymax, OEM = w.oem, MTOM = w.mtom, cgOEM = w.oem_cg, cgMTOM = w.mtom_cg,
+             Passed = bool(omax < critBuckling and N > 365 * 3 * 15 and Ymax < aluminum.oyield))
 
 
 with open("output.json", "r") as o:
     dic = json.loads(o.read())
 
 dic[["Tandem", "Box", "Single"][config - 1]] = output
+print(output)
 
-output = json.dumps(dic, indent=3)
+op = json.dumps(dic, indent=3)
 
 with open("output.json", "w") as out:
-    out.write(output)
+    out.write(op)
+
+
+with open(f"../data/inputs_config_{config}.json", "r") as f:
+    dic = json.loads(f.read())
+
+dic["Structures"] = output
+op = json.dumps(dic, indent=3)
+
+with open(f"../data/inputs_config_{config}.json", "w") as f:
+    f.write(op)
