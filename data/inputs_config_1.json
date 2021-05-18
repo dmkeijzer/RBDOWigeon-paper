@@ -2,7 +2,7 @@
    "Aerodynamics": {
       "e": 1.1302,
       "AR": 7,
-      "CLforCDmin": 0.2927,
+      "CLforCDmin": 0.29270,
       "CDmin": 0.03254,
       "CLmax_front": 1.781,
       "CLmax_back": 1.737,
