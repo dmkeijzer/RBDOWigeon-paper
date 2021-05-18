@@ -16,6 +16,7 @@ WoS = 1422
 Pmax = 8.77182
 mProp = 400 / N_cruise
 thickness = 3e-3
+w_fus= 1.3; h_fus=1.6; l_fus=4
 
 nmax = max(plotgustenv(0.75 * V_cruise, V_cruise, CLalpha_back, WoS), plotmaneuvrenv(WoS, V_cruise, CLmax_back))
 
@@ -56,8 +57,8 @@ critBuckling = aluminum.buckling(box.h, box.t)*1e-6
 
 output = dict(config = config, WingLoading = WoS, maxPerimeter = Pmax, mPropellers = mProp, weightFractions = wf,
               MaxNormalStress=omax, MaxShearStress=taumax, critBucklingStress=critBuckling, fatigueLife=N, deflectionX = xd(b/2),
-             deflectionY = yd(b/2), maxVonMises = Ymax, OEM = w.oem, MTOM = w.mtom, cgOEM = w.oem_cg, cgMTOM = w.mtom_cg,
-             Passed = bool(omax < critBuckling and N > 365 * 3 * 15 and Ymax < aluminum.oyield))
+             deflectionY = yd(b/2), maxVonMises = Ymax, EOW = w.oem*9.81, MTOW = w.mtom*9.81, cgOEM = w.oem_cg, cgMTOM = w.mtom_cg,
+             Passed = bool(omax < critBuckling and N > 365 * 3 * 15 and Ymax < aluminum.oyield), w_fus= 1.3, h_fus=1.6, l_fus=4)
 
 
 with open("output.json", "r") as o:
