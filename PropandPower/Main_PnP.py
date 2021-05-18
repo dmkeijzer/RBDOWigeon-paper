@@ -75,6 +75,14 @@ if Prop_config == 1 or Prop_config == 2:
     print("The power needed for hover is:", P_h.P_hover() * 1.2, "[W]")
     print(" ")
 
+    print("--- P for max thrust ---")
+    P_max = prop.PropulsionHover(MTOM * TW_ratio, N_hover, disk_A_per_prop, eff_D_h, eff_F_h, eff_M_h,
+                                 eff_PE_h, eff_B_h, disk.v_e_hover(), 0, rho, Ducted)
+
+    # P_for_max_T_engine = P_max.P_hover()
+    print("The max power needed for TW ratio is:", P_max.P_hover() * 1.2, "[W]")
+    print(" ")
+
     print("--- Energy ---")
     print("Energy for hover (assuming 4 minutes in total for a flight):", P_h.P_hover() * 1.2 * (4 / 60) / 1000,
           "[kWh]")
@@ -84,6 +92,9 @@ if Prop_config == 1 or Prop_config == 2:
     req_energy = P_h.P_hover() * 1.2 * (4 / 60) / 1000 + P_cr.P_cr() * 1.2 * (time_cruise / 3600) / 1000
     print("Total energy for the mission:", req_energy, "[kWh]")
     print(" ")
+
+    print("--- Thrust ---")
+    print("Max thrust per engine:", TW_ratio*MTOW/N_hover, "[N]")
 
 # Engine sizing for config 3:
 xc_wing_eng_start = 0.2
@@ -144,6 +155,15 @@ if Prop_config == 3:
 
     print("The power needed for cruise is:", P_cr_tilt.P_cr() * 1.2, "[W]")
     print("The power needed for hover is:", P_hover * 1.2, "[W]")
+    print(" ")
+
+    print("--- P for max thrust ---")
+    P_max_tilt = prop.PropulsionHover(TW_ratio * mass_tilt_eng, 4, area_tilt_eng, eff_D_h, eff_F_h, eff_M_h,
+                                      eff_PE_h, eff_B_h, disk.v_e_hover(), 0, rho, Ducted)
+    P_max_wing = prop.PropulsionHover(TW_ratio * mass_wing_eng, 2, area_wing_prop, eff_D_h, eff_F_h, eff_M_h,
+                                      eff_PE_h, eff_B_h, disk.v_e_hover(), 0, rho, Ducted)
+    P_for_max_T_3 = P_max_tilt.P_hover() + P_max_wing.P_hover()
+    print("The max power needed for TW ratio is:", P_for_max_T_3 * 1.2, "[W]")
     print(" ")
 
     print("--- Energy ---")
