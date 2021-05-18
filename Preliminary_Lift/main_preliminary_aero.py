@@ -32,9 +32,9 @@ if conf == 3:
     AR = 10
 # A/C
 W = STR["MTOW"] #[N]
-Vcruise = 69.444 #[m/s]
+Vcruise = FP["V_cruise"] #[m/s]
 
-Wing_loading = 551
+Wing_loading = FP["WS"]
 # ISA
 h = 400 # cruise height[m]
 atm_flight  = ISA(h)
@@ -44,7 +44,8 @@ a = atm_flight.soundspeed()
 
 # Wing Planform Parameter
 
-S_ref = FP["S"] #[m**2] PLACEHOLDER
+S_ref = W/Wing_loading #[m**2] PLACEHOLDER
+print("S", S_ref)
 b = np.sqrt(AR*S_ref) # Due to reqs
   #PLACEHOLDER
 taper = 0.4

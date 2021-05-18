@@ -24,7 +24,6 @@ def e_factor(type,h, b, e_ref):
 """
 Cfe = 0.0045 for light twin wing aircraft ADSEE-I
 Swet_ratio = 4 estimation using ADSEE-I
-
 """
 def C_D_0(Swet_ratio, Cf): # ADSEE-I
     return Swet_ratio * Cf
@@ -42,11 +41,11 @@ def LoD_ratio(phase, CD0, AR, e):
         return np.sqrt((3 * np.pi * AR * e)/(16* CD0))
 
 # C_L from ADSEE-I
-def C_L(phase, CD0, AR, e):
+def C_L(phase, CDmin, AR, e, C_LforCDmin):
     if phase == 'cruise':
-        return np.sqrt(np.pi * AR * e * CD0)
+        return np.sqrt(np.pi * AR * e * CDmin) +C_LforCDmin
     if phase == 'loiter':
-        return np.sqrt(3 * np.pi * AR * e * CD0)
+        return np.sqrt(3 * np.pi * AR * e * CDmin) +C_LforCDmin
 
 def e_OS(AR):
     return 1.78 * (1-0.045*AR**0.68)-0.64
