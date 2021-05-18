@@ -104,7 +104,6 @@ for f in sensitivity_factors:
                                         disk.v_e_hover(), 0, rho, Ducted)
         P_hover = P_h_wing.P_hover() + P_h_tilt.P_hover()
 
-
         print("--- P for max thrust ---")
         P_max_tilt = prop.PropulsionHover(f*TW_ratio*mass_tilt_eng, 4, area_tilt_eng, eff_D_h, eff_F_h, eff_M_h, eff_PE_h, eff_B_h,
                                           disk.v_e_hover(), 0, rho, Ducted)
