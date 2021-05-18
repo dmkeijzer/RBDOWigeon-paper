@@ -103,7 +103,7 @@ class Weight:
         self.wing = wing
         # weights of components
         self.tot_pax_w = self.w_pax * 5
-        self.wweight = np.sum(wing.get_weight()) if wing.config != 3 else wing.get_weight()
+        self.wweight = np.sum(wing.get_weight()) if wing.config != 3 else wing.get_weight()[0]
         self.fweight = fuselage.get_weight()
         self.lweight = landing_gear.get_weight()
         self.pweight = propulsion.get_weight()
@@ -163,14 +163,13 @@ if __name__ == '__main__':
     n_prop = 16
     m_prop = [40]*16
     pos_prop = [0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 3.8, 3.8, 3.8, 3.8, 3.8, 3.8, 3.8, 3.8]
-    wing = Wing(mtom, S1, S2, n_ult, A, (0.2,3.8), config = 1)
+    wing = Wing(mtom, S1, S2, n_ult, A, (0.2,3.8), config = 3)
     # mtom, Pmax, lf, npax, pos, config = None
-    fuselage = Fuselage(mtom, Pmax, lf, 5, 2, config = 1)
+    fuselage = Fuselage(mtom, Pmax, lf, 5, 2, config = 3)
     lgear = LandingGear(mtom, 1.5)
     props = Propulsion(n_prop, m_prop, pos_prop)
     weight = Weight(m_pax, wing, fuselage, lgear, props, 85, 3, 400, 2, p_pax = [0.8, 1.3, 1.3, 2.5, 2.5])
     # print(weight.oem, weight.mtom, weight.mtom_cg, weight.oem_cg)
-    weight.print_weight_fractions()
     # print(wing.get_moment())
     # # (mtom, S1, S2, n_ult, A, pos, config = None)
     # print(wing.get_weight())
