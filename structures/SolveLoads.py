@@ -6,9 +6,9 @@ from Equilibrium import *
 from constants import *
 
 def SolveACLoads(cg, acf, acb):
-    Weight = PointLoad([0, - mTO * 9.81, 0], [cg, 0, 0])
+    Weight = PointLoad([0, - mTO * 9.81, 0], [cg[0] if isinstance(cg, np.ndarray) else cg, 0, 0])
     LFront = PointLoad([0, 1, 0], [acf, 0, 0])
-    LBack = PointLoad([0, 1, 0], [acb, 0, 0])
+    LBack = PointLoad([0, 1, 0], [acb, 0, 0]) if acb != 0 else Moment([0, 1, 0])
     motion = EquilibriumEquation(kloads = [Weight], ukloads=[LFront, LBack])
     motion.SetupEquation()
     return list(motion.SolveEquation())
