@@ -25,16 +25,16 @@ class Wing:
         if self.config == 1 or self.config == 2:
             return self.wweight1*0.453592, self.wweight2*0.453592
         if self.config == 3:
-            return self.wweight*0.453592
+            return self.wweight*0.453592, 0
 
     def get_moment(self):
+        pos1, pos2 = self.pos
         if self.config is None:
             return
         if self.config == 1 or self.config == 2:
-            pos1, pos2 = self.pos
             return self.wweight1*0.453592*pos1, self.wweight2*0.453592*pos2
-        if self.congif == 3:
-            return self.wweight*self.pos
+        if self.config == 3:
+            return self.wweight * pos1
 
 class Fuselage:
     # Roskam method (not accurate because does not take into account density of material but good enough for comparison
@@ -103,7 +103,7 @@ class Weight:
         self.wing = wing
         # weights of components
         self.tot_pax_w = self.w_pax * 5
-        self.wweight = np.sum(wing.get_weight()) if type(wing.get_weight()) is tuple else wing.get_weight()
+        self.wweight = np.sum(wing.get_weight()) if wing.config != 3 else wing.get_weight()[0]
         self.fweight = fuselage.get_weight()
         self.lweight = landing_gear.get_weight()
         self.pweight = propulsion.get_weight()
@@ -141,13 +141,16 @@ class Weight:
         d['Battery'] = [self.bweight, self.bweight/self.oem, self.bweight/self.mtom]
         d['Payload'] = [self.tot_pax_w, 0.0, self.tot_pax_w/self.oem]
 
-        print("{:<15} {:<20} {:<25} {:<15}".format('Component', 'Mass[kg]', 'fraction of OEM', 'fraction of MTOM'))
+        # print("{:<15} {:<20} {:<25} {:<15}".format('Component', 'Mass[kg]', 'fraction of OEM', 'fraction of MTOM'))
         print('--------------------------------------------------------------------------------')
         for k, v in d.items():
             mass, oem_frac, mtom_frac = v
-            print("{:<15} {:<20} {:<25} {:<15}".format(k, mass, oem_frac, mtom_frac))
+            # print("{:<15} {:<20} {:<25} {:<15}".format(k, mass, oem_frac, mtom_frac))
         print('')
         print(f'Where OEM is {self.oem}kg with CG of {self.oem_cg}m, and MTOM is {self.mtom}kg with CG of {self.mtom_cg}m')
+        for key in d:
+            d[key] = {k: list(i) if isinstance(i, np.ndarray) else i for k, i in zip(["mass", "fracOEM", "fracEM"], d[key])}
+        return d
 
 if __name__ == '__main__':
     mtom = 1930
@@ -160,14 +163,13 @@ if __name__ == '__main__':
     n_prop = 16
     m_prop = [40]*16
     pos_prop = [0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 3.8, 3.8, 3.8, 3.8, 3.8, 3.8, 3.8, 3.8]
-    wing = Wing(mtom, S1, S2, n_ult, A, (0.2,3.8), config = 1)
+    wing = Wing(mtom, S1, S2, n_ult, A, (0.2,3.8), config = 3)
     # mtom, Pmax, lf, npax, pos, config = None
-    fuselage = Fuselage(mtom, Pmax, lf, 5, 2, config = 1)
+    fuselage = Fuselage(mtom, Pmax, lf, 5, 2, config = 3)
     lgear = LandingGear(mtom, 1.5)
     props = Propulsion(n_prop, m_prop, pos_prop)
     weight = Weight(m_pax, wing, fuselage, lgear, props, 85, 3, 400, 2, p_pax = [0.8, 1.3, 1.3, 2.5, 2.5])
     # print(weight.oem, weight.mtom, weight.mtom_cg, weight.oem_cg)
-    weight.print_weight_fractions()
     # print(wing.get_moment())
     # # (mtom, S1, S2, n_ult, A, pos, config = None)
     # print(wing.get_weight())

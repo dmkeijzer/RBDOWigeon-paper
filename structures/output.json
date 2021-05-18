@@ -1,0 +1,182 @@
+{
+   "Tandem": {
+      "config": 1,
+      "WingLoading": 1422,
+      "maxPerimeter": 8.77182,
+      "mPropellers": 25.0,
+      "weightFractions": {
+         "Front wing": {
+            "mass": 120.3865396527448,
+            "fracOEM": 0.09205690154113973,
+            "fracEM": 0.06445570935069328
+         },
+         "Back wing": {
+            "mass": 120.3865396527448,
+            "fracOEM": 0.09205690154113973,
+            "fracEM": 0.06445570935069328
+         },
+         "Fuselage": {
+            "mass": 90.21643376125438,
+            "fracOEM": 0.06898649453758258,
+            "fracEM": 0.04830244518984232
+         },
+         "Landing gear": {
+            "mass": 77.24,
+            "fracOEM": 0.05906370509151448,
+            "fracEM": 0.04135478106280164
+         },
+         "Propulsion": {
+            "mass": 400.0,
+            "fracOEM": 0.3058710776360149,
+            "fracEM": 0.21416251197722236
+         },
+         "Cargo": {
+            "mass": 85,
+            "fracOEM": 0.0,
+            "fracEM": 0.045509533795159755
+         },
+         "Battery": {
+            "mass": 499.511,
+            "fracOEM": 0.38196491965260865,
+            "fracEM": 0.26744132630063583
+         },
+         "Payload": {
+            "mass": 475,
+            "fracOEM": 0.0,
+            "fracEM": 0.3632219046927677
+         }
+      },
+      "MaxNormalStress": 50.5411071279063,
+      "MaxShearStress": -14.553614386939387,
+      "critBucklingStress": 209.6121519610381,
+      "fatigueLife": -9623401.005862327,
+      "deflectionX": 0.00019086468912730663,
+      "deflectionY": 0.001760051307792468,
+      "maxVonMises": 56.47854977675762,
+      "OEM": 1307.740513066744,
+      "MTOM": 1867.740513066744,
+      "cgOEM": 2.0,
+      "cgMTOM": 1.9641277792438152,
+      "Passed": false
+   },
+   "Box": {
+      "config": 2,
+      "WingLoading": 1422,
+      "maxPerimeter": 8.77182,
+      "mPropellers": 16.666666666666668,
+      "weightFractions": {
+         "Front wing": {
+            "mass": 120.05706462342471,
+            "fracOEM": 0.08699657029897653,
+            "fracEM": 0.06188442572424457
+         },
+         "Back wing": {
+            "mass": 120.05706462342471,
+            "fracOEM": 0.08699657029897653,
+            "fracEM": 0.06188442572424457
+         },
+         "Fuselage": {
+            "mass": 90.21643376125438,
+            "fracOEM": 0.06537324851687717,
+            "fracEM": 0.04650282106860092
+         },
+         "Landing gear": {
+            "mass": 77.24,
+            "fracOEM": 0.055970176440427996,
+            "fracEM": 0.03981400892928394
+         },
+         "Propulsion": {
+            "mass": 400.0,
+            "fracOEM": 0.28985073247243914,
+            "fracEM": 0.20618337094398728
+         },
+         "Cargo": {
+            "mass": 85,
+            "fracOEM": 0.0,
+            "fracEM": 0.043813966325597295
+         },
+         "Battery": {
+            "mass": 572.4501,
+            "fracOEM": 0.4148127019723026,
+            "fracEM": 0.2950742282880565
+         },
+         "Payload": {
+            "mass": 475,
+            "fracOEM": 0.0,
+            "fracEM": 0.3441977448110215
+         }
+      },
+      "MaxNormalStress": 50.145799298170246,
+      "MaxShearStress": -14.481958391348886,
+      "critBucklingStress": 209.6121519610381,
+      "fatigueLife": -9852788.541111927,
+      "deflectionX": 0.00018933079737264106,
+      "deflectionY": 0.001746226907322631,
+      "maxVonMises": 56.069443940515875,
+      "OEM": 1380.0206630081038,
+      "MTOM": 1940.0206630081038,
+      "cgOEM": 2.0,
+      "cgMTOM": 1.9654642853668822,
+      "Passed": false
+   },
+   "Single": {
+      "config": 3,
+      "WingLoading": 1422,
+      "maxPerimeter": 8.77182,
+      "mPropellers": 100.0,
+      "weightFractions": {
+         "Front wing": {
+            "mass": 211.5286237107415,
+            "fracOEM": 0.17137272243972998,
+            "fracEM": 0.11788796333484206
+         },
+         "Back wing": {
+            "mass": 0,
+            "fracOEM": 0.0,
+            "fracEM": 0.0
+         },
+         "Fuselage": {
+            "mass": 112.48147152994906,
+            "fracOEM": 0.09112835729728003,
+            "fracEM": 0.06268755196792952
+         },
+         "Landing gear": {
+            "mass": 77.24,
+            "fracOEM": 0.06257701132375199,
+            "fracEM": 0.043046969853285204
+         },
+         "Propulsion": {
+            "mass": 400.0,
+            "fracOEM": 0.3240653098071051,
+            "fracEM": 0.22292578898645887
+         },
+         "Cargo": {
+            "mass": 85,
+            "fracOEM": 0.0,
+            "fracEM": 0.04737173015962251
+         },
+         "Battery": {
+            "mass": 433.069,
+            "fracOEM": 0.35085659913213296,
+            "fracEM": 0.24135562127644192
+         },
+         "Payload": {
+            "mass": 475,
+            "fracOEM": 0.0,
+            "fracEM": 0.38482755539593727
+         }
+      },
+      "MaxNormalStress": 10.551161553760148,
+      "MaxShearStress": -5.365502150417072,
+      "critBucklingStress": 61.00301951484689,
+      "fatigueLife": -1057731929.4283823,
+      "deflectionX": 0.0002330191527441793,
+      "deflectionY": 0.0006923285535802198,
+      "maxVonMises": 14.060328947501084,
+      "OEM": 1234.3190952406906,
+      "MTOM": 1794.3190952406906,
+      "cgOEM": 1.808379550658142,
+      "cgMTOM": 1.830843476800573,
+      "Passed": false
+   }
+}
