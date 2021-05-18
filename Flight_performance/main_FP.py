@@ -9,7 +9,7 @@ sys.path.append("../data/")
 # Initial data
 cruising_alt    = 400           # [m] Estimated cruising altitude
 energy          = 110*3.6e6     # [J] Energy capacity of the aircraft
-data_path       = "../data/inputs_config_1.json"
+data_path       = "../data/inputs_config_3.json"
 
 # ================== Run the initial sizing ====================
 perf = initial_sizing(cruising_alt, data_path)

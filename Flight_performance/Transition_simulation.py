@@ -44,7 +44,6 @@ class transition_EOM:
         self.TA     = prop["TA"]
         self.A_prop = self.T_max/self.TA
 
-
         #FP = self.data["Flight performance"]
         self.S = FP["S"]
         self.P_max = FP["P tot"]
@@ -60,8 +59,11 @@ class transition_EOM:
 
     def max_thrust(self, motor_AoA, speed):
 
+        init = np.minimum(self.P_max/(speed+0.0001), self.T_max)
+
         # Find the thrust for a certain input power and speed
-        T = optimize.newton(self.disk_power, 10000, args = (self.P_max, motor_AoA, speed, ))
+        T = optimize.newton(self.disk_power, init, args = (self.P_max, motor_AoA, speed, ))
+        T_bis = optimize.bisect(self.disk_power, 0, 40000, args = (self.P_max, motor_AoA, speed, ))
 
         return T
 
@@ -72,7 +74,6 @@ class transition_EOM:
 
         # Drag force
         D   = 0.5*self.rho*(speed**2)*self.S*CD
-
 
         # Acceleration in x (positive in direction of V)
         a_x = (-D + thrust*np.cos(motor_angle))/self.m
@@ -117,7 +118,6 @@ class transition_EOM:
         dt  = 0.1
         vx  = 0.     # Horizontal speed
         vy  = 0.     # Vertical speed
-        v   = 0.#np.array([[0], [0]], dtype = 'float64')
         x   = 0.#np.array([[0], [0]], dtype = 'float64')     # horizontal position
         y   = 0.     # Vertical position
         V   = 0.
@@ -148,7 +148,7 @@ class transition_EOM:
 
 
             # In the beginning op transition the motors are rotated with a constant speed, correct for future rotation
-            if 1.01*T_req < T_max:
+            if T_req < T_max:
                 i_T -= 2*np.pi*dt/180
 
                 # Recalculate the thrust for the rotated engines
@@ -177,8 +177,10 @@ class transition_EOM:
 
             V       = np.sqrt(vx**2  + vy**2)
 
-            alpha   = np.arctan(vy/(vx+1e-9))
+            alpha   = np.arctan2(vy,(vx+1e-9))
             a_T     = i_T + alpha
+
+            #print(T, T_max, vx, vy, i_T)
 
             # Store everything
             V_lst.append(V)

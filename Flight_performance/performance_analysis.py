@@ -184,6 +184,8 @@ class initial_sizing:
         self.ax1.plot(self.des_WS, self.des_WP, 'D', label='Design point')
         self.ax1.legend()
         self.ax1.set_ylim(0, 0.2)
+        self.ax1.set_ylabel("Power loading [N/W]")
+        self.ax1.set_xlabel("Wing loading [N/m^2]")
         plt.show()
 
         # Print results
@@ -268,7 +270,7 @@ class mission_analysis:
         self.FP             = self.data["Flight performance"]
         self.S              = self.FP["S"]
         self.WS             = self.FP["WS"]
-        self.gamma_descent  = np.radians(self.FP["Gamma descent"])
+
         self.WP_ho          = self.FP["WP hover"]
         self.WP_cr          = self.FP["WP cruise"]
         self.t_to           = self.FP["t_TO"]
@@ -281,6 +283,7 @@ class mission_analysis:
         self.ROD_ho = self.req["ROD_hover"]
         self.t_loit = self.req["Loiter time"]
         self.V_st   = self.req["V_stall"]
+        self.t_hov_loit = self.req["Hover loiter"]
 
         # Aerodynamic data
         self.aero   = self.data["Aerodynamics"]
@@ -318,7 +321,7 @@ class mission_analysis:
         self.h_cruise       = h_cruise      # [m] Cruising altitude
         self.h_climb        = h_climb       # [m] Average climbing altitude
         self.capacity       = ac_energy     # [J] Aircraft energy
-        self.h_tr           = 100           # [m] Transition altitude
+        self.h_tr           = 40            # [m] Transition altitude
         self.save           = save_data     # Boolean to see if data has to be saved or not
 
         # Warn if the aircraft is overweight
@@ -343,6 +346,9 @@ class mission_analysis:
 
         # Get the CL
         self.CL_climb = CL[idx_climb]
+
+        # Descent angle
+        self.gamma_descent = np.arctan(CL[idx]/CD[idx])#np.radians(self.FP["Gamma descent"])
 
         # Testing whether the CL is indeed the optimum one
         dist = CL / CD
@@ -380,8 +386,11 @@ class mission_analysis:
     def hover_power(self, ROC, W):
 
         TWR = 1.2 * (1 + ((ROC ** 2) * self.rho_sl * self.StotSw / self.WS))
+        T   = TWR*self.MTOW
 
-        P_hov = TWR * W * np.sqrt(self.TA / (self.rho_sl * 2)) / self.hover_eff
+        A_prop = T/self.TA
+
+        P_hov = T + 1.2*T*(-ROC/2 + np.sqrt(ROC**2/4 + T/(2*self.rho_sl*A_prop)))
 
         if np.any(P_hov < 0):
             print("hover power implemented incorrectly")
@@ -485,6 +494,14 @@ class mission_analysis:
 
         return E_hover_la
 
+    def hover_loiter_energy(self):
+
+        P_hover_loit = self.hover_power(0, self.W)
+
+        E_hover_loit = P_hover_loit*self.t_hov_loit
+
+        return E_hover_loit
+
     def loiter_energy(self):
 
         # Speed for minimum power is the same as maximum climb rate
@@ -537,7 +554,7 @@ class mission_analysis:
                 # Transition energy
                 plotting = False
                 if weight > 18500:
-                    plotting = True
+                    plotting = False
                 E_trans = trans.simulate(plotting = plotting)
 
                 W_lst.append(E_trans)
@@ -564,12 +581,13 @@ class mission_analysis:
         E_climb     = self.climb_energy(self.ROC)
         E_descent   = self.descent_energy()
         E_loiter    = self.loiter_energy()
+        E_hov_loit  = self.hover_loiter_energy()
 
         # Transition energy, assuming the take-off and landing transition take as much energy
         E_trans     = self.transition_energy()
 
         # Based on the energy available to the aircraft, estimate the amount left for cruise
-        E_cruise    = self.capacity - E_hover_to - E_hover_la - E_climb - E_descent - E_loiter - 2*E_trans
+        E_cruise    = self.capacity - E_hover_to - E_hover_la - E_climb - E_descent - E_loiter - 2*E_trans - E_hov_loit
 
         # Cruise power
         P_cruise    = self.cruise_power(self.W)
@@ -628,17 +646,18 @@ class mission_analysis:
         E_loiter    = self.loiter_energy()
         E_cruise    = self.cruise_energy(mission_range)
         E_trans     = 2*self.transition_energy()
+        E_hov_loit  = self.hover_loiter_energy()
 
         # Pie chart with all the energies
         if pie:
-            labels    = ['Take-off', 'Climb', 'Cruise', 'Descent', 'Land', 'Loiter', 'Transition']
-            fractions = [E_hover_to, E_climb, E_cruise, E_descent, E_hover_la, E_loiter, E_trans]
+            labels    = ['Take-off', 'Climb', 'Cruise', 'Descent', 'Land', 'Loiter', 'Transition', 'Hover loiter']
+            fractions = [E_hover_to, E_climb, E_cruise, E_descent, E_hover_la, E_loiter, E_trans, E_hov_loit]
 
             plt.pie(fractions, labels = labels, autopct='%1.1f%%')
             plt.legend(loc = 'lower left')
             plt.show()
 
         # Total energy needed for the mission
-        E_tot   = E_hover_to + E_hover_la + E_climb + E_descent + E_loiter + E_cruise + E_trans
+        E_tot   = E_hover_to + E_hover_la + E_climb + E_descent + E_loiter + E_cruise + E_trans + E_hov_loit
 
         return E_tot
