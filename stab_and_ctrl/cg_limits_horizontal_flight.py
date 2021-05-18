@@ -393,22 +393,28 @@ def est_Cnbeta(conf):
     b_fwd, b_rear, xacfwd, xacrear, e, CD0, lfus, hfus, wfus, Sweep_c4_fwd, Sweep_c4_rear, cr,Sref = values_conf_1_2(conf)
     V_fus = 4*np.pi/3*wfus*lfus*hfus
     # V_fus = wfus*lfus*hfus
+    Cnb_fus_fwd = -1.3 * (V_fus * lfus / wfus) * (1 / (S_fwd * b_fwd))
     if conf == 3:
         Cnb_w_rear = 0
-        Cnb_fus_rear = 0
+        Cnb_fus = Cnb_fus_fwd
     else:
         Cnb_w_rear = CLdes ** 2 * (1 / (4 * np.pi * Arear))
         Cnb_fus_rear = -1.3 * (V_fus * lfus / wfus) * (1 / (S_rear * b_rear))
-    Cnb_fus_fwd = -1.3*(V_fus*lfus/wfus)*(1/(S_fwd*b_fwd))*3/4
-    Cnb_fus = (Cnb_fus_fwd+Cnb_fus_rear)/2
-    Cnb_fus=Cnb_fus/100
+        Cnb_fus = (Cnb_fus_fwd + Cnb_fus_rear) / 2
+    print("AR = %.1f "%(Afwd))
     Cnb_w_fwd = CLdes**2*(1/(4*np.pi*Afwd)) #assumes 0 sweep
     Cnb_w = Cnb_w_fwd+Cnb_w_rear
-    Cnb = Cnb_w+Cnb_fus
-    lv = lfus/2
-    bv = np.sqrt(2*abs(Cnb)*S_fwd*b_fwd/(np.pi*lv))
+    if conf==1 or conf==2:
+        lv = lfus-1.682
+        Cnb_fus *= 1/100
+        Cnb = Cnb_w + Cnb_fus
+    else:
+        lv = lfus-1.7947
+        Cnb_fus *= 1/10
+        Cnb = Cnb_w + Cnb_fus
+    bv = np.sqrt(2 * abs(Cnb) * S_fwd * b_fwd / (np.pi * lv))
     print("Wing: Cnb_w = %.6f 1/rad"%(Cnb_w))
-    print("Fuselage: Cnb_w = %.6f 1/rad" % (Cnb_fus))
+    print("Fuselage: Cnb_fus = %.6f 1/rad" % (Cnb_fus))
     print("Total: Cnb = %.6f 1/rad" % (Cnb))
     print("Required vertical stabiliser bv = %.4f [m]"%(bv))
     return Cnb
@@ -423,15 +429,17 @@ print("-----------------------------------------------------------------")
 
 def CmqCzq(conf,sens,sens_value,AR_t,AR):
     CL_t = False
-    xcg = 2
     if conf == 1 or conf ==2:
+        xcg = 1.6819
         cruise = True
         values = values_sens_1_2(conf,cruise,sens,sens_value,AR_t,AR,CL_t)
         CLfwd, CLrear, Cmacfwd, Cmacrear, CLafwd, CLarear, Sfwd, Srear, Afwd, cfwd, crear, b_fwd, b_rear, \
         xacfwd, xacrear, e, CD0, lfus, hfus, wfus, Sweep_c4_fwd, Sweep_c4_rear, cr = values
+        print("x_ac_fwd = %.3f [m] and x_ac_rear = %.3f [m]"%(xacfwd,xacrear))
         Czq = (CLafwd*(xcg-xacfwd)/cfwd)-CLarear*Srear/Sfwd*(xacrear-xcg)/cfwd
         Cmq = -(CLafwd*(xcg-xacfwd)**2/cfwd**2+CLarear*Srear/Sfwd*(xacrear-xcg)**2/cfwd**2)
     else:
+        xcg = 1.7947
         values = values_conf_3(sens,sens_value,AR_t,AR)
         CL_max_fwd, CL_max_rear, Cm_ac_fwd, Cm_ac_rear, CLa_fwd, CLa_rear, S_fwd, S_rear, Afwd, c, b_fwd, e, CD0 = values
         lfus = 4
@@ -446,6 +454,7 @@ def CmqCzq(conf,sens,sens_value,AR_t,AR):
         else:
             Afwd = Afwd
         xacfwd = lfus / 2 - c/ 2 + 0.26 * c
+        print("x_ac = %.3f [m]" % (xacfwd))
         Czq = -CLa_fwd*(xacfwd-xcg)/c
         Cmq = -Czq*(xacfwd-xcg)/c
     print("Configuration %.0f: C_Z_q = %.3f 1/rad and C_m_q = %.3f 1/rad"%(conf,Czq,Cmq))
