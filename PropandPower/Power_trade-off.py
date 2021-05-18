@@ -6,8 +6,8 @@ Trade-off of the power system
 weights = {"Specific energy density": 1,
            "Volumetric energy density": 0.8,
            "Power density": 0.8,
-           "Safety score": 0.5,
-           "Operational life": 0.3,
+           "Safety score": 0,
+           "Operational life": 0.5,
            "Cost": 0.3}
 
 # List of power system options
@@ -35,11 +35,11 @@ li_metal = {"Specific energy density": 500,
             "Operational life": 800,
             "Cost": 100}
 
-solid_st = {"Specific energy density": 600,
+solid_st = {"Specific energy density": 500,
             "Volumetric energy density": 1000,
-            "Power density": 1000,
+            "Power density": 10000,
             "Safety score": 5,
-            "Operational life": 800,
+            "Operational life": 10000,
             "Cost": 100}
 
 GH2_fuelcell = {"Specific energy density": 1,
@@ -63,7 +63,7 @@ def score(system):
             weights["Power density"]*system["Power density"] / li_ion["Power density"] +
             weights["Safety score"]*system["Safety score"] / li_ion["Safety score"] +
             weights["Operational life"]*system["Operational life"] / li_ion["Operational life"] +
-            weights["Cost"]*(1/system["Cost"]) * li_ion["Cost"]) / sum(weights.values())
+            weights["Cost"]*(1/system["Cost"]) * li_ion["Cost"]) / sum(weights.values() )
 
 
 print("Trade-off scores:")

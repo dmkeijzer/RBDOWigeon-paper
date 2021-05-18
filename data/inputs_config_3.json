@@ -65,8 +65,8 @@
     "E_hover": 27.1197,
     "E_cr": 170.62197,
     "E_tot": 197.7416,
-    "Bat_mass": 395.4833,
-    "Bat_volume": 0.19774
+    "Bat_mass": 433.069,
+    "Bat_volume": 0.21653
   },
   "Requirements": {
     "V_stall": 40,
