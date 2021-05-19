@@ -7,7 +7,7 @@ from constants import *
 from maneuvre import plotgustenv, plotmaneuvrenv
 
 from cg_est import Wing, Fuselage, LandingGear, Propulsion, Weight
-from SolveLoads import SolveACLoads, SolveWingLoads
+from SolveLoads import SolveACLoads, SolveWingLoads, SolveVLoads
 from Analysis import WingBox, WingStructure
 from Material import Material
 
@@ -28,7 +28,11 @@ w = Weight(95, Wing(mTO, S_front, S_back, 1.5*nmax, AR, [0.4, 3.6], config),
 
 wf = w.print_weight_fractions()
 b = (S_front * AR) ** 0.5
+
 LpWing = SolveACLoads(w.mtom_cg, *w.wing.pos)
+
+
+
 wingEquation = SolveWingLoads(MAC1, b, 1.5*nmax*LpWing[0]/2, mTO / LD_ratio, w.wing.get_weight()[0]/2, 
                               mTO / (LD_ratio*N_cruise), N_cruise)
 wingEquation.SetupEquation()
@@ -61,6 +65,8 @@ output = dict(config = config, WingLoading = WoS, maxPerimeter = Pmax, mPropelle
              Passed = bool(omax < critBuckling and N > 365 * 3 * 15 and Ymax < aluminum.oyield), w_fus= 1.3, h_fus=1.6, l_fus=4)
 
 
+
+
 with open("output.json", "r") as o:
     dic = json.loads(o.read())
 
@@ -73,11 +79,11 @@ with open("output.json", "w") as out:
     out.write(op)
 
 
-with open(f"../data/inputs_config_{config}.json", "r") as f:
-    dic = json.loads(f.read())
+# with open(f"../data/inputs_config_{config}.json", "r") as f:
+#     dic = json.loads(f.read())
 
-dic["Structures"] = output
-op = json.dumps(dic, indent=3)
+# dic["Structures"] = output
+# op = json.dumps(dic, indent=3)
 
-with open(f"../data/inputs_config_{config}.json", "w") as f:
-    f.write(op)
+# with open(f"../data/inputs_config_{config}.json", "w") as f:
+#     f.write(op)
