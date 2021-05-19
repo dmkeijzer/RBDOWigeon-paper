@@ -48,5 +48,14 @@ def SolveVLoads(cg, acf, acb):
     motion.SetupEquation()
     return list(motion.SolveEquation())
 
-def SolveVWingLoads(MAC, b, Lwing, Dwing, mWing, TpE, nE):
-    pass
+def SolveVWingLoads(MAC, b, Dwing, mWing, TpE, nE):
+    pos = np.linspace(0, b / 2)
+    WingWeight = RunningLoad([[(mWing * 9.81 + Dwing) / b]*len(pos), [0]*len(pos)], pos, axis=2)
+    Thrust = [PointLoad([-TpE, 0, 0], [0, 0, i]) for i in np.linspace(0, b/2, round(nE/4))]
+    Fixedx = PointLoad([1, 0, 0], [0.5 * MAC, 0, 0])
+    FixedMomenty = Moment([0, 1, 0])
+    wingequation = EquilibriumEquation(kloads=[WingWeight] + Thrust,
+                                       ukloads=[Fixedx, FixedMomenty])
+    wingequation.SetupEquation()
+
+    return wingequation
