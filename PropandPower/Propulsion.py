@@ -20,11 +20,11 @@ class PropulsionHover:
         :param MTOM:        Maximum take off mass [kg]
         :param n:           Number of engines
         :param A:           Area per engine [m^2]
-        :param eff_bat_el:  Efficiency from battery to electronics
-        :param eff_el_mo:   Efficiency from electronics to motors
-        :param eff_mo_sha:  Efficiency from motors to shaft
-        :param eff_sha_flo: Efficiency from shaft to flow
-        :param eff_flo_jet: Efficiency from flow to jet
+        :param eff_B_h:     Efficiency from battery to electronics
+        :param eff_PE_h:    Efficiency from electronics to motors
+        :param eff_M_h:     Efficiency from motors to shaft
+        :param eff_F_h:     Efficiency from shaft to flow
+        :param eff_D_h:     Efficiency from flow to jet
         :param vj:          Jet speed [m/s]
         :param m_dot_h:     Mass flow at hover [kg/s]
         eff_D_h, eff_F_h, eff_M_h, eff_PE_h, eff_B_h
@@ -69,12 +69,12 @@ class PropulsionCruise:
         :param MTOM: Maximum take off mass [kg]
         :param n: Number of engines
         :param A: Area per engine [m^2]
-        :param eff_bat_el:  Efficiency from battery to electronics
-        :param eff_el_mo:   Efficiency from electronics to motors
-        :param eff_mo_sha:  Efficiency from motors to shaft
-        :param eff_sha_flo: Efficiency from shaft to flow
-        :param eff_flo_jet: Efficiency from flow to jet
-        :param eff_jet_air: Efficiency from jet to aircraft
+        :param eff_B_cr:  Efficiency from battery to electronics
+        :param eff_PE_cr:   Efficiency from electronics to motors
+        :param eff_M_cr:  Efficiency from motors to shaft
+        :param eff_F_cr: Efficiency from shaft to flow
+        :param eff_D_cr: Efficiency from flow to jet
+        :param eff_P_cr: Efficiency from jet to aircraft
         eff_P_cr,eff_D_cr,eff_F_cr,eff_M_cr,eff_PE_cr,eff_B_cr,
         eff_D_h, eff_F_h, eff_M_h, eff_PE_h, eff_B_h
         """
