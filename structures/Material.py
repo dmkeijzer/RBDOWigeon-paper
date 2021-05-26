@@ -8,6 +8,7 @@ class Material:
         self.C, self.m = Paris
         self.props = others
         self.name = name
+        self.G = E / (2 * (1 + poisson))
     
     __repr__ = __str__ = lambda self: (self.name if self.name else "Material")+f"(E={self.E}, ρ={self.rho}, σy={self.oy}, σult={self.oult})"
     
