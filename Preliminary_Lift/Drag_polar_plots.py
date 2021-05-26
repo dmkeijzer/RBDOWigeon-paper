@@ -1,13 +1,15 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from Preliminary_Lift.Drag import CD0, C_D, e_factor
+from Preliminary_Lift.Drag import  C_D, e_factor
 
 C_L = np.linspace(-0.5, 1.5,151)
-C_D0 = CD0(4 ,0.0045)
+C_Dmin1 = 0.0327
+C_Dmin2 = 0.0322
+CD_min3 =0.0285
 
-e_ref = 0.85
-e_tandem = e_factor('tandem',0.2, 1, e_ref)
-e_box = e_factor('box',0.2, 1, e_ref)
+e_ref = 0.7566
+e_tandem = 1.1302
+e_box = 1.1738
 C_D_n8 = []
 C_D_n9 = []
 C_D_n10 = []
@@ -17,21 +19,26 @@ C_D_t8 = []
 C_D_b6 = []
 C_D_b7 = []
 C_D_b8 = []
-
+LoD = []
 for i in C_L :
-    C_D_n8.append(C_D(i, C_D0, 8, e_ref ))
-    C_D_n9.append(C_D(i, C_D0, 9, e_ref))
-    C_D_n10.append(C_D(i, C_D0, 10, e_ref))
-    C_D_t6.append(C_D(i, C_D0, 6, e_tandem))
-    C_D_t7.append(C_D(i, C_D0, 7, e_tandem))
-    C_D_t8.append(C_D(i, C_D0, 8, e_tandem))
-    C_D_b6.append(C_D(i, C_D0, 6, e_box))
-    C_D_b7.append(C_D(i, C_D0, 7, e_box))
-    C_D_b8.append(C_D(i, C_D0, 8, e_box))
-fig , ax = plt.subplots(2,2)
-ax[0,0].plot(C_D_n8, C_L, color = 'red', label = 'Wing A = 8')
-ax[0,0].plot(C_D_n9, C_L, color = 'red', alpha = 0.7, label = 'Wing A = 9')
-ax[0,0].plot(C_D_n10, C_L, color = 'red', alpha = 0.4, label = 'Wing A = 10')
+    C_D_n8.append(C_D(i,0.2927, C_Dmin1, 7, e_tandem ))
+    C_D_n9.append(C_D(i,0.2927, C_Dmin2, 7, e_box))
+    C_D_n10.append(C_D(i,0.2401, CD_min3, 10, e_ref))
+    #C_D_t6.append(C_D(i, C_D0, 6, e_tandem))
+   # C_D_t7.append(C_D(i, C_D0, 7, e_tandem))
+   # C_D_t8.append(C_D(i, C_D0, 8, e_tandem))
+    #C_D_b6.append(C_D(i, C_D0, 6, e_box))
+    #C_D_b7.append(C_D(i, C_D0, 7, e_box))
+    #C_D_b8.append(C_D(i, C_D0, 8, e_box))
+
+#fig , ax = plt.subplots(1,1)
+plt.plot(C_D_n8, C_L, color = 'blue', alpha = 0.7,label = 'Tandem configuration')
+plt.plot(C_D_n9, C_L, color = 'red', alpha = 0.7, label = 'Box wing configuration')
+plt.plot(C_D_n10, C_L, color = 'green', alpha = 0.7, label = 'Flying wing configuration')
+plt.grid()
+plt.xlabel("$C_D$[-]")
+plt.ylabel("$C_L$")
+"""
 ax[0,1].plot(C_D_t6, C_L, color = 'blue', label = 'Tandem A = 6')
 ax[0,1].plot(C_D_t7, C_L, color = 'blue', alpha = 0.7,  label = 'Tandem A = 7')
 ax[0,1].plot(C_D_t8, C_L, color = 'blue', alpha = 0.4, label = 'Tandem A = 8')
@@ -41,8 +48,8 @@ ax[1,0].plot(C_D_b8, C_L, color = 'green', alpha = 0.4, label = 'Box Wing A = 8'
 ax[1,1].plot(C_D_n8, C_L, color = 'red', label = 'Wing A = 8')
 ax[1,1].plot(C_D_t8, C_L, color = 'blue', alpha = 0.4, label = 'Tandem A = 8')
 ax[1,1].plot(C_D_b8, C_L, color = 'green', alpha = 0.4, label = 'Box Wing A = 8')
-ax[0,0].legend()
-ax[0,1].legend()
-ax[1,0].legend()
-ax[1,1].legend()
+"""
+plt.legend()
+
 plt.show()
+

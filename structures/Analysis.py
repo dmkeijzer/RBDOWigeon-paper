@@ -4,8 +4,9 @@ from MathFunctions.Mechanics import StepFunction
 import pandas as pd
 
 class WingBox:
-    def __init__(self, thickness, base, height):
+    def __init__(self, thickness, base, height, material):
         self.b, self.h, self.t = base, height, thickness
+        self.mat = material
     
     Area = lambda self: self.b * self.h - (self.b - 2 * self.t) * (self.h - 2 * self.t)
 
@@ -53,17 +54,12 @@ class WingBox:
             return vit * (-self.b * (self.h/2-y) / 2) + self.Hshear(Vx, -self.b/2, self.h/2)
         else:
             raise ValueError(f"Invalid Coordinates Supplied: {(x, y) = }")
-    
-    @staticmethod
-    def buckling(shorterSideOfSkin, skinThickness, E, v=0.33):
-        C = 5.41 # SSCS Support
-        b = shorterSideOfSkin
-        t = skinThickness
-        return C * pi * pi * E * (t / b) ** 2 / (12 * (1 - v * v))
-    
+
     q = lambda self, x, y, Vx=0, Vy=0, T=0: self.Vshear(Vy, x, y) + self.Hshear(Vx, x, y) + T / (2 * self.Area())
     tau = lambda self, x, y, Vx=0, Vy=0, T=0: self.q(x, y, Vx, Vy, T) / self.t
     o = lambda self, x, y, Mx=0, My=0: My * x / self.Iyy() + Mx * y / self.Ixx()
+    buckling = lambda self: self.mat.buckling(min(self.b, self.h), self.t)
+    fatigue = lambda self, dS, ai, af: self.mat.ParisFatigueN(dS, self.b, ai, af)
 
 class WingStructure:
     def __init__(self, wingequation):

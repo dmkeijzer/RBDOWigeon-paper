@@ -36,7 +36,7 @@ class Material:
     @staticmethod
     def StressConcentration(beta, a, o):
         return beta * o*1e-6 * (pi * a) ** 0.5
-    
+
     def ParisFatigueN(self, dS, w, ai, af):
         def integrand(a):
             beta = self.beta(a/w)
