@@ -40,7 +40,7 @@ class Material:
 
     def ParisFatigueN(self, dS, w, ai, af):
         def integrand(a):
-            beta = self.beta(a/w)
+            beta = self.beta(a/w, False)
             return 1 / self.StressConcentration(beta, a, dS)**self.m
         N = (1/self.C) * quad(integrand, ai, af)[0]
         return N
