@@ -72,7 +72,7 @@
 127,Stuttgart Aerospace Apollo,None,2,100,50,None,#VALUE!,None
 128,Stuttgart Aerospace Eolos,None,6,100,50,480,#VALUE!,Payload 480 kg
 129,Stuttgart Aerospace Eolos I,None,1,100,,,#VALUE!,None
-134,Terrafugia TF-2 Tiltrotor,3630,4,333,555,500,3630,Cost per flight hour: $380-$421
+134,Terrafugia TF-2 Tiltrotor,4130,4,333,555,500,3630,Cost per flight hour: $380-$421
 136,Transcend Vy500,3171,6,652,644,993.577,2177.243,"empty 4800 lbs MTOW 6990 lbs, hover 40 mph"
 143,Vimana AAV,1050,4,244,900,400,650,"MTOW 1050 kg, max payload 400, 8 propellers with 8 motors (60 kW), powerplant 200 kW"
 147,VRCO NeoXCraft,450,2,338,120,180,270,"Max payload 180, 450 MTOM"
