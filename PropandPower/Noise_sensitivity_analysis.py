@@ -18,11 +18,11 @@ xc_wing_eng_start = 0.2
 xc_wing_eng_end = 0.8
 xb_wing_eng_start = 0.2
 taper = c_t/c_r
-b = np.sqrt(2*AR*S_front)
+b = np.sqrt(AR*S_front)
 MTOM = MTOW/g0
 
 if Prop_config == 1:
-    M_t_max = 0.75
+    M_t_max = 0.7
 
     disk_A_per_prop = disk.A/N_hover
     r_out = np.sqrt(disk_A_per_prop / (np.pi*(1-D_inner_ratio**2)))
@@ -36,8 +36,8 @@ if Prop_config == 1:
     print("")
 
     # Shaft power of each engine in kW
-    P_br_cruise = P_cr_estim/N_cruise * 1/1000 * eff_B_cr * eff_PE_cr * eff_M_cr
-    P_br_hover = P_hover_estim/N_hover * 1/1000 * eff_B_h * eff_PE_h * eff_M_h
+    P_br_cruise = P_cr_estim/N_cruise * 1/1000 * eff_B_cr * eff_PE_cr * eff_M_cr / 1.2
+    P_br_hover = P_hover_estim/N_hover * 1/1000 * eff_B_h * eff_PE_h * eff_M_h / 1.2
 
     # The 1s are number of propellers (we calculate individually each engine, so 1)
     noise = brr.Noise(P_br_cruise, P_br_hover, 2*r_out, num_blades, 1, 1, rpm_max, rpm_max, a, M_t_h=M_t_max, M_t_cr=M_t_max)
@@ -57,13 +57,13 @@ if Prop_config == 2:
     r_out = np.sqrt(disk_A_per_prop / (np.pi*(1-D_inner_ratio**2)))
 
     # Shaft power of each engine in kW
-    P_br_cruise = P_cr_estim/N_cruise * 1/1000 * eff_B_cr * eff_PE_cr * eff_M_cr
-    P_br_hover = P_hover_estim/N_hover * 1/1000 * eff_B_h * eff_PE_h * eff_M_h
+    P_br_cruise = P_cr_estim/N_cruise * 1/1000 * eff_B_cr * eff_PE_cr * eff_M_cr / 1.2
+    P_br_hover = P_hover_estim/N_hover * 1/1000 * eff_B_h * eff_PE_h * eff_M_h / 1.2
 
     # Calculate available rpm based on allowable Mach at the blade tips
     rpm_max_hover = M_t_max*a*60 / (np.pi * 2*r_out)
     # Cruise rpm is hpver rpm times the ratio of cruise vs hover power
-    rpm_cr = rpm_max_hover * P_br_cruise/P_br_hover
+    rpm_cr = rpm_max_hover * (P_br_cruise/P_br_hover)**(2/3)
 
     print("For config 2, the maximum allowable rpm in hover are:", rpm_max_hover, "[rpm]")
     print("For config 2, the maximum allowable rpm in cruise are:", rpm_cr, "[rpm]")
@@ -83,7 +83,7 @@ if Prop_config == 2:
     print("")
 
 elif Prop_config == 3:
-    M_t_max = 0.75
+    M_t_max = 0.7
 
     r_out_wing_eng = ((xc_wing_eng_end-xc_wing_eng_start)*c_r/2 - (xc_wing_eng_end-xc_wing_eng_start)*(1-taper)*c_r*xb_wing_eng_start/2) / \
                      (1 + 2*(xc_wing_eng_end-xc_wing_eng_start)*(1-taper)/b**2)
@@ -113,10 +113,10 @@ elif Prop_config == 3:
     print("")
 
     # Shaft power
-    P_h_wing = P_h_wing.P_hover() * 1/1000 * eff_B_h * eff_PE_h * eff_M_h
-    P_h_tilt = P_h_tilt.P_hover() * 1/1000 * eff_B_h * eff_PE_h * eff_M_h
+    P_h_wing = P_h_wing.P_hover() * 1/1000 * eff_B_h * eff_PE_h * eff_M_h / 1.2
+    P_h_tilt = P_h_tilt.P_hover() * 1/1000 * eff_B_h * eff_PE_h * eff_M_h / 1.2
 
-    P_cr = P_cr_tilt.P_cr() * 1/1000 * eff_B_cr * eff_PE_cr * eff_M_cr
+    P_cr = P_cr_tilt.P_cr() * 1/1000 * eff_B_cr * eff_PE_cr * eff_M_cr / 1.2
 
     # The 1s are number of propellers (we calculate individually each engine, so 1)
     noise_tilt = brr.Noise(P_cr, P_h_tilt, 2*r_out, num_blades, 1, 1, rpm_max_tilt, rpm_max_tilt, a, M_t_h=M_t_max, M_t_cr=M_t_max)
