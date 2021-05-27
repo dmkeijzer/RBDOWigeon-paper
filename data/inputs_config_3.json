@@ -125,8 +125,8 @@
     "E_tot": 201.2075,
     "Bat_mass": 402.415,
     "Bat_volume": 0.201207,
-    "num_blades": 3,
-    "rpm": 3000
+    "num_blades": 5,
+    "rpm": 1000
   },
   "Requirements": {
     "V_stall": 40,
