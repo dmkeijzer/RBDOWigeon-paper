@@ -2,7 +2,7 @@ import numpy as np
 from structures.Equilibrium import *
 from constants import *
 
-def SolveACLoads(cg, acf, acb):
+def SolveACLoads(cg: float, acf: float, acb: float) -> :
     Weight = PointLoad([0, - mTO * 9.81, 0], [cg[0] if isinstance(cg, np.ndarray) else cg, 0, 0])
     LFront = PointLoad([0, 1, 0], [acf, 0, 0])
     LBack = PointLoad([0, 1, 0], [acb, 0, 0]) if acb != 0 else Moment([0, 1, 0])
