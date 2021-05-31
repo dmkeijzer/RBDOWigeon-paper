@@ -1,8 +1,5 @@
-import sys
-sys.path.append('../')
-
 import numpy as np
-from Equilibrium import *
+from structures.Equilibrium import *
 from constants import *
 
 def SolveACLoads(cg, acf, acb):

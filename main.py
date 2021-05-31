@@ -1,4 +1,9 @@
-import pandas as pd
+from structures.Material import Material
+from structures.SolveLoads import *
 
-df = pd.DataFrame({"a": [1, 2], "b": [1, 2]})
-print(df)
+aluminum = Material.load(file='structures/materials.csv', material='Al 6061', Condition='T6')
+
+print(aluminum)
+
+
+print(SolveACLoads(1, 0.5, 1.5))
