@@ -1,8 +1,5 @@
-import sys
-sys.path.append('../stab_and_ctrl/')
-
 import numpy as np
-from hover_controllability import *
+from stab_and_ctrl.hover_controllability import *
 
 def test_hexacopter_example():
     ma = 1.535  # [kg]
