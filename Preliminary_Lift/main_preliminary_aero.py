@@ -7,7 +7,7 @@ from Aero_tools import ISA
 import os
 import json
 root_path = os.path.join(os.getcwd(), os.pardir)
-conf = 2
+conf = 1
 
 if conf == 1:
     datafile = open(os.path.join(root_path, "data/inputs_config_1.json"), "r")
@@ -29,7 +29,7 @@ if conf == 3:
     datafile.close()
     FP = data["Flight performance"]
     STR = data["Structures"]
-    AR = 10
+    AR = 10.5
 # A/C
 W = STR["MTOW"] #[N]
 Vcruise = FP["V_cruise"] #[m/s]
@@ -129,8 +129,8 @@ flamf =0.1  # From ADSEE 2 L2 GA aircraft
 IF_f = 1    # From ADSEE 2 L2
 IF_w = 1.1   # From ADSEE 2 L2
 flamw = 0.35 # From ADSEE 2 L2 GA aircraft
-u = 0.229 # fuselage upsweep
-Abase = 0.06
+u = 0.229 #np.pi/180# fuselage upsweep
+Abase = 0.04
 sweep_xcm_single = sweep_atx(EPPLER335[6],Wing_planform_params_single[1],Wing_planform_params_single[0],taper,sweepc4)
 sweep_xcm_double = sweep_atx(NASA_LANGLEY[6],Wing_planform_params_double[0][1],Wing_planform_params_single[0],taper,sweepc4)
 
