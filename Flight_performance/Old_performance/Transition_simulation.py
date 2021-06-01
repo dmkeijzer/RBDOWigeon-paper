@@ -27,6 +27,7 @@ class transition_EOM:
         aero = self.data["Aerodynamics"]
         self.CDmin  = aero["CDmin"]
         self.CLmin  = aero["CLforCDmin"]
+        self.CLmax  = aero["CLmax_front"]
         self.A      = aero["AR"]
         self.e      = aero["e"]
         self.StotSw = aero["Stot/Sw"]
@@ -159,6 +160,7 @@ class transition_EOM:
             # If the required thrust is higher than the maximum thrust, wait for the speed to increase
             else:
                 T   = T_max
+                i_T -= 0.5*np.pi*dt/180
 
             # Power used
             P   = self.disk_power(T, 0, a_T, V)
@@ -177,10 +179,8 @@ class transition_EOM:
 
             V       = np.sqrt(vx**2  + vy**2)
 
-            alpha   = np.arctan2(vy,(vx+1e-9))
+            alpha   = np.arctan2(vy, vx)
             a_T     = i_T + alpha
-
-            #print(T, T_max, vx, vy, i_T)
 
             # Store everything
             V_lst.append(V)
@@ -191,22 +191,30 @@ class transition_EOM:
             E_lst.append(P*dt)
 
             # Stop the simulation if the engines are rotated enough and climb begins
-            if t > 100 or i_T < 2e-1:
+            if t > 100 or i_T < 0.5e-1:
                 running = False
 
         if plotting:
             plt.subplot(311)
             plt.plot(x_lst, y_lst)
+            plt.xlabel("x-position [m]")
+            plt.ylabel("y [m]")
             plt.grid()
 
             plt.subplot(312)
             plt.plot(t_lst, V_lst)
+            plt.xlabel("Time [s]")
+            plt.ylabel("V [m/s]")
             plt.grid()
 
             plt.subplot(313)
-            plt.plot(t_lst, i_lst)
+            plt.plot(np.array(t_lst), np.array(i_lst)*180/np.pi)
+            plt.xlabel("Time [s]")
+            plt.ylabel("Motor angle [deg]")
             plt.grid()
 
+            print("end speed", V_lst[-1])
+            plt.tight_layout()
             plt.show()
 
         # Return the total energy
