@@ -487,13 +487,14 @@ def Sr_Sfwd(conf,s,s_value,AR_t,AR,CL_t,Xcg,d):
     SrSfwd_stab = CLafwd*(Xcg-xacfwd)/(CLarear*(1-deda)*(xacrear-d-Xcg))
     SrSfwd_control = (-Cmacfwd*cfwd+CDfwd*hfus/2 -CLfwd*(Xcg-xacfwd-d)/(CDrear*hfus/2-CLrear*(xacrear-Xcg)+Cmacrear*crear))
     return SrSfwd_stab**-1,SrSfwd_control**-1
-Xcg = np.linspace(1, 4,1000)
+Xcg = np.linspace(0.75, 4,1000)
 d = [0,0.125,0.25,0.375,0.5,0.625,0.75,0.875,1,1.25,1.5,1.75,2]
 for i in range(0,len(d)):
     SrSfwd = Sr_Sfwd(1,s=False,s_value=0,AR_t =False,AR=AR,CL_t = False,Xcg=Xcg,d=d[i])
     plt.plot(Xcg,SrSfwd[0],label="Neutral stability")
     plt.plot(Xcg,SrSfwd[1],label="Controllability limit")
-    plt.xlabel(r"${x}_{cg}$ [m]")
-    plt.ylabel(r"$\frac{S_{fwd}}{S_{rear}}$ [-]")
+    plt.xlabel(r"${x}_{cg}$ [m]",fontsize=14)
+    plt.ylabel(r"$S_{fwd}/S_{rear}$ [-]",fontsize=14)
+    plt.ylim(0,max(SrSfwd[1]))
     plt.legend()
     plt.show()
