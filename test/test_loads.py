@@ -1,9 +1,7 @@
 import unittest
 import pytest
-import sys
-sys.path.append('../structures/')
 
-from SolveLoads import *
+from structures.SolveLoads import *
 from MathFunctions.Mechanics import StepFunction
 
 class TestLoads(unittest.TestCase):

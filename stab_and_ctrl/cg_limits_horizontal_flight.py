@@ -293,6 +293,12 @@ plt.xlabel(r"Increase in $C_{L_{fwd}}$ [%]",fontsize=14)
 plt.ylabel(r"$x_{cg_{min}}$ [m]",fontsize=14)
 plt.show()
 
+cg_CL = cg_range_conf_1_2(2,s=True,s_value=sense_value,AR_t =False,AR=AR,CL_t = True)[0]
+plt.plot(sense_value,cg_CL)
+plt.xlabel(r"Increase in $C_{L_{fwd}}$ [%]",fontsize=14)
+plt.ylabel(r"$x_{cg_{min}}$ [m]",fontsize=14)
+plt.show()
+
 # cg1_1 = cg_range_conf_1_2(1,s=True,s_value=-sense_value)
 # plt.plot(sense_value*100,cg1_1)
 # plt.xlabel("Decrease in AR [%]")
@@ -430,7 +436,7 @@ print("-----------------------------------------------------------------")
 def CmqCzq(conf,sens,sens_value,AR_t,AR):
     CL_t = False
     if conf == 1 or conf ==2:
-        xcg = 1.6819
+        xcg = 1.6853
         cruise = True
         values = values_sens_1_2(conf,cruise,sens,sens_value,AR_t,AR,CL_t)
         CLfwd, CLrear, Cmacfwd, Cmacrear, CLafwd, CLarear, Sfwd, Srear, Afwd, cfwd, crear, b_fwd, b_rear, \

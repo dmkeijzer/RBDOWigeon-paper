@@ -70,7 +70,8 @@ if Prop_config == 1 or Prop_config == 2:
                                  eff_B_cr, rho, V_cruise, MTOW / LD_ratio)
     P_h = prop.PropulsionHover(MTOM, N_hover, disk_A_per_prop, eff_D_h, eff_F_h, eff_M_h, eff_PE_h, eff_B_h,
                                disk.v_e_hover(), 0, rho, Ducted)
-
+    print("eff_hov:", P_h.eff_hover)
+    print("eff_cr:", P_cr.eff_cruise)
     print("The power needed for cruise is:", P_cr.P_cr() * 1.2, "[W]")
     print("The power needed for hover is:", P_h.P_hover() * 1.2, "[W]")
     print(" ")
@@ -186,6 +187,10 @@ if Prop_config == 1:
     print("The initial area was:", LE_prop.S, "[m^2]")
     print("With leading edge distributed propulsion, this area can be reduced to", LE_prop.S1(), "[m^2]")
     print("This corresponds to a ratio of", LE_prop.S_ratio())
+    print(" ")
+    print("The cruise speed is:", LE_prop.v0, "[m/s]")
+    print("The jet speed is:", LE_prop.ve, "[m/s]")
+    print("The speed ratio is:", LE_prop.ve/LE_prop.v0, "[m/s]")
 
 # This needs to be checked and added to the json files
 xc_prop = 0.7

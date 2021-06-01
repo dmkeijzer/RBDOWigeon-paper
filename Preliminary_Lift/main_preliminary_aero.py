@@ -7,7 +7,7 @@ from Aero_tools import ISA
 import os
 import json
 root_path = os.path.join(os.getcwd(), os.pardir)
-conf =3
+conf = 1
 
 if conf == 1:
     datafile = open(os.path.join(root_path, "data/inputs_config_1.json"), "r")
@@ -29,7 +29,7 @@ if conf == 3:
     datafile.close()
     FP = data["Flight performance"]
     STR = data["Structures"]
-    AR = 10
+    AR = 10.5
 # A/C
 W = STR["MTOW"] #[N]
 Vcruise = FP["V_cruise"] #[m/s]
@@ -129,7 +129,8 @@ flamf =0.1  # From ADSEE 2 L2 GA aircraft
 IF_f = 1    # From ADSEE 2 L2
 IF_w = 1.1   # From ADSEE 2 L2
 flamw = 0.35 # From ADSEE 2 L2 GA aircraft
-u = 0.1 # fuselage upsweep
+u = 0.229 #np.pi/180# fuselage upsweep
+Abase = 0.04
 sweep_xcm_single = sweep_atx(EPPLER335[6],Wing_planform_params_single[1],Wing_planform_params_single[0],taper,sweepc4)
 sweep_xcm_double = sweep_atx(NASA_LANGLEY[6],Wing_planform_params_double[0][1],Wing_planform_params_single[0],taper,sweepc4)
 
@@ -138,11 +139,11 @@ LEsweep_double = sweep_atx(0,Wing_planform_params_double[0][1],b,taper,sweepc4)
 C_L_finite_single = EPPLER335[4]*(np.cos(LEsweep_single)**2)
 C_L_finite_double = NASA_LANGLEY[4]*(np.cos(LEsweep_double)**2)
 print("e_conv",e_conv)
-class2drag_box = componentdrag('box',S_ref,2,0,2,np.sqrt(1.2*1.6),Vcruise,rho,MAC*0.5,AR,e_box,Mach(Vcruise,a),k,flamf,flamw,mu,NASA_LANGLEY[5],NASA_LANGLEY[6],0,u,c_t_double,h_d,IF_f,IF_w,C_L_des,C_L_finite_double)
+class2drag_box = componentdrag('box',S_ref,2,0,2,np.sqrt(1.3*1.6),Vcruise,rho,MAC*0.5,AR,e_box,Mach(Vcruise,a),k,flamf,flamw,mu,NASA_LANGLEY[5],NASA_LANGLEY[6],0,u,c_t_double,h_d,IF_f,IF_w,C_L_des,C_L_finite_double, Abase)
 
-class2drag_tan = componentdrag('tandem',S_ref,2,0,2,np.sqrt(1.2*1.6),Vcruise,rho,MAC*0.5,AR,e_tan,Mach(Vcruise,a),k,flamf,flamw,mu,NASA_LANGLEY[5],NASA_LANGLEY[6],0,u,c_t_double,h_d,IF_f,IF_w,C_L_des,C_L_finite_double)
+class2drag_tan = componentdrag('tandem',S_ref,2,0,2,np.sqrt(1.3*1.6),Vcruise,rho,MAC*0.5,AR,e_tan,Mach(Vcruise,a),k,flamf,flamw,mu,NASA_LANGLEY[5],NASA_LANGLEY[6],0,u,c_t_double,h_d,IF_f,IF_w,C_L_des,C_L_finite_double,Abase)
 
-class2drag_wing = componentdrag('wing',S_ref,2,0,2,np.sqrt(1.2*1.6),Vcruise,rho,MAC,AR,e_conv,Mach(Vcruise,a),k,flamf,flamw,mu,EPPLER335[5],EPPLER335[6],0,u,0,0,IF_f,IF_w,C_L_des,C_L_finite_single)
+class2drag_wing = componentdrag('wing',S_ref,2,0,2,np.sqrt(1.3*1.6),Vcruise,rho,MAC,AR,e_conv,Mach(Vcruise,a),k,flamf,flamw,mu,EPPLER335[5],EPPLER335[6],0,u,0,0,IF_f,IF_w,C_L_des,C_L_finite_single, Abase)
 
 if conf == 1:
     C_D = class2drag_tan.CD()
@@ -153,8 +154,14 @@ if conf == 1:
     C_r, C_t, MAC = Wing_planform_params_double[0][1:4]
     LE_sweep = LEsweep_double
     LoD = C_L_des/ C_D
+    C_D_u = class2drag_tan.CD_upsweep()
+    C_D_b = class2drag_tan.CD_base()
+    C_D0 = class2drag_tan.CD0()
 if conf == 2:
     C_D = class2drag_box.CD()
+    C_D_u = class2drag_box.CD_upsweep()
+    C_D_b = class2drag_box.CD_base()
+    C_D0 = class2drag_box.CD0()
     C_Dpolar = class2drag_box.Drag_polar()
     Drag = class2drag_box.Drag()
     AR_final = AR
@@ -162,6 +169,7 @@ if conf == 2:
     C_r, C_t, MAC = Wing_planform_params_double[0][1:4]
     LE_sweep = LEsweep_double
     LoD = C_L_des / C_D
+    swetf = class2drag_box.Swet_f()
 if conf == 3:
     C_D = class2drag_wing.CD()
     C_Dpolar = class2drag_wing.Drag_polar()
@@ -171,6 +179,9 @@ if conf == 3:
     C_r, C_t , MAC = Wing_planform_params_single[1:4]
     LE_sweep = LEsweep_single
     LoD = C_L_des / C_D
+    C_D_u = class2drag_wing.CD_upsweep()
+    C_D_b = class2drag_wing.CD_base()
+    C_D0 = class2drag_wing.CD0()
 
 print(e_conv)
 print("AR= ", AR)
@@ -186,6 +197,9 @@ print("C_L_max_double=", 0.9* NASA_LANGLEY[1],  0.9*1.930)
 
 print("C_D", C_D)
 print("Drag polar", C_Dpolar)
-print("Cruise Drag [N]", Drag)
+print("C_D0", C_D0)
+print("C_Du", C_D_u)
+print("C_Db", C_D_b)
 print("C_L for minimum drag", C_L_finite_single, C_L_finite_double)
 print("Lift over drag", LoD)
+#print(swetf)
