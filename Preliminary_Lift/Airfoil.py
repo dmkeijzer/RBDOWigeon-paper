@@ -65,12 +65,6 @@ def Re( rho, V, MAC, mu):
 def Mach(V,a):
     return V/a
 
-def CL_des(rho, V, W, S ):
-    return W / S  / (0.5 * rho * V ** 2)  # no -ve lift contribution from tail trimming -> no 10% factor
-
-def Re( rho, V, MAC, mu):
-    return (rho * V * MAC)/mu
-
 def liftslope(type, AR, sweepc2, M, Clda_airfoil, s1, s2, deda):
     b = np.sqrt(1-M**2)
     SW = np.tan(sweepc2)
