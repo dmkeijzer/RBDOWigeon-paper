@@ -38,7 +38,7 @@ if Prop_config == 1:
     # Shaft power of each engine in kW
     P_br_cruise = P_cr_estim/N_cruise * 1/1000 * eff_B_cr * eff_PE_cr * eff_M_cr / 1.2
     P_br_hover = P_hover_estim/N_hover * 1/1000 * eff_B_h * eff_PE_h * eff_M_h / 1.2
-
+    print("jdwndinwi:", 0.65 / (eff_B_h * eff_PE_h * eff_M_h))
     # The 1s are number of propellers (we calculate individually each engine, so 1)
     noise = brr.Noise(P_br_cruise, P_br_hover, 2*r_out, num_blades, 1, 1, rpm_max, rpm_max, a, M_t_h=M_t_max, M_t_cr=M_t_max)
 
