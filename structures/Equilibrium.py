@@ -76,7 +76,7 @@ class DistributedMoment:
     
     force = lambda self: np.array([0, 0, 0])
     
-    moment = lambda self: np.array([quad(lambda x: np.interp(x, self.p, self.v[i, :]), self.p[0], self.p[-1])[0] for i in range(3)])
+    moment = lambda self: np.array([quad(lambda x: np.interp(x, self.p, self.v[i, :]), self.p[0], self.p[-1], )[0] for i in range(3)])
 
 class EquilibriumEquation:
     def __init__(self, kloads=[], ukloads=[]):
