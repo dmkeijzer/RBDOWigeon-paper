@@ -69,6 +69,14 @@ class RunningLoad:
     
     momentx, momenty, momentz = [lambda self: self.moment()[i] for i in range(3)]
 
+    
+class DistributedMoment:
+    def __init__(self, values=[], positions=[]):
+        self.v, self.p = np.array(values).T, np.array(positions)
+    
+    force = lambda self: np.array([0, 0, 0])
+    
+    moment = lambda self: np.array([quad(lambda x: np.interp(x, self.p, self.v[i, :]), self.p[0], self.p[-1])[0] for i in range(3)])
 
 class EquilibriumEquation:
     def __init__(self, kloads=[], ukloads=[]):
