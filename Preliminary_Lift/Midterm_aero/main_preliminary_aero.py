@@ -32,7 +32,7 @@ if conf == 3:
     AR = 10.5
 # A/C
 W = STR["MTOW"] #[N]
-Vcruise = FP["V_cruise"] #[m/s]
+Vcruise = 60#FP["V_cruise"] #[m/s]
 
 Wing_loading = FP["WS"]
 # ISA
