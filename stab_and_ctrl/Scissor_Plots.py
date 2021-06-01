@@ -112,3 +112,15 @@ class Wing_placement_sizing:
         SrSfwd_control = (-self.Cmacfwd * self.cfwd + CDfwd * self.hfus / 2 - CLfwd * (Xcg - self.xacfwd) / (
                         CDrear * self.hfus / 2 - self.CLrear * (self.xacrear -d- Xcg) + self.Cmacrear * self.crear))
         return SrSfwd_stab ** -1, SrSfwd_control ** -1
+
+    def plotting(self,Xcg,elevator,d):
+        SrSfwd_stability = self.Sr_Sfwd(Xcg,elevator,d)[0]
+        SrSfwd_control = self.Sr_Sfwd(Xcg, elevator, d)[1]
+        plt.plot(Xcg,SrSfwd_stability,label="Neutral Stability Line")
+        plt.plot(Xcg,SrSfwd_control,label="Controllability Line")
+        plt.xlabel(r"$x_{cg}$ [m]",fontsize=14)
+        plt.ylabel(r"$\cfrac{S_{fwd}}{S_{rear}}$ [-]",fontsize=14)
+        plt.legend()
+        plt.show()
+
+
