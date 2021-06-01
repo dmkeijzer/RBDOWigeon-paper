@@ -1,9 +1,7 @@
 import unittest
 import pytest
-import sys
-sys.path.append('../structures/')
 
-from Equilibrium import PointLoad, Moment, RunningLoad, EquilibriumEquation
+from structures.Equilibrium import PointLoad, Moment, RunningLoad, EquilibriumEquation
 from MathFunctions.Mechanics import StepFunction
 
 test_data = [[float(d) for d in dat.split(' ')] for dat in '''47.88 -1.064

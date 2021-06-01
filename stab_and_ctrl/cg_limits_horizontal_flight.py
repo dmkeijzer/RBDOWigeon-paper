@@ -293,6 +293,12 @@ plt.xlabel(r"Increase in $C_{L_{fwd}}$ [%]",fontsize=14)
 plt.ylabel(r"$x_{cg_{min}}$ [m]",fontsize=14)
 plt.show()
 
+cg_CL = cg_range_conf_1_2(2,s=True,s_value=sense_value,AR_t =False,AR=AR,CL_t = True)[0]
+plt.plot(sense_value,cg_CL)
+plt.xlabel(r"Increase in $C_{L_{fwd}}$ [%]",fontsize=14)
+plt.ylabel(r"$x_{cg_{min}}$ [m]",fontsize=14)
+plt.show()
+
 # cg1_1 = cg_range_conf_1_2(1,s=True,s_value=-sense_value)
 # plt.plot(sense_value*100,cg1_1)
 # plt.xlabel("Decrease in AR [%]")
@@ -430,14 +436,15 @@ print("-----------------------------------------------------------------")
 def CmqCzq(conf,sens,sens_value,AR_t,AR):
     CL_t = False
     if conf == 1 or conf ==2:
-        xcg = 1.6819
+        xcg = 1.6853
         cruise = True
         values = values_sens_1_2(conf,cruise,sens,sens_value,AR_t,AR,CL_t)
         CLfwd, CLrear, Cmacfwd, Cmacrear, CLafwd, CLarear, Sfwd, Srear, Afwd, cfwd, crear, b_fwd, b_rear, \
         xacfwd, xacrear, e, CD0, lfus, hfus, wfus, Sweep_c4_fwd, Sweep_c4_rear, cr = values
+        S = Sfwd+Srear
         print("x_ac_fwd = %.3f [m] and x_ac_rear = %.3f [m]"%(xacfwd,xacrear))
         Czq = (CLafwd*(xcg-xacfwd)/cfwd)-CLarear*Srear/Sfwd*(xacrear-xcg)/cfwd
-        Cmq = -(CLafwd*(xcg-xacfwd)**2/cfwd**2+CLarear*Srear/Sfwd*(xacrear-xcg)**2/cfwd**2)
+        Cmq = -(CLafwd*Sfwd/S*(xcg-xacfwd)**2/cfwd**2+CLarear*Srear/S*(xacrear-xcg)**2/cfwd**2)
     else:
         xcg = 1.7947
         values = values_conf_3(sens,sens_value,AR_t,AR)
@@ -464,5 +471,29 @@ CmqCzq(1,sens=True,sens_value=0,AR_t=False,AR=AR)
 CmqCzq(2,sens=True,sens_value=0,AR_t=False,AR=AR)
 CmqCzq(3,sens=True,sens_value=0,AR_t=False,AR=AR)
 
-
-
+def Sr_Sfwd(conf,s,s_value,AR_t,AR,CL_t,Xcg,d):
+    conf = conf
+    values_c = values_sens_1_2(conf, True, s, s_value, AR_t, AR, CL_t)
+    CLfwd, CLrear, Cmacfwd, Cmacrear, CLafwd, CLarear, Sfwd, Srear, Afwd, cfwd, crear, b_fwd, b_rear, \
+    xacfwd, xacrear, e, CD0, lfus, hfus, wfus, Sweep_c4_fwd, Sweep_c4_rear, cr = values_c
+    CLfwd = CLfwd*1.4
+    CDfwd = CD0+ CLfwd**2/(np.pi*Afwd*e)
+    CDrear = CD0 + CLrear ** 2 / (np.pi * Afwd * e)
+    c = Sfwd/(Sfwd+Srear)*cfwd+ Srear/(Srear+Sfwd)*crear
+    # CDafwd = 2*CLafwd*CLfwd/(np.pi*Afwd*e)
+    # CDarear = 2*CLarear*CLrear/(np.pi*Afwd*e)
+    deda = deps_da(Sweep_c4_fwd, b_fwd, lh(xacfwd, xacrear), hfus, Afwd, CLafwd, conf)
+    # print("de/da = ",deda)
+    SrSfwd_stab = CLafwd*(Xcg-xacfwd)/(CLarear*(1-deda)*(xacrear-d-Xcg))
+    SrSfwd_control = (-Cmacfwd*cfwd+CDfwd*hfus/2 -CLfwd*(Xcg-xacfwd-d)/(CDrear*hfus/2-CLrear*(xacrear-Xcg)+Cmacrear*crear))
+    return SrSfwd_stab**-1,SrSfwd_control**-1
+Xcg = np.linspace(1, 4,1000)
+d = [0,0.125,0.25,0.375,0.5,0.625,0.75,0.875,1,1.25,1.5,1.75,2]
+for i in range(0,len(d)):
+    SrSfwd = Sr_Sfwd(1,s=False,s_value=0,AR_t =False,AR=AR,CL_t = False,Xcg=Xcg,d=d[i])
+    plt.plot(Xcg,SrSfwd[0],label="Neutral stability")
+    plt.plot(Xcg,SrSfwd[1],label="Controllability limit")
+    plt.xlabel(r"${x}_{cg}$ [m]")
+    plt.ylabel(r"$\frac{S_{fwd}}{S_{rear}}$ [-]")
+    plt.legend()
+    plt.show()

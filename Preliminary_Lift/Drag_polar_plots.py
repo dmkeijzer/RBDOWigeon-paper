@@ -36,8 +36,10 @@ plt.plot(C_D_n8, C_L, color = 'blue', alpha = 0.7,label = 'Tandem configuration'
 plt.plot(C_D_n9, C_L, color = 'red', alpha = 0.7, label = 'Box wing configuration')
 plt.plot(C_D_n10, C_L, color = 'green', alpha = 0.7, label = 'Flying wing configuration')
 plt.grid()
-plt.xlabel("$C_D$[-]")
-plt.ylabel("$C_L$")
+plt.xlabel("$C_D$[-]", fontsize = 20)
+plt.xticks(fontsize= 18)
+plt.yticks(fontsize= 18)
+plt.ylabel("$C_L[-]$", fontsize = 20)
 """
 ax[0,1].plot(C_D_t6, C_L, color = 'blue', label = 'Tandem A = 6')
 ax[0,1].plot(C_D_t7, C_L, color = 'blue', alpha = 0.7,  label = 'Tandem A = 7')
@@ -49,7 +51,7 @@ ax[1,1].plot(C_D_n8, C_L, color = 'red', label = 'Wing A = 8')
 ax[1,1].plot(C_D_t8, C_L, color = 'blue', alpha = 0.4, label = 'Tandem A = 8')
 ax[1,1].plot(C_D_b8, C_L, color = 'green', alpha = 0.4, label = 'Box Wing A = 8')
 """
-plt.legend()
+plt.legend(fontsize = 18)
 
 plt.show()
 
