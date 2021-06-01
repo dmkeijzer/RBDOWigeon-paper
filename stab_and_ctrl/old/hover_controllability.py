@@ -31,7 +31,7 @@ config1_params = {
     "Jx": [1000, 500, 1E6],
     "Jy": [1000, 500, 1E6],
     "Jz": [1000, 500, 1E6],
-    "x_cg_l_fus": [0.5, -0.2, 0.8]
+    "x_cg_l_fus": [0.5, -0.2, 1.2]
 }
 
 config2_params = {
@@ -39,7 +39,7 @@ config2_params = {
     "Jx": [1000, 500, 1E6],
     "Jy": [1000, 500, 1E6],
     "Jz": [1000, 500, 1E6],
-    "x_cg_l_fus": [0.5, 0.2, 0.8]
+    "x_cg_l_fus": [0.5, -0.2, 1.2]
 }
 
 config3_params = {
@@ -48,13 +48,14 @@ config3_params = {
     "Jx": [1000, 500, 1E6],
     "Jy": [1000, 500, 1E6],
     "Jz": [1000, 500, 1E6],
-    "x_cg_l_fus": [0.5, 0.2, 0.8],
-    "y_fus_b": [0.1, 0.05, 0.3],
-    "x_w_l_fus": [0.5, 0.3, 0.7],
-    "y_w_b": [0.15, 0.05, 0.35]
+    "x_cg_l_fus": [0.5, -0.2, 1.2],
+    "y_fus_b": [0.15, 0, 0.5],
+    "x_w_l_fus": [0.5, 0, 1],
+    "y_w_b": [0.15, 0, 0.5]
 }
 
 params = [config1_params, config2_params, config3_params]
+
 
 @dataclass
 class Rotor:
@@ -154,10 +155,12 @@ def double_wing_config(datafile, ku, Jx, Jy, Jz, x_cg_l_fus, failed=None):
     data = json.load(datafile)
     datafile.close()
 
-    ma = data["Structures"]["MTOW"]
+    ma = data["Structures"]["MTOW"] / 9.81
 
-    b_front = np.sqrt(data["Aerodynamics"]["AR"] * data["Aerodynamics"]["S_front"])
-    b_back = np.sqrt(data["Aerodynamics"]["AR"] * data["Aerodynamics"]["S_back"])
+    b_front = np.sqrt(data["Aerodynamics"]["AR"] *
+                      (data["Aerodynamics"]["S_front"])
+                      + data["Aerodynamics"]["S_back"])
+    b_back = b_front
     if b_front != b_back:
         print("Warning: wings are not equal in size")
 
@@ -174,9 +177,12 @@ def double_wing_config(datafile, ku, Jx, Jy, Jz, x_cg_l_fus, failed=None):
     else:
         eta = n_rotors * [1]
 
-    # inspired by typical quadcopter configuration. Can change
-    ccw = (n_rotor_per_half_wing * [True] + n_rotor_per_half_wing * [False]
+    # the wish of propulsion. Can change
+    ccw = (n_rotor_per_half_wing * [False] + n_rotor_per_half_wing * [True]
            + n_rotor_per_half_wing * [False] + n_rotor_per_half_wing * [True])
+
+    # alternating pattern
+    # ccw = [i % 2 for i in range(n_rotors)]
 
     # assumes that the rotors are at the extremities of the fuselage
     x = (2 * n_rotor_per_half_wing * [-x_cg_l_fus * l_fus]
@@ -193,21 +199,21 @@ def double_wing_config(datafile, ku, Jx, Jy, Jz, x_cg_l_fus, failed=None):
 
 
 def config1(ku, Jx, Jy, Jz, x_cg_l_fus, failed=None):
-    datafile = open(os.path.join(root_path, "inputs_config_1.json"), "r")
+    datafile = open(os.path.join(root_path, "data/inputs_config_1.json"), "r")
     return double_wing_config(datafile, ku, Jx, Jy, Jz, x_cg_l_fus, failed)
 
 
 def config2(ku, Jx, Jy, Jz, x_cg_l_fus, failed=None):
-    datafile = open(os.path.join(root_path, "inputs_config_2.json"), "r")
+    datafile = open(os.path.join(root_path, "data/inputs_config_2.json"), "r")
     return double_wing_config(datafile, ku, Jx, Jy, Jz, x_cg_l_fus, failed)
 
 
 def config3(ku_fus, ku_w, Jx, Jy, Jz, x_cg_l_fus, y_fus_b, x_w_l_fus, y_w_b, failed=None):
-    datafile = open(os.path.join(root_path, "inputs_config_3.json"), "r")
+    datafile = open(os.path.join(root_path, "data/inputs_config_3.json"), "r")
     data = json.load(datafile)
     datafile.close()
 
-    ma = data["Structures"]["MTOW"]
+    ma = data["Structures"]["MTOW"] / 9.81
 
     b = np.sqrt(data["Aerodynamics"]["AR"] * data["Aerodynamics"]["S_front"])
     l_fus = data["Structures"]["l_fus"]
@@ -219,7 +225,7 @@ def config3(ku_fus, ku_w, Jx, Jy, Jz, x_cg_l_fus, y_fus_b, x_w_l_fus, y_w_b, fai
 
     # assumes that K is the same for the fuselage rotors in front and back
     K_fus = data["Propulsion"]["Max_T_engine"]
-    K_w = K_fus * 1.5  # TODO: get propulsion to specify this
+    K_w = K_fus * 1  # TODO: get propulsion to specify this
     K = 4 * [K_fus] + 2 * [K_w]
 
     if data["Propulsion"]["N_hover"] != 6:
@@ -233,6 +239,9 @@ def config3(ku_fus, ku_w, Jx, Jy, Jz, x_cg_l_fus, y_fus_b, x_w_l_fus, y_w_b, fai
     # inspired by example configuration from paper. Can change
     ccw = [True, False, True, False, False, True]
 
+    # inspired by better configuration from paper
+    # ccw = [True, False, False, True, False, True]
+
     # assumes that the fuselage rotors are at the extremities of the fuselage
     x = (2 * [-x_cg_l_fus * l_fus] + 2 * [l_fus * (1 - x_cg_l_fus)]
          + 2 * [l_fus * (x_w_l_fus - x_cg_l_fus)])
@@ -243,7 +252,7 @@ def config3(ku_fus, ku_w, Jx, Jy, Jz, x_cg_l_fus, y_fus_b, x_w_l_fus, y_w_b, fai
 
     # assumes that ku is the same for the fuselage rotors in front and back
     ku = 4 * [ku_fus] + 2 * [ku_w]
-    rotors = [Rotor(x[i], y[i], K[i], ku[i], eta[i], ccw[i]) for i in range(4)]
+    rotors = [Rotor(x[i], y[i], K[i], ku[i], eta[i], ccw[i]) for i in range(6)]
 
     return Aircraft(Jx, Jy, Jz, ma, rotors)
 
@@ -258,59 +267,19 @@ def plot_sensitivities(config, res=20, failed=None, vmin=-0.1, vmax=1.1):
     else:
         ac_generator = config3
 
-    Jx_range = np.linspace(p["Jx"][1], p["Jx"][2], res)
-    Jy_range = np.linspace(p["Jy"][1], p["Jy"][2], res)
-    Jz_range = np.linspace(p["Jz"][1], p["Jz"][2], res)
     x_cg_l_fus_range = np.linspace(p["x_cg_l_fus"][1], p["x_cg_l_fus"][2], res)
 
     if config == 0 or config == 1:
         ku_range = np.linspace(p["ku"][1], p["ku"][2], res)
 
-        # vary Jx
-        plt.subplot(311)
-        rhos = []
-        for Jx in Jx_range:
-            ac = ac_generator(p["ku"][0], Jx, p["Jy"][0], p["Jz"][0],
-                              p["x_cg_l_fus"][0], failed=failed)
-            rhos.append(acai(ac))
-        plt.xlabel(r"J$_x$")
-        plt.ylabel("ACAI")
-        plt.ylim(vmin, vmax)
-        plt.plot(Jx_range, rhos)
-
-        # vary Jy
-        plt.subplot(312)
-        rhos = []
-        for Jy in Jy_range:
-            ac = ac_generator(p["ku"][0], p["Jx"][0], Jy, p["Jz"][0],
-                              p["x_cg_l_fus"][0], failed=failed)
-            rhos.append(acai(ac))
-        plt.xlabel(r"J$_y$")
-        plt.ylabel("ACAI")
-        plt.ylim(vmin, vmax)
-        plt.plot(Jy_range, rhos)
-
-        # vary Jz
-        plt.subplot(313)
-        rhos = []
-        for Jz in Jz_range:
-            ac = ac_generator(p["ku"][0], p["Jx"][0], p["Jy"][0], Jz,
-                              p["x_cg_l_fus"][0], failed=failed)
-            rhos.append(acai(ac))
-        plt.xlabel(r"J$_z$")
-        plt.ylabel("ACAI")
-        plt.ylim(vmin, vmax)
-        plt.plot(Jz_range, rhos)
-
-        plt.tight_layout()
-
         # vary x_cg_l_fus
-        plt.figure()
         rhos = []
         for x_cg_l_fus in x_cg_l_fus_range:
             ac = ac_generator(p["ku"][0], p["Jx"][0], p["Jy"][0], p["Jz"][0],
                               x_cg_l_fus, failed=failed)
             rhos.append(acai(ac))
+            if rank_Cab(ac) < n_states:
+                print("Warning: rank of controllability system too low")
         plt.xlabel(r"x$_{cg}$/l$_{fus}$")
         plt.ylabel("ACAI")
         plt.ylim(vmin, vmax)
@@ -323,6 +292,8 @@ def plot_sensitivities(config, res=20, failed=None, vmin=-0.1, vmax=1.1):
             ac = ac_generator(ku, p["Jx"][0], p["Jy"][0], p["Jz"][0],
                               p["x_cg_l_fus"][0], failed=failed)
             rhos.append(acai(ac))
+            if rank_Cab(ac) < n_states:
+                print("Warning: rank of controllability system too low")
         plt.xlabel(r"k$_{\mu}$")
         plt.ylabel("ACAI")
         plt.ylim(vmin, vmax)
@@ -335,50 +306,7 @@ def plot_sensitivities(config, res=20, failed=None, vmin=-0.1, vmax=1.1):
         x_w_l_fus_range = np.linspace(p["x_w_l_fus"][1], p["x_w_l_fus"][2], res)
         y_w_b_range = np.linspace(p["y_w_b"][1], p["y_w_b"][2], res)
 
-        # vary Jx
-        plt.subplot(311)
-        rhos = []
-        for Jx in Jx_range:
-            ac = ac_generator(p["ku_fus"][0], p["ku_w"][0], Jx, p["Jy"][0],
-                              p["Jz"][0], p["x_cg_l_fus"][0], p["y_fus_b"][0],
-                              p["x_w_l_fus"][0], p["y_w_b"][0], failed=failed)
-            rhos.append(acai(ac))
-        plt.xlabel(r"J$_x$")
-        plt.ylabel("ACAI")
-        plt.ylim(vmin, vmax)
-        plt.plot(Jx_range, rhos)
-
-        # vary Jy
-        plt.subplot(312)
-        rhos = []
-        for Jy in Jy_range:
-            ac = ac_generator(p["ku_fus"][0], p["ku_w"][0], p["Jx"][0], Jy,
-                              p["Jz"][0], p["x_cg_l_fus"][0], p["y_fus_b"][0],
-                              p["x_w_l_fus"][0], p["y_w_b"][0], failed=failed)
-            rhos.append(acai(ac))
-        plt.xlabel(r"J$_y$")
-        plt.ylabel("ACAI")
-        plt.ylim(vmin, vmax)
-        plt.plot(Jy_range, rhos)
-
-        # vary Jz
-        plt.subplot(313)
-        rhos = []
-        for Jz in Jz_range:
-            ac = ac_generator(p["ku_fus"][0], p["ku_w"][0], p["Jx"][0],
-                              p["Jy"][0], Jz, p["x_cg_l_fus"][0],
-                              p["y_fus_b"][0], p["x_w_l_fus"][0],
-                              p["y_w_b"][0], failed=failed)
-            rhos.append(acai(ac))
-        plt.xlabel(r"J$_z$")
-        plt.ylabel("ACAI")
-        plt.ylim(vmin, vmax)
-        plt.plot(Jz_range, rhos)
-
-        plt.tight_layout()
-
         # vary x_cg_l_fus
-        plt.figure()
         rhos = []
         for x_cg_l_fus in x_cg_l_fus_range:
             ac = ac_generator(p["ku_fus"][0], p["ku_w"][0], p["Jx"][0],
@@ -418,9 +346,11 @@ def plot_sensitivities(config, res=20, failed=None, vmin=-0.1, vmax=1.1):
         plt.ylim(vmin, vmax)
         plt.plot(ku_w_range, rhos)
 
+        plt.tight_layout()
+
         # vary y_fus_b
         plt.figure()
-        plt.subplot(211)
+        # plt.subplot(211)
         rhos = []
         for y_fus_b in y_fus_b_range:
             ac = ac_generator(p["ku_fus"][0], p["ku_w"][0], p["Jx"][0],
@@ -434,7 +364,8 @@ def plot_sensitivities(config, res=20, failed=None, vmin=-0.1, vmax=1.1):
         plt.plot(y_fus_b_range, rhos)
 
         # vary y_w_b
-        plt.subplot(212)
+        plt.figure()
+        # plt.subplot(212)
         rhos = []
         for y_w_b in y_w_b_range:
             ac = ac_generator(p["ku_fus"][0], p["ku_w"][0], p["Jx"][0],
@@ -447,9 +378,10 @@ def plot_sensitivities(config, res=20, failed=None, vmin=-0.1, vmax=1.1):
         plt.ylim(vmin, vmax)
         plt.plot(y_w_b_range, rhos)
 
+        # plt.tight_layout()
+
         # vary x_w_l_fus
         plt.figure()
-        plt.subplot(211)
         rhos = []
         for x_w_l_fus in x_w_l_fus_range:
             ac = ac_generator(p["ku_fus"][0], p["ku_w"][0], p["Jx"][0],
@@ -464,5 +396,28 @@ def plot_sensitivities(config, res=20, failed=None, vmin=-0.1, vmax=1.1):
 
 
 if __name__ == "__main__":
-    plot_sensitivities(1)
+    plot_sensitivities(0, vmin=0, vmax=5000, res=20,
+                       failed=[False, False, False, False,
+                               False, False, False, False,
+                               False, False, False, False,
+                               False, False, False, False])
+    ac = config1(config1_params["ku"][0],
+                 config1_params["Jx"][0], config1_params["Jy"][0],
+                 config1_params["Jz"][0], config1_params["x_cg_l_fus"][0],
+                 failed=[False, False, False, False,
+                         False, False, False, False,
+                         False, False, False, False,
+                         False, False, False, False])
+    print(acai(ac))
+    # ac = config3(config3_params["ku_fus"][0], config3_params["ku_w"][0],
+    #              config3_params["Jx"][0], config3_params["Jy"][0],
+    #              config3_params["Jz"][0], config3_params["x_cg_l_fus"][0],
+    #              config3_params["y_fus_b"][0], config3_params["x_w_l_fus"][0],
+    #              config3_params["y_w_b"][0],
+    #              failed=[False, False,
+    #                      False, False,
+    #                      False, False])
+
+    plt.figure()
+    ac.plot()
     plt.show()
