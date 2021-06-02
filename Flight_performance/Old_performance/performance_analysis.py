@@ -6,10 +6,12 @@ from Transition_simulation import transition_EOM
 
 
 class initial_sizing:
-    def __init__(self, h, path):
+    def __init__(self, h, path, concept):
 
         self.path = path
         datafile = open(self.path, "r")
+
+        self.concept = concept
 
         # Read data from json file
         self.data = json.load(datafile)
@@ -181,18 +183,25 @@ class initial_sizing:
         # Plot design space and point
         self.ax1.fill_between(ws_crit, np.zeros(np.size(crit)), crit, facecolor='green', alpha=0.2)
         self.ax1.fill_between(ws_crit, np.zeros(np.size(crit_cruise)), crit_cruise, facecolor='limegreen', alpha=0.2)
-        self.ax1.plot(self.des_WS, self.des_WP, 'D', label='Design point')
-        self.ax1.legend()
-        self.ax1.set_ylim(0, 0.2)
+        #self.ax1.plot(self.des_WS, self.des_WP, 'D', label='Design point')
+        #self.ax1.legend()
+        self.ax1.set_ylim(0, 0.25)
         self.ax1.set_ylabel("Power loading [N/W]")
         self.ax1.set_xlabel("Wing loading [N/m^2]")
+        plt.tight_layout()
+
+        # Save the figure
+        path = 'C:/Users/Egon Beyne/Desktop/DSE/Plots/wing_power_loading_' + str(self.concept) + '.pdf'
+        plt.savefig(path)
+
         plt.show()
 
         # Print results
         print()
         print('====== Design point ====== ')
-        print('Wing loading:  ', np.round(self.des_WS, 4), '  N/m^2')
-        print('Power loading: ', np.round(self.des_WP, 4), 'N/W')
+        print('Wing loading         :  ', np.round(self.des_WS, 4), '  N/m^2')
+        print('Power loading        : ', np.round(self.des_WP, 4), 'N/W')
+        print('Power loading cruise : ', np.round(self.des_WP_cruise, 4), 'N/W')
 
     def sizing(self):
 
@@ -236,7 +245,7 @@ class initial_sizing:
 
         if abs(WP_turn - WP_speed) > 1e-3:
             print("Turning or speed equations implemented incorrectly")
-
+            print('diff', WP_turn, WP_speed)
         # Testing the climb requirement
         descent = self.climb(WS_test, -10)
         climb   = self.climb(WS_test, 10)
@@ -253,13 +262,15 @@ class initial_sizing:
 
 
 class mission_analysis:
-    def __init__(self, path, h_cruise, m_pl, ac_energy, save_data = False):
+    def __init__(self, path, h_cruise, m_pl, ac_energy, concept, save_data = False):
 
         # Import aircraft data
         self.path       = path
         datafile        = open(self.path, "r")
         self.data       = json.load(datafile)
         datafile.close()
+
+        self.concept = concept
 
         # Structural data
         self.struc  = self.data["Structures"]
@@ -611,10 +622,13 @@ class mission_analysis:
         CD  = self.CDmin + (((CL - self.CLmin) ** 2) * self.k)
         P_r = CD*0.5*rho*V*V*V*self.S
 
+        #print(dedicated_hover, (self.WP_ho*dedicated_hover + self.WP_cr * (not dedicated_hover)) ** -1, self.WP_cr**-1)
+        #print(not dedicated_hover)
         # Rate of climb (depending on whether there are dedicated hover engines, power loading is chosen)
-        RC  = ((self.WP_cr*dedicated_hover + self.WP_ho * (not dedicated_hover)) ** -1) * self.cruise_eff - P_r/self.W
+        RC  = np.minimum(((((self.WP_cr*dedicated_hover + self.WP_ho * (not dedicated_hover)) ** -1)
+                                        * self.cruise_eff) - P_r/self.W)/V, 1)*V
 
-        return RC
+        return RC#np.degrees(np.arcsin((self.WP_ho**-1 - (P_r/self.W))/V))#RC
 
     def climb_perf_chart(self):
 
@@ -624,9 +638,12 @@ class mission_analysis:
         for alt in h:
             # Calculate the density to reduce the stall speed with altitude
             rho = ISA(alt).density()
-            V = np.arange(self.V_st*np.sqrt(self.rho_sl/rho), 400, 0.1)
+            V = np.arange(self.V_st*np.sqrt(self.rho_sl/rho), 200, 0.1)
 
             RC = self.climb_performance(alt, V)
+            print()
+            print('Maximum climb rate: ', max(RC))
+            print()
             label = 'height: ' + str(alt) + ' [m]'
             plt.plot(V, RC, label = label)
 
@@ -634,6 +651,9 @@ class mission_analysis:
         plt.ylabel("Rate of climb [m/s]")
         plt.grid()
         plt.legend()
+        plt.tight_layout()
+        path = 'C:/Users/Egon Beyne/Desktop/DSE/Plots/climb_perf_' + str(self.concept) + '.pdf'
+        plt.savefig(path)
         plt.show()
 
     def total_energy(self, mission_range, pie = False):
@@ -653,8 +673,11 @@ class mission_analysis:
             labels    = ['Take-off', 'Climb', 'Cruise', 'Descent', 'Land', 'Loiter', 'Transition', 'Hover loiter']
             fractions = [E_hover_to, E_climb, E_cruise, E_descent, E_hover_la, E_loiter, E_trans, E_hov_loit]
 
-            plt.pie(fractions, labels = labels, autopct='%1.1f%%')
-            plt.legend(loc = 'lower left')
+            plt.pie(fractions, labels = labels, autopct='%1.1f%%')#, startangle= 75)
+            #plt.legend(loc = 'best')
+            plt.tight_layout()
+            path = 'C:/Users/Egon Beyne/Desktop/DSE/Plots/Energy_breakdown_' + str(self.concept) + '.pdf'
+            plt.savefig(path, bbox_inches = 'tight')
             plt.show()
 
         # Total energy needed for the mission

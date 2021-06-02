@@ -2,6 +2,7 @@ import numpy as np
 from scipy.linalg import null_space
 from matplotlib import pyplot as plt
 from matplotlib import colors as mc
+from stab_and_ctrl import hover_controllabilty
 
 class Wing_placement_sizing:
     def __init__(self,W,h,lfus,hfus,wfus,V0,M0,CD0,theta0,
