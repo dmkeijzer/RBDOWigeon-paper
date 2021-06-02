@@ -2,6 +2,7 @@ import numpy as np
 from scipy.linalg import null_space
 from matplotlib import pyplot as plt
 from matplotlib import colors as mc
+from stab_and_ctrl import hover_controllabilty
 
 class Wing_placement_sizing:
     def __init__(self,W,h,lfus,hfus,wfus,V0,M0,CD0,theta0,
@@ -120,6 +121,7 @@ class Wing_placement_sizing:
         plt.plot(Xcg,SrSfwd_control,label="Controllability Line")
         plt.xlabel(r"$x_{cg}$ [m]",fontsize=14)
         plt.ylabel(r"$\cfrac{S_{fwd}}{S_{rear}}$ [-]",fontsize=14)
+        plt.ylim(0, max(SrSfwd_stability))
         plt.legend()
         plt.show()
 

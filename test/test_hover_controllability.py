@@ -1,5 +1,5 @@
-import numpy as np
-from stab_and_ctrl.hover_controllability import *
+from stab_and_ctrl.hover_controllabilty import *
+
 
 def test_hexacopter_example():
     ma = 1.535  # [kg]
@@ -16,6 +16,6 @@ def test_hexacopter_example():
     K = 6.125  # [N]
 
     rotors = [Rotor(x[i], y[i], K, ku, eta, ccw[i]) for i in range(6)]
-    ac = Aircraft(Jx, Jy, Jz, ma, rotors)
+    calc = HoverControlCalcBase(ma, rotors)
 
-    assert controllable(ac, g=g) and abs(acai(ac, g=g) - 1.4861) < 1E-4
+    assert calc.controllable([0, 0]) and abs(calc.acai([0, 0]) - 1.4861) < 1E-4
