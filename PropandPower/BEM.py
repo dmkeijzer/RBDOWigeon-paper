@@ -7,7 +7,7 @@ ADKINS AND LIEBECK
 
 
 class BEM:
-    def __init__(self, B, R, rpm, xi_0, rho, dyn_vis, V_fr, N_stations, a, T=None, P=None):
+    def __init__(self, B, R, rpm, xi_0, rho, dyn_vis, V_fr, N_stations, a, RN_spacing, T=None, P=None):
         """
         :param B: Number of blades [-]
         :param R: Outer radius of propeller [m]
@@ -20,9 +20,12 @@ class BEM:
         :param P: Power delivered TO the propeller [W]
         :param N_stations: Number of stations to calculate [-]
         :param a: Speed of sound [m/s]
+        :param RN_spacing: Spacing of the Reynold's numbers of the airfoil data files [-] (added for flexibility,
+                           but probably should be 100,000)
         """
         self.B = B
         self.R = R
+        self.D = 2*R
         self.Omega = rpm * 2 * np.pi / 60  # rpm to rad/s
         self.xi_0 = xi_0
         self.rho = rho
@@ -32,6 +35,7 @@ class BEM:
         self.lamb = V_fr/(self.Omega*R)  # Speed ratio
         self.N_s = N_stations
         self.a = a
+        self.RN_spacing = RN_spacing
         if T is not None:
             self.Tc = 2 * T / (rho * V_fr**2 * np.pi * R**2)
             self.Pc = None
@@ -109,29 +113,82 @@ class BEM:
 
     # This function runs the design procedure from an arbitrary start zeta (which can be 0)
     def run_BEM(self, zeta):
+        # Length of each station
         st_len = (self.R - self.R*self.xi_0)/self.N_s
+
+        # Array with station numbers
+        stations = np.arange(1, self.N_s + 1)
+
+        # Radius of the middle point of each station
         stations_r = np.arange(st_len/2, self.R, st_len)
+
+        # F and phi for each station
         F = self.F(self.xi(stations_r), stations_r, zeta)
         phis = self.phi(stations_r, zeta)
 
-        Wc = self.Wc(F, phis, zeta)
-        Reyn = self.RN(Wc)
+        # TODO: Determine Cl
+        # Probably trial with a different range of Cls
+        Cls_trial = np.arange(0.2, 1.1, 0.05)
 
-        # TODO
-        # Get epsilon (D/L) and AoA from airfoil data
-        eps = 1
-        alpha = 1
-        # Optimise eps and recalculated Wc and eps and alpha
+        # Create arrays for lift and drag coefficients, angle of attack and D/L ratio for each station
+        Cl = np.ones(self.N_s)
+        Cd = np.ones(self.N_s)
+        alpha = np.ones(self.N_s)
+        E = np.ones(self.N_s)
 
-        a = (zeta/2) * (np.cos(phis))**2 * (1 - eps*np.tan(phis))
-        a_prime = (zeta/(2*self.x(stations_r))) * np.cos(phis) * np.sin(phis) * (1 + eps/np.tan(phis))
+        # Optimise each station for min D/L
+        for station in stations:
 
-        W = self.V * (1 + a) / np.sin(phis)
+            eps_min = 1
+            optim_vals = [1, 1, 1, 1]
 
-        c = Wc/W
+            # Optimise each station
+            for lift_coef in Cls_trial:
+                # TODO: Make this work for each station
+                Wc = self.Wc(F[station], phis[station], zeta, lift_coef)
+                Reyn = self.RN(Wc)
 
-        # Blade angle is AoA+phi
-        beta = alpha + phis
+                RN = self.RN_spacing * round(Reyn[station] / self.RN_spacing)
+                filename1 = "4412_{%d}_up" % RN
+                filename2 = "4412_{%d}_dwn" % RN
+
+                # TODO: See format of files and retrieve Cd and AoA from them
+                Cd_ret = 1     # Retrieved Cd
+                alpha_ret = 1  # Retrieved AoA
+
+                # Compute D/L ration
+                eps = Cd_Ret / lift_coef
+
+                # See if it is min
+                if eps < eps_min:
+                    optim_vals = [lift_coef, Cd_ret, alpha_ret, eps, Wc]
+                    eps_min = eps
+
+            # Save the optimum config of the blade station
+            Cl[station] = optim_vals[0]
+            Cd[station] = optim_vals[1]
+            alpha[station] = optim_vals[2]
+            E[station] = optim_vals[3]
+
+            local_Cl = optim_vals[0]
+            local_Cd = optim_vals[1]
+            local_AoA = optim_vals[2]
+            local_eps = optim_vals[3]
+            Wc = optim_vals[4]
+
+            #
+            a = (zeta/2) * (np.cos(phis[station]))**2 * (1 - local_eps*np.tan(phis[station]))
+            a_prime = (zeta/(2*self.x(stations_r))) * np.cos(phis[station]) * np.sin(phis[station]) * \
+                      (1 + local_eps/np.tan(phis[station]))
+
+            W = self.V * (1 + a) / np.sin(phis[station])
+
+            c = Wc/W
+
+            # Blade angle is AoA+phi
+            beta = alpha + phis
+
+        # TODO: Is this local or general?
 
         # Integrate the derivatives from xi_0 to 1 (from hub to tip of the blade)
         I1 = spint.quad(self.I_prim_1, self.xi_0, 1, args=(zeta, eps))[0]
@@ -150,15 +207,22 @@ class BEM:
 
         eff = self.efficiency(Tc, Pc)
 
-        return zeta_new
+        return zeta_new, [c, beta, alpha, eps]
 
     def optimise_blade(self, zeta):
         zeta_new = 1
         convergence = 1
         while convergence > 0.001:
-            zeta_new = self.run_BEM(zeta)
+            zeta_new = self.run_BEM(zeta)[0]
             convergence = self.conv(zeta_new, zeta)
         return zeta_new
+
+    # TODO
+    # Implement a cycle with eps = 0 to calculate viscous losses
+
+    # Advance ratio
+    def J(self):
+        return self.V / ((self.Omega/(2*np.pi)) * self.D)
 
     def solidity(self):
         # TODO
