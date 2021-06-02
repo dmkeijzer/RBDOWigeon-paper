@@ -2,7 +2,7 @@ class CgCalculator:
     """
     Class to calculate the CG and generate loading diagrams for the aircraft.
     The coordinate system has its origin at the nose, and the x-axis points
-    backwards. The y-axis points towards port.
+    backwards. The y-axis points towards starboard.
 
     @author: Jakob Schoser
     """
@@ -41,19 +41,19 @@ class CgCalculator:
         self.cg_pax = cg_pax
         self.cg_pil = cg_pil
 
-    def calc_cg(self, cg_wf: float, cg_wr: float, loaded_cargo: bool,
-                seated_pax: list, seated_pil: bool):
+    def calc_cg(self, x_wf: float, x_wr: float, loaded_cargo: bool,
+                seated_pax: list, seated_pil: bool) -> tuple:
         """
         Calculates the CG of the aircraft for given wing positions and
         occupied seats.
-        :param cg_wf: x-location of the CG of the front wing
-        :param cg_wr: x-location of the CG of the rear wing
+        :param x_wf: x-location of the CG of the front wing
+        :param x_wr: x-location of the CG of the rear wing
         :param loaded_cargo: boolean indicating whether cargo has been loaded
         :param seated_pax: list of booleans indicating passenger presence
         :param seated_pil: boolean indicating whether pilot is seated
         :return: [x, y]-location of the CG of the aircraft
         """
-        x = (self.m_wf * cg_wf + self.m_wr * cg_wr
+        x = (self.m_wf * x_wf + self.m_wr * x_wr
              + self.m_fus * self.cg_fus[0] + self.m_bat * self.cg_bat[0])
         y = (self.m_fus * self.cg_fus[1] + self.m_bat * self.cg_bat[1])
         m = self.m_wf + self.m_wr + self.m_fus + self.m_bat
@@ -79,19 +79,19 @@ class CgCalculator:
 
         return x, y
 
-    def calc_cg_range(self, cg_wf: float, cg_wr: float,
-                      order=("cargo", "pil", 1, 2, 3, 4)):
+    def calc_cg_range(self, x_wf: float, x_wr: float,
+                      order=("cargo", "pil", 1, 2, 3, 4)) -> tuple:
         """
         Calculate the CG range during loading of the aircraft.
-        :param cg_wf: x-location of the CG of the front wing
-        :param cg_wr: x-location of the CG of the rear wing
+        :param x_wf: x-location of the CG of the front wing
+        :param x_wr: x-location of the CG of the rear wing
         :param order: Order of loading different parts. May contain "cargo",
         "pil", and numbers indicating passenger IDs starting from 1.
         :return: [most forward CG, most aft CG],
         [most port CG, most starboard CG]
         """
 
-        x_front, x_aft, y_star, y_port = None, None, None, None
+        x_front, x_aft, y_port, y_star = None, None, None, None
 
         loaded_cargo = False
         seated_pax = [False for _ in order]
@@ -105,17 +105,17 @@ class CgCalculator:
             else:
                 seated_pax[item - 1] = True
 
-            x, y = self.calc_cg(cg_wf, cg_wr, loaded_cargo,
+            x, y = self.calc_cg(x_wf, x_wr, loaded_cargo,
                                 seated_pax, seated_pil)
 
             if x_front is None:
                 x_front, x_aft = x, x
-                y_star, y_port = y, y
+                y_port, y_star = y, y
             else:
                 x_front = min(x_front, x)
                 x_aft = max(x_aft, x)
 
-                y_star = min(y_star, y)
-                y_port = max(y_port, y)
+                y_port = min(y_port, y)
+                y_star = max(y_star, y)
 
         return [x_front, x_aft], [y_star, y_port]
