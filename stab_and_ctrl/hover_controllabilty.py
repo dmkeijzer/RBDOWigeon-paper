@@ -147,13 +147,14 @@ class HoverControlCalcBase:
         Cab = np.hstack([np.linalg.matrix_power(A, i) @ B for i in range(8)])
         return np.linalg.matrix_rank(Cab)
 
-    def controllable(self, cg: list) -> bool:
+    def controllable(self, cg: list, margin=1e-10) -> bool:
         """
         Check both criteria for controllability: rank(C(AB)) = 8 and ACAI > 0.
         :param cg: [x, y]-location of the CG of the aircraft
+        :param margin: smallest value of the ACAI that counts as controllable
         :return: Boolean indicating whether the aircraft is controllable or not
         """
-        if self.rank_cab() < n_states or self.acai(cg) <= 0:
+        if self.rank_cab() < n_states or self.acai(cg) <= margin:
             return False
 
         return True
