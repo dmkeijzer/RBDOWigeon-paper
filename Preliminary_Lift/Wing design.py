@@ -1,7 +1,6 @@
 import numpy as np
 from Preliminary_Lift.Airfoil_analysis import airfoil_stats, airfoil_datapoint
 from stab_and_ctrl.cg_limits_horizontal_flight import deps_da
-
 class wing_design:
 
     def __init__(self, AR, s1, sweepc41, s2, sweepc42, M, S):
