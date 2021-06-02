@@ -1,17 +1,11 @@
 import numpy as np
-from scipy.linalg import null_space
 from matplotlib import pyplot as plt
 from matplotlib import colors as mc
-from Aero_tools import ISA
+
 class Control_surface:
     def __init__(self,V0,Vstall,CLfwd,CLrear,
-                 CLafwd,CLarear, Clafwd,Clarear,Cd0fwd,Cd0rear,Cmacfwd,Cmacrear,
+                 CLafwd,CLarear, Clafwd,Clarear,Cd0fwd,Cd0rear,
                  Sfwd,Srear,Afwd,Arear,cfwd,crear,bfwd,brear,taper):
-        # self.W = W         # Weight [N]
-        # self.h = h     # Height [m]
-        # Aero = ISA(self.h)
-        # self.rho = Aero.density()
-        # self.mu = Aero.viscosity_dyn()
         # self.lfus = lfus # Length of the fuselage
         # self.hsus = hfus # Height of the fuselage [m]
         # self.wfus = wfus # Maximum width of the fuselage [m]
@@ -31,17 +25,10 @@ class Control_surface:
         # self.Sweepc2rear = Lambda_c2_rear # Sweep at c/2 [rad]
         # self.Sweepc4fwd = self.Sweep(Afwd,self.Sweepc2fwd,25,50)
         # self.Sweepc4rear = self.Sweep(Arear, self.Sweepc2rear, 25, 50)
-        # self.th0 = theta0  # Initial pitch angle [rad]
         self.V0 = V0       # Initial speed [m/s]
-        # self.M0 = M0       # Initial mach number [-]
-        # self.Re = self.rho*self.V0*self.lfus/self.mu
         self.CLafwd, self.CLarear = CLafwd, CLarear # Wing lift curve slopes for both wings [1/rad]
-        self.Cmacfwd, self.Cmacrear = Cmacfwd,Cmacrear
-        # self.CD0 = CD0 # C_D_0 of forward wing
-        self.xacfwd = 0.25*self.cfwd
-        self.xacrear = self.lfus - (1 - 0.25) * self.crear
-        # self.de_da = self.deps_da(self.Sweepc4fwd,self.bfwd,self.lh(),self.hfus,self.Afwd,self.CLafwd)
-        self.taper_v = 0.4
+        # self.xacfwd = 0.25*self.cfwd
+        # self.xacrear = self.lfus - (1 - 0.25) * self.crear
         self.Vs = Vstall # Stall speed [m/s]
         self.Vmc = 1.2*self.Vs # Mimum controllable speed [m/s]
         # self.xcg = xcg
