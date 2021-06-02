@@ -120,6 +120,7 @@ class Wing_placement_sizing:
         plt.plot(Xcg,SrSfwd_control,label="Controllability Line")
         plt.xlabel(r"$x_{cg}$ [m]",fontsize=14)
         plt.ylabel(r"$\cfrac{S_{fwd}}{S_{rear}}$ [-]",fontsize=14)
+        plt.ylim(0, max(SrSfwd_stability))
         plt.legend()
         plt.show()
 
