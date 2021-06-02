@@ -6,7 +6,7 @@ from Aero_tools import ISA
 class VT_sizing:
     def __init__(self,W,h,xcg,lfus,hfus,wfus,V0,Vstall,M0,CD0,theta0,CLfwd,CLrear,
                  CLafwd,CLarear, Cmacfwd,Cmacrear,
-                 Sfwd,Srear,Afwd,Arear,Lambda_c2_fwd,Lambda_c2_rear,cfwd,crear,bfwd,brear,taper):
+                 Sfwd,Srear,Afwd,Arear,Lambda_c4_fwd,Lambda_c4_rear,cfwd,crear,bfwd,brear,taper):
         self.W = W         # Weight [N]
         self.h = h     # Height [m]
         Aero = ISA(self.h)
@@ -25,10 +25,10 @@ class VT_sizing:
         self.taper = taper # Wing taper ratio [-]
         self.CLfwd,self.CLrear  = CLfwd,CLrear # DESIGN FOR CRUISE Lift coefficients [-]
         self.Afwd, self.Arear = Afwd, Arear # Aspect ratio of both wings [-]
-        self.Sweepc2fwd = Lambda_c2_fwd # Sweep at c/2 [rad]
-        self.Sweepc2rear = Lambda_c2_rear # Sweep at c/2 [rad]
-        self.Sweepc4fwd = self.Sweep(Afwd,self.Sweepc2fwd,25,50)
-        self.Sweepc4rear = self.Sweep(Arear, self.Sweepc2rear, 25, 50)
+        self.Sweepc4fwd = Lambda_c4_fwd # Sweep at c/2 [rad]
+        self.Sweepc4rear = Lambda_c4_rear # Sweep at c/2 [rad]
+        self.Sweepc2fwd = self.Sweep(Afwd,self.Sweepc4fwd,50,25)
+        self.Sweepc2rear = self.Sweep(Arear, self.Sweepc4rear, 50, 25)
         self.th0 = theta0  # Initial pitch angle [rad]
         self.V0 = V0       # Initial speed [m/s]
         self.M0 = M0       # Initial mach number [-]
