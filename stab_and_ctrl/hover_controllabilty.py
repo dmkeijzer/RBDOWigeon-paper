@@ -16,7 +16,7 @@ from matplotlib import colors as mc
 import colorsys
 from dataclasses import dataclass
 from itertools import combinations
-from Aero_tools import ISA
+import constants as consts
 
 # numbers of states and control variables
 # Hard-coded because they would not make sense as arguments
@@ -53,8 +53,6 @@ class HoverControlCalcBase:
         """
         self.m = m
         self.rotors = rotors
-        isa = ISA(0)
-        self.g = isa.g0  # TODO: find a nicer way to get g0
 
     def plot_rotors(self):
         """
@@ -92,7 +90,7 @@ class HoverControlCalcBase:
             return -1E6
 
         G = np.zeros(n_ctrl)
-        G[0] = self.m * self.g
+        G[0] = self.m * consts.g
 
         m = Bf.shape[1]
         M = np.arange(m)
@@ -196,19 +194,23 @@ class HoverControlCalcBase:
         Set the efficiency of the given motors to 0 (simulating a failure)
         :param failed: List of indices for the rotors that failed
         """
+        self.reset_rotors()
         for f in failed:
             self.rotors[f].eta = 0
 
-    def find_max_allowable_rotor_failures(self, cg: list) -> list:
+    def find_max_allowable_rotor_failures(self, cg: list,
+                                          max_n_failures: int) -> list:
         """
         Find the combinations of rotor failures that allow for the highest
         number of rotor failures without becoming uncontrollable.
         :param cg: [x, y]-location of the CG of the aircraft
-        :return: List of the different alternative failure patterns. Each
-        failure pattern is represented by a list of rotor indices
+        :param max_n_failures: Maximum number of failures considered
+        :return: Lists of the different controllable failure patterns,
+        sorted into sub-lists by number of engine failures. Each failure
+        pattern is represented by a list of rotor indices
         """
         self.reset_rotors()
-        idcs = [range(len(self.rotors))]  # rotor indices
+        idcs = list(range(len(self.rotors)))  # rotor indices
 
         # return an empty list if the aircraft is not controllable with all
         # rotors active
@@ -216,60 +218,96 @@ class HoverControlCalcBase:
             return []
 
         controllable_combos = []
-        for n_failures in range(1, len(self.rotors) + 1):
-            failure_combos = combinations(idcs, n_failures)
-            for combo in failure_combos:
+
+        for n_failures in range(1, min(len(self.rotors), max_n_failures) + 1):
+            if not controllable_combos:
+                test_combos = [[i] for i in idcs]
+
+            # based on the controllable combinations in the last step,
+            # determine the combinations to be tested in this step
+            else:
+                test_combos = []
+                for combo in controllable_combos[-1]:
+                    for i in range(combo[-1] + 1, len(self.rotors)):
+                        test_combos.append(combo + [i])
+
+            controllable_combos.append([])
+
+            for combo in test_combos:
                 self.fail_rotors(combo)
                 if self.controllable(cg):
-                    controllable_combos.append(combo)
+                    controllable_combos[-1].append(combo)
 
-            # if there are no allowable failure combinations with this
-            # number of failures
-            if not len(controllable_combos[-1]) == n_failures:
+            # return an empty list if no controllable failure combinations
+            # were found in the last iteration
+            if not controllable_combos[-1]:
                 break
 
         self.reset_rotors()
-
-        # remove the combos with fewer than maximum rotor failures
-        n_failures_max = len(controllable_combos[-1])
-        n_combos = len(controllable_combos)
-        for i in range(n_combos):
-            if not len(controllable_combos[0]) == n_failures_max:
-                controllable_combos.pop(0)
-            else:
-                break
-
         return controllable_combos
 
-    def calc_crit_x_cg_range(self, x_min: float, x_max: float,
-                             dx: float, y: float) -> tuple:
+    def calc_crit_x_cg_range(self, x_min: float, x_max: float, dx: float,
+                             y: float, failure_eval_cg: list,
+                             n_failures: list) -> list:
         """
         Calculate the allowable CG range in x-direction for a given y-location,
-        such that the CG location is never critical for controllability
+        such that the CG location is not critical for controllability
         :param x_min: Minimum x-location in the considered CG range
         :param x_max: Maximum x-location in the considered CG range
         :param dx: Resolution of CG range evaluation
         :param y: y-location of the CG of the aircraft
-        :return: (most forward CG, most aft CG). (None, None) if the aircraft
-        is never controllable
+        :param failure_eval_cg: [x, y]-location of the CG that is used to
+        find the maximum allowable rotor failures.
+        :param n_failures: List of the different numbers of engine failures
+        for which the critical CG limits will be calculated
+        :return: [(most forward CG, most aft CG, rotor failures leading to
+        front limit, rotor failures leading to aft limit) for each number
+        of engine failures]. The return values are replaced by
+        (None, None, None, None) if the aircraft is not controllable with
+        any CG location
         """
-        x_front, x_aft = None, None
-
-        # assume central CG to find rotor failures
-        # TODO: check if this has an impact on the results
+        # assume central CG to find allowable rotor failures. This is the
+        # most lenient of CGs, so it is guaranteed that all relevant failure
+        # combinations will be considered in the next step
         failure_combos = self.find_max_allowable_rotor_failures(
-            [0.5 * (x_min + x_max), y]
+            failure_eval_cg, max(n_failures)
         )
 
-        for combo in failure_combos:
-            self.fail_rotors(combo)
-            _x_front, _x_aft = self.calc_x_cg_range(x_min, x_max, dx, y)
-            x_front = max(x_front, _x_front)
-            x_aft = min(x_aft, _x_aft)
+        return_list = []
+        for failed in n_failures:
+            failures = failure_combos[failed - 1]
+
+            x_front, x_aft = None, None
+            limiting_failures_front, limiting_failures_aft = None, None
+            for combo in failures:
+                self.fail_rotors(combo)
+                _x_front, _x_aft = self.calc_x_cg_range(x_min, x_max, dx, y)
+
+                # go to the next combination if this one cannot be controllable
+                # with the given CG
+                if _x_front is None:
+                    continue
+
+                if x_front is None:
+                    x_front = _x_front
+                    x_aft = _x_aft
+
+                    limiting_failures_front = combo
+                    limiting_failures_aft = combo
+                else:
+                    if _x_front > x_front:
+                        x_front = _x_front
+                        limiting_failures_front = combo
+                    if _x_aft < x_aft:
+                        x_aft = _x_aft
+                        limiting_failures_aft = combo
+
+            return_list.append((
+                x_front, x_aft, limiting_failures_front, limiting_failures_aft
+            ))
 
         self.reset_rotors()
-
-        return x_front, x_aft
+        return return_list
 
 
 class HoverControlCalcTandem(HoverControlCalcBase):
@@ -300,10 +338,10 @@ class HoverControlCalcTandem(HoverControlCalcBase):
 
         xs = n_rot_f * [x_wf] + n_rot_r * [x_wr]
         ys = np.concatenate((
-            np.arange(-rot_y_range_f[1], -rot_y_range_f[0], n_rot_f // 2),
-            np.arange(rot_y_range_f[0], rot_y_range_f[1], n_rot_f // 2),
-            np.arange(-rot_y_range_r[1], -rot_y_range_r[0], n_rot_r // 2),
-            np.arange(rot_y_range_r[0], rot_y_range_r[1], n_rot_r // 2)
+            np.linspace(-rot_y_range_f[1], -rot_y_range_f[0], n_rot_f // 2),
+            np.linspace(rot_y_range_f[0], rot_y_range_f[1], n_rot_f // 2),
+            np.linspace(-rot_y_range_r[1], -rot_y_range_r[0], n_rot_r // 2),
+            np.linspace(rot_y_range_r[0], rot_y_range_r[1], n_rot_r // 2)
         ))
 
         ccws = (n_rot_f // 2 * [True] + n_rot_f // 2 * [False]
