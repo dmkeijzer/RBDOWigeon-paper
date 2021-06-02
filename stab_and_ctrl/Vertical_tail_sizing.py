@@ -4,9 +4,9 @@ from matplotlib import pyplot as plt
 from matplotlib import colors as mc
 from Aero_tools import ISA
 class VT_sizing:
-    def __init__(self,W,h,lfus,hfus,wfus,xcg,V0,Vstall,M0,CD0,theta0,CLfwd,CLrear,
+    def __init__(self,W,h,xcg,lfus,hfus,wfus,V0,Vstall,M0,CD0,theta0,CLfwd,CLrear,
                  CLafwd,CLarear, Cmacfwd,Cmacrear,
-                 Sfwd,Srear,Afwd,Arear,Lambda_c2_fwd,Lambda_c2_rear,cfwd,crear,bfwd,brear,efwd,erear,taper):
+                 Sfwd,Srear,Afwd,Arear,Lambda_c2_fwd,Lambda_c2_rear,cfwd,crear,bfwd,brear,taper):
         self.W = W         # Weight [N]
         self.h = h     # Height [m]
         Aero = ISA(self.h)
@@ -14,7 +14,7 @@ class VT_sizing:
         self.mu = Aero.viscosity_dyn()
         self.lfus = lfus # Length of the fuselage
         self.hsus = hfus # Height of the fuselage [m]
-        self.wfus = wfus # Width of the fuselage [m]
+        self.wfus = wfus # Maximum width of the fuselage [m]
         self.Srear = Srear # Rear wing area [m^2]
         self.Sfwd = Sfwd   # Forward wing area [m^2]
         self.S = Srear+Sfwd # Aircraft wing area [m^2]
@@ -22,7 +22,6 @@ class VT_sizing:
         self.crear = crear  # Average chord [m]
         self.bfwd = bfwd         # Wing span [m]
         self.brear = brear # Wing span [m]
-        self.efwd, self.erear = efwd,erear
         self.taper = taper # Wing taper ratio [-]
         self.CLfwd,self.CLrear  = CLfwd,CLrear # DESIGN FOR CRUISE Lift coefficients [-]
         self.Afwd, self.Arear = Afwd, Arear # Aspect ratio of both wings [-]
@@ -39,12 +38,26 @@ class VT_sizing:
         self.CD0 = CD0 # C_D_0 of forward wing
         self.xacfwd = 0.25*self.cfwd
         self.xacrear = self.lfus - (1 - 0.25) * self.crear
-        self.de_da = self.deps_da(self.Sweepc4fwd,self.bfwd,self.lh(),self.hfus,self.Afwd,self.CLafwd)
+        # self.de_da = self.deps_da(self.Sweepc4fwd,self.bfwd,self.lh(),self.hfus,self.Afwd,self.CLafwd)
         self.taper_v = 0.4
-        self.Vs = Vstall
-        self.Vmc = 1.2*self.Vs
+        self.Vs = Vstall # Stall speed [m/s]
+        self.Vmc = 1.2*self.Vs # Mimum controllable speed [m/s]
         self.xcg = xcg
         self.c = self.Sfwd/self.S*self.cfwd+self.Srear/self.S*self.crear
+
+    def Sweep(self,AR,Sweepm,n,m):
+        """
+        Inputs
+        :param AR: Aspect Ratio of VT
+        :param Sweepm: Sweep at mth chord [rad]
+        :param n: (example quarter chord: n =25)
+        :param m: mth chord (example half chord: m=50)
+        :return: Sweep at nth chord [rad]
+        """
+        tanSweep_m = np.tan(Sweepm)
+        tanSweep_n = tanSweep_m -4/(AR*4)*(n-m)/100*(1-self.taper)/(1+self.taper)
+        return np.arctan(tanSweep_n)
+
     def C_L_a(self,A, Lambda_half, eta=0.95):
         """
         Inputs:
@@ -108,13 +121,20 @@ class VT_sizing:
         return Sv
 
     def VT_stability(self,lv):
-        kn = 0.01*(0.27*self.xcg/self.lfus-0.168*np.log(self.lfus/self.wfus)+0.416)-0.0005
-        kR = 0.46*np.log10(self.Re/10**6)+1
-        Cnb_fus = -360/(2*np.pi)*kn*kR*self.lfus**2*self.wfus/(self.S*max(self.brear,self.bfwd))
+        """
+        Inputs
+        :param lv: CG moment arm
+        :return: Sv for stability [m^2]
+        """
+        # kn = 0.01*(0.27*self.xcg/self.lfus-0.168*np.log(self.lfus/self.wfus)+0.416)-0.0005
+        # kR = 0.46*np.log10(self.Re/10**6)+1
+        # Cnb_fus = -360/(2*np.pi)*kn*kR*self.lfus**2*self.wfus/(self.S*max(self.brear,self.bfwd))
         a = self.lfus/2
         b = self.wfus/2
         V = 2*np.pi/4*b**2*(self.lfus/2-(self.lfus/2)**3/(3*a**2))
         Cnb_fus = -2*V/(self.S*max(self.bfwd,self.brear))
+        self.Sweepc2fwd = 0
+        self.Sweepc2rear = 0
         Cnb_w_fwd = self.CLfwd**2*(1/(4*np.pi*self.Afwd)-
                                    (np.tan(self.Sweepc2fwd)/(np.pi*self.Afwd+4*np.cos(self.Sweepc2fwd)))*
                                    (np.cos(self.Sweepc2fwd)-self.Afwd/2-self.Afwd**2/(8*np.cos(self.Sweepc2fwd))-
@@ -126,10 +146,58 @@ class VT_sizing:
         CYb_v = -self.C_L_a(self.initial_VT(lv)[1],self.initial_VT(lv)[4])
 
         Cnb = 0.06
-        Sv = self.S*(Cnb-Cnb_fus+Cnb_w_fwd+Cnb_w_rear)/(-CYb_v)*max(self.brear,self.bfwd)/lv
+        Sv = self.S*(Cnb-Cnb_fus-Cnb_w_fwd-Cnb_w_rear)/(-CYb_v)*max(self.brear,self.bfwd)/lv
         return Sv
 
-    def min_Sv(self,nE,Tt0,yE,lv):
+    def final_VT_rudder(self,nE,Tt0,yE,lv):
+        """
+        Inputs:
+        :param nE: Number of propellers
+        :param Tt0: Thrust [N]
+        :param yE: Moment arm [m]
+        :param lv: CG moment arm [m]
+        :return: Final design
+        """
         Sv = max(self.VT_stability(lv),self.VT_controllability(nE,Tt0,yE,lv))
-        return Sv
+        ARv = 1.25
+        bv = np.sqrt(ARv*Sv)
+        C_v = Sv/bv
+        C_vr = 3/2*C_v*(1+self.taper_v)/(1+self.taper_v+self.taper_v**2)
+        C_vt = self.taper_v*C_vr
+        Sweep_v_c2 = self.Sweep(ARv,0,50,100) # Design variable TE sweep 0.
+        br_bv = 0.85
+        Cr_Cv = 0.25
+        c_r = Cr_Cv*C_v
+        c_r_root = 3/2*c_r*(1+self.taper_v)/(1+self.taper_v+self.taper_v**2)
+        c_r_tip = self.taper_v*c_r_root
+        b_r = br_bv*bv
+        return Sv,C_vr,C_vt,bv,Sweep_v_c2,c_r,c_r_root,c_r_tip,b_r,ARv
+
+    def plotting(self,nE,Tt0,yE,lv):
+        y_LE_0 = 0
+        x_LE_0 = 0
+        x_TE_1 = self.final_VT_rudder(nE,Tt0,yE,lv)[1]
+        y_TE_1 = 0
+        x_TE_2 = x_TE_1
+        y_TE_2 = self.final_VT_rudder(nE,Tt0,yE,lv)[3]
+        y_LE_3 = y_TE_2
+        x_LE_3 = x_TE_1 - x_TE_1 * 0.4
+        br_bv = 0.85
+        cr_cv = 0.25
+        y_up = br_bv * y_TE_2
+        y_down = 0
+        x1 = x_TE_1 - cr_cv * x_TE_1
+        x2 = x_TE_1
+        x3 = x2
+        x4 = x_TE_1 - cr_cv * 0.4 * x_TE_1
+        x_r = np.array([x1, x2, x3, x4, x1])
+        y_r = np.array([y_down, y_down, y_up, y_up, y_down])
+        x_points = np.array([x_LE_0, x_TE_1, x_TE_2, x_LE_3, 0])
+        y_points = np.array([y_LE_0, y_TE_1, y_TE_2, y_LE_3, 0])
+        plt.plot(x_points, y_points, label="Vertical tail")
+        plt.plot(x_r, y_r, label="Rudder")
+        plt.legend()
+        plt.show()
+
+
 
