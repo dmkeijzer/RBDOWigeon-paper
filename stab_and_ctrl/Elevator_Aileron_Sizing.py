@@ -85,9 +85,9 @@ class Control_surface:
         minClda = np.ones(len(b2))*minClda
         Clda_array = self.Clda(b2)
         plt.plot(b2,minClda,label=r"Minimum value required $C_{l_{\delta_a}}$")
-        plt.plot(b2,Clda_array,label=r"$C_{l_{\delta_a}}$")
+        plt.plot(b2,Clda_array,label=r"$C_{l_{\delta_a}}(b_2)$")
         plt.xlabel(r"$b_2 [m]$",fontsize=14)
-        plt.ylabel(r"$C_{l_{\delta_a}}$")
+        plt.ylabel(r"$C_{l_{\delta_a}} [1/rad]$")
         plt.legend()
         plt.show()
 
