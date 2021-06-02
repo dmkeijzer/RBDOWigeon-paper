@@ -87,18 +87,23 @@ class mission:
         # Limit altitude
         vy_tgt = np.maximum(np.minimum(-0.5 * (y - y_tgt), max_vy), -max_vy)
 
+        # Slow down when approaching 15 m while going too fast in horizontal direction
+        if 15 + (np.abs(vy) / self.ay_target_descend) > y > y_tgt and abs(vx) > 0.25:
+            vy_tgt = 0
+            print('slowing', vx, y)
+
+        # Keep horizontal velocity zero when flying low
+        if y < 10:
+            vx_tgt_1 = 0
+        else:
+            vx_tgt_1 = vx_tgt
+
+
         # Limit speed
-        ax_tgt = np.minimum(np.maximum(-0.5*(vx - vx_tgt), -max_ax), max_ax)
+        ax_tgt = np.minimum(np.maximum(-0.5*(vx - vx_tgt_1), -max_ax), max_ax)
         ay_tgt = np.minimum(np.maximum(-0.5*(vy - vy_tgt), -max_ay), max_ay)
 
-        # Additional constraints
-
-        # Do not start transitioning under 10 m
-        if y < 10 < y_tgt:
-            ax_tgt = 0
-
         return ax_tgt, ay_tgt
-
 
     def numerical_simulation(self, vx_start, y_start, th_start, y_tgt, vx_tgt, plotting):
 
@@ -170,18 +175,6 @@ class mission:
             if y <= 0:
                 vy = 0
 
-            # Get initial thrust and angle for equilibrium
-            # if t == dt:
-            #
-            #     # Equilibrium
-            #     ax_tgt = 0
-            #     ay_tgt = 0
-            #
-            #     # Remove limits
-            #     #th_max, th_min = 1000, 0
-            #     T_max,  T_min  = 1e6, 0
-            #     print(vx, np.degrees(th), L, np.degrees(alpha))
-
             # Solve for the thrust and wing angle, using the target acceleration values
             th = np.arctan2((self.m * ay_tgt + self.m * self.g - L * np.cos(gamma) + D * np.sin(gamma)),
                             (self.m * ax_tgt + D * np.cos(gamma) + L * np.sin(gamma)))
@@ -212,8 +205,11 @@ class mission:
             ax_lst.append(ax)
             ay_lst.append(ay)
 
+            # Low pass filter for the thrust
+            #T = np.mean(np.array(T_lst[-5:]))
+
             # Check if end conditions are satisfied
-            if abs(vx - vx_tgt) < 0.5 and abs(y - y_tgt) < 0.5 and abs(vy) < 0.5 and t >= 5 or t > 100:
+            if abs(vx - vx_tgt) < 0.5 and abs(y - y_tgt) < 0.5 and abs(vy) < 0.5 and t >= 5 or t > 120:
                 running = False
 
         # Convert everything to arrays
@@ -257,21 +253,25 @@ class mission:
             plt.plot(t_arr, vx_arr)
             plt.xlabel("Time [s]")
             plt.ylabel("horizontal speed")
+            plt.grid()
 
             plt.subplot(222)
             plt.plot(x_arr, y_arr)
             plt.xlabel("Distance")
             plt.ylabel("Altitude")
+            plt.grid()
 
             plt.subplot(223)
             plt.plot(t_arr, vy_arr)
             plt.xlabel("Time [s]")
             plt.ylabel("roc")
+            plt.grid()
 
             plt.subplot(224)
             plt.plot(t_arr, np.sqrt((ay_arr+self.g)**2 + ax_arr**2)/self.g)
             plt.xlabel("Time [s]")
             plt.ylabel("g-forces")
+            plt.grid()
 
             plt.tight_layout()
             plt.show()
@@ -346,10 +346,10 @@ class mission:
 a = mission()
 
 # Simulate descend
-a.numerical_simulation(vx_start = 60, y_start = 300, th_start = np.radians(5), y_tgt = 10, vx_tgt = 0, plotting = True)
+a.numerical_simulation(vx_start = 60, y_start = 300, th_start = np.radians(5), y_tgt = 0, vx_tgt = 0, plotting = True)
 
 # Simulate climb
 a.numerical_simulation(vx_start = 0.001, y_start = 0, th_start = np.pi/2, y_tgt = 300, vx_tgt = 60, plotting = True)
 
-#E_total, t_total = a.total_energy()
-#print(E_total, t_total)
+E_total, t_total = a.total_energy()
+print(E_total, t_total)
