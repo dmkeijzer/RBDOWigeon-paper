@@ -111,6 +111,10 @@ class BEM:
     def efficiency(self, Tc, Pc):
         return Tc/Pc
 
+    # Prandtl-Glauert correction factor
+    def PG(self, M):
+        return np.sqrt(1 - M**2)
+
     # This function runs the design procedure from an arbitrary start zeta (which can be 0)
     def run_BEM(self, zeta):
         # Length of each station
