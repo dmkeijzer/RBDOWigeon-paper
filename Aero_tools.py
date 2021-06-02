@@ -12,16 +12,19 @@ class ISA:
     """
 
     def __init__(self, h, T_offset=0):
-        # Sea level values
-        self.rho_SL = 1.225  # [kg/m^3]  Sea level density
-        self.p_SL = 101325  # [Pa]      Sea level pressure
-        self.T_SL = 288.15 + T_offset  # [K]       Sea level temperature
-        self.mu_SL = 1.7894E-5  # 1.81206E-5 [kg/m/s] Sea Level Dynamic Viscosity
-        self.a_SL = 340.29 #m/s
+
         # Constants
-        self.a = -0.0065  # [K/m]     Temperature lapse rate
-        self.g0 = 9.80665  # [m/s^2]   Gravitational acceleration
-        self.R = 287  # [J/kg K]  Specific gas constant
+        self.a = -0.0065    # [K/m]     Temperature lapse rate
+        self.g0 = 9.80665   # [m/s^2]   Gravitational acceleration
+        self.R = 287        # [J/kg K]  Specific gas constant
+        self.gamma = 1.4    # [-]       Heat capacity ratio
+
+        # Sea level values
+        self.rho_SL = 1.225                                 # [kg/m^3]  Sea level density
+        self.p_SL   = 101325                                # [Pa]      Sea level pressure
+        self.T_SL   = 288.15 + T_offset                     # [K]       Sea level temperature
+        self.mu_SL  = 1.7894E-5                             # [kg/m/s] Sea Level Dynamic Viscosity 1.81206E-5
+        self.a_SL   = np.sqrt(self.gamma*self.R*self.T_SL)  # [m/s] Sea level speed of sound
 
         self.h = h  # [m]       Altitude
 
@@ -47,5 +50,6 @@ class ISA:
         return a
 
     def viscosity_dyn(self):
-        mu = self.mu_SL * (self.T / self.T_SL) ** (1.5) * (self.T_SL + 110.4) / (self.T + 110.4)  # 1.458E-6 * self.T ** 1.5 / (self.T + 110.4) # Sutherland Law, using Sutherland's constant S_mu = 110.4 for air
+        mu = self.mu_SL * (self.T / self.T_SL) ** (1.5) * (self.T_SL + 110.4) / (self.T + 110.4)
+        # 1.458E-6 * self.T ** 1.5 / (self.T + 110.4) # Sutherland Law, using Sutherland's constant S_mu = 110.4 for air
         return mu

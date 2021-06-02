@@ -36,8 +36,8 @@ class testAccelerations(unittest.TestCase):
         dist_dn, E_dn, time_dn  = cruise.numerical_simulation(vx_start=60, y_start=300, th_start=np.radians(1),
                                                               y_tgt=300-1e-9, vx_tgt=60, plotting=False)
 
-        # Test whether the climb and descend part of the model agree, inputting a +-1m difference in final altitude
-        self.assertAlmostEqual(E_up, E_dn, places = 1)
+        # Test whether the climb and descend part of the model agree, inputting a small difference in final altitude
+        self.assertAlmostEqual(E_up, E_dn, delta = 30)
         self.assertAlmostEqual(dist_up, dist_dn, places = 1)
 
         # Same mission, but using the cruise part of the program
