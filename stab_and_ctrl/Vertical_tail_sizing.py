@@ -133,16 +133,14 @@ class VT_sizing:
         b = self.wfus/2
         V = 2*np.pi/4*b**2*(self.lfus/2-(self.lfus/2)**3/(3*a**2))
         Cnb_fus = -2*V/(self.S*max(self.bfwd,self.brear))
-        self.Sweepc2fwd = 0
-        self.Sweepc2rear = 0
         Cnb_w_fwd = self.CLfwd**2*(1/(4*np.pi*self.Afwd)-
-                                   (np.tan(self.Sweepc2fwd)/(np.pi*self.Afwd+4*np.cos(self.Sweepc2fwd)))*
-                                   (np.cos(self.Sweepc2fwd)-self.Afwd/2-self.Afwd**2/(8*np.cos(self.Sweepc2fwd))-
-                                    6*(self.xacfwd-self.xcg)*np.sin(self.Sweepc2fwd)/(self.Afwd*self.c)))
+                                   (np.tan(self.Sweepc4fwd)/(np.pi*self.Afwd+4*np.cos(self.Sweepc4fwd)))*
+                                   (np.cos(self.Sweepc4fwd)-self.Afwd/2-self.Afwd**2/(8*np.cos(self.Sweepc4fwd))-
+                                    6*(self.xacfwd-self.xcg)*np.sin(self.Sweepc4fwd)/(self.Afwd*self.c)))
         Cnb_w_rear = self.CLrear**2*(1/(4*np.pi*self.Arear)-
-                                   (np.tan(self.Sweepc2rear)/(np.pi*self.Arear+4*np.cos(self.Sweepc2rear)))*
-                                   (np.cos(self.Sweepc2rear)-self.Afwd/2-self.Arear**2/(8*np.cos(self.Sweepc2rear))-
-                                    6*(self.xacrear-self.xcg)*np.sin(self.Sweepc2rear)/(self.Arear*self.c)))
+                                   (np.tan(self.Sweepc4rear)/(np.pi*self.Arear+4*np.cos(self.Sweepc4rear)))*
+                                   (np.cos(self.Sweepc4rear)-self.Afwd/2-self.Arear**2/(8*np.cos(self.Sweepc4rear))-
+                                    6*(self.xacrear-self.xcg)*np.sin(self.Sweepc4rear)/(self.Arear*self.c)))
         CYb_v = -self.C_L_a(self.initial_VT(lv)[1],self.initial_VT(lv)[4])
 
         Cnb = 0.06
