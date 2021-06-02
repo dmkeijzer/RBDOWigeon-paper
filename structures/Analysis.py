@@ -11,6 +11,40 @@ class Stringer:
     
     Ixx = lambda self: self.a * self.y**2
     Iyy = lambda self: self.a * self.x**2
+
+class ZStringer(Stringer):
+    def __init__(self, area = 0.001, point = (0, 0), bflange = 0.05, tflange = 0.05, vflange = 0.05, tstr = 0.001):
+        super.__init__()
+        self.bflange, self.tflange, self.vflange, self.t = bflange, tflange, vflange, tstr
+
+    a = lambda self: ((self.tflange - self.t) + (self.bflange - self.t) + (self.vflange - (2 * self.t))) * self.t
+    
+    def cripplingStress(self, E, v, sigma_y):
+        alpha, n = 0.8, 0.6
+        ccstress1 = 0.8 * (0.425/sigma_y * (np.pi**2 * E / (12 * (1 - v**2))) * (self.t / (self.bflange - self.t))**2) ** (1 - n) * sigma_y
+        ccstress2 = 0.8 * (0.425/sigma_y * (np.pi**2 * E / (12 * (1 - v**2))) * (self.t / (self.tflange - self.t))**2) ** (1 - n) * sigma_y
+        ccstress3 = 0.8 * (4/sigma_y * (np.pi**2 * E / (12 * (1 - v**2))) * (self.t / (self.vflange - self.t))**2) ** (1 - n) * sigma_y
+        return (ccstress1 * self.t * (self.bflange - self.t) 
+                + ccstress2 * self.t * (self.tflange - self.t)
+                + ccstress1 * self.t * (self.vflange - 2*self.t)) / self.a()
+    
+class HatStringer(Stringer):
+    def __init__(self, area = 0.001, point = (0, 0), bflange1 = 0.05, bflange2 =0.05, tflange = 0.05, vflange = 0.05, tstr = 0.001):
+        super.__init__()
+        self.bflange1, self.bflange2, self.tflange, self.vflange, self.t = bflange1, bflange2, tflange, vflange, tstr
+
+    a = lambda self: ((self.tflange - self.t) + (self.bflange1 - self.t) + (self.bflange2 - self.t) + 2*(self.vflange - (2 * self.t))) * self.t
+    
+    def cripplingStress(self, E, v, sigma_y):
+        alpha, n = 0.8, 0.6
+        ccstress1 = 0.8 * (0.425/sigma_y * (np.pi**2 * E / (12 * (1 - v**2))) * (self.t / (self.bflange1 - self.t))**2) ** (1 - n) * sigma_y
+        ccstress5 = 0.8 * (0.425/sigma_y * (np.pi**2 * E / (12 * (1 - v**2))) * (self.t / (self.bflange2 - self.t))**2) ** (1 - n) * sigma_y
+        ccstress24 = 0.8 * (4/sigma_y * (np.pi**2 * E / (12 * (1 - v**2))) * (self.t / (self.vflange - self.t))**2) ** (1 - n) * sigma_y
+        ccstress3 = 0.8 * (4/sigma_y * (np.pi**2 * E / (12 * (1 - v**2))) * (self.t / (self.tflange - self.t))**2) ** (1 - n) * sigma_y
+        return (ccstress1 * self.t * (self.bflange1 - self.t) 
+                + ccstress5 * self.t * (self.bflange2 - self.t)
+                + 2* ccstress24 * self.t * (self.vflange - 2*self.t) + ccstress3 * self.t * (self.tflange - 2*self.t)) / self.a()
+    
     
 class WingBox:
     def __init__(self, thicknessOfSkin, thicknessOfSpar, base, height, stringers = []):
