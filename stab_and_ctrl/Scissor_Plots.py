@@ -2,16 +2,21 @@ import numpy as np
 from scipy.linalg import null_space
 from matplotlib import pyplot as plt
 from matplotlib import colors as mc
-from stab_and_ctrl import hover_controllabilty
+from stab_and_ctrl.hover_controllabilty import HoverControlCalcTandem
+import constants as consts
+
 
 class Wing_placement_sizing:
-    def __init__(self,W,h,lfus,hfus,wfus,V0,M0,CD0,theta0,
-                 CLfwd,CLrear,CLafwd,CLarear, Cmacfwd,Cmacrear,
-                 Sfwd,Srear,Afwd,Arear,Gamma,Lambda_c2_fwd,Lambda_c2_rear,cfwd,crear,bfwd,brear,efwd,erear,taper):
+    def __init__(self, W, h, lfus, hfus, wfus, V0, M0, CD0, theta0, CLfwd,
+                 CLrear, CLafwd, CLarear, Cmacfwd, Cmacrear, Sfwd, Srear,
+                 Afwd, Arear, Gamma, Lambda_c2_fwd, Lambda_c2_rear, cfwd,
+                 crear, bfwd, brear, efwd, erear, taper, n_rot_f, n_rot_r,
+                 rot_y_range_f, rot_y_range_r, K, ku):
+
         self.W = W         # Weight [N]
         self.h = h     # Height [m]
         self.lfus = lfus # Length of the fuselage
-        self.hsus = hfus # Height of the fuselage [m]
+        self.hfus = hfus # Height of the fuselage [m]
         self.wfus = wfus # Width of the fuselage [m]
         self.Srear = Srear # Rear wing area [m^2]
         self.Sfwd = Sfwd   # Forward wing area [m^2]
@@ -40,6 +45,10 @@ class Wing_placement_sizing:
         self.xacrear = self.lfus - (1 - 0.25) * self.crear
         self.de_da = self.deps_da(self.Sweepc4fwd,self.bfwd,self.lh(),self.hfus,self.Afwd,self.CLafwd)
 
+        self.hover_calc = HoverControlCalcTandem(W / consts.g, n_rot_f,
+                                                 n_rot_r, self.xacfwd,
+                                                 self.xacrear, rot_y_range_f,
+                                                 rot_y_range_r, K, ku)
     def lh(self):
         return abs(self.xacfwd - self.xacrear)
 
@@ -114,15 +123,20 @@ class Wing_placement_sizing:
                         CDrear * self.hfus / 2 - self.CLrear * (self.xacrear -d- Xcg) + self.Cmacrear * self.crear))
         return SrSfwd_stab ** -1, SrSfwd_control ** -1
 
-    def plotting(self,Xcg,elevator,d):
+    def plotting(self, x_min, x_max, dx, elevator, d, n_failures=2, y_cg=0):
+        Xcg = np.arange(x_min, x_max, dx)
         SrSfwd_stability = self.Sr_Sfwd(Xcg,elevator,d)[0]
         SrSfwd_control = self.Sr_Sfwd(Xcg, elevator, d)[1]
         plt.plot(Xcg,SrSfwd_stability,label="Neutral Stability Line")
         plt.plot(Xcg,SrSfwd_control,label="Controllability Line")
+
+        x_hover_min, x_hover_max, hover_fail_limit_front, hover_fail_limit_aft = self.hover_calc.calc_crit_x_cg_range(x_min, x_max, dx, y_cg, [(self.xacfwd + self.xacrear) / 2, 0], [n_failures])[0]
+        plt.axvline(x_hover_min, label="Hover Controllability Limits for " + str(n_failures) + " Engine Failures", color="tab:red")
+        plt.axvline(x_hover_max, color="tab:red")
+
         plt.xlabel(r"$x_{cg}$ [m]",fontsize=14)
-        plt.ylabel(r"$\cfrac{S_{fwd}}{S_{rear}}$ [-]",fontsize=14)
+        plt.ylabel(r"$\frac{S_{fwd}}{S_{rear}}$ [-]",fontsize=14)
         plt.ylim(0, max(SrSfwd_stability))
         plt.legend()
+
         plt.show()
-
-
