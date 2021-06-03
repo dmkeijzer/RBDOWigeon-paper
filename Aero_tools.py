@@ -1,5 +1,5 @@
 import numpy as np
-
+from constants import*
 
 class ISA:
     """
@@ -53,3 +53,33 @@ class ISA:
         mu = self.mu_SL * (self.T / self.T_SL) ** (1.5) * (self.T_SL + 110.4) / (self.T + 110.4)
         # 1.458E-6 * self.T ** 1.5 / (self.T + 110.4) # Sutherland Law, using Sutherland's constant S_mu = 110.4 for air
         return mu
+
+
+class speeds:
+    """
+    Class that contains all the relevant speeds.
+
+    TO DO:
+        - Add climb and cruise speed (once drag polar is done)
+        - Add aircraft parameters from datafile
+    """
+    def __init__(self, altitude, m):
+
+        # To be added from datafile:
+        self.CLmax  = 1.5
+        self.S      = 10
+
+        self.rho    = ISA(altitude).density()
+        self.W      = m*g
+
+    def stall(self):
+        return np.sqrt(2*self.W/(self.rho*self.S*self.CLmax))
+
+    def climb(self):
+        raise NotImplementedError
+
+    def cruise(self):
+        raise NotImplementedError
+
+
+
