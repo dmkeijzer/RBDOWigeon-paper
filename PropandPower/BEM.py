@@ -3,7 +3,7 @@ import scipy.integrate as spint
 import scipy.interpolate as spinplt
 """
 This program calculates the blade geometry for propellers for minimum loss according to a procedure laid down by
-ADKINS AND LIEBECK
+ADKINS AND LIEBECK.
 """
 
 
