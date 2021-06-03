@@ -86,6 +86,16 @@ class BEM:
 
     # Product of local speed at the blade and chord
     def Wc(self, F, phi, zeta, Cl):
+        print(self.lamb)
+        print(F)
+        print(np.sin(phi))
+        print(np.cos(phi))
+        print(self.V)
+        print(self.R)
+        print(zeta)
+        print(Cl)
+        print(self.B)
+        print("")
         return 4*np.pi*self.lamb * F * np.sin(phi) * np.cos(phi) * self.V * self.R * zeta / (Cl * self.B)
 
     # Non-dimensional speed
@@ -184,21 +194,13 @@ class BEM:
     #            (1 + eps(xi) / ((1 + zeta / 2) * (self.lamb/xi))) * (1 - eps(xi) * (1 + zeta / 2) * self.lamb / xi) * \
     #            (np.cos(np.arctan((1 + zeta / 2) * self.lamb / xi))) ** 2
 
-    # # Check convergence of the design procedure
-    # # TODO: Check if current exception is an appropriate measure for convergence
-    # def conv(self, zeta_new, zeta):
-    #     try:
-    #         return zeta_new/zeta
-    #     except ZeroDivisionError:
-    #         return zeta_new-zeta
-
     # Propeller efficiency Tc/Pc
     def efficiency(self, Tc, Pc):
         return Tc/Pc
 
-    # Prandtl-Glauert correction factor
+    # Prandtl-Glauert correction factor: sqrt(1 - M^2)
     def PG(self, M):
-        return 1/np.sqrt(1 - M**2)
+        return np.sqrt(1 - M**2)
 
     # This function runs the design procedure from an arbitrary start zeta (which can be 0)
     def run_BEM(self, zeta):
@@ -240,8 +242,8 @@ class BEM:
             for lift_coef in Cls_trial:
                 # TODO: Make this work for each station
 
-                # Correct Cl with Prandtl-Glauert factor (using local Mach number in the middle of the station
-                lift_coef = lift_coef * self.PG(self.M(stations_r[station]))
+                # 'Uncorrect' Cl with Prandtl-Glauert factor (using local Mach number in the middle of the station)
+                # lift_coef = lift_coef * self.PG(self.M(stations_r[station]))
 
                 # Calculate product of local speed with chord
                 Wc = self.Wc(F[station], phis[station], zeta, lift_coef)
@@ -255,13 +257,13 @@ class BEM:
                 # Maximum and minimum RN in database
                 if RN<100000:
                     RN = 100000
-                if RN>4400000:
-                    RN = 4400000  # TODO update once we have final database
+                if RN>5000000:
+                    RN = 5000000
 
+                # Look for corresponding airfoil data file for that RN
                 filename1 = "4412_Re%d_up.txt" % RN
                 filename2 = "4412_Re%d_dwn.txt" % RN
 
-                # TODO: implement code to open and read files
                 file_up = open('Airfoil_Data/'+filename1, "r")
                 file_down = open('Airfoil_Data/'+filename2, "r")
 
@@ -327,7 +329,8 @@ class BEM:
                 airfoil_data_check = airfoil_data
 
                 # Subtract current Cl from list of Cls
-                airfoil_data_check[:, 1] -= lift_coef
+                # 'Uncorrect' Cl for Mach, since the files do not take Mach into account, only RN
+                airfoil_data_check[:, 1] -= (lift_coef * self.PG(self.M(stations_r[station])))
 
                 # Check what line has min Cl difference, and retrieve index of that column
                 index = np.argmin(np.abs(airfoil_data_check[:, 1]))
