@@ -44,7 +44,8 @@ sweepc42=0
 
 #Other paramters
 b_d = b  # fixed due to span limitations
-h_d = 1.4  # Based on fuselage size
+h_d = 1.4  #  Vertical gap between wings. Based on fuselage size
+l_h = 5 # Horizontal gap between wings. Based on fuselgae size
 e_ref = e_OS(AR)
 e = e_factor('tandem', h_d,b_d,e_ref)
 
@@ -76,13 +77,23 @@ CL_lst = np.arange(-0.5,1.7,0.100)
 S_v = 0.6
 S_t = 0
 
-Drag = componentdrag('tandem',S_ref,l1,l2,l3,d_eq,Vcruise,rho,MAC,AR,e,Mach(Vcruise,a),k,flamf,flamw,mu,tc,xcm,0,u,0,h_d,IF_f,IF_w,CL_CDmin,Abase, S_v, S_t)
-print(Drag.Swet_f())
 
-LD = CL_lst/ Drag.CD(CL_lst)
-#plt.plot(CL_lst,Drag.CD(CL_lst))
-plt.plot(CL_lst,LD)
+Drag = componentdrag('tandem',S_ref,l1,l2,l3,d_eq,Vcruise,rho,MAC,AR,e,Mach(Vcruise,a),k,flamf,flamw,mu,tc,xcm,0,u,0,h_d,IF_f,IF_w,CL_CDmin,Abase, S_v, S_t)
+
+#Stall
+stall = Wing_params.CLmax_s(l_h,h_d,w_max)
+CLmax = stall[0]
+CDs = Drag.CD(CLmax)
+CDs_f = Drag.CD0_f
+#Post stall
+Afus = np.pi *d_eq/4
+post_stall = Wing_params.post_stall_lift_drag(l_h,h_d,w_max,tc, CDs, CDs_f, Afus)
+plt.plot(post_stall[0],post_stall[3])
+
 plt.show()
+
+
+
 
 
 

@@ -1,7 +1,7 @@
 import numpy as np
 from Preliminary_Lift.Airfoil_analysis import airfoil_stats, airfoil_datapoint
 
-def deps_da(Lambda_quarter_chord, b,lh, h_ht, A, CLaw,conf):
+def deps_da(Lambda_quarter_chord, b,lh, h_ht, A, CLaw):
     """
     Inputs:
     :param Lambda_quarter_chord: Sweep Angle at c/4 [RAD]
@@ -82,41 +82,42 @@ class wing_design:
         sweep2 = np.arctan(tan_sweep_LE2 - x * (2 * c_r2 / b2) * (1 - self.taper2))
         return sweep1, sweep2
 
-    def liftslope(self, lh, h_ht, w, conf):
+    def liftslope(self, lh, h_ht, w):
         beta = np.sqrt(1 - self.M ** 2)
         SW = np.tan(self.sweep_atx(0.5))
         self.AR_i = 2*self.AR_b
         slope1 = self.Clalpha * (self.AR_i / (2 + np.sqrt(4 + ((self.AR_i * beta / 0.95) ** 2) * ((1 + SW ** 2) / (beta ** 2)))))
         wg =  self.wing_planform_double()
-        deda = deps_da(self.sweepc41, wg[0][0],lh,h_ht, self.AR_i,slope1, conf)
+        deda = deps_da(self.sweepc41, wg[0][0],lh,h_ht, self.AR_i,slope1)
         wfi = 1 + 0.025*(w/wg[0][0]) - 0.25*(w/wg[0][0])  # wing fuselage interaction factor: effect of fuselage diameter on aerodynamic characteristics for straightwing at low and high aspect ratio
 
         slope2 = slope1 * (1 - deda)
         slope_tot = wfi*(slope1 * self.s1 + slope2 * self.s2)
         return slope_tot, slope1* wfi, slope2*wfi, deda
 
-    def CLmax_s(self, lh, h_ht, w, conf):
-        ls = self.liftslope(lh, h_ht, w, conf)
+    def CLmax_s(self, lh, h_ht, w):
+        ls = self.liftslope(lh, h_ht, w)
         CLa = ls[0]
         deda = ls[3]
-        CLmax1 = self.clmax
-        alpha_s2 = round(((self.a_saf-self.a_0L)*(1-deda) +self.a_0L)*4)/4
-        CLmax2 = airfoil_datapoint("CL", "Stall",alpha_s2)
-        CLmax = self.s1*0.9*CLmax1 +self.s2*0.9*CLmax2
-        self.a_s = CLmax/CLa + self.a_0L
+        CLmax1 = self.clmax *0.9
+
+        alpha_s2 = round(((self.a_saf-self.a_0L)*(1-deda[1]) +self.a_0L)*4)/4
+        CLmax2 = 0.9* airfoil_datapoint("CL", "Stall",alpha_s2)
+        CLmax = self.s1*CLmax1 +self.s2*CLmax2
+        self.a_s = (180/np.pi)* CLmax/CLa + self.a_0L
         return CLmax, CLmax1, CLmax2, self.a_s
 
-    def post_stall_lift_drag(self, lh, h_ht, w, conf, tc, CDs_W, CDs_f, Afus):
+    def post_stall_lift_drag(self, lh, h_ht, w, tc, CDs_W, CDs_f, Afus):
         #Wing
-        stall = self.CLmax_s( lh, h_ht, w, conf)
+        stall = self.CLmax_s( lh, h_ht, w)
         CLs = stall[0]
-        a_s = self.a_s*np.pi/180
+        a_s = self.a_s[1]* np.pi/180
         A1 = 0.5*(1.1 + 0.018* self.AR_i)
         A2 = (CLs - 2*A1*np.sin(a_s)*np.cos(a_s))*(np.sin(a_s)/(np.cos(a_s)**2))
         CDmax = (1 + 0.065*self.AR_i)/(0.9 + tc)
         B2 = (CDs_W - CDmax * np.sin(a_s))/np.cos(a_s)
 
-        alpha_ps = (np.pi/180)*np.arange(round(a_s)+1, 90, 1)
+        alpha_ps = (np.pi/180)*np.arange(round(self.a_s[1])+1, 90, 1)
         CL_ps = A1*np.sin(2*alpha_ps)+A2*((np.cos(alpha_ps)**2)/np.sin(alpha_ps))
         CD_ps = CDmax*np.sin(alpha_ps)+ B2 * np.cos(alpha_ps)
 
@@ -126,10 +127,10 @@ class wing_design:
         CD_ps_f = CDmax_f * np.sin(alpha_ps) + B2_f * np.cos(alpha_ps)
         return alpha_ps, CL_ps, CD_ps, CD_ps_f
 
-    def CLa(self, lh, h_ht, w, conf, tc, CDs_W, CDs_f, Afus):
+    def CLa(self, lh, h_ht, w, tc, CDs_W, CDs_f, Afus):
 
-        poststall = self.post_stall_lift_drag( lh, h_ht, w, conf, tc, CDs_W, CDs_f, Afus)
-        CLa = self.liftslope(lh, h_ht, w, conf)
+        poststall = self.post_stall_lift_drag( lh, h_ht, w, tc, CDs_W, CDs_f, Afus)
+        CLa = self.liftslope(lh, h_ht, w)
 
         alpha = np.arange(-5,self.a_s,0.25)
         CL = CLa*(alpha - self.a_0L)
