@@ -1,6 +1,26 @@
 import numpy as np
 from Preliminary_Lift.Airfoil_analysis import airfoil_stats, airfoil_datapoint
-from stab_and_ctrl.cg_limits_horizontal_flight import deps_da
+
+def deps_da(Lambda_quarter_chord, b,lh, h_ht, A, CLaw,conf):
+    """
+    Inputs:
+    :param Lambda_quarter_chord: Sweep Angle at c/4 [RAD]
+    :param lh: distance between ac_w1 with ac_w2 (horizontal)
+    :param h_ht: distance between ac_w1 with ac_w2 (vertical)
+    :param A: Aspect Ratio of wing
+    :param CLaw: Wing Lift curve slope
+    :return: de/dalpha
+    """
+    r = lh * 2 / b
+    mtv = h_ht * 2 / b
+    Keps = (0.1124 + 0.1265 * Lambda_quarter_chord + 0.1766 * Lambda_quarter_chord ** 2) / r ** 2 + 0.1024 / r + 2
+    Keps0 = 0.1124 / r ** 2 + 0.1024 / r + 2
+    v = 1 + (r ** 2 / (r ** 2 + 0.7915 + 5.0734 * mtv ** 2) ** (0.3113))
+    de_da = Keps / Keps0 * CLaw / (np.pi * A) * (
+            r / (r ** 2 + mtv ** 2) * 0.4876 / (np.sqrt(r ** 2 + 0.6319 + mtv ** 2)) + v * (
+            1 - np.sqrt(mtv ** 2 / (1 + mtv ** 2))))
+    #print("Configuration %.0f de/da = %.4f "%(conf,de_da))
+    return de_da
 class wing_design:
 
     def __init__(self, AR, s1, sweepc41, s2, sweepc42, M, S):
@@ -106,9 +126,9 @@ class wing_design:
         CD_ps_f = CDmax_f * np.sin(alpha_ps) + B2_f * np.cos(alpha_ps)
         return alpha_ps, CL_ps, CD_ps, CD_ps_f
 
-    def CLa(self, lh, h_ht, w, conf, tc, CDs_W, CDs_f):
+    def CLa(self, lh, h_ht, w, conf, tc, CDs_W, CDs_f, Afus):
 
-        poststall = self.post_stall_lift_drag( lh, h_ht, w, conf, tc, CDs_W, CDs_f)
+        poststall = self.post_stall_lift_drag( lh, h_ht, w, conf, tc, CDs_W, CDs_f, Afus)
         CLa = self.liftslope(lh, h_ht, w, conf)
 
         alpha = np.arange(-5,self.a_s,0.25)
