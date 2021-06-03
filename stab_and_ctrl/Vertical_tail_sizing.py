@@ -176,8 +176,6 @@ class VT_sizing:
         y_TE_2 = self.final_VT_rudder(nE,Tt0,yE,lv,br_bv,cr_cv)[3]
         y_LE_3 = y_TE_2
         x_LE_3 = x_TE_1 - x_TE_1 * 0.4
-        br_bv = 0.85
-        cr_cv = 0.35
         y_up = br_bv * y_TE_2
         y_down = 0
         x1 = x_TE_1 - cr_cv * x_TE_1
