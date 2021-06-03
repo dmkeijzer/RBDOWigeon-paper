@@ -123,22 +123,18 @@ class BEM:
 
     def I_prim_2(self, xi, zeta, eps):
         return self.lamb * (4 / np.pi) * np.arccos(np.exp(-self.B * (1 - zeta) / (2 * np.sin(self.phi_t(zeta))))) * \
-               np.cos(np.arctan((1 + zeta / 2) * self.lamb / xi)) * np.sin(
-            np.arctan((1 + zeta / 2) * self.lamb / xi)) * \
+               np.cos(np.arctan((1 + zeta/2) * self.lamb / xi)) * np.sin(np.arctan((1 + zeta / 2) * self.lamb/xi)) * \
                (1 - eps(xi) * (1 + zeta / 2) * self.lamb / xi) * (1 + xi / ((1 + zeta / 2) * self.lamb / xi)) * \
-               np.cos(np.arctan((1 + zeta / 2) * self.lamb / xi)) * np.sin(
-            np.arctan((1 + zeta / 2) * self.lamb / xi))
+               np.cos(np.arctan((1 + zeta/2) * self.lamb/xi)) * np.sin(np.arctan((1 + zeta/2) * self.lamb / xi))
 
     def J_prim_1(self, xi, zeta, eps):
         return 4 * xi * (2 / np.pi) * np.arccos(np.exp(-self.B * (1 - zeta) / (2 * np.sin(self.phi_t(zeta))))) * \
-               np.cos(np.arctan((1 + zeta / 2) * self.lamb / xi)) * np.sin(
-            np.arctan((1 + zeta / 2) * self.lamb / xi)) * \
+               np.cos(np.arctan((1 + zeta/2) * self.lamb / xi)) * np.sin(np.arctan((1 + zeta/2) * self.lamb / xi)) * \
                (1 + eps(xi) / ((1 + zeta / 2) * (self.lamb / xi)))
 
     def J_prim_2(self, xi, zeta, eps):
         return 2 * xi * (2 / np.pi) * np.arccos(np.exp(-self.B * (1 - zeta) / (2 * np.sin(self.phi_t(zeta))))) * \
-               np.cos(np.arctan((1 + zeta / 2) * self.lamb / xi)) * np.sin(
-            np.arctan((1 + zeta / 2) * self.lamb / xi)) * \
+               np.cos(np.arctan((1 + zeta/2) * self.lamb/xi)) * np.sin(np.arctan((1 + zeta / 2) * self.lamb / xi)) * \
                (1 + eps(xi) / ((1 + zeta / 2) * (self.lamb / xi))) * (1 - eps(xi) * (1 + zeta / 2) * self.lamb / xi) * \
                (np.cos(np.arctan((1 + zeta / 2) * self.lamb / xi))) ** 2
 
@@ -204,12 +200,12 @@ class BEM:
                 # Calculate Reynolds number at the station to look for the correct airfoil datafile
                 Reyn = self.RN(Wc)
 
-                # Retrieve appropriate file from airfoil data folder
+                # Round Reynolds number to 100,000 to retrieve appropriate file from airfoil data folder
                 RN = self.RN_spacing * round(Reyn[station] / self.RN_spacing)
                 filename1 = "4412_Re{%d}_up" % RN
                 filename2 = "4412_Re{%d}_dwn" % RN
 
-                # TODO: implement open and read file code
+                # TODO: implement code to open and read files
 
                 # TODO: See format of files and retrieve Cd and AoA from them
                 Cd_ret = 1     # Retrieved Cd
