@@ -1,5 +1,7 @@
 import numpy as np
 from constants import*
+import warnings
+
 
 class ISA:
     """
@@ -76,10 +78,13 @@ class speeds:
         return np.sqrt(2*self.W/(self.rho*self.S*self.CLmax))
 
     def climb(self):
-        raise NotImplementedError
+        # !!!! IMPLEMENT !!!
+        return 50
 
     def cruise(self):
-        raise NotImplementedError
+        # !!!! IMPLEMENT !!!!
+        # ADD WIND EFFECT
+        return 60
 
 
 
