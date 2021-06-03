@@ -53,16 +53,23 @@ wps = Wing_placement_sizing(W, h, lfus, hfus, wfus, V0, M0, CD0, theta0, CLfwd,
 vt_sizing = VT_sizing(W,h,xcg,lfus,hfus,wfus,V0,Vstall,M0,CD0,theta0,
                       CLfwd,CLrear,CLafwd,CLarear,
                       Cmacfwd,Cmacrear,Sfwd,Srear,Afwd,Arear,0,0,cfwd,crear,bfwd,brear,taper)
-
 elevator_effect = 1.4
 d = 0
 dx = 0.1
 
-nE = 16
-Tt0 = 4000
+nE = 8
+Tt0 = 800
 yE = bfwd/2
 lv = lfus-xcg
-vt_sizing.plotting(nE,Tt0,yE,lv,br_bv=0.87,cr_cv=0.4)
+brbv = np.linspace(0.75,1,150)
+crcv = np.linspace(0.1,0.4,150)
+# for i in range(len(brbv)):
+#     for j in crcv:
+#         print("For a br/bv = %.3f and cr/cv = %.3f "%(brbv[i],j))
+#         vt_br = vt_sizing.final_VT_rudder(nE,Tt0,yE,lv,br_bv=brbv[i],cr_cv=j)
+print("Sv = ",vt_sizing.VT_stability(lv))
+vt_sizing.plotting(nE,Tt0,yE,lv,br_bv=brbv,cr_cv=crcv)
+vt_sizing.plotting(nE,Tt0,yE,lv,br_bv=0.85,cr_cv=0.4)
 # xcg_middle = (0.2187 + 3.3439) / 2
 # wps.hover_calc.fail_rotors([0, 3, 5, 6])
 # xcgs = np.linspace(xcg_middle - 2, xcg_middle + 2, 100)
