@@ -83,7 +83,7 @@ class DistributedMoment:
 class EquilibriumEquation:
     def __init__(self, kloads=[], ukloads=[]):
         self.k, self.uk = kloads, ukloads
-        self.A, self.b = None, None
+        self.A, self.b = [], []
 
     def SetupEquation(self):
         b = np.concatenate([-sum([k.force() for k in self.k]), -sum([l.moment() for l in self.k])]).reshape(-1, 1)
@@ -95,7 +95,7 @@ class EquilibriumEquation:
         self.A, self.b = unsingularsys[:, :-1], unsingularsys[:, -1]
         return self.A, self.b
 
-    SolveEquation = lambda self: np.linalg.inv(self.A) @ self.b
+    SolveEquation = lambda self: np.linalg.inv(self.A) @ self.b if len(self.A) and len(self.b) else None
 
 if __name__ == '__main__':
     load1 = PointLoad([1, 0, 0], [0, 1, 0])
