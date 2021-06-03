@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from Aero_tools import ISA
-
+import scipy.optimize as optimize
 
 class mission:
     """
@@ -15,15 +15,17 @@ class mission:
         - Add propulsion data   (Thrust-to-power, max thrust)
         - Cruise performance
         - Descend performance
+        - Add optimum speeds part
+        - Efficiencies
     """
-    def __init__(self):
+    def __init__(self, mass, cruising_alt, cruise_speed):
 
         # Temporary placeholders, REMOVE BEFORE RUNNING OPTIMIZATION
         self.a = 2 * np.pi
         self.mission_dist = 300e3
         self.S = 10
         self.g = 9.80665
-        self.m = 2000
+        self.m = mass
         self.max_rot = np.radians(5)
 
         # Design variables
@@ -36,8 +38,8 @@ class mission:
         self.roc = 5
         self.rod = 5
 
-        self.h_cruise = 300
-        self.v_cruise = 60
+        self.h_cruise = cruising_alt
+        self.v_cruise = cruise_speed
 
     def aero_coefficients(self, angle_of_attack):
         """
@@ -87,10 +89,14 @@ class mission:
         # Limit altitude
         vy_tgt = np.maximum(np.minimum(-0.5 * (y - y_tgt), max_vy), -max_vy)
 
+        # Change target speeds based on optimal values !!!! IMPLEMENT !!!!
+        if y < 290:
+            a =1
+            #print("Implement optimum speeds")
+
         # Slow down when approaching 15 m while going too fast in horizontal direction
         if 15 + (np.abs(vy) / self.ay_target_descend) > y > y_tgt and abs(vx) > 0.25:
             vy_tgt = 0
-            print('slowing', vx, y)
 
         # Keep horizontal velocity zero when flying low
         if y < 10:
@@ -343,13 +349,171 @@ class mission:
         return E_tot, t_tot
 
 
-a = mission()
+class evtol_performance():
+    """
+    This script calculates different performance characteristics for a tilt-wing evtol.
 
-# Simulate descend
-a.numerical_simulation(vx_start = 60, y_start = 300, th_start = np.radians(5), y_tgt = 0, vx_tgt = 0, plotting = True)
+    TO DO:
+        - Integrate final data file (replace self.parameters by datafile.parameters)
+        - Add drag curve in Climb performance
+        - Replace max_thrust by function from propulsion department
+        - Vertical flight CD
+        - Efficiencies
+    """
+    def __init__(self, cruising_alt, cruise_speed):
 
-# Simulate climb
-a.numerical_simulation(vx_start = 0.001, y_start = 0, th_start = np.pi/2, y_tgt = 300, vx_tgt = 60, plotting = True)
+        # Change this when datafile is final
+        self.S      = 10
+        self.CL_max = 1.5
+        self.g      = 9.80665
+        self.m      = 2000
+        self.W      = self.m*self.g
+        self.bat_E  = 500e6 # [J] Battery capacity
+        self.v_cruise = cruise_speed
+        self.h_cruise = cruising_alt
+        self.EOM    = 1500
 
-E_total, t_total = a.total_energy()
-print(E_total, t_total)
+    def max_thrust(self, V):
+
+        eff = 0.9   # !!!!! IMPLEMENT changing efficiency !!!!!
+        P_max = 600000/eff
+        return np.minimum(P_max/V, 40000)
+
+    def climb_performance(self, mass):
+
+        # Altitudes to consider climb performance at
+        altitudes   = np.array([300, 3000])
+
+        for h in altitudes:
+
+            # Density at altitude
+            rho     = ISA(h).density()
+
+            # Stall speed
+            V_stall = np.sqrt(2*self.W/(rho*self.S*self.CL_max))
+
+            # Range of speeds
+            V   = np.linspace(V_stall, 200, 1000)
+
+            # Lift coefficient
+            CL  = 2*self.W/(rho*V*V*self.S)
+
+            # Drag coefficient !!! CHANGE !!!
+            CD  = 0.05 + 0.1*CL*CL
+
+            # Drag
+            D   = CD*0.5*rho*V*V*self.S
+
+            # Maximum available thrust
+            T   = self.max_thrust(V)
+
+            # Climb rate, setting a hard limit on climbs more than 90 degrees
+            RC = np.minimum((T - D)/self.W, 1)*V
+
+            # Plot results
+            plt.plot(V, RC, label = 'Altitude: ' + str(h))
+
+        plt.grid()
+        plt.xlabel('Speed [m/s]')
+        plt.ylabel('Rate-of-climb [m/s]')
+        plt.legend()
+        plt.show()
+
+    def vertical_equilibrium(self, rate_of_climb, altitude, m):
+
+        # Density at altitude
+        rho     = ISA(altitude).density()
+
+        # Drag coefficient of the aircraft when flying straight up
+        CD_vert = 1     # !!!!! IMPLEMENT !!!!
+
+        return self.max_thrust(rate_of_climb) - 0.5*rho*(rate_of_climb**2)*self.S*CD_vert - m*self.g
+
+    def vertical_climb(self):
+
+        # Range of altitudes and masses
+        masses    = np.arange(1500, 2100, 100)
+        altitudes = np.arange(0, 3000, 100)
+        RC  = np.zeros(np.size(altitudes))
+
+        for j, m in enumerate(masses):
+            for i, h in enumerate(altitudes):
+
+                # Solve the equation for the rate of climb
+                RC[i] = optimize.fsolve(self.vertical_equilibrium, 5, args = (h, m))
+
+            # Plot the results
+            plt.plot(altitudes, RC, label = 'mass: ' + str(m))
+
+        plt.xlabel('Altitude [m]')
+        plt.ylabel('Rate-of-climb [m/s]')
+        plt.grid()
+        plt.legend()
+        plt.show()
+
+
+
+    def payload_range(self):
+
+        # Range of payload masses
+        payload_mass = np.arange(0, 500, 100)
+
+        # Total mass
+        mass = payload_mass + self.EOM
+
+        E_to_arr = np.zeros(np.size(payload_mass))
+        E_la_arr = np.zeros(np.size(payload_mass))
+        P_cr_arr = np.zeros(np.size(payload_mass))
+
+        for i, m in enumerate(mass):
+
+            # Call mission class
+            energy = mission(mass=m, cruising_alt=self.h_cruise, cruise_speed=self.v_cruise)
+
+            # Get the distances and energy needed for take-off and landing
+            d_to, E_to, t_to = energy.numerical_simulation(vx_start = 60, y_start = 300, th_start = np.radians(5),
+                                                           y_tgt = 0, vx_tgt = 0, plotting = False)
+
+            d_la, E_la, t_la = energy.numerical_simulation(vx_start = 0.001, y_start = 0, th_start = np.pi/2,
+                                                           y_tgt = 300, vx_tgt = 60, plotting = False)
+
+            # Power needed for cruise
+            P_cr = energy.cruise()
+
+            # Store results
+            E_to_arr[i] = E_to
+            E_la_arr[i] = E_la
+            P_cr_arr[i] = P_cr
+
+        # Find the remaining energy for cruise
+        E_cr    = self.bat_E - E_la_arr - E_to_arr
+
+        # Time in cruise
+        t_cr    = E_cr/P_cr_arr
+
+        # Cruising distance
+        d_cr    = self.v_cruise*t_cr
+
+        # Plot results
+        plt.plot(d_cr/1000, payload_mass)
+        plt.xlabel('Range [km]')
+        plt.ylabel('Payload mass [kg]')
+        plt.grid()
+        plt.show()
+
+
+# a = mission(2000)
+#
+# # Simulate descend
+# a.numerical_simulation(vx_start = 60, y_start = 300, th_start = np.radians(5), y_tgt = 0, vx_tgt = 0, plotting = True)
+#
+# # Simulate climb
+# a.numerical_simulation(vx_start = 0.001, y_start = 0, th_start = np.pi/2, y_tgt = 300, vx_tgt = 60, plotting = True)
+#
+# E_total, t_total = a.total_energy()
+# print(E_total, t_total)
+
+b = evtol_performance(cruising_alt = 300, cruise_speed = 60)
+b.climb_performance(mass = 2000)
+b.payload_range()
+b.vertical_climb()
