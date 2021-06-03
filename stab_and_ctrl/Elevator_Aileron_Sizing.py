@@ -57,17 +57,17 @@ class Control_surface:
         tau_a = -6.624*x**4+12.07*x**3-8.292*x**2+3.295*x+0.004942
         return tau_a
 
-    def Clda(self,b2):
+    def Clda(self,Sa_S,b1,b2):
         """
         Input:
         :param b2: Outer distance of the aileron [m]
         :return: Control derivative C_l_da [1/rad]
         """
-        b1 = 0.7*self.bfwd/2
+        b_1 = b1*self.bfwd / 2 / 100
+        b_2 = b2*self.bfwd / 2 / 100
         c_r = self.cfwd*3/2*(1+self.taper)/(1+self.taper+self.taper**2)
-        Sa_S = 0.075
         Clda = self.CLafwd*self.tau_a(Sa_S)*c_r/(self.Sfwd*self.bfwd)*\
-               (0.5*(b2**2-b1**2) + 2*(self.taper-1)/(3*self.bfwd)*(b2**3-b1**3))
+               (0.5*(b_2**2-b_1**2) + 2*(self.taper-1)/(3*self.bfwd)*(b_2**3-b_1**3))
         return Clda
 
     def Clp(self):
@@ -78,17 +78,41 @@ class Control_surface:
         Clp = Clp_fwd+Clp_rear
         return Clp
 
-    def plotting(self,b2):
-        da_max = 30*np.pi/180
-        dphi_dt = 60*np.pi/180
-        minClda = -(dphi_dt)/1.3*self.Clp()*max(self.bfwd,self.brear)/(2*self.Vmc*da_max)
-        minClda = np.ones(len(b2))*minClda
-        Clda_array = self.Clda(b2)
-        plt.plot(b2,minClda,label=r"Minimum value required $C_{l_{\delta_a}}$")
-        plt.plot(b2,Clda_array,label=r"$C_{l_{\delta_a}}(b_2)$")
-        plt.xlabel(r"$b_2 [m]$",fontsize=14)
-        plt.ylabel(r"$C_{l_{\delta_a}} [1/rad]$",fontsize=14)
-        plt.legend()
-        plt.show()
+    def plotting(self,Sa_S,b1,b2):
+        if isinstance(Sa_S,float):
+            da_max = 30*np.pi/180
+            dphi_dt = 60*np.pi/180/1.3
+            minClda = -(dphi_dt)*self.Clp()*max(self.bfwd,self.brear)/(2*self.Vmc*da_max)
+            minClda = np.ones(len(b2))*minClda
+            Clda_array = self.Clda(Sa_S,b1,b2)
+            plt.plot(b2,minClda,label=r"Minimum value required $C_{l_{\delta_a}}$")
+            plt.plot(b2,Clda_array,label=r"$C_{l_{\delta_a}}(b_2)$")
+            plt.xlabel(r"$b_2 [m]$",fontsize=14)
+            plt.ylabel(r"$C_{l_{\delta_a}} [1/rad]$",fontsize=14)
+            # plt.vlines(b1, min(Clda_array),max(Clda_array),"r",label=r"Smallest limit set by $b_1$")
+            plt.ylim(min(Clda_array))
+            plt.xlim(min(b2))
+            plt.legend()
+            plt.show()
+        else:
+            da_max = 30 * np.pi / 180
+            dphi_dt = 60 * np.pi / 180 /1.3
+            minClda = -(dphi_dt) * self.Clp() * max(self.bfwd, self.brear) / (2 * self.Vmc * da_max)
+            X, Y = np.meshgrid(b2, Sa_S)
+            Z =  self.Clda(Y,b1, X)
+            fig, ax = plt.subplots(1, 1)
+            # ax.add_artist(ab)
+            # levels = [0,0.1,1,1.]
+            cp = ax.contourf(X, Y, Z, cmap='coolwarm')
+            minimum = ax.contour(X, Y, Z, [minClda], colors=["k"])
+            plt.clabel(minimum,fmt="Roll requirement")
+            cbar = plt.colorbar(cp, orientation="horizontal")
+            cbar.set_label(r"$C_{l_{\delta_a}} [1/rad]$")
+            plt.ylabel(r"$S_a/S_{fwd}$ [-]", fontsize=12)
+            plt.xlabel(r"$b_2$ [$\% b_{fwd}/2$]", fontsize=12)
+            # plt.vlines(b1,min(Sa_S),max(Sa_S),"r",label=r"Smallest limit set by $b_1$")
+            plt.show()
+
+
 
 

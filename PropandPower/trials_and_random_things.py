@@ -1,12 +1,10 @@
 import Aero_tools as at
 
-cruise_height = 3000
+RN_spacing = 100000
 
-ISA = at.ISA(cruise_height)
+# Round Reynolds number to 100,000 to retrieve appropriate file from airfoil data folder
+RN = RN_spacing * round(1278980 / RN_spacing)
+filename1 = "4412_Re%d_up" % RN
 
-print(ISA.viscosity_dyn(), ISA.density())
-
-ISA = at.ISA(0)
-
-print(ISA.viscosity_dyn(), ISA.density())
-
+print(RN)
+print(filename1)
