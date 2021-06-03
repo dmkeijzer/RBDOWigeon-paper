@@ -1,7 +1,8 @@
 import numpy as np
 from stab_and_ctrl.Scissor_Plots import Wing_placement_sizing
 from stab_and_ctrl.Vertical_tail_sizing import VT_sizing
-from stab_and_ctrl.Elevator_Aileron_Sizing import Control_surface
+from stab_and_ctrl.Aileron_Sizing import Control_surface
+from stab_and_ctrl.Elevator_sizing import Elevator_sizing
 import constants as const
 from matplotlib import pyplot as plt
 
@@ -87,6 +88,14 @@ b2 =np.linspace(b1,100,150)
 Sa_S = np.linspace(0.05,0.20,150)
 # elevon.plotting(0.15,b1,b2)
 elevon.plotting(Sa_S,b1,b2,False)
+
+#### Plotting Elevator ####
+elevator = Elevator_sizing(W,h,xcg,lfus,hfus,wfus,V0,Vstall,M0,CD0,theta0,CLfwd,CLrear,CLafwd,CLarear,
+                           Cmacfwd,Cmacrear,Sfwd,Srear,Afwd,Arear,0,0,cfwd,crear,bfwd,brear,taper,dCLfwd=0.4*CLfwd)
+beb = np.linspace(10,100,150)
+SeS = np.linspace(0.1,0.4,150)
+de_max = 15
+elevator.plotting(SeS,beb,de_max)
 # xcg_middle = (0.2187 + 3.3439) / 2
 # wps.hover_calc.fail_rotors([0, 3, 5, 6])
 # xcgs = np.linspace(xcg_middle - 2, xcg_middle + 2, 100)
