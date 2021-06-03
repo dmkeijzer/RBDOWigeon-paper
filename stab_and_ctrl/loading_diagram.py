@@ -1,9 +1,9 @@
 class CgCalculator:
     """
     Class to calculate the CG and generate loading diagrams for the aircraft.
-    The coordinate system has its origin at the nose, and the x-axis points
-    backwards. The y-axis points towards starboard and the z-axis points
-    upwards.
+    The coordinate system has its origin at the nose the height of the bottom
+    of the fuselage. The x-axis points backwards, the y-axis points towards
+    starboard and the z-axis points upwards.
 
     @author: Jakob Schoser
     """
@@ -77,13 +77,14 @@ class CgCalculator:
         if seated_pil:
             x += self.m_pil * self.cg_pil[0]
             y += self.m_pil * self.cg_pil[1]
-            y += self.m_pil * self.cg_pil[2]
+            z += self.m_pil * self.cg_pil[2]
             m += self.m_pil
 
         x /= m
         y /= m
+        z /= m
 
-        return x, y
+        return x, y, z
 
     def calc_cg_range(self, cg_wf: list, cg_wr: list,
                       order=("cargo", "pil", 0, 1, 2, 3)) -> tuple:
@@ -94,10 +95,12 @@ class CgCalculator:
         :param order: Order of loading different parts. May contain "cargo",
         "pil", and numbers indicating passenger IDs starting from 0.
         :return: [most forward CG, most aft CG],
-        [most port CG, most starboard CG]
+        [most port CG, most starboard CG], [lowest CG, highest CG]
         """
 
-        x_front, x_aft, y_port, y_star = None, None, None, None
+        x_front, x_aft = None, None
+        y_port, y_star = None, None
+        z_bottom, z_top = None, None
 
         loaded_cargo = False
         seated_pax = []
@@ -111,12 +114,13 @@ class CgCalculator:
             else:
                 seated_pax.append(item)
 
-            x, y = self.calc_cg(cg_wf, cg_wr, loaded_cargo,
-                                seated_pax, seated_pil)
+            x, y, z = self.calc_cg(cg_wf, cg_wr, loaded_cargo,
+                                   seated_pax, seated_pil)
 
             if x_front is None:
                 x_front, x_aft = x, x
                 y_port, y_star = y, y
+                z_bottom, z_top = z, z
             else:
                 x_front = min(x_front, x)
                 x_aft = max(x_aft, x)
@@ -124,4 +128,7 @@ class CgCalculator:
                 y_port = min(y_port, y)
                 y_star = max(y_star, y)
 
-        return [x_front, x_aft], [y_star, y_port]
+                z_bottom = min(z_bottom, z)
+                z_top = max(z_top, z)
+
+        return [x_front, x_aft], [y_star, y_port], [z_bottom, z_top]
