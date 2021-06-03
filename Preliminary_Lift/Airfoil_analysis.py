@@ -40,7 +40,7 @@ def Cd(CL):
     fcd = interp1d(Cl_vals,Cd_vals,kind = 'quadratic')
     return fcd(CL)
 
-#plt.plot(np.arange(0,1,0.05), Cd(np.arange(0,1,0.05)))
+#plt.plot(np.arange(0,1.7,0.05), Cd(np.arange(0,1.7,0.05)))
 #plt.show()
 
 

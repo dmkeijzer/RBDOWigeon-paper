@@ -142,7 +142,8 @@ class VT_sizing:
         CYb_v = -self.C_L_a(self.initial_VT(lv)[1],self.initial_VT(lv)[4])
 
         Cnb = 0.06
-        Sv = self.S*(Cnb-Cnb_fus-Cnb_w_fwd-Cnb_w_rear)/(-CYb_v)*max(self.brear,self.bfwd)/lv
+        Sv = self.S*(Cnb-Cnb_fus-Cnb_w_fwd*self.Sfwd*self.cfwd/(self.S*self.c)-
+                     Cnb_w_rear*self.Srear*self.crear/(self.S*self.c))/(-CYb_v)*max(self.brear,self.bfwd)/lv
         return Sv
 
     def final_VT_rudder(self,nE,Tt0,yE,lv,br_bv, cr_cv):
