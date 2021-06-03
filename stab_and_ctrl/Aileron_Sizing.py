@@ -44,7 +44,7 @@ class Control_surface:
         :return: Sweep at nth chord [rad]
         """
         tanSweep_m = np.tan(Sweepm)
-        tanSweep_n = tanSweep_m -4/(AR*4)*(n-m)/100*(1-self.taper)/(1+self.taper)
+        tanSweep_n = tanSweep_m -4/(AR)*(n-m)/100*(1-self.taper)/(1+self.taper)
         return np.arctan(tanSweep_n)
 
     def tau_a(self,Sa_S):
