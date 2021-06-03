@@ -41,7 +41,7 @@ class VT_sizing:
         # self.de_da = self.deps_da(self.Sweepc4fwd,self.bfwd,self.lh(),self.hfus,self.Afwd,self.CLafwd)
         self.taper_v = 0.4
         self.Vs = Vstall # Stall speed [m/s]
-        self.Vmc = 1.2*self.Vs # Mimum controllable speed [m/s]
+        self.Vmc = 1.2*self.Vs # Minimum controllable speed [m/s]
         self.xcg = xcg
         self.c = self.Sfwd/self.S*self.cfwd+self.Srear/self.S*self.crear
 
@@ -98,7 +98,7 @@ class VT_sizing:
         """
         return 1.129*(Cr/Cv)**0.4044 - 0.1772
 
-    def VT_controllability(self,nE,Tt0,yE,lv):
+    def VT_controllability(self,nE,Tt0,yE,lv,br_bv,cr_cv):
         """
         Inputs:
         :param nE: Number of engines [-]
@@ -110,10 +110,8 @@ class VT_sizing:
         N_D = 0.25*N_E # component due to drag [Nm]
         N_total = N_E + N_D
         Sr_Sv = 0.2
-        br_bv = 0.85
-        Cr_Cv = 0.25
         dr_max = 25*np.pi/180
-        C_rudder = self.initial_VT(lv)[3]*Cr_Cv
+        C_rudder = self.initial_VT(lv)[3]*cr_cv
         tau_r = self.tau(C_rudder,self.initial_VT(lv)[3])
         CLa_v = self.C_L_a(self.initial_VT(lv)[1],self.initial_VT(lv)[4])
         Vv_V = 1
@@ -147,7 +145,7 @@ class VT_sizing:
         Sv = self.S*(Cnb-Cnb_fus-Cnb_w_fwd-Cnb_w_rear)/(-CYb_v)*max(self.brear,self.bfwd)/lv
         return Sv
 
-    def final_VT_rudder(self,nE,Tt0,yE,lv):
+    def final_VT_rudder(self,nE,Tt0,yE,lv,br_bv, cr_cv):
         """
         Inputs:
         :param nE: Number of propellers
@@ -156,32 +154,30 @@ class VT_sizing:
         :param lv: CG moment arm [m]
         :return: Final design
         """
-        Sv = max(self.VT_stability(lv),self.VT_controllability(nE,Tt0,yE,lv))
+        Sv = max(self.VT_stability(lv),self.VT_controllability(nE,Tt0,yE,lv,br_bv,cr_cv))
         ARv = 1.25
         bv = np.sqrt(ARv*Sv)
         C_v = Sv/bv
         C_vr = 3/2*C_v*(1+self.taper_v)/(1+self.taper_v+self.taper_v**2)
         C_vt = self.taper_v*C_vr
         Sweep_v_c2 = self.Sweep(ARv,0,50,100) # Design variable TE sweep 0.
-        br_bv = 0.85
-        Cr_Cv = 0.25
-        c_r = Cr_Cv*C_v
+        c_r = cr_cv*C_v
         c_r_root = 3/2*c_r*(1+self.taper_v)/(1+self.taper_v+self.taper_v**2)
         c_r_tip = self.taper_v*c_r_root
         b_r = br_bv*bv
         return Sv,C_vr,C_vt,bv,Sweep_v_c2,c_r,c_r_root,c_r_tip,b_r,ARv
 
-    def plotting(self,nE,Tt0,yE,lv):
+    def plotting(self,nE,Tt0,yE,lv,br_bv,cr_cv):
         y_LE_0 = 0
         x_LE_0 = 0
-        x_TE_1 = self.final_VT_rudder(nE,Tt0,yE,lv)[1]
+        x_TE_1 = self.final_VT_rudder(nE,Tt0,yE,lv,br_bv,cr_cv)[1]
         y_TE_1 = 0
         x_TE_2 = x_TE_1
-        y_TE_2 = self.final_VT_rudder(nE,Tt0,yE,lv)[3]
+        y_TE_2 = self.final_VT_rudder(nE,Tt0,yE,lv,br_bv,cr_cv)[3]
         y_LE_3 = y_TE_2
         x_LE_3 = x_TE_1 - x_TE_1 * 0.4
         br_bv = 0.85
-        cr_cv = 0.25
+        cr_cv = 0.35
         y_up = br_bv * y_TE_2
         y_down = 0
         x1 = x_TE_1 - cr_cv * x_TE_1
