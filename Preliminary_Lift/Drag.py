@@ -1,6 +1,6 @@
 import numpy as np
 from math import *
-
+from Preliminary_Lift.Airfoil_analysis import Cd
 #
 # From BOX WING FUNDAMENTALS - A DESIGN PERSPECTIVE
 # Oswald efficiency factor depending on the wing type
@@ -52,7 +52,7 @@ def e_OS(AR):
 # CD0 component build up
 
 class componentdrag:
-    def __init__(self, type, S_ref, l1, l2, l3, d, V_cr, rho, MAC, AR, e, M_cr, k, frac_lam_f, frac_lam_w, mu, tc,xcm,sweepm, u, c_t,h, IF_f, IF_w, C_L, C_L_minD, Abase):
+    def __init__(self, type, S_ref, l1, l2, l3, d, V_cr, rho, MAC, AR, e, M_cr, k, frac_lam_f, frac_lam_w, mu, tc,xcm,sweepm, u, c_t,h, IF_f, IF_w, C_L_minD, Abase, S_v, S_t):
         self.S_ref = S_ref
         self.l1 = l1
         self.l2 = l2
@@ -76,23 +76,24 @@ class componentdrag:
         self.type = type
         self.IF_w = IF_w
         self.IF_f = IF_f
-        self.C_L = C_L
         self.C_L_minD = C_L_minD
         self.Abase = Abase
         if self.type == 'box':
-            self.S_v = c_t*h
+            self.S_c = c_t*h
+        self.S_v = S_v
+        self.S_t = S_t
     def Swet_f(self):
 
         return (np.pi * self.d/4)* (((1/(3*self.l1**2))*((4*self.l1**2 +((self.d**2)/4))**1.5 -((self.d**3)/8)) ) -self.d + 4*self.l2 + 2 * np.sqrt(self.l3**2 + (self.d**2)/4 ))
 
-    def Swet_w(self):
+    def Swet_v(self):
 
         if self.type =='box':
-            return (self.S_ref+self.S_v) *2.14
+            return (self.S_ref+self.S_c + self.S_v) *2.14
 
         else:
 
-            return self.S_ref*2.1
+            return (self.S_t+self.S_v)*2.14
 
     def Re_f(self):
 
@@ -124,8 +125,8 @@ class componentdrag:
     def CD0(self):
 
         self.CD0_f = (1/self.S_ref) * (self.Cf_f() *self.FF_f()*self.IF_f* self.Swet_f())
-        self.CD0_w = (1 / self.S_ref) * (self.Cf_w() * self.FF_w() * self.IF_w * self.Swet_w())
-        CD0 = (self.CD0_w + self.CD0_f)*1.05
+        self.CD0_v = (1 / self.S_ref) * (self.Cf_w() * self.FF_w() * self.IF_w * self.Swet_v())
+        CD0 = (self.CD0_v + self.CD0_f)*1.05
         return CD0
 
     def CD_upsweep(self):
@@ -136,17 +137,21 @@ class componentdrag:
 
         return (0.139 + 0.419*(self.M-0.161)**2) * self.Abase/(self.S_ref)
 
-    def CDi(self):
+    def CDi(self, C_L):
 
-        return ((self.C_L-self.C_L_minD)**2)/(np.pi *self.AR *self.e)
+        return ((C_L-self.C_L_minD)**2)/(np.pi *self.AR *self.e)
 
-    def CD(self):
+    def Cd_w(self, C_L):
 
-        return self.CD0()+self.CDi() + self.CD_base() +self.CD_upsweep()
+        return Cd(C_L)
 
-    def Drag(self):
+    def CD(self, C_L):
 
-        return self.CD() *0.5*self.rho* (self.V**2)*self.S_ref
+        return self.CD0()+self.CDi(C_L) + self.CD_base() +self.CD_upsweep() + self.Cd_w(C_L)
+
+    def Drag(self, C_L):
+
+        return self.CD(C_L) *0.5*self.rho* (self.V**2)*self.S_ref
 
     def Drag_polar(self):
         CDmin = self.CD0()+ self.CD_base() +self.CD_upsweep()

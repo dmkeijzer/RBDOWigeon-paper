@@ -1,6 +1,7 @@
+import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
-
+from scipy.interpolate import interp1d
 
 def airfoil_stats():
     df1 = pd.read_csv("Airfoil_data/NACA44017_Re2.300.csv")
@@ -30,3 +31,17 @@ def airfoil_datapoint(type, Re, alpha):
         df = pd.read_csv("Airfoil_data/NACA44017_Re2.300.csv")
 
     return np.average(df[type][df["alpha"] == alpha])
+
+def Cd(CL):
+    df = pd.read_csv("Airfoil_data/NACA44017_Re2.300.csv")
+    Cl_vals = np.array(df["CL"][df["alpha"]<17])
+    Cd_vals = np.array(df["CD"][df["alpha"]<17])
+    #print(Cl_vals)
+    fcd = interp1d(Cl_vals,Cd_vals,kind = 'quadratic')
+    return fcd(CL)
+
+#plt.plot(np.arange(0,1,0.05), Cd(np.arange(0,1,0.05)))
+#plt.show()
+
+
+

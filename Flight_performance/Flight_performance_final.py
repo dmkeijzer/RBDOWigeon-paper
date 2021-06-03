@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 from Aero_tools import ISA
 import scipy.optimize as optimize
 
+
 class mission:
     """
     This class simulates the take-off and landing af a tilt-wing eVTOL. Hover, transition and horizontal flight are
@@ -41,6 +42,9 @@ class mission:
         self.h_cruise = cruising_alt
         self.v_cruise = cruise_speed
 
+        plt.rcParams.update({'font.size': 16})
+        self.path = 'C:/Users/Egon Beyne/Desktop/DSE/Final/'
+
     def aero_coefficients(self, angle_of_attack):
         """
         Calculates the lift and drag coefficients of the aircraft for a given angle of attack.
@@ -52,11 +56,11 @@ class mission:
         """
 
         # Placeholder values for the lift and drag coefficients
-        if angle_of_attack<np.radians(20):
+        if angle_of_attack < np.radians(20):
             CL = angle_of_attack * 2 * np.pi
 
         else:
-            CL = np.maximum(np.radians(15)* 2 * np.pi - (2*(angle_of_attack - np.radians(20))), 0)
+            CL = np.maximum(np.radians(15) * 2 * np.pi - (2*(angle_of_attack - np.radians(20))), 0)
 
         CD = 0.05 + 0.05 * ((angle_of_attack * 2 * np.pi)**2)
 
@@ -91,8 +95,7 @@ class mission:
 
         # Change target speeds based on optimal values !!!! IMPLEMENT !!!!
         if y < 290:
-            a =1
-            #print("Implement optimum speeds")
+            a = 1
 
         # Slow down when approaching 15 m while going too fast in horizontal direction
         if 15 + (np.abs(vy) / self.ay_target_descend) > y > y_tgt and abs(vx) > 0.25:
@@ -103,7 +106,6 @@ class mission:
             vx_tgt_1 = 0
         else:
             vx_tgt_1 = vx_tgt
-
 
         # Limit speed
         ax_tgt = np.minimum(np.maximum(-0.5*(vx - vx_tgt_1), -max_ax), max_ax)
@@ -188,7 +190,6 @@ class mission:
             th = np.maximum(np.minimum(th, th_max), th_min)
 
             # Thrust can be calculated in two ways, result should be very close
-            T  = (self.m * ax_tgt + D * np.cos(gamma) + L * np.sin(gamma))/np.cos(th)
             T  = (self.m*ay_tgt + self.m*self.g - L*np.cos(gamma) + D*np.sin(gamma))/np.sin(th)
 
             T = np.maximum(np.minimum(np.maximum(T, T_min), T_max), 0)
@@ -211,12 +212,12 @@ class mission:
             ax_lst.append(ax)
             ay_lst.append(ay)
 
-            # Low pass filter for the thrust
-            #T = np.mean(np.array(T_lst[-5:]))
-
             # Check if end conditions are satisfied
-            if abs(vx - vx_tgt) < 0.5 and abs(y - y_tgt) < 0.5 and abs(vy) < 0.5 and t >= 5 or t > 120:
+            if abs(vx - vx_tgt) < 0.5 and abs(y - y_tgt) < 0.5 and abs(vy) < 0.5 and t >= 5 or t > 600:
                 running = False
+
+                if t>600:
+                    print("Take-off takes longer than 10 minutes")
 
         # Convert everything to arrays
         y_arr   = np.array(y_lst)
@@ -253,12 +254,13 @@ class mission:
 
             plt.tight_layout()
             plt.grid()
+            plt.savefig(self.path + 'inputs_' + 'climb'*(y_tgt > 10) + 'descend'*(y_tgt < 10) + '.pdf')
             plt.show()
 
             plt.subplot(221)
             plt.plot(t_arr, vx_arr)
             plt.xlabel("Time [s]")
-            plt.ylabel("horizontal speed")
+            plt.ylabel("v_x")
             plt.grid()
 
             plt.subplot(222)
@@ -270,7 +272,7 @@ class mission:
             plt.subplot(223)
             plt.plot(t_arr, vy_arr)
             plt.xlabel("Time [s]")
-            plt.ylabel("roc")
+            plt.ylabel("v_y")
             plt.grid()
 
             plt.subplot(224)
@@ -280,6 +282,7 @@ class mission:
             plt.grid()
 
             plt.tight_layout()
+            plt.savefig(self.path + 'transition_' + 'climb'*(y_tgt > 10) + 'descend'*(y_tgt < 10) + '.pdf')
             plt.show()
 
         distance = x_lst[-1]
@@ -349,7 +352,7 @@ class mission:
         return E_tot, t_tot
 
 
-class evtol_performance():
+class evtol_performance:
     """
     This script calculates different performance characteristics for a tilt-wing evtol.
 
@@ -368,10 +371,13 @@ class evtol_performance():
         self.g      = 9.80665
         self.m      = 2000
         self.W      = self.m*self.g
-        self.bat_E  = 500e6 # [J] Battery capacity
+        self.bat_E  = 500e6  # [J] Battery capacity
         self.v_cruise = cruise_speed
         self.h_cruise = cruising_alt
         self.EOM    = 1500
+
+        plt.rcParams.update({'font.size': 16})
+        self.path = 'C:/Users/Egon Beyne/Desktop/DSE/Final/'
 
     def max_thrust(self, V):
 
@@ -379,7 +385,7 @@ class evtol_performance():
         P_max = 600000/eff
         return np.minimum(P_max/V, 40000)
 
-    def climb_performance(self, mass):
+    def climb_performance(self):
 
         # Altitudes to consider climb performance at
         altitudes   = np.array([300, 3000])
@@ -393,7 +399,7 @@ class evtol_performance():
             V_stall = np.sqrt(2*self.W/(rho*self.S*self.CL_max))
 
             # Range of speeds
-            V   = np.linspace(V_stall, 200, 1000)
+            V   = np.linspace(V_stall, 150, 100)
 
             # Lift coefficient
             CL  = 2*self.W/(rho*V*V*self.S)
@@ -417,6 +423,8 @@ class evtol_performance():
         plt.xlabel('Speed [m/s]')
         plt.ylabel('Rate-of-climb [m/s]')
         plt.legend()
+        plt.tight_layout()
+        plt.savefig(self.path + 'Climb_performance_cruise' + '.pdf')
         plt.show()
 
     def vertical_equilibrium(self, rate_of_climb, altitude, m):
@@ -449,9 +457,38 @@ class evtol_performance():
         plt.ylabel('Rate-of-climb [m/s]')
         plt.grid()
         plt.legend()
+        plt.tight_layout()
+        plt.savefig(self.path + 'Climb_performance_vertical' + '.pdf')
         plt.show()
 
+    def range(self, cruising_altitude, cruise_speed, mass):
 
+        # Call mission class
+        energy = mission(mass=mass, cruising_alt=cruising_altitude, cruise_speed=cruise_speed)
+
+        # Get the distances and energy needed for take-off and landing
+        d_la, E_la, t_la = energy.numerical_simulation(vx_start=cruise_speed, y_start=cruising_altitude,
+                                                       th_start=np.radians(5), y_tgt=0, vx_tgt=0, plotting=False)
+
+        d_to, E_to, t_to = energy.numerical_simulation(vx_start=0.001, y_start=0, th_start=np.pi / 2,
+                                                       y_tgt=cruising_altitude, vx_tgt=cruise_speed, plotting=False)
+
+        # Power needed for cruise
+        P_cr = energy.cruise()
+
+        # Find the remaining energy for cruise
+        E_cr = self.bat_E - E_la - E_to
+
+        # Time in cruise
+        t_cr = E_cr / P_cr
+
+        # Cruising distance
+        d_cr = cruise_speed * t_cr
+
+        # Mission time
+        t_tot = t_to + t_la + t_cr
+
+        return d_cr, t_tot
 
     def payload_range(self):
 
@@ -461,59 +498,36 @@ class evtol_performance():
         # Total mass
         mass = payload_mass + self.EOM
 
-        E_to_arr = np.zeros(np.size(payload_mass))
-        E_la_arr = np.zeros(np.size(payload_mass))
-        P_cr_arr = np.zeros(np.size(payload_mass))
+        d_cr = np.zeros(np.size(payload_mass))
 
+        # Loop through all masses
         for i, m in enumerate(mass):
 
-            # Call mission class
-            energy = mission(mass=m, cruising_alt=self.h_cruise, cruise_speed=self.v_cruise)
-
-            # Get the distances and energy needed for take-off and landing
-            d_to, E_to, t_to = energy.numerical_simulation(vx_start = 60, y_start = 300, th_start = np.radians(5),
-                                                           y_tgt = 0, vx_tgt = 0, plotting = False)
-
-            d_la, E_la, t_la = energy.numerical_simulation(vx_start = 0.001, y_start = 0, th_start = np.pi/2,
-                                                           y_tgt = 300, vx_tgt = 60, plotting = False)
-
-            # Power needed for cruise
-            P_cr = energy.cruise()
-
-            # Store results
-            E_to_arr[i] = E_to
-            E_la_arr[i] = E_la
-            P_cr_arr[i] = P_cr
-
-        # Find the remaining energy for cruise
-        E_cr    = self.bat_E - E_la_arr - E_to_arr
-
-        # Time in cruise
-        t_cr    = E_cr/P_cr_arr
-
-        # Cruising distance
-        d_cr    = self.v_cruise*t_cr
+            # Get the range
+            d_cr[i],_ = self.range(cruising_altitude=self.h_cruise, cruise_speed = self.v_cruise,mass = m)
 
         # Plot results
         plt.plot(d_cr/1000, payload_mass)
         plt.xlabel('Range [km]')
         plt.ylabel('Payload mass [kg]')
         plt.grid()
+        plt.tight_layout()
+        plt.savefig(self.path + 'Payload_range' + '.pdf')
         plt.show()
 
 
-# a = mission(2000)
-#
-# # Simulate descend
+# a = mission(2000, cruising_alt = 300, cruise_speed = 60)
+# #
+# # # Simulate descend
 # a.numerical_simulation(vx_start = 60, y_start = 300, th_start = np.radians(5), y_tgt = 0, vx_tgt = 0, plotting = True)
-#
-# # Simulate climb
+# #
+# # # Simulate climb
 # a.numerical_simulation(vx_start = 0.001, y_start = 0, th_start = np.pi/2, y_tgt = 300, vx_tgt = 60, plotting = True)
-#
+# #
 # E_total, t_total = a.total_energy()
-# print(E_total, t_total)
-
-b = evtol_performance(cruising_alt = 300, cruise_speed = 60)
-b.climb_performance(mass = 2000)
-b.payload_range()
-b.vertical_climb()
+# # print(E_total, t_total)
+#
+# b = evtol_performance(cruising_alt = 300, cruise_speed = 60)
+# b.climb_performance()
+# b.payload_range()
+# b.vertical_climb()
