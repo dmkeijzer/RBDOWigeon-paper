@@ -154,7 +154,10 @@ class VT_sizing:
         :param lv: CG moment arm [m]
         :return: Final design
         """
-        Sv = max(self.VT_stability(lv),self.VT_controllability(nE,Tt0,yE,lv,br_bv,cr_cv))
+        if isinstance(br_bv,float):
+            Sv = max(self.VT_controllability(nE,Tt0,yE,lv,br_bv,cr_cv),self.VT_stability(lv))
+        else:
+            Sv = self.VT_controllability(nE,Tt0,yE,lv,br_bv,cr_cv)
         ARv = 1.25
         bv = np.sqrt(ARv*Sv)
         C_v = Sv/bv
@@ -168,28 +171,44 @@ class VT_sizing:
         return Sv,C_vr,C_vt,bv,Sweep_v_c2,c_r,c_r_root,c_r_tip,b_r,ARv
 
     def plotting(self,nE,Tt0,yE,lv,br_bv,cr_cv):
-        y_LE_0 = 0
-        x_LE_0 = 0
-        x_TE_1 = self.final_VT_rudder(nE,Tt0,yE,lv,br_bv,cr_cv)[1]
-        y_TE_1 = 0
-        x_TE_2 = x_TE_1
-        y_TE_2 = self.final_VT_rudder(nE,Tt0,yE,lv,br_bv,cr_cv)[3]
-        y_LE_3 = y_TE_2
-        x_LE_3 = x_TE_1 - x_TE_1 * 0.4
-        y_up = br_bv * y_TE_2
-        y_down = 0
-        x1 = x_TE_1 - cr_cv * x_TE_1
-        x2 = x_TE_1
-        x3 = x2
-        x4 = x_TE_1 - cr_cv * 0.4 * x_TE_1
-        x_r = np.array([x1, x2, x3, x4, x1])
-        y_r = np.array([y_down, y_down, y_up, y_up, y_down])
-        x_points = np.array([x_LE_0, x_TE_1, x_TE_2, x_LE_3, 0])
-        y_points = np.array([y_LE_0, y_TE_1, y_TE_2, y_LE_3, 0])
-        plt.plot(x_points, y_points, label="Vertical tail")
-        plt.plot(x_r, y_r, label="Rudder")
-        plt.legend()
-        plt.show()
+        if isinstance(br_bv,float):
+            y_LE_0 = 0
+            x_LE_0 = 0
+            x_TE_1 = self.final_VT_rudder(nE,Tt0,yE,lv,br_bv,cr_cv)[1]
+            y_TE_1 = 0
+            x_TE_2 = x_TE_1
+            y_TE_2 = self.final_VT_rudder(nE,Tt0,yE,lv,br_bv,cr_cv)[3]
+            y_LE_3 = y_TE_2
+            x_LE_3 = x_TE_1 - x_TE_1 * 0.4
+            y_up = br_bv * y_TE_2
+            y_down = 0
+            x1 = x_TE_1 - cr_cv * x_TE_1
+            x2 = x_TE_1
+            x3 = x2
+            x4 = x_TE_1 - cr_cv * 0.4 * x_TE_1
+            x_r = np.array([x1, x2, x3, x4, x1])
+            y_r = np.array([y_down, y_down, y_up, y_up, y_down])
+            x_points = np.array([x_LE_0, x_TE_1, x_TE_2, x_LE_3, 0])
+            y_points = np.array([y_LE_0, y_TE_1, y_TE_2, y_LE_3, 0])
+            plt.plot(x_points, y_points, label="Vertical tail")
+            plt.plot(x_r, y_r, label="Rudder")
+            plt.legend()
+            plt.show()
+        else:
+            X, Y = np.meshgrid(cr_cv, br_bv)
+            Z = self.final_VT_rudder(nE,Tt0,yE,lv,Y,X)[0]
+            fig, ax = plt.subplots(1, 1)
+            # ax.add_artist(ab)
+            # levels = [0,0.1,1,1.]
+            cp = ax.contourf(X, Y, Z, cmap='coolwarm')
+            Svstab = ax.contour(X,Y,Z,[self.VT_stability(lv)],colors=["k"])
+            plt.clabel(Svstab)
+            cbar = plt.colorbar(cp, orientation="horizontal")
+            cbar.set_label(r"$S_v$")
+            plt.ylabel(r"$b_r/b_v$ [-]", fontsize=12)
+            plt.xlabel(r"$c_r/c_v$ [-]", fontsize=12)
+            plt.show()
+
 
 
 

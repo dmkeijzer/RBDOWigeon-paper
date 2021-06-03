@@ -85,7 +85,7 @@ class WingBox:
         elif inrge(-self.b/2, 0, -self.h/2, -self.h/2+self.tsk):
             return vit * (-self.h * (x + self.b/2) / 2) + self.Vshear(Vy, -self.b/2, -self.h/2)
         else:
-            raise ValueError(f"Invalid Coordinates Supplied: {(x, y) = }")
+            return None
 
     def Hshear(self, Vx, x, y):
         Iyy = self.Iyy()
@@ -104,7 +104,7 @@ class WingBox:
         elif inrge(-self.b/2, -self.b/2+self.tsp, 0, self.h/2):
             return vit * (-self.b * (self.h/2-y) / 2) + self.Hshear(Vx, -self.b/2, self.h/2)
         else:
-            raise ValueError(f"Invalid Coordinates Supplied: {(x, y) = }")
+            return None
     
     q = lambda self, x, y, Vx=0, Vy=0, T=0: self.Vshear(Vy, x, y) + self.Hshear(Vx, x, y) + T / (2 * self.Area())
     tau = lambda self, x, y, Vx=0, Vy=0, T=0: self.q(x, y, Vx, Vy, T) / (self.tsp if \
