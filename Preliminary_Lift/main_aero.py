@@ -48,10 +48,6 @@ h_d = 1.4  #  Vertical gap between wings. Based on fuselage size
 l_h = 5 # Horizontal gap between wings. Based on fuselgae size
 e_ref = e_OS(AR)
 e = e_factor('tandem', h_d,b_d,e_ref)
-
-Wing_params = wing_design(AR,s1,sweepc41,s2,sweepc42,M,S_ref)
-MAC = Wing_params.wing_planform_double()[0][3]
-SweepLE = Wing_params.sweep_atx(0)[0]
 #Fuselage dimensions
 l1 = 2.5
 l2 = 2
@@ -59,6 +55,11 @@ l3 = 2.7
 w_max = 1.38
 h_max = 1.705
 d_eq = np.sqrt(h_max*w_max)
+
+Wing_params = wing_design(AR,s1,sweepc41,s2,sweepc42,M,S_ref, l_h,h_d,w_max)
+MAC = Wing_params.wing_planform_double()[0][3]
+SweepLE = Wing_params.sweep_atx(0)[0]
+
 #For Drag estimation
 k = 0.634 * 10**(-5) # Smooth paint from adsee 2 L2
 flamf =0.1  # From ADSEE 2 L2 GA aircraft
@@ -78,18 +79,26 @@ S_v = 0.6
 S_t = 0
 
 
-Drag = componentdrag('tandem',S_ref,l1,l2,l3,d_eq,Vcruise,rho,MAC,AR,e,Mach(Vcruise,a),k,flamf,flamw,mu,tc,xcm,0,u,0,h_d,IF_f,IF_w,CL_CDmin,Abase, S_v, S_t)
+Drag = componentdrag('tandem',S_ref,l1,l2,l3,d_eq,Vcruise,rho,MAC,AR,e,Mach(Vcruise,a),k,flamf,flamw,mu,tc,xcm,0,SweepLE,u,0,h_d,IF_f,IF_w,CL_CDmin,Abase, S_v, S_t)
 
 #Stall
-stall = Wing_params.CLmax_s(l_h,h_d,w_max)
+stall = Wing_params.CLmax_s()
 CLmax = stall[0]
+
 CDs = Drag.CD(CLmax)
 CDs_f = Drag.CD0_f
+CDs_w = CDs - CDs_f
 #Post stall
 Afus = np.pi *d_eq/4
-post_stall = Wing_params.post_stall_lift_drag(l_h,h_d,w_max,tc, CDs, CDs_f, Afus)
-plt.plot(post_stall[0],post_stall[3])
+post_stall = Wing_params.post_stall_lift_drag(tc, CDs, CDs_f, Afus)
 
+alpha_lst = np.arange(0,90,0.1)
+Cl_alpha_curve = Wing_params.CLa(tc, CDs, CDs_f, Afus, alpha_lst)
+
+CD_a_w = Wing_params.CDa_poststall(tc, CDs, CDs_f, Afus, alpha_lst, "wing", Drag.CD)
+CD_a_f = Wing_params.CDa_poststall(tc, CDs, CDs_f, Afus, alpha_lst, "fus", Drag.CD)
+
+plt.plot(alpha_lst,CD_a_w)
 plt.show()
 
 
