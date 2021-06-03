@@ -96,8 +96,8 @@ class Weight:
 
 if __name__ == '__main__':
     mtom = 1972 # maximum take-off mass from statistical data - Class I estimation
-    S1, S2 = 11, 11 # surface areas of wing one and two
-    A = 11 # aspect ratio of a wing, not aircraft
+    S1, S2 = 5.5, 5.5 # surface areas of wing one and two
+    A = 14 # aspect ratio of a wing, not aircraft
     n_ult = 3.2*1.5 # 3.2 is the max we found, 1.5 is the safety factor
     Pmax = 15.25 # this is defined as maximum perimeter in Roskam, so i took top down view of the fuselage perimeter
     lf = 7.2 # length of fuselage
