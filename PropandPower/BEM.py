@@ -115,28 +115,74 @@ class BEM:
     #            (1 + eps / ((1+zeta/2)*(self.lamb/xi))) * (1 - eps*(1+zeta/2)*self.lamb/xi) * \
     #            (np.cos(np.arctan((1+zeta/2)*self.lamb/xi)))**2
 
+    def phi_int(self, xi, zeta):
+        return np.arctan((1 + zeta/2)*self.lamb/xi)
+
+    # F function used for integration part only
+    def F_int(self, xi, zeta):
+        return 2*np.arccos(np.exp(-self.f_int(xi, zeta)))/np.pi
+
+    # f function used for integration part only
+    def f_int(self, xi, zeta):
+        return (self.B/2)*(1 - xi)/np.sin(self.phi_t(zeta))
+
+    # G function used for integration part only
+    def G_int(self, xi, zeta):
+        return self.F_int(xi, zeta) * np.cos(self.phi_t(zeta)) * np.sin(self.phi_t(zeta))
+
+    # # Integrals used to calculate internal variables, refer to paper for more explanation if needed
+    # def I_prim_1(self, xi, zeta, eps):
+    #     return 4 * xi * self.G_int(xi, zeta) * (1 - eps(xi)*np.tan(self.phi_int(xi, zeta)))
+    #
+    # def I_prim_2(self, xi, zeta, eps):
+    #     return self.lamb * (self.I_prim_1(xi, zeta, eps)/(2*xi)) * (1 + eps(xi)/np.tan(self.phi_int(xi, zeta))) * \
+    #            np.sin(self.phi_int(xi, zeta)) * np.cos(self.phi_int(xi, zeta))
+    #
+    # def J_prim_1(self, xi, zeta, eps):
+    #     return 4 * xi * self.G_int(xi, zeta) * (1 + eps(xi) / np.tan(self.phi_int(xi, zeta)))
+    #
+    # def J_prim_2(self, xi, zeta, eps):
+    #     return (self.J_prim_1(xi, zeta, eps)/2) * (1 - eps(xi)*np.tan(self.phi_int(xi, zeta))) * \
+    #            (np.cos(self.phi_int(xi, zeta)))**2
+
     # Integrals used to calculate internal variables, refer to paper for more explanation if needed
+    # Assuming average eps
     def I_prim_1(self, xi, zeta, eps):
-        return 4 * xi * (2 / np.pi) * np.arccos(np.exp(-self.B * (1 - xi) / (2 * np.sin(self.phi_t(zeta))))) * \
-               np.cos(np.arctan((1 + zeta / 2) * self.lamb / xi)) * np.sin(np.arctan((1 + zeta/2) * self.lamb/xi)) * \
-               (1 - eps(xi) * (1 + zeta / 2) * self.lamb / xi)
+        return 4 * xi * self.G_int(xi, zeta) * (1 - eps * np.tan(self.phi_int(xi, zeta)))
 
     def I_prim_2(self, xi, zeta, eps):
-        return self.lamb * (4 / np.pi) * np.arccos(np.exp(-self.B * (1 - xi) / (2 * np.sin(self.phi_t(zeta))))) * \
-               np.cos(np.arctan((1 + zeta/2) * self.lamb / xi)) * np.sin(np.arctan((1 + zeta / 2) * self.lamb/xi)) * \
-               (1 - eps(xi) * (1 + zeta / 2) * self.lamb / xi) * (1 + xi / ((1 + zeta / 2) * self.lamb / xi)) * \
-               np.cos(np.arctan((1 + zeta/2) * self.lamb/xi)) * np.sin(np.arctan((1 + zeta/2) * self.lamb / xi))
+        return self.lamb * (self.I_prim_1(xi, zeta, eps) / (2 * xi)) * (1 + eps / np.tan(self.phi_int(xi, zeta))) * \
+               np.sin(self.phi_int(xi, zeta)) * np.cos(self.phi_int(xi, zeta))
 
     def J_prim_1(self, xi, zeta, eps):
-        return 4 * xi * (2 / np.pi) * np.arccos(np.exp(-self.B * (1 - xi) / (2 * np.sin(self.phi_t(zeta))))) * \
-               np.cos(np.arctan((1 + zeta/2) * self.lamb / xi)) * np.sin(np.arctan((1 + zeta/2) * self.lamb / xi)) * \
-               (1 + eps(xi) / ((1 + zeta / 2) * (self.lamb / xi)))
+        return 4 * xi * self.G_int(xi, zeta) * (1 + eps / np.tan(self.phi_int(xi, zeta)))
 
     def J_prim_2(self, xi, zeta, eps):
-        return 2 * xi * (2 / np.pi) * np.arccos(np.exp(-self.B * (1 - xi) / (2 * np.sin(self.phi_t(zeta))))) * \
-               np.cos(np.arctan((1 + zeta/2) * self.lamb/xi)) * np.sin(np.arctan((1 + zeta / 2) * self.lamb / xi)) * \
-               (1 + eps(xi) / ((1 + zeta / 2) * (self.lamb / xi))) * (1 - eps(xi) * (1 + zeta / 2) * self.lamb / xi) * \
-               (np.cos(np.arctan((1 + zeta / 2) * self.lamb / xi))) ** 2
+        return (self.J_prim_1(xi, zeta, eps) / 2) * (1 - eps * np.tan(self.phi_int(xi, zeta))) * \
+               (np.cos(self.phi_int(xi, zeta))) ** 2
+
+    # # Integrals used to calculate internal variables, refer to paper for more explanation if needed
+    # def I_prim_1(self, xi, zeta, eps):
+    #     return 4 * xi * (2 / np.pi) * np.arccos(np.exp(-self.B * (1 - xi) / (2 * np.sin(self.phi_t(zeta))))) * \
+    #            np.cos(np.arctan((1 + zeta / 2) * self.lamb / xi)) * np.sin(np.arctan((1 + zeta/2) * self.lamb/xi)) * \
+    #            (1 - eps(xi) * (1 + zeta / 2) * self.lamb / xi)
+    #
+    # def I_prim_2(self, xi, zeta, eps):
+    #     return self.lamb * (4 / np.pi) * np.arccos(np.exp(-self.B * (1 - xi) / (2 * np.sin(self.phi_t(zeta))))) * \
+    #            np.cos(np.arctan((1 + zeta/2) * self.lamb / xi)) * np.sin(np.arctan((1 + zeta / 2) * self.lamb/xi)) * \
+    #            (1 - eps(xi) * (1 + zeta / 2) * self.lamb / xi) * (1 + xi / ((1 + zeta / 2) * self.lamb / xi)) * \
+    #            np.cos(np.arctan((1 + zeta/2) * self.lamb/xi)) * np.sin(np.arctan((1 + zeta/2) * self.lamb / xi))
+    #
+    # def J_prim_1(self, xi, zeta, eps):
+    #     return 4 * xi * (2 / np.pi) * np.arccos(np.exp(-self.B * (1 - xi) / (2 * np.sin(self.phi_t(zeta))))) * \
+    #            np.cos(np.arctan((1 + zeta/2) * self.lamb / xi)) * np.sin(np.arctan((1 + zeta/2) * self.lamb / xi)) * \
+    #            (1 + eps(xi) / ((1 + zeta / 2) * (self.lamb / xi)))
+    #
+    # def J_prim_2(self, xi, zeta, eps):
+    #     return 2 * xi * (2 / np.pi) * np.arccos(np.exp(-self.B * (1 - xi) / (2 * np.sin(self.phi_t(zeta))))) * \
+    #            np.cos(np.arctan((1 + zeta/2) * self.lamb/xi)) * np.sin(np.arctan((1 + zeta / 2) * self.lamb / xi)) * \
+    #            (1 + eps(xi) / ((1 + zeta / 2) * (self.lamb/xi))) * (1 - eps(xi) * (1 + zeta / 2) * self.lamb / xi) * \
+    #            (np.cos(np.arctan((1 + zeta / 2) * self.lamb / xi))) ** 2
 
     # # Check convergence of the design procedure
     # # TODO: Check if current exception is an appropriate measure for convergence
@@ -162,8 +208,10 @@ class BEM:
         # Length of each station
         st_len = (self.R - self.R*self.xi_0)/len(stations)
 
-        # Radius of the middle point of each station. Station 1 has st length/2, each station has that plus N*st length
-        stations_r = st_len/2 + (stations-1)*st_len
+        # Radius of the middle point of each station.
+        # Station 1 has st length/2, each station has that plus N*st length
+        # Station 1 starts after hub
+        stations_r = self.xi_0*self.R + st_len/2 + (stations-1)*st_len
 
         # F and phi for each station
         # self.Xi(stations_r),
@@ -267,7 +315,9 @@ class BEM:
                 # Convert to numpy array with airfoil data
                 airfoil_data = np.array(format_lines)
 
-                # TODO: See format of files and retrieve Cd and AoA from them
+                # Format of each line:
+                # alpha, CL, CD, Re(CL), CM, S_xtr, P_xtr, CDp
+
                 # Order airfoil data by angle of attack, this can be eliminated to save time if needed
                 airfoil_data = airfoil_data[airfoil_data[:, 0].argsort()]
 
@@ -275,13 +325,12 @@ class BEM:
 
                 # Save airfoil data array to have a copy to modify
                 airfoil_data_check = airfoil_data
+
                 # Subtract current Cl from list of Cls
                 airfoil_data_check[:, 1] -= lift_coef
+
                 # Check what line has min Cl difference, and retrieve index of that column
                 index = np.argmin(np.abs(airfoil_data_check[:, 1]))
-
-                # Format of each line:
-                # alpha, CL, CD, Re(CL), CM, S_xtr, P_xtr, CDp
 
                 # Obtain the Cd and AoA from the line where Cl difference is min
                 Cd_ret = airfoil_data[index, 2]                   # Retrieved Cd
@@ -291,7 +340,7 @@ class BEM:
                 eps = Cd_ret / lift_coef
 
                 # See if D/L is minimum. If so, save the values
-                if eps < eps_min:
+                if eps < eps_min and airfoil_data[index, 1] > 0:
                     optim_vals = [lift_coef, Cd_ret, alpha_ret, eps, Wc]
                     eps_min = eps
 
@@ -323,15 +372,29 @@ class BEM:
             beta = local_AoA + phis[station]
             betas[station] = beta
 
-        # TODO: Is this local or general? Check current implementation
+        # # Possibly implement a function for eps as a function of r/R (xi)
+        # eps_fun = spinplt.interp1d(E, stations_r/self.R, fill_value="extrapolate")
+        #
+        # # Integrate the derivatives from xi_0 to 1 (from hub to tip of the blade)
+        # I1 = spint.quad(self.I_prim_1, self.xi_0, 1, args=(zeta, eps_fun))[0]
+        # I2 = spint.quad(self.I_prim_2, self.xi_0, 1, args=(zeta, eps_fun))[0]
+        # J1 = spint.quad(self.J_prim_1, self.xi_0, 1, args=(zeta, eps_fun))[0]
+        # J2 = spint.quad(self.J_prim_2, self.xi_0, 1, args=(zeta, eps_fun))[0]
+
         # Possibly implement a function for eps as a function of r/R (xi)
-        eps_fun = spinplt.interp1d(E, stations_r/self.R, fill_value="extrapolate")
+        eps_avg = np.average(E)
 
         # Integrate the derivatives from xi_0 to 1 (from hub to tip of the blade)
-        I1 = spint.quad(self.I_prim_1, self.xi_0, 1, args=(zeta, eps_fun))[0]
-        I2 = spint.quad(self.I_prim_2, self.xi_0, 1, args=(zeta, eps_fun))[0]
-        J1 = spint.quad(self.J_prim_1, self.xi_0, 1, args=(zeta, eps_fun))[0]
-        J2 = spint.quad(self.J_prim_2, self.xi_0, 1, args=(zeta, eps_fun))[0]
+        I1 = spint.quad(self.I_prim_1, self.xi_0, 1, args=(zeta, eps_avg))[0]
+        I2 = spint.quad(self.I_prim_2, self.xi_0, 1, args=(zeta, eps_avg))[0]
+        J1 = spint.quad(self.J_prim_1, self.xi_0, 1, args=(zeta, eps_avg))[0]
+        J2 = spint.quad(self.J_prim_2, self.xi_0, 1, args=(zeta, eps_avg))[0]
+
+        print("I1:", I1)
+        print("I2:", I2)
+        print("J1:", J1)
+        print("J2:", J2)
+        print("")
 
         # Calculate new speed ratio and Tc or Pc as required
         if self.Tc is not None:
@@ -375,19 +438,12 @@ class BEM:
 
             zeta = zeta_new
 
+        print("Zeta:", zeta)
         design = self.run_BEM(zeta)
         return design
 
     # TODO
     # Implement a cycle with eps = 0 to calculate viscous losses
-
-    # # Check convergence of the design procedure
-    # # TODO: Check if current exception is an appropriate measure for convergence
-    # def conv(self, zeta_new, zeta):
-    #     try:
-    #         return zeta_new/zeta
-    #     except ZeroDivisionError:
-    #         return zeta_new-zeta
 
     # Advance ratio
     def J(self):
