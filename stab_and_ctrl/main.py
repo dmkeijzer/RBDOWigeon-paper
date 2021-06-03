@@ -27,8 +27,9 @@ Cd0rear = Cd0fwd
 CLarear = CLafwd
 Cmacfwd = -0.0645
 Cmacrear = -0.0645
-Sfwd = 5.25
-Srear = 5.25
+S = 10.5
+Sfwd = 1/2*S
+Srear = S-Sfwd
 Afwd = 7
 Arear = 7
 Gamma = 0
@@ -67,7 +68,7 @@ dx = 0.1
 
 #### Plotting Vertical Tail ####
 nE = 8
-Tt0 = 800
+Tt0 = 3500
 yE = bfwd/2
 lv = lfus-xcg
 brbv = np.linspace(0.75,1,150)
@@ -85,7 +86,7 @@ b1 = 60
 b2 =np.linspace(b1,100,150)
 Sa_S = np.linspace(0.05,0.20,150)
 # elevon.plotting(0.15,b1,b2)
-elevon.plotting(Sa_S,b1,b2)
+elevon.plotting(Sa_S,b1,b2,False)
 # xcg_middle = (0.2187 + 3.3439) / 2
 # wps.hover_calc.fail_rotors([0, 3, 5, 6])
 # xcgs = np.linspace(xcg_middle - 2, xcg_middle + 2, 100)
