@@ -202,14 +202,35 @@ class BEM:
 
                 # Round Reynolds number to 100,000 to retrieve appropriate file from airfoil data folder
                 RN = self.RN_spacing * round(Reyn[station] / self.RN_spacing)
-                filename1 = "4412_Re{%d}_up" % RN
-                filename2 = "4412_Re{%d}_dwn" % RN
+                filename1 = "4412_Re%d_up.txt" % RN
+                filename2 = "4412_Re%d_dwn.txt" % RN
 
                 # TODO: implement code to open and read files
+                file_up = open(filename1, "r")
+                file_down = open(filename2, "r")
+
+                lines = file_up.readlines()
+
+                file_up.close()
+
+                # List and Boolean to save relevant lines
+                format_lines = []
+                save_lines = False
+
+                for line in lines:
+
+                    a = line.split()
+                    if save_lines:
+                        format_lines.append(a)
+                    if len(a) > 0:
+                        if a[0].count('-') >= 1:
+                            save_lines = True
+
+                print(format_lines)
 
                 # TODO: See format of files and retrieve Cd and AoA from them
                 Cd_ret = 1     # Retrieved Cd
-                alpha_ret = 1  # Retrieved AoA
+                alpha_ret = 1  # Retrieved AoA convert from deg to rad
 
                 # Compute D/L ration
                 eps = Cd_ret / lift_coef
