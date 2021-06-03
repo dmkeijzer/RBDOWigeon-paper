@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from Aero_tools import ISA
+from Aero_tools import ISA, speeds
 import scipy.optimize as optimize
 
 
@@ -19,7 +19,7 @@ class mission:
         - Add optimum speeds part
         - Efficiencies
     """
-    def __init__(self, mass, cruising_alt, cruise_speed):
+    def __init__(self, mass, cruising_alt, cruise_speed, roc = 5, rod = 5):
 
         # Temporary placeholders, REMOVE BEFORE RUNNING OPTIMIZATION
         self.a = 2 * np.pi
@@ -36,11 +36,12 @@ class mission:
         self.ax_target_descend = 0.5*self.g
         self.ay_target_descend = 0.1*self.g
 
-        self.roc = 5
-        self.rod = 5
+        self.roc = roc
+        self.rod = rod
 
         self.h_cruise = cruising_alt
         self.v_cruise = cruise_speed
+        self.t_loiter = 30*60
 
         plt.rcParams.update({'font.size': 16})
         self.path = 'C:/Users/Egon Beyne/Desktop/DSE/Final/'
@@ -291,21 +292,21 @@ class mission:
 
         return distance, energy, time
     
-    def cruise(self):
+    def power_cruise_config(self, altitude, speed, mass):
 
         # Density at cruising altitude
-        rho     = ISA(self.h_cruise).density()
+        rho     = ISA(altitude).density()
 
         # Lift coefficient during cruise, based on the cruise speed (can be non-optimal)
-        CL_cruise   = 2*self.m*self.g/(self.v_cruise*self.v_cruise*self.S*rho)
+        CL_cruise   = 2*mass*self.g/(speed*speed*self.S*rho)
 
         # Drag coefficient !!!!! UPDATE !!!!!
-        CD_cruise   = 0.05
+        CD_cruise   = 0.05 + .05*CL_cruise*CL_cruise
         eff_cruise  = 0.95
 
-        P_cruise    = CD_cruise*self.m*self.g*self.v_cruise/(CL_cruise*eff_cruise)
+        P           = CD_cruise*self.m*self.g*self.v_cruise/(CL_cruise*eff_cruise)
 
-        return P_cruise
+        return P
 
     def total_energy(self):
 
@@ -324,21 +325,30 @@ class mission:
         t_cruise = d_cruise/self.v_cruise
 
         # Get the brake power used in cruise
-        P_cruise = self.cruise()
+        P_cruise = self.power_cruise_config(self.h_cruise, self.v_cruise, self.m)
+
+        V = speeds(self.h_cruise, self.m)
+
+        # Loiter power
+        V_loit = V.climb()
+        P_loiter = self.power_cruise_config(altitude = self.h_cruise, speed = V_loit, mass = self.m)
 
         # Cruise energy
         E_cruise = P_cruise*t_cruise
 
+        # Loiter energy
+        E_loiter = P_loiter*self.t_loiter
+
         # Get the total energy consumption
-        E_tot = E_cruise + E_climb + E_desc
+        E_tot = E_cruise + E_climb + E_desc + E_loiter
 
         # Mission time
         t_tot = t_climb + t_desc + t_cruise
 
         # Pie chart
-        labels  = ['Take-off', 'Cruise', 'Landing']
-        Energy  = [E_climb, E_cruise, E_desc]
-        Time    = [t_climb, t_cruise, t_desc]
+        labels  = ['Take-off', 'Cruise', 'Landing', 'Loiter']
+        Energy  = [E_climb, E_cruise, E_desc, E_loiter]
+        Time    = [t_climb, t_cruise, t_desc, self.t_loiter]
 
         plt.subplot(211)
         plt.pie(Energy, labels = labels, autopct='%1.1f%%')
@@ -375,6 +385,7 @@ class evtol_performance:
         self.v_cruise = cruise_speed
         self.h_cruise = cruising_alt
         self.EOM    = 1500
+        self.t_loiter = 30*60
 
         plt.rcParams.update({'font.size': 16})
         self.path = 'C:/Users/Egon Beyne/Desktop/DSE/Final/'
@@ -405,7 +416,7 @@ class evtol_performance:
             CL  = 2*self.W/(rho*V*V*self.S)
 
             # Drag coefficient !!! CHANGE !!!
-            CD  = 0.05 + 0.1*CL*CL
+            CD  = 0.05 + 0.05*CL*CL
 
             # Drag
             D   = CD*0.5*rho*V*V*self.S
@@ -461,7 +472,7 @@ class evtol_performance:
         plt.savefig(self.path + 'Climb_performance_vertical' + '.pdf')
         plt.show()
 
-    def range(self, cruising_altitude, cruise_speed, mass):
+    def range(self, cruising_altitude, cruise_speed, mass, wind_speed = 0, loiter = False):
 
         # Call mission class
         energy = mission(mass=mass, cruising_alt=cruising_altitude, cruise_speed=cruise_speed)
@@ -474,19 +485,27 @@ class evtol_performance:
                                                        y_tgt=cruising_altitude, vx_tgt=cruise_speed, plotting=False)
 
         # Power needed for cruise
-        P_cr = energy.cruise()
+        P_cr = energy.power_cruise_config(altitude = cruising_altitude, speed = cruise_speed, mass = mass)
+
+        V = speeds(altitude = cruising_altitude, m = mass)
+
+        # Power needed for loiter
+        P_lt = energy.power_cruise_config(altitude = cruising_altitude, speed = V.climb(), mass = mass)
+
+        # Energy needed for loiter
+        E_lt = P_lt*self.t_loiter
 
         # Find the remaining energy for cruise
-        E_cr = self.bat_E - E_la - E_to
+        E_cr = self.bat_E - E_la - E_to - E_lt*loiter
 
         # Time in cruise
         t_cr = E_cr / P_cr
 
         # Cruising distance
-        d_cr = cruise_speed * t_cr
+        d_cr = (cruise_speed - wind_speed) * t_cr
 
         # Mission time
-        t_tot = t_to + t_la + t_cr
+        t_tot = t_to + t_la + t_cr + self.t_loiter*loiter
 
         return d_cr, t_tot
 
@@ -515,7 +534,7 @@ class evtol_performance:
         plt.savefig(self.path + 'Payload_range' + '.pdf')
         plt.show()
 
-
+#
 # a = mission(2000, cruising_alt = 300, cruise_speed = 60)
 # #
 # # # Simulate descend
