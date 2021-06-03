@@ -2,8 +2,8 @@ import numpy as np
 import scipy.integrate as spint
 import scipy.interpolate as spinplt
 """
-This program calculates the blade geometry for propellers for minimum loss according to a procedure laid down by
-ADKINS AND LIEBECK.
+This program calculates the blade geometry for propellers with minimum loss according to a procedure laid down by
+ADKINS AND LIEBECK, based on Larrabee.
 """
 
 
@@ -70,7 +70,7 @@ class BEM:
 
     # Angle of local velocity of the blade wrt to disk plane
     def phi(self, r, zeta):
-        return np.arctan(np.tan(self.phi_t(zeta)) / self.Xi(r))
+        return np.arctan(np.tan(self.phi_t(zeta)) * self.R / r)
 
     # Mach as a function of radius
     def M(self, r):
@@ -81,21 +81,18 @@ class BEM:
         # Reynolds number. Wc is speed times chord
         return Wc * self.rho / self.dyn_vis
 
-    # def G(self):
-    #     return F * np.cos(self.phi())
-
     # Product of local speed at the blade and chord
     def Wc(self, F, phi, zeta, Cl):
-        print(self.lamb)
-        print(F)
-        print(np.sin(phi))
-        print(np.cos(phi))
-        print(self.V)
-        print(self.R)
-        print(zeta)
-        print(Cl)
-        print(self.B)
-        print("")
+        # print(self.lamb)
+        # print(F)
+        # print(np.sin(phi))
+        # print(np.cos(phi))
+        # print(self.V)
+        # print(self.R)
+        # print(zeta)
+        # print(Cl)
+        # print(self.B)
+        # print("")
         return 4*np.pi*self.lamb * F * np.sin(phi) * np.cos(phi) * self.V * self.R * zeta / (Cl * self.B)
 
     # Non-dimensional speed
@@ -155,21 +152,45 @@ class BEM:
     #     return (self.J_prim_1(xi, zeta, eps)/2) * (1 - eps(xi)*np.tan(self.phi_int(xi, zeta))) * \
     #            (np.cos(self.phi_int(xi, zeta)))**2
 
+    # # Integrals used to calculate internal variables, refer to paper for more explanation if needed
+    # # Assuming average eps
+    # def I_prim_1(self, xi, zeta, eps):
+    #     return 4 * xi * self.G_int(xi, zeta) * (1 - eps * np.tan(self.phi_int(xi, zeta)))
+    #
+    # def I_prim_2(self, xi, zeta, eps):
+    #     return self.lamb * (self.I_prim_1(xi, zeta, eps) / (2 * xi)) * (1 + eps / np.tan(self.phi_int(xi, zeta))) * \
+    #            np.sin(self.phi_int(xi, zeta)) * np.cos(self.phi_int(xi, zeta))
+    #
+    # def J_prim_1(self, xi, zeta, eps):
+    #     return 4 * xi * self.G_int(xi, zeta) * (1 + eps / np.tan(self.phi_int(xi, zeta)))
+    #
+    # def J_prim_2(self, xi, zeta, eps):
+    #     return (self.J_prim_1(xi, zeta, eps) / 2) * (1 - eps * np.tan(self.phi_int(xi, zeta))) * \
+    #            (np.cos(self.phi_int(xi, zeta))) ** 2
+
     # Integrals used to calculate internal variables, refer to paper for more explanation if needed
     # Assuming average eps
     def I_prim_1(self, xi, zeta, eps):
-        return 4 * xi * self.G_int(xi, zeta) * (1 - eps * np.tan(self.phi_int(xi, zeta)))
+        return 4*xi*(2/np.pi)*np.arccos(np.exp(-self.B*np.sin(self.phi_t(zeta))*(1-xi)/2)) * \
+               np.cos(np.arctan((1+zeta/2)*self.lamb/xi))*np.sin(np.arctan((1+zeta/2)*self.lamb/xi)) * \
+               (1 - eps*(1+zeta/2)*self.lamb/xi)
 
     def I_prim_2(self, xi, zeta, eps):
-        return self.lamb * (self.I_prim_1(xi, zeta, eps) / (2 * xi)) * (1 + eps / np.tan(self.phi_int(xi, zeta))) * \
-               np.sin(self.phi_int(xi, zeta)) * np.cos(self.phi_int(xi, zeta))
+        return 2*self.lamb * (2/np.pi)*np.arccos(np.exp(-self.B*np.sin(self.phi_t(zeta))*(1-xi)/2)) * \
+               np.cos(np.arctan((1+zeta/2)*self.lamb/xi))*np.sin(np.arctan((1+zeta/2)*self.lamb/xi)) * \
+               (1 - eps*(1+zeta/2)*self.lamb/xi) * (1 + eps/((1+zeta/2)*self.lamb/xi)) * \
+               np.cos(np.arctan((1+zeta/2)*self.lamb/xi))*np.sin(np.arctan((1+zeta/2)*self.lamb/xi))
 
     def J_prim_1(self, xi, zeta, eps):
-        return 4 * xi * self.G_int(xi, zeta) * (1 + eps / np.tan(self.phi_int(xi, zeta)))
+        return 4*xi*(2/np.pi)*np.arccos(np.exp(-self.B*np.sin(self.phi_t(zeta))*(1-xi)/2)) * \
+               np.cos(np.arctan((1+zeta/2)*self.lamb/xi))*np.sin(np.arctan((1+zeta/2)*self.lamb/xi)) * \
+               (1 + eps / ((1+zeta/2) * self.lamb / xi))
 
     def J_prim_2(self, xi, zeta, eps):
-        return (self.J_prim_1(xi, zeta, eps) / 2) * (1 - eps * np.tan(self.phi_int(xi, zeta))) * \
-               (np.cos(self.phi_int(xi, zeta))) ** 2
+        return 2*xi*(2/np.pi)*np.arccos(np.exp(-self.B*np.sin(self.phi_t(zeta))*(1-xi)/2)) * \
+               np.cos(np.arctan((1+zeta/2)*self.lamb/xi))*np.sin(np.arctan((1+zeta/2)*self.lamb/xi)) * \
+               (1 + eps / ((1+zeta/2) * self.lamb / xi)) * (1 - eps*(1+zeta/2)*self.lamb/xi) * \
+               (np.cos(np.arctan((1+zeta/2)*self.lamb/xi)))**2
 
     # # Integrals used to calculate internal variables, refer to paper for more explanation if needed
     # def I_prim_1(self, xi, zeta, eps):
@@ -240,9 +261,6 @@ class BEM:
 
             # Optimise each station
             for lift_coef in Cls_trial:
-                # TODO: Make this work for each station
-
-                # 'Uncorrect' Cl with Prandtl-Glauert factor (using local Mach number in the middle of the station)
                 # lift_coef = lift_coef * self.PG(self.M(stations_r[station]))
 
                 # Calculate product of local speed with chord
@@ -388,16 +406,16 @@ class BEM:
         eps_avg = np.average(E)
 
         # Integrate the derivatives from xi_0 to 1 (from hub to tip of the blade)
-        I1 = spint.quad(self.I_prim_1, self.xi_0, 1, args=(zeta, eps_avg))[0]
-        I2 = spint.quad(self.I_prim_2, self.xi_0, 1, args=(zeta, eps_avg))[0]
-        J1 = spint.quad(self.J_prim_1, self.xi_0, 1, args=(zeta, eps_avg))[0]
-        J2 = spint.quad(self.J_prim_2, self.xi_0, 1, args=(zeta, eps_avg))[0]
+        I1 = spint.romberg(self.I_prim_1, self.xi_0, 1, args=(zeta, eps_avg))
+        I2 = spint.romberg(self.I_prim_2, self.xi_0, 1, args=(zeta, eps_avg))
+        J1 = spint.romberg(self.J_prim_1, self.xi_0, 1, args=(zeta, eps_avg))
+        J2 = spint.romberg(self.J_prim_2, self.xi_0, 1, args=(zeta, eps_avg))
 
-        print("I1:", I1)
-        print("I2:", I2)
-        print("J1:", J1)
-        print("J2:", J2)
-        print("")
+        # print("I1:", I1)
+        # print("I2:", I2)
+        # print("J1:", J1)
+        # print("J2:", J2)
+        # print("")
 
         # Calculate new speed ratio and Tc or Pc as required
         if self.Tc is not None:
@@ -407,7 +425,7 @@ class BEM:
             # Propeller efficiency
             eff = self.efficiency(self.Tc, Pc)
 
-            return zeta_new, [cs, betas, alpha, E, eff, self.Tc, Pc]
+            return zeta_new, [cs, betas, alpha, stations_r, E, eff, self.Tc, Pc]
 
         elif self.Pc is not None:
             zeta_new = -(J1/(2*J2)) + ((J1/(2*J2))**2 + self.Pc/J2)**(1/2)
@@ -416,7 +434,7 @@ class BEM:
             # Propeller efficiency
             eff = self.efficiency(Tc, self.Pc)
 
-            return zeta_new, [cs, betas, alpha, E, eff, Tc, self.Pc]
+            return zeta_new, [cs, betas, alpha, stations_r, E, eff, Tc, self.Pc]
 
     def optimise_blade(self, zeta_init):
         convergence = 1
@@ -431,17 +449,12 @@ class BEM:
             if zeta == 0:
                 convergence = zeta_new - zeta
             else:
-                convergence = zeta_new / zeta
-
-            # This isn't working :(
-            # try:
-            #     convergence = zeta_new / zeta
-            # except ZeroDivisionError:
-            #     convergence = zeta_new - zeta
+                convergence = np.abs(zeta_new - zeta)/zeta
 
             zeta = zeta_new
-
-        print("Zeta:", zeta)
+        #     print(convergence, "conv")
+        #
+        # print("Zeta:", zeta)
         design = self.run_BEM(zeta)
         return design
 

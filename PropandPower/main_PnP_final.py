@@ -1,27 +1,35 @@
 import numpy as np
 import BEM as BEM
 import Aero_tools as at
+import Blade_plotter as BP
+
 ISA = at.ISA(2500)
 a = ISA.soundspeed()
 rho = ISA.density()
 dyn_visc = ISA.viscosity_dyn()
 
 # B, R, rpm, xi_0, rho, dyn_vis, V_fr, N_stations, a, RN_spacing, T=None, P=None
-B = 3
-xi_0 = 0.25
-A_prop = 0.47*2
-R = np.sqrt(A_prop / (np.pi * (1 - xi_0**2)))
+B = 2
+xi_0 = 0.1
+# A_prop = 0.47*2
+# R = np.sqrt(A_prop / (np.pi * (1 - xi_0**2)))
+R = 0.95
+A_prop = np.pi*R**2
 
 # M_t_max = 0.6
 # rpm = M_t_max*a*60 / (np.pi * 2*R)
-rpm = 3500
+rpm = 2700
 
-V_cruise = 60
+V_cruise = 62
 N_stations = 30
 RN_spacing = 100000
 
-P_cr = 110024
-T = (P_cr*2*np.sqrt(rho*8*A_prop) * 0.65)**(2/3)
+# P_cr = 110024
+# T = (P_cr*2*np.sqrt(rho*8*A_prop) * 0.65)**(2/3)
+
+# Cessna 172, CdS = 5.93 sq ft
+D = 0.551*rho*V_cruise**2/2
+T = D
 
 propeller = BEM.BEM(B, R, rpm, xi_0, rho, dyn_visc, V_cruise, N_stations, a, RN_spacing, T=T)
 
@@ -35,11 +43,19 @@ print("Pitch per station in [deg]:", design[1]*180/(2*np.pi))
 print("")
 print("AoA per station in [deg]:", design[2]*180/(2*np.pi))
 print("")
-print("D/L ratio per station:", design[3])
+print("Radial coordinates [m]:", design[3])
 print("")
-print("Propeller efficiency:", design[4])
+print("D/L ratio per station:", design[4])
 print("")
-print("Thrust coefficient:", design[5])
+print("Propeller efficiency:", design[5])
 print("")
-print("Power coefficient:", design[6])
+print("Thrust coefficient:", design[6])
+print("")
+print("Power coefficient:", design[7])
 
+# Load blade plotter
+plotter = BP.PlotBlade(design[0], design[1], design[3], R, xi_0)
+
+# Plot blade
+plotter.plot_blade_planform()
+plotter.plot_blade_side()
