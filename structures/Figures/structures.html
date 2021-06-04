@@ -34,7 +34,7 @@
     </div>
 
     <script>
-        const graphs = [["NVM", "Load Diagrams"], ["Lift", "Lift Distribution"]];
+        const graphs = [["loads", "Load Diagrams"], ["Lift", "Lift Distribution"]];
 
         const showGraph =  ( event ) => {
             const frame = document.querySelector("iframe");
@@ -47,8 +47,9 @@
         for (var [ graphFile, graphName ] of graphs) {
             const link = document.createElement("a");
             link.className = "nav-link";
-            link.href = "#";
+            link.href = "#" + graphFile;
             link.innerText = graphName;
+            link.id = graphFile;
             const item = document.createElement("li");
             item.className = "nav-item";
             item.id = graphFile;
