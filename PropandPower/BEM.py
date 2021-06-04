@@ -243,7 +243,7 @@ class BEM:
 
         # TODO: Check if Cl range is good
         # Probably trial with a different range of Cls
-        Cls_trial = np.arange(0.2, 1.1, 0.05)
+        Cls_trial = np.arange(0.4, 0.9, 0.05)
 
         # Create arrays for lift and drag coefficients, angle of attack and D/L ratio for each station
         Cl = np.ones(self.N_s)
@@ -406,10 +406,10 @@ class BEM:
         eps_avg = np.average(E)
 
         # Integrate the derivatives from xi_0 to 1 (from hub to tip of the blade)
-        I1 = spint.romberg(self.I_prim_1, self.xi_0, 1, args=(zeta, eps_avg))
-        I2 = spint.romberg(self.I_prim_2, self.xi_0, 1, args=(zeta, eps_avg))
-        J1 = spint.romberg(self.J_prim_1, self.xi_0, 1, args=(zeta, eps_avg))
-        J2 = spint.romberg(self.J_prim_2, self.xi_0, 1, args=(zeta, eps_avg))
+        I1 = spint.quad(self.I_prim_1, self.xi_0, 1, args=(zeta, eps_avg))[0]
+        I2 = spint.quad(self.I_prim_2, self.xi_0, 1, args=(zeta, eps_avg))[0]
+        J1 = spint.quad(self.J_prim_1, self.xi_0, 1, args=(zeta, eps_avg))[0]
+        J2 = spint.quad(self.J_prim_2, self.xi_0, 1, args=(zeta, eps_avg))[0]
 
         # print("I1:", I1)
         # print("I2:", I2)
