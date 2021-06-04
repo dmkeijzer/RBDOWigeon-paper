@@ -149,6 +149,11 @@ class PlotBlade:
 
         # ax.plot3D(blade_plot[:][0], blade_plot[:][1], blade_plot[:][2], color='k')
 
+
+        # Trick to set 3D axes to equal scale, obtained from:
+        # https://stackoverflow.com/questions/13685386/matplotlib-equal-unit-length-with-equal-aspect-ratio-z-axis-is-not-equal-to
+
+        # Just to get max X, Y, and Z
         X = np.array([self.chords[0], self.chords[-1]])
         Y = np.array([self.chords[0]*self.tc_ratio, self.chords[-1]*self.tc_ratio])
         Z = np.array([0, self.radial_coords[-1]])
