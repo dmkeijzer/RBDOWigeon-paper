@@ -29,7 +29,7 @@ cargo_m = (95-m_pax)*n_pax  # Use difference of pax+luggage - pax to get cargo m
 # Propulsion
 n_prop = 16     # number of engines
 P_cr_estim = 110024/1.2 * 0.9        # Total cruise power in W
-P_Cr_per_engine = P_cr_estim/n_prop  # Total cruise power per engine in W
+P_cr_per_engine = P_cr_estim/n_prop  # Total cruise power per engine in W
 
 pos_fus = 3.6                         # fuselage centre of mass away from the nose
 pos_lgear = 4                         # landing gear position away from the nose
