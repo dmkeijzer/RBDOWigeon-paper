@@ -9,8 +9,8 @@ rho = ISA.density()
 dyn_visc = ISA.viscosity_dyn()
 
 # B, R, rpm, xi_0, rho, dyn_vis, V_fr, N_stations, a, RN_spacing, T=None, P=None
-B = 2
-xi_0 = 0.1
+B = 4
+xi_0 = 0.05
 # A_prop = 0.47*2
 # R = np.sqrt(A_prop / (np.pi * (1 - xi_0**2)))
 R = 0.95
@@ -21,7 +21,7 @@ A_prop = np.pi*R**2
 rpm = 2700
 
 V_cruise = 62
-N_stations = 30
+N_stations = 20
 RN_spacing = 100000
 
 # P_cr = 110024
@@ -34,7 +34,7 @@ T = D
 propeller = BEM.BEM(B, R, rpm, xi_0, rho, dyn_visc, V_cruise, N_stations, a, RN_spacing, T=T)
 
 # Zeta init
-zeta_init = 0.05
+zeta_init = 0
 design = propeller.optimise_blade(zeta_init)[1]
 # [cs, betas, alpha, E, eff, Tc, self.Pc]
 print("Chord per station:", design[0])
@@ -57,5 +57,5 @@ print("Power coefficient:", design[7])
 plotter = BP.PlotBlade(design[0], design[1], design[3], R, xi_0)
 
 # Plot blade
-plotter.plot_blade_planform()
-plotter.plot_blade_side()
+plotter.plot_blade()
+plotter.plot_3D_blade()
