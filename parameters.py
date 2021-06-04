@@ -5,12 +5,21 @@ Do NOT use these constants in your class/tool files, only on the main file
 Keep in mind that these values will change (probably a lot), only use them if you need estimates to run the code
 """
 
-mtom = 1972         # maximum take-off mass from statistical data - Class I estimation
-S1, S2 = 5.5, 5.5   # surface areas of wing one and two
-A = 14              # aspect ratio of a wing, not aircraft
-n_ult = 3.2 * 1.5   # 3.2 is the max we found, 1.5 is the safety factor
-Pmax = 15.25        # this is defined as maximum perimeter in Roskam, so i took top down view of the fuselage perimeter
-lf = 7.2            # length of fuselage
+mtom = 1972          # maximum take-off mass from statistical data - Class I estimation
+S1, S2 = 5.25, 5.25  # surface areas of wing one and two
+A = 14               # aspect ratio of a wing, not aircraft
+n_ult = 3.2 * 1.5    # 3.2 is the max we found, 1.5 is the safety factor
+Pmax = 15.25         # this is defined as maximum perimeter in Roskam, so i took top down view of the fuselage perimeter
+lf = 7.2             # length of fuselage
+h_fus = 1.705        # height of fuselage
+w_fus = 1.38         # width of fuselage
+
+MAC1 = 0.65
+MAC2 = 0.65
+
+c_r = 0.8748
+c_t = 0.3499
+
 
 # From project guide: 95 kg per pax (including luggage)
 n_pax = 5                   # number of passengers (pilot included)
