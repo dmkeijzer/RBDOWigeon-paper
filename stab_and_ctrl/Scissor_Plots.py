@@ -9,10 +9,10 @@ from Aero_tools import ISA
 
 class Wing_placement_sizing:
     def __init__(self, W,h, lfus, hfus, wfus, V0, M0, CD0, CLfwd,
-                 CLrear, CLafwd, CLarear, Cmacfwd, Cmacrear, Sfwd, Srear,
+                 CLrear,CLdesfwd,CLdesrear,Clafwd,Clarear, Cmacfwd, Cmacrear, Sfwd, Srear,
                  Afwd, Arear, Gamma, Lambda_c4_fwd, Lambda_c4_rear, cfwd,
                  crear, bfwd, brear, efwd, erear, taper, n_rot_f, n_rot_r,
-                 rot_y_range_f, rot_y_range_r, K, ku,Zcg,d,Pbr):
+                 rot_y_range_f, rot_y_range_r, K, ku,Zcg,d,dy,Pbr):
 
         self.W = W         # Weight [N]
         self.h = h       # Height [m]
@@ -35,22 +35,30 @@ class Wing_placement_sizing:
         self.Afwd, self.Arear = Afwd, Arear # Aspect ratio of both wings [-]
         self.Sweepc4fwd = Lambda_c4_fwd # Sweep at c/4 [rad]
         self.Sweepc4rear = Lambda_c4_rear # Sweep at c/4 [rad]
-        self.Sweepc2fwd = self.Sweep(Afwd,self.Sweepc4fwd,25,50)
-        self.Sweepc2rear = self.Sweep(Arear, self.Sweepc4rear, 25, 50)
+        self.Sweepc2fwd = self.Sweep(Afwd,self.Sweepc4fwd,50,25)
+        self.Sweepc2rear = self.Sweep(Arear, self.Sweepc4rear, 50, 25)
         self.V0 = V0       # Initial speed [m/s]
         self.M0 = M0       # Initial mach number [-]
         self.Gamma_fwd = Gamma # Forward wing dihedral [rad]
         self.CLfwd = CLfwd # MAX Forward lift coefficient [-]
         self.CLrear = CLrear # MAX Rear lift coefficient [-]
-        self.CLafwd, self.CLarear = CLafwd, CLarear # Wing lift curve slopes for both wings [1/rad]
+        self.Clafwd,self.Clarear = Clafwd,Clarear # Airfoil lift slopes [1/rad]
+        # self.CLafwd, self.CLarear = CLafwd, CLarear # Wing lift curve slopes for both wings [1/rad]
+        self.CLafwd = self.C_L_a(self.Afwd,self.Sweepc2fwd)# Wing lift curve slopes for both wings [1/rad]
+        self.CLarear = self.C_L_a(self.Arear,self.Sweepc2rear)# Wing lift curve slopes for both wings [1/rad]
+        # print("CLafwd,CLarear = ",self.CLafwd,self.CLarear)
+        # print("Sweep half chord = ", self.Sweepc2fwd*180/np.pi)
         self.Cmacfwd, self.Cmacrear = Cmacfwd,Cmacrear
         self.CD0 = CD0 # C_D_0 of forward wing
-        self.d = d
+        self.d = d  # Horizontal distance alteration for forward wing [m]
+        self.dy = dy # Vertical distance alteration for forward wing [m]
         self.xacfwd = 0.25*self.cfwd + d
         self.xacrear = self.lfus - (1 - 0.25) * self.crear
-        self.CLdesfwd = self.W / (0.5 * self.rho * self.V0 ** 2 * self.Sfwd) / 2
-        self.CLdesrear = self.W / 2 / (0.5 * self.V0 ** 2 * self.rho * self.Srear)
-        self.de_da = self.deps_da(self.Sweepc4fwd,self.bfwd,self.lh(),self.hfus,self.Afwd,self.CLafwd)
+        # self.CLdesfwd = self.W / (0.5 * self.rho * self.V0 ** 2 * self.Sfwd) / 2
+        # self.CLdesrear = self.W / 2 / (0.5 * self.V0 ** 2 * self.rho * self.Srear)
+        self.CLdesfwd = CLdesfwd
+        self.CLdesrear = CLdesrear
+        self.de_da = self.deps_da(self.Sweepc4fwd,self.bfwd,self.lh(),self.hfus-self.dy,self.Afwd,self.CLafwd)
         print("de/da = %.3f"%(self.de_da))
         self.Zcg = Zcg
         self.hover_calc = HoverControlCalcTandem(W / consts.g, n_rot_f,
@@ -113,7 +121,7 @@ class Wing_placement_sizing:
         """
         M = self.M0
         beta = np.sqrt(1 - M ** 2)
-        value = 2 * np.pi * A / (2 + np.sqrt(4 + ((A * beta / eta) ** 2) * (1 + (np.tan(Lambda_half) / beta) ** 2)))
+        value =  self.Clafwd* A / (2 + np.sqrt(4 + ((A * beta / eta) ** 2) * (1 + (np.tan(Lambda_half) / beta) ** 2)))
         return value
 
     def Sr_Sfwd(self, Xcg, elevator, d):
@@ -133,7 +141,7 @@ class Wing_placement_sizing:
         deda = self.de_da
         # print("de/da = ",deda)
         SrSfwd_stab = self.CLafwd * (Xcg - self.xacfwd) / (self.CLarear * (1 - deda) * (self.xacrear  - Xcg))
-        SrSfwd_control = (-self.Cmacfwd * self.cfwd + CDfwd * self.Zcg - CLfwd * (Xcg - self.xacfwd) / (
+        SrSfwd_control = (-self.Cmacfwd * self.cfwd + CDfwd * (self.Zcg-self.dy) - CLfwd * (Xcg - self.xacfwd) / (
                         CDrear * (self.hfus-self.Zcg) - self.CLrear * (self.xacrear - Xcg) + self.Cmacrear * self.crear))
         return SrSfwd_stab ** (-1), SrSfwd_control ** (-1)
 
@@ -150,7 +158,7 @@ class Wing_placement_sizing:
 
         plt.xlabel(r"$x_{cg}$ [m]",fontsize=14)
         plt.ylabel(r"$\frac{S_{fwd}}{S_{rear}}$ [-]",fontsize=14)
-        plt.ylim(0, max(SrSfwd_stability))
+        plt.ylim(0.5, 1.5)
         plt.legend()
 
         plt.show()
