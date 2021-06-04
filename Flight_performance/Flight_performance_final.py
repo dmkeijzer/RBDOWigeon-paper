@@ -2,7 +2,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 from Aero_tools import ISA, speeds
 import scipy.optimize as optimize
+import sys
 
+#sys.path.append("../../Flight_performance/Figures/")
 
 class mission:
     """
@@ -44,7 +46,7 @@ class mission:
         self.t_loiter = 30*60
 
         plt.rcParams.update({'font.size': 16})
-        self.path = 'C:/Users/Egon Beyne/Desktop/DSE/Final/'
+        self.path = '../Flight_performance/Figures/'
 
     def aero_coefficients(self, angle_of_attack):
         """
@@ -388,7 +390,7 @@ class evtol_performance:
         self.t_loiter = 30*60
 
         plt.rcParams.update({'font.size': 16})
-        self.path = 'C:/Users/Egon Beyne/Desktop/DSE/Final/'
+        self.path = '../Flight_performance/Figures/'
 
     def max_thrust(self, V):
 

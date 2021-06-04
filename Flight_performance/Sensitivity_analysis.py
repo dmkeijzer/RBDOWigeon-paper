@@ -18,7 +18,7 @@ class sensitivity_analysis:
         self.h_cruise_opt = 305
 
         plt.rcParams.update({'font.size': 16})
-        self.path = 'C:/Users/Egon Beyne/Desktop/DSE/Final/'
+        self.path = '../Flight_performance/Figures/'
 
     def cruising_altitude(self):
 
