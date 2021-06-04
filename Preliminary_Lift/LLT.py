@@ -224,13 +224,14 @@ def weissinger_l(wing, al, m):
     ccl = ccl[0:nrhs]
 
     # Sectional cl and induced angle of attack
-    cl = np.zeros(nrhs)
+    cl = np.zeros(nrhs) # Lift Distribution
     al_i = np.zeros(nrhs)
     for i in range(nrhs):
         cl[i] = ccl[i]/c[i]
         al_e = cl[i]/(2.*pi)
         al_i[i] = al + twist[i] - al_e
-
+    al_i = al_i * 180 / pi
+    print('induced', al_i)
     # Integrate to get CL and CDi
     CL = 0.
     CDi = 0.
@@ -245,11 +246,13 @@ def weissinger_l(wing, al, m):
     CL /= area
     CDi /= area
 
-    return y*wing.span/2., cl, ccl, al_i*180./pi, CL, CDi
+
+
+    return y*wing.span/2., cl, ccl, al_i, CL, CDi
 
 # RUN _WEISSINGER
 
-def create_plot(wing, y, cl, ccl, CL, CDi):
+def create_plot(wing, y, cl, ccl, al_i, CL, CDi):
     """ Plots lift distribution and wing geometry """
 
     # Mirror to left side for plotting
@@ -257,10 +260,9 @@ def create_plot(wing, y, cl, ccl, CL, CDi):
     y = np.hstack((y, np.flipud(-y[0:npt-1])))
     cl = np.hstack((cl, np.flipud(cl[0:npt-1])))
     ccl = np.hstack((ccl, np.flipud(ccl[0:npt-1])))
-
     fig, axarr = plt.subplots(2, sharex=True)
 
-    axarr[0].plot(y, cl, 'r', y, ccl/wing.cbar, 'b' )
+    axarr[0].plot(y, cl, 'r', y, ccl/wing.cbar, 'b')
     axarr[0].set_xlabel('y')
     axarr[0].set_ylabel('Sectional lift coefficient')
     axarr[0].legend(['Cl', 'cCl / MAC'], numpoints=1)
@@ -287,5 +289,5 @@ if __name__ == "__main__":
     print("{:<6}".format("CL: ") + str(CL))
     print("{:<6}".format("CDi: ") + str(CDi))
 
-    create_plot(wing, y, cl, ccl, CL, CDi)
-    create_plot(wing2, y2, cl2, ccl2, CL2, CDi2)
+    create_plot(wing, y, cl, ccl, al_i,CL, CDi)
+    create_plot(wing2, y2, cl2, ccl2, al_i2, CL2, CDi2)

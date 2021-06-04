@@ -7,14 +7,13 @@ import constants as consts
 
 
 class Wing_placement_sizing:
-    def __init__(self, W, h, lfus, hfus, wfus, V0, M0, CD0, theta0, CLfwd,
+    def __init__(self, W, lfus, hfus, wfus, V0, M0, CD0, CLfwd,
                  CLrear, CLafwd, CLarear, Cmacfwd, Cmacrear, Sfwd, Srear,
                  Afwd, Arear, Gamma, Lambda_c2_fwd, Lambda_c2_rear, cfwd,
                  crear, bfwd, brear, efwd, erear, taper, n_rot_f, n_rot_r,
-                 rot_y_range_f, rot_y_range_r, K, ku,Zcg):
+                 rot_y_range_f, rot_y_range_r, K, ku,Zcg,d):
 
         self.W = W         # Weight [N]
-        self.h = h     # Height [m]
         self.lfus = lfus # Length of the fuselage
         self.hfus = hfus # Height of the fuselage [m]
         self.wfus = wfus # Width of the fuselage [m]
@@ -32,7 +31,6 @@ class Wing_placement_sizing:
         self.Sweepc2rear = Lambda_c2_rear # Sweep at c/2 [rad]
         self.Sweepc4fwd = self.Sweep(Afwd,self.Sweepc2fwd,25,50)
         self.Sweepc4rear = self.Sweep(Arear, self.Sweepc2rear, 25, 50)
-        self.th0 = theta0  # Initial pitch angle [rad]
         self.V0 = V0       # Initial speed [m/s]
         self.M0 = M0       # Initial mach number [-]
         self.Gamma_fwd = Gamma # Forward wing dihedral [rad]
@@ -41,10 +39,12 @@ class Wing_placement_sizing:
         self.CLafwd, self.CLarear = CLafwd, CLarear # Wing lift curve slopes for both wings [1/rad]
         self.Cmacfwd, self.Cmacrear = Cmacfwd,Cmacrear
         self.CD0 = CD0 # C_D_0 of forward wing
-        self.xacfwd = 0.25*self.cfwd
+        self.d = d
+        self.xacfwd = 0.25*self.cfwd + d
         self.xacrear = self.lfus - (1 - 0.25) * self.crear
         self.de_da = self.deps_da(self.Sweepc4fwd,self.bfwd,self.lh(),self.hfus,self.Afwd,self.CLafwd)
         self.Zcg = Zcg
+
 
         self.hover_calc = HoverControlCalcTandem(W / consts.g, n_rot_f,
                                                  n_rot_r, self.xacfwd,
@@ -98,7 +98,7 @@ class Wing_placement_sizing:
         :param eta: =0.95
         :return: Lift curve slope for tail AND wing using DATCOM method
         """
-        M= self.M0
+        M = self.M0
         beta = np.sqrt(1 - M ** 2)
         value = 2 * np.pi * A / (2 + np.sqrt(4 + ((A * beta / eta) ** 2) * (1 + (np.tan(Lambda_half) / beta) ** 2)))
         return value
@@ -118,10 +118,10 @@ class Wing_placement_sizing:
         # CDafwd = 2*CLafwd*CLfwd/(np.pi*Afwd*e)
         # CDarear = 2*CLarear*CLrear/(np.pi*Afwd*e)
         deda = self.de_da
-        # print("de/da = ",deda)
-        SrSfwd_stab = self.CLafwd * (Xcg - self.xacfwd) / (self.CLarear * (1 - deda) * (self.xacrear - d - Xcg))
+        print("de/da = ",deda)
+        SrSfwd_stab = self.CLafwd * (Xcg - self.xacfwd) / (self.CLarear * (1 - deda) * (self.xacrear  - Xcg))
         SrSfwd_control = (-self.Cmacfwd * self.cfwd + CDfwd * self.Zcg - CLfwd * (Xcg - self.xacfwd) / (
-                        CDrear * (self.hfus-self.Zcg) - self.CLrear * (self.xacrear -d- Xcg) + self.Cmacrear * self.crear))
+                        CDrear * (self.hfus-self.Zcg) - self.CLrear * (self.xacrear - Xcg) + self.Cmacrear * self.crear))
         return SrSfwd_stab ** (-1), SrSfwd_control ** (-1)
 
     def plotting(self, x_min, x_max, dx, elevator, d, n_failures=2, y_cg=0):
