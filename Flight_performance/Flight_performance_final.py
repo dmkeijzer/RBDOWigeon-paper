@@ -2,7 +2,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 from Aero_tools import ISA, speeds
 import scipy.optimize as optimize
+import sys
 
+#sys.path.append("../../Flight_performance/Figures/")
 
 class mission:
     """
@@ -10,7 +12,7 @@ class mission:
     all considered together, no distinction is made between the phases up to and after cruise.
 
     !!!!! THIS FILE STILL CONTAINS PLACEHOLDER VALUES TO TEST ITS FUNCTIONALITY. REMOVE BEFORE OPTIMIZING DESIGNS !!!!!
-    TBD:
+    TODO:
         - Add energy estimation
         - Add aerodynamic data  (Lift and drag curves)
         - Add propulsion data   (Thrust-to-power, max thrust)
@@ -44,7 +46,7 @@ class mission:
         self.t_loiter = 30*60
 
         plt.rcParams.update({'font.size': 16})
-        self.path = 'C:/Users/Egon Beyne/Desktop/DSE/Final/'
+        self.path = '../Flight_performance/Figures/'
 
     def aero_coefficients(self, angle_of_attack):
         """
@@ -366,7 +368,7 @@ class evtol_performance:
     """
     This script calculates different performance characteristics for a tilt-wing evtol.
 
-    TO DO:
+    TODO:
         - Integrate final data file (replace self.parameters by datafile.parameters)
         - Add drag curve in Climb performance
         - Replace max_thrust by function from propulsion department
@@ -388,7 +390,7 @@ class evtol_performance:
         self.t_loiter = 30*60
 
         plt.rcParams.update({'font.size': 16})
-        self.path = 'C:/Users/Egon Beyne/Desktop/DSE/Final/'
+        self.path = '../Flight_performance/Figures/'
 
     def max_thrust(self, V):
 
@@ -396,7 +398,7 @@ class evtol_performance:
         P_max = 600000/eff
         return np.minimum(P_max/V, 40000)
 
-    def climb_performance(self):
+    def climb_performance(self, testing = False):
 
         # Altitudes to consider climb performance at
         altitudes   = np.array([300, 3000])
@@ -429,6 +431,13 @@ class evtol_performance:
 
             # Plot results
             plt.plot(V, RC, label = 'Altitude: ' + str(h))
+
+            # If running a test, return the speed for which the rate of climb is closest to zero
+            if h == 300 and testing:
+
+                idx = np.argmin(np.abs(RC))
+
+                return V[idx]
 
         plt.grid()
         plt.xlabel('Speed [m/s]')
@@ -498,6 +507,9 @@ class evtol_performance:
         # Find the remaining energy for cruise
         E_cr = self.bat_E - E_la - E_to - E_lt*loiter
 
+        if E_cr <= 0:
+            print("No energy left for cruise")
+
         # Time in cruise
         t_cr = E_cr / P_cr
 
@@ -534,19 +546,19 @@ class evtol_performance:
         plt.savefig(self.path + 'Payload_range' + '.pdf')
         plt.show()
 
+
+a = mission(2000, cruising_alt = 300, cruise_speed = 60)
 #
-# a = mission(2000, cruising_alt = 300, cruise_speed = 60)
-# #
-# # # Simulate descend
-# a.numerical_simulation(vx_start = 60, y_start = 300, th_start = np.radians(5), y_tgt = 0, vx_tgt = 0, plotting = True)
-# #
-# # # Simulate climb
-# a.numerical_simulation(vx_start = 0.001, y_start = 0, th_start = np.pi/2, y_tgt = 300, vx_tgt = 60, plotting = True)
-# #
-# E_total, t_total = a.total_energy()
-# # print(E_total, t_total)
+# # Simulate descend
+a.numerical_simulation(vx_start = 60, y_start = 300, th_start = np.radians(5), y_tgt = 0, vx_tgt = 0, plotting = True)
 #
-# b = evtol_performance(cruising_alt = 300, cruise_speed = 60)
-# b.climb_performance()
-# b.payload_range()
-# b.vertical_climb()
+# # Simulate climb
+a.numerical_simulation(vx_start = 0.001, y_start = 0, th_start = np.pi/2, y_tgt = 300, vx_tgt = 60, plotting = True)
+#
+E_total, t_total = a.total_energy()
+# print(E_total, t_total)
+
+b = evtol_performance(cruising_alt = 300, cruise_speed = 60)
+b.climb_performance()
+b.payload_range()
+b.vertical_climb()
