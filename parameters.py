@@ -27,7 +27,7 @@ m_pax = 88                  # assume average mass of a passenger according to Go
 cargo_m = (95-m_pax)*n_pax  # Use difference of pax+luggage - pax to get cargo mass
 
 # Propulsion
-n_prop = 16     # number of engines
+n_prop = 16                          # number of engines
 P_cr_estim = 110024/1.2 * 0.9        # Total cruise power in W
 P_cr_per_engine = P_cr_estim/n_prop  # Total cruise power per engine in W
 
