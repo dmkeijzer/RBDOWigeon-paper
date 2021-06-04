@@ -55,8 +55,10 @@ l3 = 2.7
 w_max = 1.38
 h_max = 1.705
 d_eq = np.sqrt(h_max*w_max)
-
-Wing_params = wing_design(AR,s1,sweepc41,s2,sweepc42,M,S_ref, l_h,h_d,w_max)
+#Winglets
+h_wl1 =0
+h_wl2 = 0.7
+Wing_params = wing_design(AR,s1,sweepc41,s2,sweepc42,M,S_ref, l_h,h_d,w_max,"Back",h_wl1,h_wl2)
 MAC = Wing_params.wing_planform_double()[0][3]
 SweepLE = Wing_params.sweep_atx(0)[0]
 

@@ -21,9 +21,14 @@ def deps_da(Lambda_quarter_chord, b,lh, h_ht, A, CLaw):
             1 - np.sqrt(mtv ** 2 / (1 + mtv ** 2))))
     #print("Configuration %.0f de/da = %.4f "%(conf,de_da))
     return de_da
+
+def winglet_dAR(AR, h_wl, b):
+
+    return 1.9*(h_wl/b)*AR
+
 class wing_design:
 
-    def __init__(self, AR, s1, sweepc41, s2, sweepc42, M, S, lh, h_ht, w):
+    def __init__(self, AR, s1, sweepc41, s2, sweepc42, M, S, lh, h_ht, w, winglet, h_wl1,h_wl2):
         self.AR_b = AR
         self.s1 = s1
         self.S1 = s1 * S
@@ -42,6 +47,9 @@ class wing_design:
         self.lh = lh
         self.h_ht = h_ht
         self.w = w
+        self.winglet = winglet
+        self.h_wl1 = h_wl1
+        self.h_wl2 = h_wl2
     def taper_opt(self):
         return 0.45 * np.exp(-0.036 * self.sweepc41), 0.45 * np.exp(-0.036 * self.sweepc42)  # Eq. 7.4 Conceptual Design of a Medium Range Box Wing Aircraft
 
@@ -88,13 +96,42 @@ class wing_design:
     def liftslope(self):
         beta = np.sqrt(1 - self.M ** 2)
         SW = np.tan(self.sweep_atx(0.5))
-        self.AR_i = 2*self.AR_b
-        slope1 = self.Clalpha * (self.AR_i / (2 + np.sqrt(4 + ((self.AR_i * beta / 0.95) ** 2) * ((1 + SW ** 2) / (beta ** 2)))))
-        wg =  self.wing_planform_double()
-        deda = deps_da(self.sweepc41, wg[0][0],self.lh,self.h_ht, self.AR_i,slope1)
+        wg = self.wing_planform_double()
+        if self.winglet == "None":
+
+            self.AR_i = 2*self.AR_b
+            slope1 = self.Clalpha * (self.AR_i / (2 + np.sqrt(4 + ((self.AR_i * beta / 0.95) ** 2) * ((1 + SW ** 2) / (beta ** 2)))))
+            deda = deps_da(self.sweepc41, wg[0][0],self.lh,self.h_ht, self.AR_i,slope1)
+            slope2 = slope1 * (1 - deda)
+
+        if self.winglet == "Front":
+
+            self.AR_i = 2 * self.AR_b +winglet_dAR(2 * self.AR_b,self.h_wl1, wg[0][0])
+            slope1 = self.Clalpha * (self.AR_i / (2 + np.sqrt(4 + ((self.AR_i * beta / 0.95) ** 2) * ((1 + SW ** 2) / (beta ** 2)))))
+            self.AR_2 = 2*self.AR_b
+            slope2_b = self.Clalpha * (self.AR_2 / (2 + np.sqrt(4 + ((self.AR_2 * beta / 0.95) ** 2) * ((1 + SW ** 2) / (beta ** 2)))))
+            deda = deps_da(self.sweepc41, wg[0][0], self.lh, self.h_ht, self.AR_i, slope1)
+            slope2 = slope2_b * (1 - deda)
+
+        if self.winglet == "Back":
+
+            self.AR_i = 2 * self.AR_b
+            slope1 = self.Clalpha * (self.AR_i / (2 + np.sqrt(4 + ((self.AR_i * beta / 0.95) ** 2) * ((1 + SW ** 2) / (beta ** 2)))))
+            self.AR_2 = 2 * self.AR_b + winglet_dAR(2 * self.AR_b, self.h_wl2, wg[0][0])
+            slope2_b = self.Clalpha * (self.AR_2 / (2 + np.sqrt(4 + ((self.AR_2 * beta / 0.95) ** 2) * ((1 + SW ** 2) / (beta ** 2)))))
+            deda = deps_da(self.sweepc41, wg[0][0], self.lh, self.h_ht, self.AR_i, slope1)
+            slope2 = slope2_b * (1 - deda)
+        if self.winglet == "Both":
+
+            self.AR_i = 2 * self.AR_b +  winglet_dAR(2 * self.AR_b, self.h_wl1, wg[0][0])
+            slope1 = self.Clalpha * (self.AR_i / (2 + np.sqrt(4 + ((self.AR_i * beta / 0.95) ** 2) * ((1 + SW ** 2) / (beta ** 2)))))
+            self.AR_2 = 2 * self.AR_b + winglet_dAR(2 * self.AR_b, self.h_wl2, wg[0][0])
+            slope2_b = self.Clalpha * (self.AR_2 / (2 + np.sqrt(4 + ((self.AR_2 * beta / 0.95) ** 2) * ((1 + SW ** 2) / (beta ** 2)))))
+            deda = deps_da(self.sweepc41, wg[0][0], self.lh, self.h_ht, self.AR_i, slope1)
+            slope2 = slope2_b * (1 - deda)
+
         wfi = 1 + 0.025*(self.w/wg[0][0]) - 0.25*(self.w/wg[0][0])  # wing fuselage interaction factor: effect of fuselage diameter on aerodynamic characteristics for straightwing at low and high aspect ratio
 
-        slope2 = slope1 * (1 - deda)
         slope_tot = wfi*(slope1 * self.s1 + slope2 * self.s2)
         return slope_tot, slope1* wfi, slope2*wfi, deda
 
