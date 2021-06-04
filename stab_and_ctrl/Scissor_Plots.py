@@ -4,16 +4,22 @@ from matplotlib import pyplot as plt
 from matplotlib import colors as mc
 from stab_and_ctrl.hover_controllabilty import HoverControlCalcTandem
 import constants as consts
+from Aero_tools import ISA
 
 
 class Wing_placement_sizing:
-    def __init__(self, W, lfus, hfus, wfus, V0, M0, CD0, CLfwd,
+    def __init__(self, W,h, lfus, hfus, wfus, V0, M0, CD0, CLfwd,
                  CLrear, CLafwd, CLarear, Cmacfwd, Cmacrear, Sfwd, Srear,
-                 Afwd, Arear, Gamma, Lambda_c2_fwd, Lambda_c2_rear, cfwd,
+                 Afwd, Arear, Gamma, Lambda_c4_fwd, Lambda_c4_rear, cfwd,
                  crear, bfwd, brear, efwd, erear, taper, n_rot_f, n_rot_r,
-                 rot_y_range_f, rot_y_range_r, K, ku,Zcg,d):
+                 rot_y_range_f, rot_y_range_r, K, ku,Zcg,d,Pbr):
 
         self.W = W         # Weight [N]
+        self.h = h       # Height [m]
+        Aero = ISA(self.h) # Imports ISA class
+        self.rho = Aero.density() #density [kg/m^3]
+        # self.CLdesfwd,self.CLdesrear = CLdesfwd,CLdesrear # DESIGN CL
+        self.Pbr = Pbr # Shaft power of one engine [W]
         self.lfus = lfus # Length of the fuselage
         self.hfus = hfus # Height of the fuselage [m]
         self.wfus = wfus # Width of the fuselage [m]
@@ -27,10 +33,10 @@ class Wing_placement_sizing:
         self.efwd, self.erear = efwd,erear
         self.taper = taper
         self.Afwd, self.Arear = Afwd, Arear # Aspect ratio of both wings [-]
-        self.Sweepc2fwd = Lambda_c2_fwd # Sweep at c/2 [rad]
-        self.Sweepc2rear = Lambda_c2_rear # Sweep at c/2 [rad]
-        self.Sweepc4fwd = self.Sweep(Afwd,self.Sweepc2fwd,25,50)
-        self.Sweepc4rear = self.Sweep(Arear, self.Sweepc2rear, 25, 50)
+        self.Sweepc4fwd = Lambda_c4_fwd # Sweep at c/4 [rad]
+        self.Sweepc4rear = Lambda_c4_rear # Sweep at c/4 [rad]
+        self.Sweepc2fwd = self.Sweep(Afwd,self.Sweepc4fwd,25,50)
+        self.Sweepc2rear = self.Sweep(Arear, self.Sweepc4rear, 25, 50)
         self.V0 = V0       # Initial speed [m/s]
         self.M0 = M0       # Initial mach number [-]
         self.Gamma_fwd = Gamma # Forward wing dihedral [rad]
@@ -42,10 +48,11 @@ class Wing_placement_sizing:
         self.d = d
         self.xacfwd = 0.25*self.cfwd + d
         self.xacrear = self.lfus - (1 - 0.25) * self.crear
+        self.CLdesfwd = self.W / (0.5 * self.rho * self.V0 ** 2 * self.Sfwd) / 2
+        self.CLdesrear = self.W / 2 / (0.5 * self.V0 ** 2 * self.rho * self.Srear)
         self.de_da = self.deps_da(self.Sweepc4fwd,self.bfwd,self.lh(),self.hfus,self.Afwd,self.CLafwd)
+        print("de/da = %.3f"%(self.de_da))
         self.Zcg = Zcg
-
-
         self.hover_calc = HoverControlCalcTandem(W / consts.g, n_rot_f,
                                                  n_rot_r, self.xacfwd,
                                                  self.xacrear, rot_y_range_f,
@@ -64,16 +71,22 @@ class Wing_placement_sizing:
         :return: de/dalpha
         """
         r = lh * 2 / b
-        mtv = h_ht * 2 / b
+        mtv = h_ht * 2 / b # Approximation
         Keps = (0.1124 + 0.1265 * Lambda_quarter_chord + 0.1766 * Lambda_quarter_chord ** 2) / r ** 2 + 0.1024 / r + 2
         Keps0 = 0.1124 / r ** 2 + 0.1024 / r + 2
-        v = 1 + (r ** 2 / (r ** 2 + 0.7915 + 5.0734 * mtv ** 2) ** (0.3113))
+        v = 1 + (r ** 2 / (r ** 2 + 0.7915 + 5.0734 * mtv ** 2)) ** (0.3113)
         de_da = Keps / Keps0 * CLaw / (np.pi * A) * (
                 r / (r ** 2 + mtv ** 2) * 0.4876 / (np.sqrt(r ** 2 + 0.6319 + mtv ** 2)) + v * (
                 1 - np.sqrt(mtv ** 2 / (1 + mtv ** 2))))
         phi = np.arcsin(mtv/r)
+        # print("r, mtv = ",r,mtv)
+        # print("phi = %.3f"%(phi*180/np.pi))
+        if 180/np.pi*phi<30 and 180/np.pi*phi>0: #To account for propeller downwash
+            dsde_da = 6.5*(self.rho*self.Pbr**2*self.Sfwd**3*self.CLdesfwd**3/(self.lh()**4*self.W**3))**(1/4)*(np.sin(phi*6))**2.5
+        else:
+            dsde_da = 0
         # print("Configuration %.0f de/da = %.4f "%(conf,de_da))
-        return de_da
+        return de_da+dsde_da
 
     def Sweep(self,AR,Sweepm,n,m):
         """
@@ -118,7 +131,7 @@ class Wing_placement_sizing:
         # CDafwd = 2*CLafwd*CLfwd/(np.pi*Afwd*e)
         # CDarear = 2*CLarear*CLrear/(np.pi*Afwd*e)
         deda = self.de_da
-        print("de/da = ",deda)
+        # print("de/da = ",deda)
         SrSfwd_stab = self.CLafwd * (Xcg - self.xacfwd) / (self.CLarear * (1 - deda) * (self.xacrear  - Xcg))
         SrSfwd_control = (-self.Cmacfwd * self.cfwd + CDfwd * self.Zcg - CLfwd * (Xcg - self.xacfwd) / (
                         CDrear * (self.hfus-self.Zcg) - self.CLrear * (self.xacrear - Xcg) + self.Cmacrear * self.crear))
@@ -131,9 +144,9 @@ class Wing_placement_sizing:
         plt.plot(Xcg,SrSfwd_stability,label="Neutral Stability Line")
         plt.plot(Xcg,SrSfwd_control,label="Controllability Line")
 
-        x_hover_min, x_hover_max, hover_fail_limit_front, hover_fail_limit_aft = self.hover_calc.calc_crit_x_cg_range(x_min, x_max, dx, y_cg, [(self.xacfwd + self.xacrear) / 2, 0], [n_failures])[0]
-        plt.axvline(x_hover_min, label="Hover Controllability Limits for " + str(n_failures) + " Engine Failures", color="tab:red")
-        plt.axvline(x_hover_max, color="tab:red")
+        # x_hover_min, x_hover_max, hover_fail_limit_front, hover_fail_limit_aft = self.hover_calc.calc_crit_x_cg_range(x_min, x_max, dx, y_cg, [(self.xacfwd + self.xacrear) / 2, 0], [n_failures])[0]
+        # plt.axvline(x_hover_min, label="Hover Controllability Limits for " + str(n_failures) + " Engine Failures", color="tab:red")
+        # plt.axvline(x_hover_max, color="tab:red")
 
         plt.xlabel(r"$x_{cg}$ [m]",fontsize=14)
         plt.ylabel(r"$\frac{S_{fwd}}{S_{rear}}$ [-]",fontsize=14)

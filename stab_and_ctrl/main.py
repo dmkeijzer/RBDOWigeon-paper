@@ -7,7 +7,7 @@ import constants as const
 from matplotlib import pyplot as plt
 
 # example values based on inputs_config_1.json
-W = 18315.27
+W = 3652.352770706565*9.80665
 h = 0
 lfus = 7.2
 hfus = 1.705
@@ -15,6 +15,7 @@ wfus = 1.38
 xcg = 3.0
 V0 = 52
 Vstall = 40
+Pbr = 110024/1.2 * 0.9 /16
 M0 = V0 / np.sqrt(const.gamma * const.R * 288.15)
 CD0 = 0.03254
 theta0 = 0
@@ -51,12 +52,12 @@ K = 4959.86
 ku = 0.1
 Zcg = 0.7
 
-d = 1.5
-wps = Wing_placement_sizing(W,  lfus, hfus, wfus, V0, M0, CD0, CLfwd,
+d = 0
+wps = Wing_placement_sizing(W,h, lfus, hfus, wfus, V0, M0, CD0, CLfwd,
                  CLrear, CLafwd, CLarear, Cmacfwd, Cmacrear, Sfwd, Srear,
                  Afwd, Arear, Gamma, Lambda_c2_fwd, Lambda_c2_rear, cfwd,
                  crear, bfwd, brear, efwd, erear, taper, n_rot_f, n_rot_r,
-                 rot_y_range_f, rot_y_range_r, K, ku,Zcg,d)
+                 rot_y_range_f, rot_y_range_r, K, ku,Zcg,d,Pbr)
 
 vt_sizing = VT_sizing(W,h,xcg,lfus,hfus,wfus,V0,Vstall,M0,CD0,theta0,
                       CLfwd,CLrear,CLafwd,CLarear,
@@ -64,7 +65,7 @@ vt_sizing = VT_sizing(W,h,xcg,lfus,hfus,wfus,V0,Vstall,M0,CD0,theta0,
 
 elevon = Control_surface(V0,Vstall,CLfwd,CLrear,CLafwd,CLarear,Clafwd,Clarear,Cd0fwd,Cd0rear,
                          Sfwd,Srear,Afwd,Arear,cfwd,crear,bfwd,brear,taper)
-elevator_effect = 1.4
+elevator_effect = 1.55
 dx = 0.1
 
 #### Plotting Vertical Tail ####
@@ -91,7 +92,7 @@ elevon.plotting(Sa_S,b1,b2,False)
 
 #### Plotting Elevator ####
 elevator = Elevator_sizing(W,h,xcg,lfus,hfus,wfus,V0,Vstall,M0,CD0,theta0,CLfwd,CLrear,CLafwd,CLarear,
-                           Cmacfwd,Cmacrear,Sfwd,Srear,Afwd,Arear,0,0,cfwd,crear,bfwd,brear,taper,dCLfwd=0.4*CLfwd)
+                           Cmacfwd,Cmacrear,Sfwd,Srear,Afwd,Arear,0,0,cfwd,crear,bfwd,brear,taper,dCLfwd=0.55*CLfwd)
 beb = np.linspace(10,100,150)
 SeS = np.linspace(0.1,0.4,150)
 de_max = 15
@@ -119,3 +120,30 @@ elevator.plotting(SeS,beb,de_max)
 # plt.show()
 
 wps.plotting(0, lfus, dx, elevator_effect, d)
+
+
+# def deps_da(Lambda_quarter_chord, b, lh, h_ht, A, CLaw):
+#     """
+#     Inputs:
+#     :param Lambda_quarter_chord: Sweep Angle at c/4 [RAD]
+#     :param lh: distance between ac_w1 with ac_w2 (horizontal)
+#     :param h_ht: distance between ac_w1 with ac_w2 (vertical)
+#     :param A: Aspect Ratio of wing
+#     :param CLaw: Wing Lift curve slope
+#     :return: de/dalpha
+#     """
+#     r = lh * 2 / b
+#     mtv = h_ht * 2 / b  # Approximation
+#     Keps = (0.1124 + 0.1265 * Lambda_quarter_chord + 0.1766 * Lambda_quarter_chord ** 2) / r ** 2 + 0.1024 / r + 2
+#     Keps0 = 0.1124 / r ** 2 + 0.1024 / r + 2
+#     v = 1 + (r ** 2 / (r ** 2 + 0.7915 + 5.0734 * mtv ** 2)) ** (0.3113)
+#     de_da = Keps / Keps0 * CLaw / (np.pi * A) * (
+#             r / (r ** 2 + mtv ** 2) * 0.4876 / (np.sqrt(r ** 2 + 0.6319 + mtv ** 2)) + v * (
+#             1 - np.sqrt(mtv ** 2 / (1 + mtv ** 2))))
+#
+#     # print("Configuration %.0f de/da = %.4f "%(conf,de_da))
+#     return de_da
+# lh = np.linspace(0.1,20,150)
+# deda = deps_da(0,bfwd,lh,hfus,Afwd,CLafwd)
+# plt.plot(lh,deda)
+# plt.show()
