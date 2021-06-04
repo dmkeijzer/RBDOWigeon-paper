@@ -27,8 +27,8 @@ Swet_ratio = 4 estimation using ADSEE-I
 """
 def C_D_0(Swet_ratio, Cf): # ADSEE-I
     return Swet_ratio * Cf
-def e_2(AR):
-    return 1.78 * ( 1 -0.045 * AR ** 0.68) - 0.64
+
+
 # Parabolic Drag
 def C_D(C_L, CL_CDmin, CD0, AR, e):
     return CD0 + (C_L-CL_CDmin )** 2 / (np.pi * AR * e)

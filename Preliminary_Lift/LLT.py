@@ -8,14 +8,15 @@ from math import *
 from matplotlib import pyplot as plt
 from Wing_design import deps_da
 
+
 # INPUTS
 alpha   = 9         # Geometric angle of attack at root, degrees
-span    = 8.57       # Wing span
+span    = 8.57        # Wing span
 root    = 0.875        # Root chord
 tip     = 0.35         # Tip chord
 sweep   = 0        # Sweep of quarter-chord, degrees
 washout = 0        # Downward twist at tip, degrees
-npoints = 10        # Number of points to evaluate on wing half
+npoints = 21        # Number of points to evaluate on wing half
 
 # WING
 def slope(y2, y1, x2, x1): return (y2 - y1) / (x2 - x1)
@@ -94,7 +95,6 @@ class Wing:
                     bbox=dict(boxstyle='square', fc='w', ec='m'), color='m')
 
 # WEISSINGER
-
 eps = 1E-10
 
 def l_function(lam, spc, y, n):
@@ -131,7 +131,6 @@ def weissinger_l(wing, al, m):
         wing.washout: twist of tip relative to root, +ve down (degrees)
         al: angle of attack (degrees) at the root
         m: number of points along the span (an odd number).
-
         Returns:
         y: vector of points along span
         cl: local 2D lift coefficient cl
@@ -225,13 +224,13 @@ def weissinger_l(wing, al, m):
     ccl = ccl[0:nrhs]
 
     # Sectional cl and induced angle of attack
-    cl = np.zeros(nrhs) # Lift Distribution
+    cl = np.zeros(nrhs)
     al_i = np.zeros(nrhs)
     for i in range(nrhs):
         cl[i] = ccl[i]/c[i]
         al_e = cl[i]/(2.*pi)
         al_i[i] = al + twist[i] - al_e
-    al_i = al_i * 180 / pi
+
     # Integrate to get CL and CDi
     CL = 0.
     CDi = 0.
@@ -246,13 +245,10 @@ def weissinger_l(wing, al, m):
     CL /= area
     CDi /= area
 
+    return y*wing.span/2., cl, ccl, al_i*180./pi, CL, CDi
 
-
-    return y*wing.span/2., cl, ccl, al_i, CL, CDi
-
-# RUN _WEISSINGER
-
-def create_plot(wing, y, cl, ccl, al_i, CL, CDi):
+# RUN_WEISSINGER
+def create_plot(wing, y, cl, ccl, CL, CDi):
     """ Plots lift distribution and wing geometry """
 
     # Mirror to left side for plotting
@@ -260,9 +256,10 @@ def create_plot(wing, y, cl, ccl, al_i, CL, CDi):
     y = np.hstack((y, np.flipud(-y[0:npt-1])))
     cl = np.hstack((cl, np.flipud(cl[0:npt-1])))
     ccl = np.hstack((ccl, np.flipud(ccl[0:npt-1])))
+
     fig, axarr = plt.subplots(2, sharex=True)
 
-    axarr[0].plot(y, cl, 'r', y, ccl/wing.cbar, 'b')
+    axarr[0].plot(y, cl, 'r', y, ccl/wing.cbar, 'b' )
     axarr[0].set_xlabel('y')
     axarr[0].set_ylabel('Sectional lift coefficient')
     axarr[0].legend(['Cl', 'cCl / MAC'], numpoints=1)
@@ -276,14 +273,13 @@ def create_plot(wing, y, cl, ccl, al_i, CL, CDi):
 
 if __name__ == "__main__":
 
-    wing = Wing(span, root, tip, sweep, washout)
+    wing = Wing(span, root, tip, sweep,washout)
     y, cl, ccl, al_i, CL, CDi = weissinger_l(wing, alpha, 2*npoints-1)
 
     de_da = deps_da(0, span, 6, 1.25, wing.aspect_ratio, 5.27)
     alpha2 = alpha * (1 - de_da)
-
-    wing2 = Wing(span, root, tip, sweep, washout)
-    y2, cl2, ccl2, al_i2, CL2, CDi2 = weissinger_l(wing, alpha2, 2*npoints-1)
+    wing2 = Wing(span, root, tip, sweep,washout)
+    y2, cl2, ccl2, al_i2, CL2, CDi2 = weissinger_l(wing2, alpha2, 2*npoints-1)
 
     print("{:<6}".format("Area: ") + str(wing.area))
     print("{:<6}".format("AR: ") + str(wing.aspect_ratio))
@@ -291,5 +287,5 @@ if __name__ == "__main__":
     print("{:<6}".format("CL: ") + str(CL))
     print("{:<6}".format("CDi: ") + str(CDi))
 
-    create_plot(wing, y, cl, ccl, al_i,CL, CDi)
-    create_plot(wing2, y2, cl2, ccl2, al_i2, CL2, CDi2)
+    create_plot(wing, y, cl, ccl, CL, CDi)
+    create_plot(wing2, y2, cl2, ccl2, CL2, CDi2)
