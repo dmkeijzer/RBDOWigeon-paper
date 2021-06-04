@@ -122,7 +122,23 @@ def l_function(lam, spc, y, n):
 
     return weissl
 
-def weissinger_l(wing, al, m):
+def downwash_fore(c,y,Cl, x_h, z_h, V_inf):
+    c = c[0:11]
+    Circ = 0.5*Cl*V_inf*c
+    w = []
+    for i in range(len(cl)):
+        r_avg = np.sqrt(x_h**2 + z_h**2)
+        thetas = np.arctan2(r_avg, y- y[i])
+        Circwsin = Circ*np.sin(thetas)
+        f = interp1d(thetas, Circwsin)
+        integral = quad(f,thetas[0],thetas[-1])
+        w.append(integral[0]*(1/(np.pi*4*r_avg)))
+    w_final = np.array(w)
+    cang = np.arctan2(z_h,x_h)
+    a_w = np.arctan2(np.cos(cang)*w_final,np.sin(cang)*w_final + V_inf) * 180/pi
+    return a_w
+
+def weissinger_l(wing, al, al_fore, m):
     """ Weissinger-L method for a swept, tapered, twisted wing.
         wing.span: span
         wing.root: chord at the root
@@ -233,7 +249,6 @@ def weissinger_l(wing, al, m):
             al_e = cl[i]/(2.*pi)
             al_i[i] = al + twist[i] - al_e
         al_i = al_i * 180 / pi
-        print('induced', al_i)
         # Integrate to get CL and CDi
         CL = 0.
         CDi = 0.
@@ -247,14 +262,17 @@ def weissinger_l(wing, al, m):
             area += dA
         CL /= area
         CDi /= area
+        print('test cl', cl, len(cl))
+        print('test al_i', al_i, len(al_i))
 
     elif wing.tandem == 'hind':
         # Convert angles to radians
         lam = wing.sweep*pi/180.
         tw = -wing.washout*pi/180.
 
-        al = al[0] *pi/180. # Fore Wing AOA
-        al_ifore = al[1] *pi/180. # Fore Wing induced AOA array
+        al = al *pi/180. # Fore Wing AOA
+        al_fore = al_fore *pi/180. # Fore Wing induced AOA array
+        al = - al_fore + al
 
         # Initialize solution arrays
         O = m+2
@@ -291,7 +309,7 @@ def weissinger_l(wing, al, m):
         print("Calculating aerodynamics ...")
         for j in range(m):
             print("Point " + str(j+1) + " of " + str(m))
-            rhs[j,0] = al + twist[j]
+            rhs[j,0] = al[j] + twist[j]
 
             for i in range(m):
                 if i == j: b[j,i] = float(m+1)/(4.*sin(phi[j]))
@@ -343,7 +361,6 @@ def weissinger_l(wing, al, m):
             al_e = cl[i]/(2.*pi)
             al_i[i] = al + twist[i] - al_e
         al_i = al_i * 180 / pi
-        print('induced', al_i)
         # Integrate to get CL and CDi
         CL = 0.
         CDi = 0.
@@ -360,7 +377,7 @@ def weissinger_l(wing, al, m):
 
 
 
-    return y*wing.span/2., cl, ccl, al_i, CL, CDi
+    return y*wing.span/2., cl, ccl, al_i, CL, CDi, c
 
 # RUN _WEISSINGER
 
@@ -390,10 +407,10 @@ if __name__ == "__main__":
 
     wing = Wing(span, root, tip, sweep, washout, 'fore')
 
-    y, cl, ccl, al_i, CL, CDi = weissinger_l(wing, alpha, 2*npoints-1)
+    y, cl, ccl, al_i, CL, CDi, c = weissinger_l(wing, alpha, 0, 2*npoints-1)
 
     wing2 = Wing(span, root, tip, sweep, washout, 'hind')
-    y2, cl2, ccl2, al_i2, CL2, CDi2 = weissinger_l(wing, 2, 2*npoints-1)
+    y2, cl2, ccl2, al_i2, CL2, CDi2, c2 = weissinger_l(wing2, alpha, downwash_fore(c, y, cl, 6, 1.25, 1), 2*npoints-1) # alpha, al_i
 
     print("{:<6}".format("Area: ") + str(wing.area))
     print("{:<6}".format("AR: ") + str(wing.aspect_ratio))

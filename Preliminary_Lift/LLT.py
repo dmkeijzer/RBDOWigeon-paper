@@ -6,6 +6,7 @@ https://github.com/montagdude/weissinger
 import numpy as np
 from math import *
 from matplotlib import pyplot as plt
+from Wing_design import deps_da
 
 # INPUTS
 alpha   = 9         # Geometric angle of attack at root, degrees
@@ -231,7 +232,6 @@ def weissinger_l(wing, al, m):
         al_e = cl[i]/(2.*pi)
         al_i[i] = al + twist[i] - al_e
     al_i = al_i * 180 / pi
-    print('induced', al_i)
     # Integrate to get CL and CDi
     CL = 0.
     CDi = 0.
@@ -277,11 +277,13 @@ def create_plot(wing, y, cl, ccl, al_i, CL, CDi):
 if __name__ == "__main__":
 
     wing = Wing(span, root, tip, sweep, washout)
-
     y, cl, ccl, al_i, CL, CDi = weissinger_l(wing, alpha, 2*npoints-1)
 
+    de_da = deps_da(0, span, 6, 1.25, wing.aspect_ratio, 5.27)
+    alpha2 = alpha * (1 - de_da)
+
     wing2 = Wing(span, root, tip, sweep, washout)
-    y2, cl2, ccl2, al_i2, CL2, CDi2 = weissinger_l(wing, 2, 2*npoints-1)
+    y2, cl2, ccl2, al_i2, CL2, CDi2 = weissinger_l(wing, alpha2, 2*npoints-1)
 
     print("{:<6}".format("Area: ") + str(wing.area))
     print("{:<6}".format("AR: ") + str(wing.aspect_ratio))
