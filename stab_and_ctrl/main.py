@@ -76,7 +76,7 @@ dx = 0.1
 
 #### Plotting Vertical Tail ####
 nE = 16
-Tt0 = 7000
+Tt0 = 7500
 yE = bfwd/2
 lv = lfus-xcg
 brbv = np.linspace(0.75,1,150)

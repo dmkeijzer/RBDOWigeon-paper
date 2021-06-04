@@ -30,7 +30,7 @@ class Control_surface:
         # self.xacfwd = 0.25*self.cfwd
         # self.xacrear = self.lfus - (1 - 0.25) * self.crear
         self.Vs = Vstall # Stall speed [m/s]
-        self.Vmc = 1.2*self.Vs # Mimum controllable speed [m/s]
+        self.Vmc = 1.2*self.Vs # Minimum controllable speed [m/s]
         # self.xcg = xcg
         self.c = self.Sfwd/self.S*self.cfwd+self.Srear/self.S*self.crear
 
