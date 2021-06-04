@@ -15,7 +15,7 @@ data = json.load(datafile)
 datafile.close()
 FP = data["Flight performance"]
 STR = data["Structures"]
-AR = 7
+AR = 5
 
 
 W = STR["MTOW"] #[N]
@@ -57,23 +57,25 @@ h_max = 1.705
 d_eq = np.sqrt(h_max*w_max)
 #Winglets
 h_wl1 =0
-h_wl2 = 0.7
-Wing_params = wing_design(AR,s1,sweepc41,s2,sweepc42,M,S_ref, l_h,h_d,w_max,"Back",h_wl1,h_wl2)
+h_wl2 = 0
+Wing_params = wing_design(AR,s1,sweepc41,s2,sweepc42,M,S_ref, l_h,h_d,w_max,"None",h_wl1,h_wl2)
 MAC = Wing_params.wing_planform_double()[0][3]
 SweepLE = Wing_params.sweep_atx(0)[0]
-
+Slope1 = Wing_params.liftslope()[1]
+print(Slope1*np.pi/180)
 #For Drag estimation
 k = 0.634 * 10**(-5) # Smooth paint from adsee 2 L2
 flamf =0.1  # From ADSEE 2 L2 GA aircraft
 IF_f = 1    # From ADSEE 2 L2
 IF_w = 1.1   # From ADSEE 2 L2
+IF_v = 1.04 #From ADSEE 2 L2
 flamw = 0.35 # From ADSEE 2 L2 GA aircraft
 u = 8.43 *np.pi/180 # fuselage upsweep
 Abase = 0
 # Airfoil
 airfoil = airfoil_stats()
-tc = 0.17
-xcm = 0.3
+tc = 0.12 #NACA0012 for winglets and Vtail
+xcm = 0.3 #NACA0012 for winglets and Vtail
 CL_CDmin = airfoil[2]
 CL_lst = np.arange(-0.5,1.7,0.100)
 #Other parameters
@@ -81,8 +83,10 @@ S_v = 0.6
 S_t = 0
 
 
-Drag = componentdrag('tandem',S_ref,l1,l2,l3,d_eq,Vcruise,rho,MAC,AR,e,Mach(Vcruise,a),k,flamf,flamw,mu,tc,xcm,0,SweepLE,u,0,h_d,IF_f,IF_w,CL_CDmin,Abase, S_v, S_t)
+Drag = componentdrag('tandem',S_ref,l1,l2,l3,d_eq,Vcruise,rho,MAC,AR,e,Mach(Vcruise,a),k,flamf,flamw,mu,tc,xcm,0,SweepLE,u,0,h_d,IF_f,IF_w, IF_v, CL_CDmin,Abase, S_v, S_t, s1, s2, h_wl1, h_wl2)
 
+CL_design = Drag.CL_des()
+print("CL_des",CL_design)
 #Stall
 stall = Wing_params.CLmax_s()
 CLmax = stall[0]
@@ -100,8 +104,7 @@ Cl_alpha_curve = Wing_params.CLa(tc, CDs, CDs_f, Afus, alpha_lst)
 CD_a_w = Wing_params.CDa_poststall(tc, CDs, CDs_f, Afus, alpha_lst, "wing", Drag.CD)
 CD_a_f = Wing_params.CDa_poststall(tc, CDs, CDs_f, Afus, alpha_lst, "fus", Drag.CD)
 
-plt.plot(alpha_lst,CD_a_w)
-plt.show()
+
 
 
 

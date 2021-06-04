@@ -1,6 +1,7 @@
 import numpy as np
 from math import *
 from Preliminary_Lift.Airfoil_analysis import Cd
+from Preliminary_Lift.Wing_design import winglet_dAR
 #
 # From BOX WING FUNDAMENTALS - A DESIGN PERSPECTIVE
 # Oswald efficiency factor depending on the wing type
@@ -52,7 +53,7 @@ def e_OS(AR):
 # CD0 component build up
 
 class componentdrag:
-    def __init__(self, type, S_ref, l1, l2, l3, d, V_cr, rho, MAC, AR, e, M_cr, k, frac_lam_f, frac_lam_w, mu, tc,xcm,sweepm, sweepLE, u, c_t,h, IF_f, IF_w, C_L_minD, Abase, S_v, S_t):
+    def __init__(self, type, S_ref, l1, l2, l3, d, V_cr, rho, MAC, AR, e, M_cr, k, frac_lam_f, frac_lam_w, mu, tc,xcm,sweepm, sweepLE, u, c_t,h, IF_f, IF_w,IF_v, C_L_minD, Abase, S_v, S_t,s1,s2, h_wl1,h_wl2):
         self.S_ref = S_ref
         self.l1 = l1
         self.l2 = l2
@@ -61,7 +62,7 @@ class componentdrag:
         self.V = V_cr
         self.rho = rho
         self.c = MAC
-        self.AR = AR
+        self.AR = AR + s1*winglet_dAR(AR*2,h_wl1, np.sqrt(AR*S_ref))+ s2*winglet_dAR(AR*2,h_wl2, np.sqrt(AR*S_ref))
         self.e = e
         self.M = M_cr
         self.k = k
@@ -74,6 +75,7 @@ class componentdrag:
         self.sweepm = sweepm
         self.u = u
         self.type = type
+        self.IF_v = IF_v
         self.IF_w = IF_w
         self.IF_f = IF_f
         self.C_L_minD = C_L_minD
@@ -126,7 +128,7 @@ class componentdrag:
     def CD0(self):
 
         self.CD0_f = (1/self.S_ref) * (self.Cf_f() *self.FF_f()*self.IF_f* self.Swet_f())
-        self.CD0_v = (1 / self.S_ref) * (self.Cf_w() * self.FF_w() * self.IF_w * self.Swet_v())
+        self.CD0_v = (1 / self.S_ref) * (self.Cf_w() * self.FF_w() * self.IF_v * self.Swet_v())
         CD0 = (self.CD0_v + self.CD0_f)*1.05
         return CD0
 
@@ -144,7 +146,7 @@ class componentdrag:
 
     def Cd_w(self, C_L):
 
-        return Cd(C_L/(np.cos(self.SweepLE)**2))
+        return self.IF_w*Cd(C_L/(np.cos(self.SweepLE)**2))
 
     def CD(self, C_L):
 
@@ -159,3 +161,9 @@ class componentdrag:
         K = 1/(np.pi*self.AR*self.e)
         return CDmin, K
 
+    def CL_des(self):
+        C_L_lst = np.arange(0,1.5,0.01)
+        LD = C_L_lst/self.CD(C_L_lst)
+        print(np.max(LD))
+        index = np.where(LD==np.max(LD))
+        return float(C_L_lst[index])

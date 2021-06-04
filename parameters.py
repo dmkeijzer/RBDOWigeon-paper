@@ -12,7 +12,9 @@ do_not_use_mtom = 1972          # maximum take-off mass from statistical data - 
 # ---------------------------------------------
 
 S1, S2 = 5.25, 5.25  # surface areas of wing one and two
-A = 14               # aspect ratio of a wing, not aircraft
+A = 10               # aspect ratio of a wing, not aircraft
+taper = 0.45         #Taper ratio of both wings
+
 n_ult = 3.2 * 1.5    # 3.2 is the max we found, 1.5 is the safety factor
 Pmax = 15.25         # this is defined as maximum perimeter in Roskam, so i took top down view of the fuselage perimeter
 lf = 7.2             # length of fuselage
