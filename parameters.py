@@ -5,7 +5,12 @@ Do NOT use these constants in your class/tool files, only on the main file
 Keep in mind that these values will change (probably a lot), only use them if you need estimates to run the code
 """
 
-mtom = 1972          # maximum take-off mass from statistical data - Class I estimation
+# ---------------------------------------------
+# THIS IS CLASS I ESTIMATION
+# UPDATED MTOM IS AT THE BOTTOM OF THE FILE IF YOU NEED IT
+do_not_use_mtom = 1972          # maximum take-off mass from statistical data - Class I estimation
+# ---------------------------------------------
+
 S1, S2 = 5.25, 5.25  # surface areas of wing one and two
 A = 14               # aspect ratio of a wing, not aircraft
 n_ult = 3.2 * 1.5    # 3.2 is the max we found, 1.5 is the safety factor
