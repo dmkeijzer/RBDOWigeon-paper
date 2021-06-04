@@ -21,16 +21,7 @@
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav">
                 <li class="nav-item active" onclick="showGraph(this.innerText);">
-                    <a class="nav-link" href="#">NVM</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="#">Features</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="#">Pricing</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link disabled" href="#">Disabled</a>
+                    <a class="nav-link" href="#">Sample</a>
                 </li>
             </ul>
         </div>
@@ -43,24 +34,29 @@
     </div>
 
     <script>
-        const graphs = ["NVM"];
+        const graphs = [["NVM", "Load Diagrams"]];
 
-        for (graph of graphs) {
+        const showGraph =  ( event ) => {
+            const frame = document.querySelector("iframe");
+            const name = graphs.filter(g => g[1] === event.target.innerText)[0][0];
+            frame.src = `/${name}.html`;
+            frame.style.display = "block";
+            document.querySelector("div.figure").appendChild(frame);
+        }
+
+        for (var [ graphFile, graphName ] of graphs) {
             const link = document.createElement("a");
             link.className = "nav-link";
             link.href = "#";
-            link.innerText = graph;
+            link.innerText = graphName;
             const item = document.createElement("li");
-
+            item.className = "nav-item";
+            item.id = graphFile;
+            item.addEventListener("click", showGraph);
+            item.appendChild(link);
+            document.querySelector("ul.navbar-nav").appendChild(item);
         }
 
-        const showGraph =  ( name ) => {
-            const frame = document.querySelector("iframe");
-            frame.src = `/${name}.html`;
-            frame.style.display = "block";
-            console.log(frame);
-            document.querySelector("div.figure").appendChild(frame);
-        }
     </script>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/js/bootstrap.bundle.min.js"
