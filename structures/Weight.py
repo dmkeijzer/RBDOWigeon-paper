@@ -101,7 +101,7 @@ if __name__ == '__main__':
     n_ult = 3.2*1.5 # 3.2 is the max we found, 1.5 is the safety factor
     Pmax = 15.25 # this is defined as maximum perimeter in Roskam, so i took top down view of the fuselage perimeter
     lf = 7.2 # length of fuselage
-    m_pax = 88 # average mass of a passenger according to Google
+    m_pax = 95 # average mass of a passenger according to Google
     n_prop = 16 # number of engines
     n_pax = 5 # number of passengers (pilot included)
     pos_fus = 3.6 # fuselage centre of mass away from the nose
@@ -109,7 +109,7 @@ if __name__ == '__main__':
     pos_frontwing, pos_backwing = 0.2, 7 # positions of the wings away from the nose
     m_prop = [30]*16 # list of mass of engines (so 30 kg per engine with nacelle and propeller)
     pos_prop = [0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 7.0, 7.0, 7.0, 7.0, 7.0, 7.0, 7.0, 7.0] # 8 on front wing and 8 on back wing
-    wing = Wing(mtom, S1, S2, n_ult, A, [pos_frontwing,pos_backwing])
+    wing = Wing(mtom, S1, S2, n_ult, A, [pos_frontwing, pos_backwing])
     fuselage = Fuselage(mtom, Pmax, lf, n_pax, pos_fus)
     lgear = LandingGear(mtom, pos_lgear)
     props = Propulsion(n_prop, m_prop, pos_prop)
