@@ -11,7 +11,7 @@ class Wing_placement_sizing:
                  CLrear, CLafwd, CLarear, Cmacfwd, Cmacrear, Sfwd, Srear,
                  Afwd, Arear, Gamma, Lambda_c2_fwd, Lambda_c2_rear, cfwd,
                  crear, bfwd, brear, efwd, erear, taper, n_rot_f, n_rot_r,
-                 rot_y_range_f, rot_y_range_r, K, ku):
+                 rot_y_range_f, rot_y_range_r, K, ku,Zcg):
 
         self.W = W         # Weight [N]
         self.h = h     # Height [m]
@@ -36,14 +36,15 @@ class Wing_placement_sizing:
         self.V0 = V0       # Initial speed [m/s]
         self.M0 = M0       # Initial mach number [-]
         self.Gamma_fwd = Gamma # Forward wing dihedral [rad]
-        self.CLfwd = CLfwd # Forward lift coefficient [-]
-        self.CLrear = CLrear # Rear lift coefficient [-]
+        self.CLfwd = CLfwd # MAX Forward lift coefficient [-]
+        self.CLrear = CLrear # MAX Rear lift coefficient [-]
         self.CLafwd, self.CLarear = CLafwd, CLarear # Wing lift curve slopes for both wings [1/rad]
         self.Cmacfwd, self.Cmacrear = Cmacfwd,Cmacrear
         self.CD0 = CD0 # C_D_0 of forward wing
         self.xacfwd = 0.25*self.cfwd
         self.xacrear = self.lfus - (1 - 0.25) * self.crear
         self.de_da = self.deps_da(self.Sweepc4fwd,self.bfwd,self.lh(),self.hfus,self.Afwd,self.CLafwd)
+        self.Zcg = Zcg
 
         self.hover_calc = HoverControlCalcTandem(W / consts.g, n_rot_f,
                                                  n_rot_r, self.xacfwd,
@@ -119,9 +120,9 @@ class Wing_placement_sizing:
         deda = self.de_da
         # print("de/da = ",deda)
         SrSfwd_stab = self.CLafwd * (Xcg - self.xacfwd) / (self.CLarear * (1 - deda) * (self.xacrear - d - Xcg))
-        SrSfwd_control = (-self.Cmacfwd * self.cfwd + CDfwd * self.hfus / 2 - CLfwd * (Xcg - self.xacfwd) / (
-                        CDrear * self.hfus / 2 - self.CLrear * (self.xacrear -d- Xcg) + self.Cmacrear * self.crear))
-        return SrSfwd_stab ** -1, SrSfwd_control ** -1
+        SrSfwd_control = (-self.Cmacfwd * self.cfwd + CDfwd * self.Zcg - CLfwd * (Xcg - self.xacfwd) / (
+                        CDrear * (self.hfus-self.Zcg) - self.CLrear * (self.xacrear -d- Xcg) + self.Cmacrear * self.crear))
+        return SrSfwd_stab ** (-1), SrSfwd_control ** (-1)
 
     def plotting(self, x_min, x_max, dx, elevator, d, n_failures=2, y_cg=0):
         Xcg = np.arange(x_min, x_max, dx)

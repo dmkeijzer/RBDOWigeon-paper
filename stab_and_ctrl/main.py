@@ -49,13 +49,14 @@ rot_y_range_f = [0.5 * bfwd * 0.1, 0.5 * bfwd * 0.9]
 rot_y_range_r = [0.5 * brear * 0.1, 0.5 * brear * 0.9]
 K = 4959.86
 ku = 0.1
+Zcg = 0.7
 
 
 wps = Wing_placement_sizing(W, h, lfus, hfus, wfus, V0, M0, CD0, theta0, CLfwd,
                  CLrear, CLafwd, CLarear, Cmacfwd, Cmacrear, Sfwd, Srear,
                  Afwd, Arear, Gamma, Lambda_c2_fwd, Lambda_c2_rear, cfwd,
                  crear, bfwd, brear, efwd, erear, taper, n_rot_f, n_rot_r,
-                 rot_y_range_f, rot_y_range_r, K, ku)
+                 rot_y_range_f, rot_y_range_r, K, ku,Zcg)
 
 vt_sizing = VT_sizing(W,h,xcg,lfus,hfus,wfus,V0,Vstall,M0,CD0,theta0,
                       CLfwd,CLrear,CLafwd,CLarear,
@@ -118,4 +119,4 @@ elevator.plotting(SeS,beb,de_max)
 # plt.title("[1, 2, 4, 7]")
 # plt.show()
 
-# wps.plotting(0, lfus, dx, elevator_effect, d)
+wps.plotting(0, lfus, dx, elevator_effect, d)
