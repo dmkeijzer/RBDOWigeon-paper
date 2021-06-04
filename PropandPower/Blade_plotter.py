@@ -81,8 +81,8 @@ class PlotBlade:
         for i in range(len(self.chords)):
             chord_len = self.chords[i]
             # Plot chord at its location, align half chords
-            y_maxs.append(chord_len/2)
-            y_mins.append(-chord_len/2)
+            y_maxs.append(chord_len/4)
+            y_mins.append(-3*chord_len/4)
 
         # Interpolate for smooth distribution
         y_max_fun = sp_int.CubicSpline(self.radial_coords, y_maxs, extrapolate=True)
