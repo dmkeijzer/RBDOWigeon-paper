@@ -84,16 +84,18 @@ crcv = np.linspace(0.1,0.4,150)
 #         vt_br = vt_sizing.final_VT_rudder(nE,Tt0,yE,lv,br_bv=brbv[i],cr_cv=j)
 # print("Sv = ",vt_sizing.VT_stability(lv))
 
-ARv = 1.25
+ARv = np.linspace(0.5,15,150)
 vt_sizing = VT_sizing(W,h,xcg,lfus,hfus,wfus,V0,Vstall,CD0,theta0,
                       CLdesfwd,CLdesrear,CLafwd,CLarear,
                       Cmacfwd,Cmacrear,Sfwd,Srear,Afwd,Arear,Lambda_c4_fwd,Lambda_c4_rear,
                       cfwd,crear,bfwd,brear,taper,ARv=ARv)
 if isinstance(ARv,float):
     vt_sizing.plotting(nE,Tt0,yE,lv,br_bv=brbv,cr_cv=crcv)
-    vt_sizing.plotting(nE, Tt0, yE, lv, br_bv=0.85, cr_cv=0.4)
+    # print(vt_sizing.plotting(nE, Tt0, yE, lv, br_bv=0.85, cr_cv=0.3))
+    Sv = vt_sizing.final_VT_rudder(nE,Tt0,yE,lv,br_bv=0.85,cr_cv=0.3)[0]
+    # print(Sv)
 else:
-    vt_sizing.plotting(nE,Tt0,yE,lv,br_bv=0.85,cr_cv=0.4)
+    vt_sizing.plotting(nE,Tt0,yE,lv,br_bv=0.85,cr_cv=0.3)
 # vt_sizing.plotting(nE,Tt0,yE,lv,br_bv=0.65,cr_cv=0.4)
 # vt_sizing.plotting(nE,Tt0,yE,lv,br_bv=0.55,cr_cv=0.4)
 
