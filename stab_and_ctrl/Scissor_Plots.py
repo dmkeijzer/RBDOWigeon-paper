@@ -38,6 +38,7 @@ class Wing_placement_sizing:
         self.Sweepc4rear = Lambda_c4_rear # Sweep at c/4 [rad]
         self.Sweepc2fwd = self.Sweep(Afwd,self.Sweepc4fwd,50,25)
         self.Sweepc2rear = self.Sweep(Arear, self.Sweepc4rear, 50, 25)
+        print("Sweep at c/2:",self.Sweepc2fwd*180/np.pi)
         self.V0 = V0       # Initial speed [m/s]
         self.M0 = self.V0/(1.4*287*self.T)       # Initial mach number [-]
         self.Gamma_fwd = Gamma # Forward wing dihedral [rad]

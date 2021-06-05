@@ -48,7 +48,7 @@ brear = np.sqrt(Srear * Arear)
 e = 1.1302
 efwd = 0.958
 erear = 0.958
-taper = 0.4
+taper = 0.45
 n_rot_f = 6
 n_rot_r = 6
 rot_y_range_f = [0.5 * bfwd * 0.1, 0.5 * bfwd * 0.9]
@@ -84,7 +84,7 @@ crcv = np.linspace(0.1,0.4,150)
 #         vt_br = vt_sizing.final_VT_rudder(nE,Tt0,yE,lv,br_bv=brbv[i],cr_cv=j)
 # print("Sv = ",vt_sizing.VT_stability(lv))
 
-ARv = np.linspace(0.5,15,150)
+ARv = 1.5
 vt_sizing = VT_sizing(W,h,xcg,lfus,hfus,wfus,V0,Vstall,CD0,theta0,
                       CLdesfwd,CLdesrear,CLafwd,CLarear,
                       Cmacfwd,Cmacrear,Sfwd,Srear,Afwd,Arear,Lambda_c4_fwd,Lambda_c4_rear,
@@ -92,7 +92,8 @@ vt_sizing = VT_sizing(W,h,xcg,lfus,hfus,wfus,V0,Vstall,CD0,theta0,
 if isinstance(ARv,float):
     vt_sizing.plotting(nE,Tt0,yE,lv,br_bv=brbv,cr_cv=crcv)
     # print(vt_sizing.plotting(nE, Tt0, yE, lv, br_bv=0.85, cr_cv=0.3))
-    Sv = vt_sizing.final_VT_rudder(nE,Tt0,yE,lv,br_bv=0.85,cr_cv=0.3)[0]
+    vt_sizing.plotting(nE, Tt0, yE, lv, br_bv=0.9, cr_cv=0.35)
+    Sv = vt_sizing.final_VT_rudder(nE,Tt0,yE,lv,br_bv=0.9,cr_cv=0.35)[0]
     # print(Sv)
 else:
     vt_sizing.plotting(nE,Tt0,yE,lv,br_bv=0.85,cr_cv=0.3)
@@ -105,6 +106,7 @@ b2 =np.linspace(b1,100,150)
 Sa_S = np.linspace(0.05,0.20,150)
 # elevon.plotting(0.15,b1,b2)
 aileron.plotting(Sa_S,b1,b2,False)
+aileron.plotting(Sa_S=0.165,b1=b1,b2=98.50,rear=False)
 
 #### Plotting Elevator ####
 elevator = Elevator_sizing(W,h,xcg,lfus,hfus,wfus,V0,Vstall,CD0,theta0,CLfwd,CLrear,CLafwd,CLarear,
