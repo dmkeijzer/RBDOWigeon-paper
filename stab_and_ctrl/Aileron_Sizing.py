@@ -117,9 +117,9 @@ class Control_surface:
             fig, ax = plt.subplots(1, 1)
             # ax.add_artist(ab)
             # levels = [0,0.1,1,1.]
-            cp = ax.contourf(X, Y, Z, cmap='coolwarm')
+            cp = ax.contourf(X, Y, Z, cmap='coolwarm',levels=20)
             minimum = ax.contour(X, Y, Z, [minClda], colors=["k"])
-            plt.clabel(minimum,fmt="Roll requirement")
+            plt.clabel(minimum,fmt="Min. : %.3f"%(minClda))
             cbar = plt.colorbar(cp, orientation="horizontal")
             cbar.set_label(r"$C_{l_{\delta_a}} [1/rad]$")
             plt.ylabel(r"$S_a/S_{fwd}$ [-]", fontsize=12)

@@ -12,7 +12,7 @@ h = 305
 lfus = 7.2
 hfus = 1.705
 wfus = 1.38
-xcg = 3.0
+xcg = 3
 V0 = 52
 Vstall = 40
 Pbr = 110024/1.2 * 0.9 /16
@@ -57,8 +57,8 @@ K = 4959.86
 ku = 0.1
 Zcg = 0.85
 
-d = 0.1
-dy = 0.15
+d = 0
+dy = 0
 wps = Wing_placement_sizing(W,h, lfus, hfus, wfus, V0, CD0fwd, CLfwd,
                  CLrear,CLdesfwd,CLdesrear, Clafwd,Clarear,Cmacfwd, Cmacrear, Sfwd, Srear,
                  Afwd, Arear, Gamma, Lambda_c4_fwd, Lambda_c4_rear, cfwd,
