@@ -3,7 +3,7 @@ from matplotlib import pyplot as plt
 from matplotlib import colors as mc
 
 class Elevator_sizing:
-    def __init__(self,W,h,xcg,lfus,hfus,wfus,V0,Vstall,M0,CD0,theta0,CLfwd,CLrear,
+    def __init__(self,W,h,xcg,lfus,hfus,wfus,V0,Vstall,CD0,theta0,CLfwd,CLrear,
                  CLafwd,CLarear, Cmacfwd,Cmacrear,
                  Sfwd,Srear,Afwd,Arear,Lambda_c4_fwd,Lambda_c4_rear,cfwd,crear,bfwd,brear,taper,dCLfwd):
         self.W = W         # Weight [N]
@@ -27,7 +27,7 @@ class Elevator_sizing:
         self.Sweepc2rear = self.Sweep(Arear, self.Sweepc4rear, 50, 25)
         self.th0 = theta0  # Initial pitch angle [rad]
         self.V0 = V0       # Initial speed [m/s]
-        self.M0 = M0       # Initial mach number [-]
+        # self.M0 = M0       # Initial mach number [-]
         # self.Re = self.rho*self.V0*self.lfus/self.mu
         self.CLafwd, self.CLarear = CLafwd, CLarear # Wing lift curve slopes for both wings [1/rad]
         self.Cmacfwd, self.Cmacrear = Cmacfwd,Cmacrear

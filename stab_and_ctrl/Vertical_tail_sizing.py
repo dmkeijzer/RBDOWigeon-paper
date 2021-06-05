@@ -4,13 +4,14 @@ from matplotlib import pyplot as plt
 from matplotlib import colors as mc
 from Aero_tools import ISA
 class VT_sizing:
-    def __init__(self,W,h,xcg,lfus,hfus,wfus,V0,Vstall,M0,CD0,theta0,CLfwd,CLrear,
+    def __init__(self,W,h,xcg,lfus,hfus,wfus,V0,Vstall,CD0,theta0,CLfwd,CLrear,
                  CLafwd,CLarear, Cmacfwd,Cmacrear,
                  Sfwd,Srear,Afwd,Arear,Lambda_c4_fwd,Lambda_c4_rear,cfwd,crear,bfwd,brear,taper):
         self.W = W         # Weight [N]
         self.h = h     # Height [m]
         Aero = ISA(self.h)
         self.rho = Aero.density()
+        self.T = Aero.temperature()
         self.mu = Aero.viscosity_dyn()
         self.lfus = lfus # Length of the fuselage
         self.hsus = hfus # Height of the fuselage [m]
@@ -31,7 +32,7 @@ class VT_sizing:
         self.Sweepc2rear = self.Sweep(Arear, self.Sweepc4rear, 50, 25)
         self.th0 = theta0  # Initial pitch angle [rad]
         self.V0 = V0       # Initial speed [m/s]
-        self.M0 = M0       # Initial mach number [-]
+        self.M0 = self.V0/(1.4*287*self.T) # Initial mach number [-]
         self.Re = self.rho*self.V0*self.lfus/self.mu
         self.CLafwd, self.CLarear = CLafwd, CLarear # Wing lift curve slopes for both wings [1/rad]
         self.Cmacfwd, self.Cmacrear = Cmacfwd,Cmacrear
@@ -130,6 +131,7 @@ class VT_sizing:
         a = self.lfus/2
         b = self.wfus/2
         V = 2*np.pi/4*b**2*(self.lfus/2-(self.lfus/2)**3/(3*a**2))
+        bmax = max(self.bfwd,self.brear)
         Cnb_fus = -2*V/(self.S*max(self.bfwd,self.brear))
         Cnb_w_fwd = self.CLfwd**2*(1/(4*np.pi*self.Afwd)-
                                    (np.tan(self.Sweepc4fwd)/(np.pi*self.Afwd+4*np.cos(self.Sweepc4fwd)))*
@@ -139,11 +141,13 @@ class VT_sizing:
                                    (np.tan(self.Sweepc4rear)/(np.pi*self.Arear+4*np.cos(self.Sweepc4rear)))*
                                    (np.cos(self.Sweepc4rear)-self.Afwd/2-self.Arear**2/(8*np.cos(self.Sweepc4rear))-
                                     6*(self.xacrear-self.xcg)*np.sin(self.Sweepc4rear)/(self.Arear*self.c)))
+        # print("Cnbw_fwd, Cnbw_rear = ",Cnb_w_fwd,Cnb_w_rear)
+        print("Cn_fus = %.4f [1/rad]"%(Cnb_fus))
         CYb_v = -self.C_L_a(self.initial_VT(lv)[1],self.initial_VT(lv)[4])
 
         Cnb = 0.06
-        Sv = self.S*(Cnb-Cnb_fus-Cnb_w_fwd*self.Sfwd*self.cfwd/(self.S*self.c)-
-                     Cnb_w_rear*self.Srear*self.crear/(self.S*self.c))/(-CYb_v)*max(self.brear,self.bfwd)/lv
+        Sv = self.S*(Cnb-Cnb_fus-Cnb_w_fwd*self.Sfwd*self.bfwd/(self.S*bmax)-
+                     Cnb_w_rear*self.Srear*self.brear/(self.S*bmax))/(-CYb_v)*bmax/lv
         return Sv
 
     def final_VT_rudder(self,nE,Tt0,yE,lv,br_bv, cr_cv):

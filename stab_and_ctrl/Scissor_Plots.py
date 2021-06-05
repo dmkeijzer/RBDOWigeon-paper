@@ -8,7 +8,7 @@ from Aero_tools import ISA
 
 
 class Wing_placement_sizing:
-    def __init__(self, W,h, lfus, hfus, wfus, V0, M0, CD0, CLfwd,
+    def __init__(self, W,h, lfus, hfus, wfus, V0, CD0, CLfwd,
                  CLrear,CLdesfwd,CLdesrear,Clafwd,Clarear, Cmacfwd, Cmacrear, Sfwd, Srear,
                  Afwd, Arear, Gamma, Lambda_c4_fwd, Lambda_c4_rear, cfwd,
                  crear, bfwd, brear, efwd, erear, taper, n_rot_f, n_rot_r,
@@ -18,6 +18,7 @@ class Wing_placement_sizing:
         self.h = h       # Height [m]
         Aero = ISA(self.h) # Imports ISA class
         self.rho = Aero.density() #density [kg/m^3]
+        self.T = Aero.temperature() # Temperature [K]
         # self.CLdesfwd,self.CLdesrear = CLdesfwd,CLdesrear # DESIGN CL
         self.Pbr = Pbr # Shaft power of one engine [W]
         self.lfus = lfus # Length of the fuselage
@@ -38,7 +39,7 @@ class Wing_placement_sizing:
         self.Sweepc2fwd = self.Sweep(Afwd,self.Sweepc4fwd,50,25)
         self.Sweepc2rear = self.Sweep(Arear, self.Sweepc4rear, 50, 25)
         self.V0 = V0       # Initial speed [m/s]
-        self.M0 = M0       # Initial mach number [-]
+        self.M0 = self.V0/(1.4*287*self.T)       # Initial mach number [-]
         self.Gamma_fwd = Gamma # Forward wing dihedral [rad]
         self.CLfwd = CLfwd # MAX Forward lift coefficient [-]
         self.CLrear = CLrear # MAX Rear lift coefficient [-]

@@ -16,7 +16,7 @@ xcg = 3.0
 V0 = 52
 Vstall = 40
 Pbr = 110024/1.2 * 0.9 /16
-M0 = V0 / np.sqrt(const.gamma * const.R * 288.15)
+# M0 = V0 / np.sqrt(const.gamma * const.R * 288.15)
 CD0 = 0.03254
 theta0 = 0
 CLfwd = 1.781
@@ -39,8 +39,8 @@ Srear = S-Sfwd
 Afwd = 5*2
 Arear = 5*2
 Gamma = 0
-Lambda_c4_fwd = 0
-Lambda_c4_rear = 0
+Lambda_c4_fwd = 0.0*np.pi/180
+Lambda_c4_rear = 0.0*np.pi/180
 cfwd = 0.65
 crear = 0.65
 bfwd = np.sqrt(Sfwd * Afwd)
@@ -57,19 +57,19 @@ K = 4959.86
 ku = 0.1
 Zcg = 0.85
 
-d = 0.00
-dy = 0.1
-wps = Wing_placement_sizing(W,h, lfus, hfus, wfus, V0, M0, CD0fwd, CLfwd,
+d = 0.1
+dy = 0.15
+wps = Wing_placement_sizing(W,h, lfus, hfus, wfus, V0, CD0fwd, CLfwd,
                  CLrear,CLdesfwd,CLdesrear, Clafwd,Clarear,Cmacfwd, Cmacrear, Sfwd, Srear,
                  Afwd, Arear, Gamma, Lambda_c4_fwd, Lambda_c4_rear, cfwd,
                  crear, bfwd, brear, efwd, erear, taper, n_rot_f, n_rot_r,
                  rot_y_range_f, rot_y_range_r, K, ku,Zcg,d,dy,Pbr)
 
-vt_sizing = VT_sizing(W,h,xcg,lfus,hfus,wfus,V0,Vstall,M0,CD0,theta0,
-                      CLfwd,CLrear,CLafwd,CLarear,
-                      Cmacfwd,Cmacrear,Sfwd,Srear,Afwd,Arear,0,0,cfwd,crear,bfwd,brear,taper)
+vt_sizing = VT_sizing(W,h,xcg,lfus,hfus,wfus,V0,Vstall,CD0,theta0,
+                      CLdesfwd,CLdesrear,CLafwd,CLarear,
+                      Cmacfwd,Cmacrear,Sfwd,Srear,Afwd,Arear,Lambda_c4_fwd,Lambda_c4_rear,cfwd,crear,bfwd,brear,taper)
 
-elevon = Control_surface(V0,Vstall,CLfwd,CLrear,CLafwd,CLarear,Clafwd,Clarear,Cd0fwd,Cd0rear,
+aileron = Control_surface(V0,Vstall,CLfwd,CLrear,CLafwd,CLarear,Clafwd,Clarear,Cd0fwd,Cd0rear,
                          Sfwd,Srear,Afwd,Arear,cfwd,crear,bfwd,brear,taper)
 elevator_effect = 1.4
 dx = 0.1
@@ -94,10 +94,10 @@ b1 = 60
 b2 =np.linspace(b1,100,150)
 Sa_S = np.linspace(0.05,0.20,150)
 # elevon.plotting(0.15,b1,b2)
-elevon.plotting(Sa_S,b1,b2,False)
+aileron.plotting(Sa_S,b1,b2,False)
 
 #### Plotting Elevator ####
-elevator = Elevator_sizing(W,h,xcg,lfus,hfus,wfus,V0,Vstall,M0,CD0,theta0,CLfwd,CLrear,CLafwd,CLarear,
+elevator = Elevator_sizing(W,h,xcg,lfus,hfus,wfus,V0,Vstall,CD0,theta0,CLfwd,CLrear,CLafwd,CLarear,
                            Cmacfwd,Cmacrear,Sfwd,Srear,Afwd,Arear,0,0,cfwd,crear,bfwd,brear,taper,dCLfwd=0.4*CLfwd)
 beb = np.linspace(10,100,150)
 SeS = np.linspace(0.1,0.4,150)
