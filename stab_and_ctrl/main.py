@@ -65,9 +65,6 @@ wps = Wing_placement_sizing(W,h, lfus, hfus, wfus, V0, CD0fwd, CLfwd,
                  crear, bfwd, brear, efwd, erear, taper, n_rot_f, n_rot_r,
                  rot_y_range_f, rot_y_range_r, K, ku,Zcg,d,dy,Pbr)
 
-vt_sizing = VT_sizing(W,h,xcg,lfus,hfus,wfus,V0,Vstall,CD0,theta0,
-                      CLdesfwd,CLdesrear,CLafwd,CLarear,
-                      Cmacfwd,Cmacrear,Sfwd,Srear,Afwd,Arear,Lambda_c4_fwd,Lambda_c4_rear,cfwd,crear,bfwd,brear,taper)
 
 aileron = Control_surface(V0,Vstall,CLfwd,CLrear,CLafwd,CLarear,Clafwd,Clarear,Cd0fwd,Cd0rear,
                          Sfwd,Srear,Afwd,Arear,cfwd,crear,bfwd,brear,taper)
@@ -76,7 +73,7 @@ dx = 0.1
 
 #### Plotting Vertical Tail ####
 nE = 16
-Tt0 = 7500
+Tt0 = 8500
 yE = bfwd/2
 lv = lfus-xcg
 brbv = np.linspace(0.75,1,150)
@@ -85,9 +82,20 @@ crcv = np.linspace(0.1,0.4,150)
 #     for j in crcv:
 #         print("For a br/bv = %.3f and cr/cv = %.3f "%(brbv[i],j))
 #         vt_br = vt_sizing.final_VT_rudder(nE,Tt0,yE,lv,br_bv=brbv[i],cr_cv=j)
-print("Sv = ",vt_sizing.VT_stability(lv))
-vt_sizing.plotting(nE,Tt0,yE,lv,br_bv=brbv,cr_cv=crcv)
-vt_sizing.plotting(nE,Tt0,yE,lv,br_bv=0.85,cr_cv=0.4)
+# print("Sv = ",vt_sizing.VT_stability(lv))
+
+ARv = 1.25
+vt_sizing = VT_sizing(W,h,xcg,lfus,hfus,wfus,V0,Vstall,CD0,theta0,
+                      CLdesfwd,CLdesrear,CLafwd,CLarear,
+                      Cmacfwd,Cmacrear,Sfwd,Srear,Afwd,Arear,Lambda_c4_fwd,Lambda_c4_rear,
+                      cfwd,crear,bfwd,brear,taper,ARv=ARv)
+if isinstance(ARv,float):
+    vt_sizing.plotting(nE,Tt0,yE,lv,br_bv=brbv,cr_cv=crcv)
+    vt_sizing.plotting(nE, Tt0, yE, lv, br_bv=0.85, cr_cv=0.4)
+else:
+    vt_sizing.plotting(nE,Tt0,yE,lv,br_bv=0.85,cr_cv=0.4)
+# vt_sizing.plotting(nE,Tt0,yE,lv,br_bv=0.65,cr_cv=0.4)
+# vt_sizing.plotting(nE,Tt0,yE,lv,br_bv=0.55,cr_cv=0.4)
 
 #### Plotting Aileron ####
 b1 = 60

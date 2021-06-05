@@ -6,7 +6,7 @@ from Aero_tools import ISA
 class VT_sizing:
     def __init__(self,W,h,xcg,lfus,hfus,wfus,V0,Vstall,CD0,theta0,CLfwd,CLrear,
                  CLafwd,CLarear, Cmacfwd,Cmacrear,
-                 Sfwd,Srear,Afwd,Arear,Lambda_c4_fwd,Lambda_c4_rear,cfwd,crear,bfwd,brear,taper):
+                 Sfwd,Srear,Afwd,Arear,Lambda_c4_fwd,Lambda_c4_rear,cfwd,crear,bfwd,brear,taper,ARv):
         self.W = W         # Weight [N]
         self.h = h     # Height [m]
         Aero = ISA(self.h)
@@ -45,6 +45,7 @@ class VT_sizing:
         self.Vmc = 1.2*self.Vs # Minimum controllable speed [m/s]
         self.xcg = xcg
         self.c = self.Sfwd/self.S*self.cfwd+self.Srear/self.S*self.crear
+        self.ARv = ARv
 
     def Sweep(self,AR,Sweepm,n,m):
         """
@@ -82,7 +83,7 @@ class VT_sizing:
         :return:
         """
         Sv = max(self.bfwd,self.brear)*self.S*VT/lv
-        ARv = 1.25
+        ARv = self.ARv
         bv = np.sqrt(ARv*Sv)
         C_v = Sv/bv
         C_vr = 3/2*C_v*(1+self.taper_v)/(1+self.taper_v+self.taper_v**2)
@@ -142,9 +143,9 @@ class VT_sizing:
                                    (np.cos(self.Sweepc4rear)-self.Afwd/2-self.Arear**2/(8*np.cos(self.Sweepc4rear))-
                                     6*(self.xacrear-self.xcg)*np.sin(self.Sweepc4rear)/(self.Arear*self.c)))
         # print("Cnbw_fwd, Cnbw_rear = ",Cnb_w_fwd,Cnb_w_rear)
-        print("Cn_fus = %.4f [1/rad]"%(Cnb_fus))
+        # print("Cn_fus = %.4f [1/rad]"%(Cnb_fus))
         CYb_v = -self.C_L_a(self.initial_VT(lv)[1],self.initial_VT(lv)[4])
-
+        # print("CYb_v = %.3f "%(CYb_v))
         Cnb = 0.06
         Sv = self.S*(Cnb-Cnb_fus-Cnb_w_fwd*self.Sfwd*self.bfwd/(self.S*bmax)-
                      Cnb_w_rear*self.Srear*self.brear/(self.S*bmax))/(-CYb_v)*bmax/lv
@@ -159,7 +160,7 @@ class VT_sizing:
         :param lv: CG moment arm [m]
         :return: Final design
         """
-        if isinstance(br_bv,float):
+        if isinstance(br_bv,float) and isinstance(self.ARv,float):
             Sv = max(self.VT_controllability(nE,Tt0,yE,lv,br_bv,cr_cv),self.VT_stability(lv))
         else:
             Sv = self.VT_controllability(nE,Tt0,yE,lv,br_bv,cr_cv)
@@ -176,7 +177,7 @@ class VT_sizing:
         return Sv,C_vr,C_vt,bv,Sweep_v_c2,c_r,c_r_root,c_r_tip,b_r,ARv
 
     def plotting(self,nE,Tt0,yE,lv,br_bv,cr_cv):
-        if isinstance(br_bv,float):
+        if isinstance(br_bv,float) and isinstance(self.ARv,float):
             y_LE_0 = 0
             x_LE_0 = 0
             x_TE_1 = self.final_VT_rudder(nE,Tt0,yE,lv,br_bv,cr_cv)[1]
@@ -199,14 +200,36 @@ class VT_sizing:
             plt.plot(x_r, y_r, label="Rudder")
             plt.legend()
             plt.show()
+        elif not isinstance(self.ARv,float) and isinstance(br_bv,float):
+            # X, Y = np.meshgrid(cr_cv, br_bv)
+            # Z = self.final_VT_rudder(nE,Tt0,yE,lv,Y,X)[0]
+            # fig, ax = plt.subplots(1, 1)
+            # ax.add_artist(ab)
+            # levels = [0,0.1,1,1.]
+            # cp = ax.contourf(X, Y, Z, cmap='coolwarm')
+            # Svstab = ax.contour(X,Y,Z,[self.VT_stability(lv)],colors=["k"])
+            # plt.clabel(Svstab)
+            Svstab = self.VT_stability(lv)
+            Svcontrol = self.VT_controllability(nE,Tt0,yE,lv,br_bv,cr_cv)
+            # cbar = plt.colorbar(cp, orientation="horizontal")
+            # cbar.set_label(r"$S_v$")
+            # plt.ylabel(r"$b_r/b_v$ [-]", fontsize=12)
+            # plt.xlabel(r"$c_r/c_v$ [-]", fontsize=12)
+            # plt.show()
+            plt.plot(self.ARv,Svstab,label="Stability Curve")
+            plt.plot(self.ARv,Svcontrol,label="Controllability for OEI condition")
+            plt.xlabel(r"$AR_v [-]$")
+            plt.ylabel(r"$S_v [m^2]$")
+            plt.legend()
+            plt.show()
         else:
             X, Y = np.meshgrid(cr_cv, br_bv)
-            Z = self.final_VT_rudder(nE,Tt0,yE,lv,Y,X)[0]
+            Z = self.final_VT_rudder(nE, Tt0, yE, lv, Y, X)[0]
             fig, ax = plt.subplots(1, 1)
             # ax.add_artist(ab)
             # levels = [0,0.1,1,1.]
             cp = ax.contourf(X, Y, Z, cmap='coolwarm')
-            Svstab = ax.contour(X,Y,Z,[self.VT_stability(lv)],colors=["k"])
+            Svstab = ax.contour(X, Y, Z, [self.VT_stability(lv)], colors=["k"])
             plt.clabel(Svstab)
             cbar = plt.colorbar(cp, orientation="horizontal")
             cbar.set_label(r"$S_v$")
