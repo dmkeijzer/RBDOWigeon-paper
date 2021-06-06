@@ -348,6 +348,7 @@ class BEM:
 
                 # Subtract current Cl from list of Cls
                 # 'Uncorrect' Cl for Mach, since the files do not take Mach into account, only RN
+                # TODO: revise Mach corrections, maybe use W
                 airfoil_data_check[:, 1] -= (lift_coef * self.PG(self.M(stations_r[station])))
 
                 # Check what line has min Cl difference, and retrieve index of that column
@@ -355,7 +356,7 @@ class BEM:
 
                 # Obtain the Cd and AoA from the line where Cl difference is min
                 Cd_ret = airfoil_data[index, 2]                   # Retrieved Cd
-                alpha_ret = airfoil_data[index, 0] * 2*np.pi/180  # Retrieved AoA convert from deg to rad
+                alpha_ret = airfoil_data[index, 0] * np.pi/180  # Retrieved AoA convert from deg to rad
 
                 # Compute D/L ration
                 eps = Cd_ret / lift_coef

@@ -11,18 +11,18 @@ dyn_visc = ISA.viscosity_dyn()
 
 # Cessna 172
 # B, R, rpm, xi_0, rho, dyn_vis, V_fr, N_stations, a, RN_spacing, T=None, P=None
-B = 2
+B = 5
 xi_0 = 0.1
 # A_prop = 0.47*2
 # R = np.sqrt(A_prop / (np.pi * (1 - xi_0**2)))
-R = 1.2
+R = 1
 A_prop = np.pi*R**2
 
 # M_t_max = 0.6
 # rpm = M_t_max*a*60 / (np.pi * 2*R)
-rpm = 2000
+rpm = 1500
 
-V_cruise = 62
+V_cruise = 52
 N_stations = 20
 RN_spacing = 100000
 
@@ -65,12 +65,14 @@ zeta, design = propeller.optimise_blade(zeta_init)
 
 print("Displacement velocity (zeta):", zeta)
 print("")
+print("Advance ratio:", propeller.J())
+print("")
 # [cs, betas, alpha, E, eff, Tc, self.Pc]
 print("Chord per station:", design[0])
 print("")
-print("Pitch per station in [deg]:", design[1]*180/np.pi)
+print("Pitch per station in [deg]:", design[1] * 180/np.pi)
 print("")
-print("AoA per station in [deg]:", design[2]*180/np.pi)
+print("AoA per station in [deg]:", design[2] * 180/np.pi)
 print("")
 print("Radial coordinates [m]:", design[3])
 print("")
