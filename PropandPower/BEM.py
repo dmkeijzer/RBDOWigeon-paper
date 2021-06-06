@@ -356,7 +356,7 @@ class BEM:
 
                 # Obtain the Cd and AoA from the line where Cl difference is min
                 Cd_ret = airfoil_data[index, 2]                   # Retrieved Cd
-                alpha_ret = airfoil_data[index, 0] * np.pi/180  # Retrieved AoA convert from deg to rad
+                alpha_ret = np.deg2rad(airfoil_data[index, 0])    # Retrieved AoA convert from deg to rad
 
                 # Compute D/L ration
                 eps = Cd_ret / lift_coef
