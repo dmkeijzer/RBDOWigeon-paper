@@ -3,7 +3,7 @@ from matplotlib import pyplot as plt
 from matplotlib import colors as mc
 
 class Elevator_sizing:
-    def __init__(self,W,h,xcg,lfus,hfus,wfus,V0,Vstall,M0,CD0,theta0,CLfwd,CLrear,
+    def __init__(self,W,h,xcg,lfus,hfus,wfus,V0,Vstall,CD0,theta0,CLfwd,CLrear,
                  CLafwd,CLarear, Cmacfwd,Cmacrear,
                  Sfwd,Srear,Afwd,Arear,Lambda_c4_fwd,Lambda_c4_rear,cfwd,crear,bfwd,brear,taper,dCLfwd):
         self.W = W         # Weight [N]
@@ -27,7 +27,7 @@ class Elevator_sizing:
         self.Sweepc2rear = self.Sweep(Arear, self.Sweepc4rear, 50, 25)
         self.th0 = theta0  # Initial pitch angle [rad]
         self.V0 = V0       # Initial speed [m/s]
-        self.M0 = M0       # Initial mach number [-]
+        # self.M0 = M0       # Initial mach number [-]
         # self.Re = self.rho*self.V0*self.lfus/self.mu
         self.CLafwd, self.CLarear = CLafwd, CLarear # Wing lift curve slopes for both wings [1/rad]
         self.Cmacfwd, self.Cmacrear = Cmacfwd,Cmacrear
@@ -92,11 +92,11 @@ class Elevator_sizing:
             fig, ax = plt.subplots(1, 1)
             # ax.add_artist(ab)
             # levels = [0,0.1,1,1.]
-            cp = ax.contourf(X, Y, Z, cmap='coolwarm')
+            cp = ax.contourf(X, Y, Z, cmap='coolwarm',levels=20)
             minimum = ax.contour(X, Y, Z, [mindCL], colors=["k"])
-            plt.clabel(minimum)
+            plt.clabel(minimum,fmt=r"Min. : %.3f"%(mindCL))
             cbar = plt.colorbar(cp, orientation="horizontal")
-            cbar.set_label(r"$\Delta C_{L_{fwd}} [-]$")
+            cbar.set_label(r"$\Delta C_{L_{fwd}}$ [-]")
             plt.ylabel(r"$S_e/S_{fwd}$ [-]", fontsize=12)
             plt.xlabel(r"$b_e$ [$\% b_{fwd}$]", fontsize=12)
             # plt.vlines(b1,min(Sa_S),max(Sa_S),"r",label=r"Smallest limit set by $b_1$")
