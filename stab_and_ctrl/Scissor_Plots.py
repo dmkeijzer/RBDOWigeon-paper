@@ -68,7 +68,7 @@ class Wing_placement_sizing:
                                                  self.xacrear, rot_y_range_f,
                                                  rot_y_range_r, K, ku)
     def lh(self):
-        return abs(self.xacfwd - self.xacrear)
+        return abs(self.xacfwd-self.d - self.xacrear)
 
     def deps_da(self,Lambda_quarter_chord, b, lh, h_ht, A, CLaw):
         """

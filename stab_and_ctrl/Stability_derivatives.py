@@ -2,26 +2,218 @@ import numpy as np
 from scipy.linalg import null_space
 from matplotlib import pyplot as plt
 from matplotlib import colors as mc
+from Aero_tools import ISA
+from stab_and_ctrl.Aileron_Sizing import Control_surface
 
 class Stab_Derivatives:
-    def __init__(self,W,h,cfwd,crear,bfwd,brear,V0,T0,M0,CD0,CL0,theta0,CLafwd,CLarear,Sfwd,Srear,Gamma, Lambda_c4,bv,Sv):
+    def __init__(self,W,h,lfus,hfus,wfus, d,dy,xcg,zcg,cfwd,crear,Afwd,Arear,Vstall,
+                 V0,T0,CLfwd0,CLrear0,CD0,CL0,theta0,alpha0,
+                 Clafwd,Clarear, Cd0fwd, Cd0rear, CLafwd,CLarear,Sfwd,Srear,Gamma, efwd,erear,Lambda_c4,taper,
+                 bv,Sv,ARv,Pbr,C_D_0):
         self.W = W         # Weight [N]
         self.h = h     # Height [m]
+        Aero = ISA(self.h) # Initialises Aero object
+        self.rho = Aero.density() # Density [kg/m^3]
+        self.T = Aero.temperature() # Temperature [K]
+        self.lfus = lfus  # Length of the fuselage
+        self.hfus = hfus  # Height of the fuselage [m]
+        self.wfus = wfus  # Maximum width of the fuselage [m]
         self.Srear = Srear # Rear wing area [m^2]
         self.Sfwd = Sfwd   # Forward wing area [m^2]
         self.S = Srear+Sfwd # Aircraft wing area [m^2]
+        self.Afwd,self.Arear  =Afwd,Arear # Aspect ratio of both wings [-]
         self.cfwd = cfwd         # Average chord [m]
         self.crear = crear  # Average chord [m]
-        self.bfwd = bfwd         # Wing span [m]
-        self.brear = brear # Wing span [m]
+        self.c = self.cfwd*self.Sfwd/(self.S) + self.crear*self.Srear/(self.S)
+        self.bfwd = np.sqrt(self.Afwd*self.Sfwd)     # Wing span [m]
+        self.brear = np.sqrt(self.Arear*self.Srear) # Wing span [m]
         self.Sweepc4 = Lambda_c4 # Sweep at c/4 [rad]
+        self.taper = taper
+        self.efwd,self.erear = efwd, erear # Span efficiency factors of both wings
         self.bv = bv       # Vertical tail span [m]
         self.Sv = Sv       # Vertical tail area [m^2]
+        self.xcg = xcg  # CG longitudinal position wrt Nose [m]
+        self.lv = self.lfus-self.xcg
         self.th0 = theta0  # Initial pitch angle [rad]
+        self.alpha0 = alpha0 # Initial AoA [rad]
         self.V0 = V0       # Initial speed [m/s]
-        self.M0 = M0       # Initial mach number [-]
+        self.M0 = V0/(1.4*287*self.T) # Initial mach number [-]
         self.CL0 = CL0     # Initial lift coefficient [-]
-        self.CD0 = CD0     # Initial drag coefficient (not CD_0)[-]
+        self.CLfwd0 = CLfwd0 # Initial lift coefficient of fwd wing [-]
+        self.CLrear0 = CLrear0 # Initial lift coefficient of rear wing [-]
+        self.CD0 = CD0     # Initial total drag coefficient (not profile CD_0)[-]
         self.T0 = T0       # Initial thrust [N]
         self.Gamma_fwd = Gamma # Forward wing dihedral [rad]
         self.CLafwd, self.CLarear = CLafwd, CLarear # Wing lift curve slopes for both wings [1/rad]
+        self.Clafwd, self.Clarear = Clafwd,Clarear # Airfoil lift curve slopes
+        self.Cd0fwd,self.Cd0rear = Cd0fwd,Cd0rear # Airfoil base drag
+        self.d = d
+        self.dy = dy
+        self.xacfwd = 0.25 * self.cfwd + self.d
+        self.xacrear = self.lfus - (1 - 0.25) * self.crear
+        self.Pbr = Pbr
+        self.zcg=zcg
+        self.ARv = ARv
+        self.b = max(self.bfwd,self.brear)
+        self.CD_0 = C_D_0 # PROFILE DRAG for one wing [-]
+        self.Vstall = Vstall # Stall speed [m/s]
+        self.Vrear_Vfwd = 1
+        ### It is assumed that aeroelastic effects are neglected ###
+    def lh_arm(self):
+        return abs(self.xacfwd-self.d - self.xacrear)
+
+    def deps_da(self, Lambda_quarter_chord, h_ht,CLaw):
+        """
+        Inputs:
+        :param Lambda_quarter_chord: Sweep Angle at c/4 [RAD]
+        :param h_ht: distance between ac_w1 with ac_w2 (vertical)
+        :param CLaw: Wing Lift curve slope
+        :return: de/dalpha
+        """
+        A = self.Afwd
+        b = self.bfwd
+        lh = self.lh_arm()
+        r = lh * 2 / b
+        mtv = h_ht * 2 / b  # Approximation
+        Keps = (0.1124 + 0.1265 * Lambda_quarter_chord + 0.1766 * Lambda_quarter_chord ** 2) / r ** 2 + 0.1024 / r + 2
+        Keps0 = 0.1124 / r ** 2 + 0.1024 / r + 2
+        v = 1 + (r ** 2 / (r ** 2 + 0.7915 + 5.0734 * mtv ** 2)) ** (0.3113)
+        de_da = Keps / Keps0 * CLaw / (np.pi * A) * (
+                r / (r ** 2 + mtv ** 2) * 0.4876 / (np.sqrt(r ** 2 + 0.6319 + mtv ** 2)) + v * (
+                1 - np.sqrt(mtv ** 2 / (1 + mtv ** 2))))
+        phi = np.arcsin(mtv / r)
+        # print("r, mtv = ",r,mtv)
+        # print("phi = %.3f"%(phi*180/np.pi))
+        if 180 / np.pi * phi < 30 and 180 / np.pi * phi > 0:  # To account for propeller downwash
+            dsde_da = 6.5 * (self.rho * self.Pbr ** 2 * self.Sfwd ** 3 * self.CLfwd0 ** 3 / (
+                        lh** 4 * self.W ** 3)) ** (1 / 4) * (np.sin(phi * 6)) ** 2.5
+        else:
+            dsde_da = 0
+        # print("Configuration %.0f de/da = %.4f "%(conf,de_da))
+        return de_da + dsde_da
+    def Sweep(self,AR,taper,Sweepm,n,m):
+        """
+        Inputs
+        :param AR: Aspect Ratio of VT
+        :param Sweepm: Sweep at mth chord [rad]
+        :param n: (example quarter chord: n =25)
+        :param m: mth chord (example half chord: m=50)
+        :return: Sweep at nth chord [rad]
+        """
+        tanSweep_m = np.tan(Sweepm)
+        tanSweep_n = tanSweep_m -4/(AR)*(n-m)/100*(1-taper)/(1+taper)
+        return np.arctan(tanSweep_n)
+
+    def C_L_a(self,A, Lambda_half, eta=0.95):
+        """
+        Inputs:
+        :param M: Mach number
+        :param b: wing span
+        :param S: wing area
+        :param Lambda_half: Sweep angle at 0.5*chord
+        :param eta: =0.95
+        :return: Lift curve slope for tail AND wing using DATCOM method
+        """
+        M= self.M0
+        beta = np.sqrt(1 - M ** 2)
+        # print("Lambda_1/2c = ",Lambda_half)
+        value = 2 * np.pi * A / (2 + np.sqrt(4 + ((A * beta / eta) ** 2) * (1 + (np.tan(Lambda_half) / beta) ** 2)))
+        return value
+    def u_derivatives(self):
+        """
+        Analytical estimates of stability derivatives wrt û = u/V0
+        :return: C_X_u, C_Z_u, C_m_u
+        """
+        CZ_u = -self.M0**2/(1-self.M0**2)*self.CL0
+        CD_M = 0 # Incompressible flow
+        CLfwd_M =  self.M0/(1-self.M0**2)*self.CLfwd0
+        CLrear_M  =self.M0/(1-self.M0**2)*self.CLrear0
+        CX_u = -3*self.CD0-3*self.CL0*np.tan(self.th0)-self.M0*CD_M
+        Cm_M = CLfwd_M*(self.xcg-self.xacfwd)*self.Sfwd/(self.S*self.c)-\
+               CLrear_M*(self.xacrear-self.xcg)*self.Srear/(self.S*self.c)
+        Cm_u = self.M0*Cm_M
+        return CX_u,CZ_u,Cm_u
+
+    def alpha_derivatives(self):
+        """
+        Analytical estimates of stability derivatives wrt AoA
+        :return: C_X_a, C_Z_a, C_m_a
+        """
+        CDafwd = 2*self.CLafwd*self.CLfwd0/(np.pi*self.Afwd*self.efwd)
+        CDarear = 2 * self.CLarear * self.CLrear0 / (np.pi * self.Arear * self.erear)
+        de_da = self.deps_da(self.Sweepc4,self.hfus-self.dy,self.CLafwd)
+        CDa = CDafwd*self.Sfwd/self.S + CDarear*(1-de_da)*self.Srear/self.S
+        CLa = self.CLafwd*self.Sfwd/self.S + self.CLarear*(1-de_da)*self.Srear/self.S
+        CX_a = -CDa + CLa*self.alpha0 + self.CL0
+        CZ_a = -CDa*self.alpha0-self.CD0 -CLa
+        Cm_a = -CDafwd*(self.zcg-self.dy)*self.Sfwd/(self.S*self.c)+\
+               self.CLafwd*(self.xcg-self.xacfwd)*self.Sfwd/(self.S*self.c) + \
+               CDarear*(1-de_da)*(self.hfus-self.zcg)*self.Srear/(self.S*self.c)-\
+               self.CLarear*(1-de_da)*(self.xacrear-self.xcg)*self.Srear/(self.S*self.c)
+        return CX_a,CZ_a,Cm_a
+
+    def q_derivatives(self):
+        """
+        Analytical estimates of stability derivatives wrt pitch rate q (q*c/V).
+        :return: C_X_q, C_Z_q, C_m_q
+        """
+        CX_q  =0
+        CZ_q = -self.CLafwd*(self.xcg-self.xacfwd)*self.Sfwd/(self.S*self.c)+\
+               self.CLarear*(self.xacrear-self.xcg)*self.Srear/(self.S*self.c)
+        Cm_q = -(self.CLafwd*(self.xcg-self.xacfwd)**2*self.Sfwd/(self.S*self.c**2)+\
+               self.CLarear*(self.xacrear-self.xcg)**2*self.Srear/(self.S*self.c**2))
+        return CX_q,CZ_q,Cm_q
+
+    def alpha_dot_derivatives(self):
+        """
+        Analytical estimates of stability derivatives wrt AoA_dot (alpha_dot*c/V).
+        :return:
+        """
+        CX_adot = 0
+        darear_dadot = self.deps_da(self.Sweepc4,self.hfus-self.dy,self.CLafwd)*self.lh_arm()/self.c
+        CLadot = self.Srear/self.S*self.CLarear*darear_dadot
+        CZ_adot = -CLadot
+        Cm_adot = (self.xacrear-self.xcg)/self.c*CZ_adot
+        return CX_adot,CZ_adot,Cm_adot
+    def r_derivatives(self):
+        """
+        Analytical estimates of stability derivatives wrt yaw rate r (rb/(2V)).
+        :return: C_Y_r, C_l_r, C_n_r
+        """
+        CY_r = 2*self.C_L_a(self.ARv,self.Sweep(self.ARv*4,0.4,0,50,100))*(self.lfus-self.xcg)*\
+                    self.Sv/(self.S*self.b)
+        Pos_MAC_v = self.bv
+        zv = self.hfus+Pos_MAC_v-self.zcg
+        Cl_r_v = zv/self.b*CY_r
+        Cl_r_fwd = self.CLfwd0/4
+        Cl_r_rear = self.CLrear0/4
+        Cl_r = Cl_r_v + Cl_r_fwd*self.Sfwd/self.S + Cl_r_rear*self.Srear/self.S
+        Cn_r_v = -(self.lfus-self.xcg)/self.b*CY_r
+        CDfwd0 = self.CD_0 + self.CLfwd0**2/(np.pi*self.Afwd*self.efwd)
+        CDrear0 = self.CD_0 + self.CLrear0**2/(np.pi*self.Arear*self.erear)
+        Cn_r_wing = -1/4*(CDfwd0*self.Sfwd/self.S+ CDrear0*self.Srear/self.S)
+        Cn_r = Cn_r_wing+Cn_r_v
+        return CY_r,Cl_r,Cn_r
+
+    def p_derivatives(self):
+        """
+        Analytical estimates of stability derivatives wrt roll rate p (pb/(2V)).
+        :return: C_Y_p, C_l_p, C_n_p
+        """
+        Ctrl = Control_surface(self.V0,self.Vstall,self.CLfwd0,self.CLrear0,self.CLafwd,self.CLarear,
+                               self.Clafwd,self.Clarear,self.Cd0fwd,self.Cd0rear,self.Sfwd,self.Srear,
+                               self.Afwd,self.Arear,self.cfwd,self.crear,self.bfwd,self.brear,self.taper)
+        Cl_p = Ctrl.Clp()
+        eta_v = 1
+        CY_p = -8/(3*np.pi)*eta_v*(self.bv*self.Sv/(self.S*self.b))*self.C_L_a(self.ARv,self.Sweep(self.ARv*4,0.4,0,50,100))
+        Cn_p_v = -(self.lfus-self.xcg)/(self.b)*CY_p
+        Cn_p_wings = -1/8*(self.CLfwd0*self.Sfwd/self.S + self.CLrear0*self.Srear/self.S)
+        Cn_p = Cn_p_v+Cn_p_wings
+        return CY_p, Cl_p,Cn_p
+
+
+
+
+
+
+

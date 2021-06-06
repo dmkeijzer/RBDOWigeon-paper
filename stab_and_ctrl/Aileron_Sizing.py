@@ -94,8 +94,8 @@ class Control_surface:
         return Clp
 
     def plotting(self,Sa_S,b1,b2,rear):
-        if isinstance(Sa_S,float) and not isinstance(b2,float):
-            da_max = 30*np.pi/180*0.75
+        if isinstance(Sa_S,(float,int)) and not isinstance(b2,(float,int)):
+            da_max = 30*np.pi/180*0.85
             dphi_dt = 60*np.pi/180/1.3
             minClda = -(dphi_dt)*self.Clp()*max(self.bfwd,self.brear)/(2*self.Vmc*da_max)
             minClda = np.ones(len(b2))*minClda
@@ -110,7 +110,7 @@ class Control_surface:
             plt.legend()
             plt.show()
 
-        elif isinstance(Sa_S,float) and isinstance(b2,float):
+        elif isinstance(Sa_S,(float,int)) and isinstance(b2,(float,int)):
             x_1 = 0
             y_1 = 0
             x_2 = self.bfwd / 2
@@ -128,11 +128,11 @@ class Control_surface:
             xa_2 = b2/100*self.bfwd/2
             ya_2 = abs(b2/100*self.bfwd/2*np.tan(self.Sweep(self.Afwd, 0, 100, 25)))
             #### Aileron geometry ####
-            ba = (b2-b1)/100*self.bfwd/2
-            ca = Sa_S*self.Sfwd/ba/2/2
-            print("c_a = ",ca)
+            ba = (b2-b1)/100*self.bfwd/2*2
+            ca = Sa_S*self.Sfwd/ba
+            # print("c_a = ",ca)
             ca_r = ca * 3 / 2 * (1 + self.taper_a) / (1 + self.taper_a + self.taper_a ** 2)
-            print("ca_root = ",ca_r)
+            # print("ca_root = ",ca_r)
             ca_t = ca_r*self.taper_a
             xa_3 = xa_2
             ya_3 = ca_t+ya_2

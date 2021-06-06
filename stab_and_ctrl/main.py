@@ -105,8 +105,8 @@ b1 = 60
 b2 =np.linspace(b1,100,150)
 Sa_S = np.linspace(0.05,0.20,150)
 # elevon.plotting(0.15,b1,b2)
-aileron.plotting(Sa_S,b1,b2,False)
-aileron.plotting(Sa_S=0.165,b1=b1,b2=98.50,rear=False)
+aileron.plotting(Sa_S,b1,b2,True)
+aileron.plotting(Sa_S=0.085,b1=b1,b2=97.5,rear=True)
 
 #### Plotting Elevator ####
 elevator = Elevator_sizing(W,h,xcg,lfus,hfus,wfus,V0,Vstall,CD0,theta0,CLfwd,CLrear,CLafwd,CLarear,
