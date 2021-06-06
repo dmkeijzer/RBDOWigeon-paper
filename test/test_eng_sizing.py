@@ -16,6 +16,8 @@ class testPropulsiob(unittest.TestCase):
         # Try sizing the radius with those variables and see if it is correct
         sample_eng_size = esp.PropSizing(span, fus_width, N_prop, clearance_fus, clearance_prop, MTOM, xi_0=0.25)
 
+        # Calculated by hand, maybe not the best way of testing
+
         # Check if the radius on these conditions is 0.58 metres
         self.assertAlmostEqual(sample_eng_size.radius(), 0.58, delta=0.01)
 
