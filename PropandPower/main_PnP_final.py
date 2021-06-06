@@ -11,11 +11,11 @@ dyn_visc = ISA.viscosity_dyn()
 
 # Cessna 172
 # B, R, rpm, xi_0, rho, dyn_vis, V_fr, N_stations, a, RN_spacing, T=None, P=None
-B = 6
+B = 2
 xi_0 = 0.1
 # A_prop = 0.47*2
 # R = np.sqrt(A_prop / (np.pi * (1 - xi_0**2)))
-R = 0.75
+R = 1.2
 A_prop = np.pi*R**2
 
 # M_t_max = 0.6

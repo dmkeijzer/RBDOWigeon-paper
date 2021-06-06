@@ -243,7 +243,7 @@ class BEM:
 
         # TODO: Check if Cl range is good
         # Probably trial with a different range of Cls
-        Cls_trial = np.arange(0.4, 0.9, 0.05)
+        Cls_trial = np.arange(0.1, 1, 0.05)
 
         # Create arrays for lift and drag coefficients, angle of attack and D/L ratio for each station
         Cl = np.ones(self.N_s)
