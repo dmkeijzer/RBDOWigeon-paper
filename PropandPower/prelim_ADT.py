@@ -3,7 +3,7 @@ import Aero_tools as at
 
 
 class ActDisk:
-    def __init__(self, TW_ratio, MTOM, v_e_h, v_cruise, D, DiskLoad, rho):
+    def __init__(self, TW_ratio, MTOM, v_e_h, v_cruise, D, DiskLoad, rho, rho0, g0):
         """
         :param TW_ratio: Thrust to weight ratio [-]
         :param MTOM: Maximum take-off MASS [kg]
@@ -20,8 +20,8 @@ class ActDisk:
         self.D = D
         self.T_cruise = D
         self.rho = rho
-        self.g0 = 9.80665
-        self.rho0 = 1.225
+        self.g0 = g0
+        self.rho0 = rho0
         self.A = MTOM/DiskLoad
         self.T_hover = MTOM*self.g0
 
@@ -29,8 +29,7 @@ class ActDisk:
         return np.sqrt(2*self.T_hover/(self.rho0*self.A) + 0)
 
     def v_e_cr(self):
-        # return np.sqrt(2*self.T_cruise/(ISA.density() * self.A_disk()) + self.v_cr**2)
-        return np.sqrt(2 * self.T_cruise / (self.rho * self.A) + self.v_cr ** 2)
+        return np.sqrt(2 * self.T_cruise / (self.rho * self.A) + self.v_cr**2)
 
     def eff_cruise(self):
         return 2/(1 + self.v_e_cr()/self.v_cr)

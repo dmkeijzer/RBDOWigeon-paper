@@ -103,8 +103,8 @@ class PlotBlade:
         axs[1].axis('equal')
 
         # Plot actual points
-        # axs[1].plot(self.radial_coords, y_maxs)
-        # axs[1].plot(self.radial_coords, y_mins)
+        axs[1].scatter(self.radial_coords, y_maxs)
+        axs[1].scatter(self.radial_coords, y_mins)
 
         # Plot smooth distribution  TODO: revise
         radius = np.linspace(self.xi_0, self.R, 200)

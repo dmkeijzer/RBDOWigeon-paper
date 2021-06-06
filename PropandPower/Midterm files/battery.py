@@ -3,9 +3,9 @@
 
 class Battery:
     """This class is to estimate the parameters of a battery"""
-    def __init__(self, sp_en_den, vol_en_den, req_energy, cost):
+    def __init__(self, sp_en_den, vol_en_den, tot_energy, cost):
         self.sp_en_den = sp_en_den
-        self.energy = req_energy
+        self.energy = tot_energy
         self.vol_en_den = vol_en_den
         self.cost = cost
 

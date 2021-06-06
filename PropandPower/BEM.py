@@ -152,45 +152,45 @@ class BEM:
     #     return (self.J_prim_1(xi, zeta, eps)/2) * (1 - eps(xi)*np.tan(self.phi_int(xi, zeta))) * \
     #            (np.cos(self.phi_int(xi, zeta)))**2
 
-    # # Integrals used to calculate internal variables, refer to paper for more explanation if needed
-    # # Assuming average eps
-    # def I_prim_1(self, xi, zeta, eps):
-    #     return 4 * xi * self.G_int(xi, zeta) * (1 - eps * np.tan(self.phi_int(xi, zeta)))
-    #
-    # def I_prim_2(self, xi, zeta, eps):
-    #     return self.lamb * (self.I_prim_1(xi, zeta, eps) / (2 * xi)) * (1 + eps / np.tan(self.phi_int(xi, zeta))) * \
-    #            np.sin(self.phi_int(xi, zeta)) * np.cos(self.phi_int(xi, zeta))
-    #
-    # def J_prim_1(self, xi, zeta, eps):
-    #     return 4 * xi * self.G_int(xi, zeta) * (1 + eps / np.tan(self.phi_int(xi, zeta)))
-    #
-    # def J_prim_2(self, xi, zeta, eps):
-    #     return (self.J_prim_1(xi, zeta, eps) / 2) * (1 - eps * np.tan(self.phi_int(xi, zeta))) * \
-    #            (np.cos(self.phi_int(xi, zeta))) ** 2
-
     # Integrals used to calculate internal variables, refer to paper for more explanation if needed
     # Assuming average eps
     def I_prim_1(self, xi, zeta, eps):
-        return 4*xi*(2/np.pi)*np.arccos(np.exp(-self.B*np.sin(self.phi_t(zeta))*(1-xi)/2)) * \
-               np.cos(np.arctan((1+zeta/2)*self.lamb/xi))*np.sin(np.arctan((1+zeta/2)*self.lamb/xi)) * \
-               (1 - eps*(1+zeta/2)*self.lamb/xi)
+        return 4 * xi * self.G_int(xi, zeta) * (1 - eps * np.tan(self.phi_int(xi, zeta)))
 
     def I_prim_2(self, xi, zeta, eps):
-        return 2*self.lamb * (2/np.pi)*np.arccos(np.exp(-self.B*np.sin(self.phi_t(zeta))*(1-xi)/2)) * \
-               np.cos(np.arctan((1+zeta/2)*self.lamb/xi))*np.sin(np.arctan((1+zeta/2)*self.lamb/xi)) * \
-               (1 - eps*(1+zeta/2)*self.lamb/xi) * (1 + eps/((1+zeta/2)*self.lamb/xi)) * \
-               np.cos(np.arctan((1+zeta/2)*self.lamb/xi))*np.sin(np.arctan((1+zeta/2)*self.lamb/xi))
+        return self.lamb * (self.I_prim_1(xi, zeta, eps) / (2 * xi)) * (1 + eps / np.tan(self.phi_int(xi, zeta))) * \
+               np.sin(self.phi_int(xi, zeta)) * np.cos(self.phi_int(xi, zeta))
 
     def J_prim_1(self, xi, zeta, eps):
-        return 4*xi*(2/np.pi)*np.arccos(np.exp(-self.B*np.sin(self.phi_t(zeta))*(1-xi)/2)) * \
-               np.cos(np.arctan((1+zeta/2)*self.lamb/xi))*np.sin(np.arctan((1+zeta/2)*self.lamb/xi)) * \
-               (1 + eps / ((1+zeta/2) * self.lamb / xi))
+        return 4 * xi * self.G_int(xi, zeta) * (1 + eps / np.tan(self.phi_int(xi, zeta)))
 
     def J_prim_2(self, xi, zeta, eps):
-        return 2*xi*(2/np.pi)*np.arccos(np.exp(-self.B*np.sin(self.phi_t(zeta))*(1-xi)/2)) * \
-               np.cos(np.arctan((1+zeta/2)*self.lamb/xi))*np.sin(np.arctan((1+zeta/2)*self.lamb/xi)) * \
-               (1 + eps / ((1+zeta/2) * self.lamb / xi)) * (1 - eps*(1+zeta/2)*self.lamb/xi) * \
-               (np.cos(np.arctan((1+zeta/2)*self.lamb/xi)))**2
+        return (self.J_prim_1(xi, zeta, eps) / 2) * (1 - eps * np.tan(self.phi_int(xi, zeta))) * \
+               (np.cos(self.phi_int(xi, zeta))) ** 2
+
+    # # Integrals used to calculate internal variables, refer to paper for more explanation if needed
+    # # Assuming average eps
+    # def I_prim_1(self, xi, zeta, eps):
+    #     return 4*xi*(2/np.pi)*np.arccos(np.exp(-self.B*np.sin(self.phi_t(zeta))*(1-xi)/2)) * \
+    #            np.cos(np.arctan((1+zeta/2)*self.lamb/xi))*np.sin(np.arctan((1+zeta/2)*self.lamb/xi)) * \
+    #            (1 - eps*(1+zeta/2)*self.lamb/xi)
+    #
+    # def I_prim_2(self, xi, zeta, eps):
+    #     return 2*self.lamb * (2/np.pi)*np.arccos(np.exp(-self.B*np.sin(self.phi_t(zeta))*(1-xi)/2)) * \
+    #            np.cos(np.arctan((1+zeta/2)*self.lamb/xi))*np.sin(np.arctan((1+zeta/2)*self.lamb/xi)) * \
+    #            (1 - eps*(1+zeta/2)*self.lamb/xi) * (1 + eps/((1+zeta/2)*self.lamb/xi)) * \
+    #            np.cos(np.arctan((1+zeta/2)*self.lamb/xi))*np.sin(np.arctan((1+zeta/2)*self.lamb/xi))
+    #
+    # def J_prim_1(self, xi, zeta, eps):
+    #     return 4*xi*(2/np.pi)*np.arccos(np.exp(-self.B*np.sin(self.phi_t(zeta))*(1-xi)/2)) * \
+    #            np.cos(np.arctan((1+zeta/2)*self.lamb/xi))*np.sin(np.arctan((1+zeta/2)*self.lamb/xi)) * \
+    #            (1 + eps / ((1+zeta/2) * self.lamb / xi))
+    #
+    # def J_prim_2(self, xi, zeta, eps):
+    #     return 2*xi*(2/np.pi)*np.arccos(np.exp(-self.B*np.sin(self.phi_t(zeta))*(1-xi)/2)) * \
+    #            np.cos(np.arctan((1+zeta/2)*self.lamb/xi))*np.sin(np.arctan((1+zeta/2)*self.lamb/xi)) * \
+    #            (1 + eps / ((1+zeta/2) * self.lamb / xi)) * (1 - eps*(1+zeta/2)*self.lamb/xi) * \
+    #            (np.cos(np.arctan((1+zeta/2)*self.lamb/xi)))**2
 
     # # Integrals used to calculate internal variables, refer to paper for more explanation if needed
     # def I_prim_1(self, xi, zeta, eps):
@@ -402,7 +402,7 @@ class BEM:
         # J1 = spint.quad(self.J_prim_1, self.xi_0, 1, args=(zeta, eps_fun))[0]
         # J2 = spint.quad(self.J_prim_2, self.xi_0, 1, args=(zeta, eps_fun))[0]
 
-        # Possibly implement a function for eps as a function of r/R (xi)
+        # Use average epsilon, independent of r/R (xi), to simplify calculations, as it is very similar in all stations
         eps_avg = np.average(E)
 
         # Integrate the derivatives from xi_0 to 1 (from hub to tip of the blade)
