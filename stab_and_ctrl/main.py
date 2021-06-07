@@ -1,167 +1,195 @@
 import numpy as np
 from stab_and_ctrl.Scissor_Plots import Wing_placement_sizing
 from stab_and_ctrl.Vertical_tail_sizing import VT_sizing
-from stab_and_ctrl.Aileron_Sizing import Control_surface
-from stab_and_ctrl.Elevator_sizing import Elevator_sizing
+from stab_and_ctrl.loading_diagram import CgCalculator
+from stab_and_ctrl.landing_gear_placement import LandingGearCalc
+from stab_and_ctrl.hover_controllabilty import HoverControlCalcTandem
 import constants as const
 from matplotlib import pyplot as plt
 
 # example values based on inputs_config_1.json
-W = 3652.352770706565*9.80665
-h = 305
-lfus = 7.2
-hfus = 1.705
-wfus = 1.38
-xcg = 3
+W = 28315.27
+h = 0
+lfus = 4
+hfus = 1.6
+wfus = 1.3
+xcg = 1.680
 V0 = 52
 Vstall = 40
-Pbr = 110024/1.2 * 0.9 /16
-# M0 = V0 / np.sqrt(const.gamma * const.R * 288.15)
+M0 = V0 / np.sqrt(const.gamma * const.R * 288.15)
 CD0 = 0.03254
 theta0 = 0
 CLfwd = 1.781
 CLrear = 1.737
 CLdesfwd = 0.82
 CLdesrear = 0.82
-CLafwd = 5.1685
 Clafwd = 6.1879
-Clarear=Clafwd
-Cd0fwd = 0.00347 # Airfoil drag coefficient [-]
-Cd0rear = Cd0fwd
-CD0fwd = 0.00822 # Wing drag coefficient [-]
-CD0rear = CD0fwd
-CLarear = CLafwd
+Clarear = Clafwd
 Cmacfwd = -0.0645
 Cmacrear = -0.0645
-S = 10.5
-Sfwd = 1/2*S
-Srear = S-Sfwd
-Afwd = 5*2
-Arear = 5*2
+Sfwd = 5.25
+Srear = 5.25
+Afwd = 7
+Arear = 7
 Gamma = 0
-Lambda_c4_fwd = 0.0*np.pi/180
-Lambda_c4_rear = 0.0*np.pi/180
-cfwd = 0.65
-crear = 0.65
+Lambda_c4_fwd = 0
+Lambda_c4_rear = 0
+cfwd = 0.8748
+crear = 0.8748
 bfwd = np.sqrt(Sfwd * Afwd)
 brear = np.sqrt(Srear * Arear)
-e = 1.1302
-efwd = 0.958
-erear = 0.958
-taper = 0.45
+efwd = 1.1302
+erear = 1.1302
+taper = 0.4
 n_rot_f = 6
 n_rot_r = 6
 rot_y_range_f = [0.5 * bfwd * 0.1, 0.5 * bfwd * 0.9]
 rot_y_range_r = [0.5 * brear * 0.1, 0.5 * brear * 0.9]
 K = 4959.86
 ku = 0.1
-Zcg = 0.85
+n_failures = 1
 
+mbat = 400
+mwing = 400
+mengine = 25
+mtom = W / 9.80665
+mcargo = 4 * 7
+mpax = 88
+mpil = 88
+mfus = mtom - mbat - 2 * mwing - (n_rot_f + n_rot_r) * mengine - mcargo - 4 * mpax - mpil
+
+x_pil = 1.9
+x_pax = [2.9, 4.3]
+x_cargo = 5.15
+x_bat = 2.9
+x_fus = 2.6
+
+y_pax = 0.3
+
+z_fus = 0.7
+z_bat = 0.4
+z_cargo = 0.9
+z_pax = 0.9
+z_pil = 0.9
+z_wf = 0.5
+z_wr = 1.4
+
+max_tw = 5
+x_ng_min = 0.7
+y_max_rotor = bfwd * 0.9
+z_rotor_line_root = z_wf + 0.1
+rotor_rad = 0.5
+fus_back_bottom = [x_cargo, 0]
+fus_back_top = [7.5, 2]
+x_cg_margin = 0.1
+theta = np.deg2rad(15)
+phi = np.deg2rad(7)
+psi = np.deg2rad(55)
+min_ng_load_frac = 0.08
+
+Pbr_cruise_pe = 110024/1.2 * 0.9 /16
+elevator_effect = 1.4
+
+# position parameters for the wing
 d = 0
 dy = 0
-wps = Wing_placement_sizing(W,h, lfus, hfus, wfus, V0, CD0fwd, CLfwd,
-                 CLrear,CLdesfwd,CLdesrear, Clafwd,Clarear,Cmacfwd, Cmacrear, Sfwd, Srear,
-                 Afwd, Arear, Gamma, Lambda_c4_fwd, Lambda_c4_rear, cfwd,
-                 crear, bfwd, brear, efwd, erear, taper, n_rot_f, n_rot_r,
-                 rot_y_range_f, rot_y_range_r, K, ku,Zcg,d,dy,Pbr)
+Sfwd_Srear = Sfwd/Srear
+
+done = False
+
+while not done:
+    x_wf = cfwd / 4 + d
+    x_wr = lfus - 3 / 4 * crear
+
+    cgcalc = CgCalculator(mwing + mengine * n_rot_f, mwing + mengine * n_rot_r,
+                          mfus, mbat, mcargo, mpax, mpil, [x_fus, 0, 0.5],
+                          [x_bat, 0, z_bat], [x_cargo, 0, z_cargo],
+                          [[x_pax[0], -y_pax, z_pax], [x_pax[0], y_pax, z_pax],
+                           [x_pax[1], -y_pax, z_pax], [x_pax[1], y_pax, z_pax]],
+                          [x_pil, 0, z_pil])
+    x_range, y_range, z_range = cgcalc.calc_cg_range([x_wf, z_wf], [x_wr, z_wr])
+
+    lgcalc = LandingGearCalc(max_tw, x_ng_min, y_max_rotor, Gamma,
+                             z_rotor_line_root, rotor_rad, fus_back_bottom,
+                             fus_back_top)
+    x_ng, x_mlg, tw, h_mlg = lgcalc.optimum_placement(x_range, x_cg_margin,
+                                                      z_range[1], theta, phi,
+                                                      psi, min_ng_load_frac)
+
+    if tw > max_tw:
+        # TODO: do something to fix it and iterate
+        print("Warning: track width too large!")
+
+    x_min_test, x_max_test = 0, lfus
+    dx = 0.1
+
+    hcct = HoverControlCalcTandem(mtom, n_rot_f, n_rot_r, x_wf, x_wr,
+                                  rot_y_range_f, rot_y_range_r, K, ku)
+    x_min, x_max, _, _ = hcct.calc_crit_x_cg_range(x_max_test, x_max_test, 0.1,
+                                                   [x_range[1], y_range[1]],
+                                                   [n_failures])[0]
+
+    if (x_min is None or x_range[0] < x_min or x_range[1] < x_min
+            or x_range[0] > x_max or x_range[1] > x_max):
+        # TODO: do something to fix it and iterate
+        print("Warning: Uncontrollable in hover!")
+
+    wps = Wing_placement_sizing(W,h, lfus, hfus, wfus, V0, CD0, CLfwd,
+                                CLrear, CLdesfwd, CLdesrear, Clafwd, Clarear,
+                                Cmacfwd, Cmacrear, Sfwd, Srear, Afwd, Arear,
+                                Gamma, Lambda_c4_fwd, Lambda_c4_rear, cfwd,
+                                crear, bfwd, brear, efwd, erear, taper,
+                                n_rot_f, n_rot_r, rot_y_range_f, rot_y_range_r,
+                                K, ku, z_range[1], d, dy, Pbr_cruise_pe)
+
+    x_test_range = np.arange(x_min_test, x_max_test, dx)
+    Sfwd_Srear_stab, Sfwd_Srear_ctrl = wps.Sr_Sfwd(np.array(x_range),
+                                                   elevator_effect, d)
+
+    # FIXME: this assumes that the CG shifts forward with increasing Swfd/Srear
+    if Sfwd_Srear_stab[0] < Sfwd_Srear or Sfwd_Srear_stab[1] < Sfwd_Srear:
+        # TODO: do something to fix it and iterate
+        print("Warning: Statically unstable in cruise!")
+
+    if Sfwd_Srear_ctrl[0] > Sfwd_Srear or Sfwd_Srear_ctrl[1] > Sfwd_Srear:
+        # TODO: do something to fix it and iterate
+        print("Warning: Uncontrollable in cruise!")
 
 
-aileron = Control_surface(V0,Vstall,CLfwd,CLrear,CLafwd,CLarear,Clafwd,Clarear,Cd0fwd,Cd0rear,
-                         Sfwd,Srear,Afwd,Arear,cfwd,crear,bfwd,brear,taper)
-elevator_effect = 1.4
-dx = 0.1
-
-#### Plotting Vertical Tail ####
-nE = 16
-Tt0 = 8500
-yE = bfwd/2
-lv = lfus-xcg
-brbv = np.linspace(0.75,1,150)
-crcv = np.linspace(0.1,0.4,150)
-# for i in range(len(brbv)):
-#     for j in crcv:
-#         print("For a br/bv = %.3f and cr/cv = %.3f "%(brbv[i],j))
-#         vt_br = vt_sizing.final_VT_rudder(nE,Tt0,yE,lv,br_bv=brbv[i],cr_cv=j)
-# print("Sv = ",vt_sizing.VT_stability(lv))
-
-ARv = 1.5
-vt_sizing = VT_sizing(W,h,xcg,lfus,hfus,wfus,V0,Vstall,CD0,
-                      CLdesfwd,CLdesrear,CLafwd,CLarear,
-                      Sfwd,Srear,Afwd,Arear,Lambda_c4_fwd,Lambda_c4_rear,
-                      cfwd,crear,bfwd,brear,taper,ARv=ARv)
-if isinstance(ARv,float):
-    vt_sizing.plotting(nE,Tt0,yE,lv,br_bv=brbv,cr_cv=crcv)
-    # print(vt_sizing.plotting(nE, Tt0, yE, lv, br_bv=0.85, cr_cv=0.3))
-    vt_sizing.plotting(nE, Tt0, yE, lv, br_bv=0.9, cr_cv=0.35)
-    Sv = vt_sizing.final_VT_rudder(nE,Tt0,yE,lv,br_bv=0.9,cr_cv=0.35)[0]
-    # print(Sv)
-else:
-    vt_sizing.plotting(nE,Tt0,yE,lv,br_bv=0.85,cr_cv=0.3)
-# vt_sizing.plotting(nE,Tt0,yE,lv,br_bv=0.65,cr_cv=0.4)
-# vt_sizing.plotting(nE,Tt0,yE,lv,br_bv=0.55,cr_cv=0.4)
-
-#### Plotting Aileron ####
-b1 = 60
-b2 =np.linspace(b1,100,150)
-Sa_S = np.linspace(0.05,0.20,150)
-# elevon.plotting(0.15,b1,b2)
-aileron.plotting(Sa_S,b1,b2,True)
-aileron.plotting(Sa_S=0.085,b1=b1,b2=97.5,rear=True)
-
-#### Plotting Elevator ####
-elevator = Elevator_sizing(W,h,xcg,lfus,hfus,wfus,V0,Vstall,CD0,theta0,CLfwd,CLrear,CLafwd,CLarear,
-                           Cmacfwd,Cmacrear,Sfwd,Srear,Afwd,Arear,0,0,cfwd,crear,bfwd,brear,taper,dCLfwd=0.4*CLfwd)
-beb = np.linspace(10,100,150)
-SeS = np.linspace(0.1,0.4,150)
-de_max = 17.5
-elevator.plotting(SeS,beb,de_max)
-# xcg_middle = (0.2187 + 3.3439) / 2
-# wps.hover_calc.fail_rotors([0, 3, 5, 6])
-# xcgs = np.linspace(xcg_middle - 2, xcg_middle + 2, 100)
-# acais = []
-# for xcg in xcgs:
-#     acais.append((wps.hover_calc.acai([xcg, 0])))
-# plt.plot(xcgs, acais)
-# plt.axvline(xcg_middle)
-# plt.axhline(0)
-# plt.title("[0, 3, 5, 6]")
-# plt.figure()
 #
-# wps.hover_calc.fail_rotors([1, 2, 4, 7])
-# acais = []
-# for xcg in xcgs:
-#     acais.append((wps.hover_calc.acai([xcg, 0])))
-# plt.plot(xcgs, acais)
-# plt.axvline(xcg_middle)
-# plt.axhline(0)
-# plt.title("[1, 2, 4, 7]")
-# plt.show()
-
-wps.plotting(0, lfus, dx, elevator_effect, d)
-
-
-# def deps_da(Lambda_quarter_chord, b, lh, h_ht, A, CLaw):
-#     """
-#     Inputs:
-#     :param Lambda_quarter_chord: Sweep Angle at c/4 [RAD]
-#     :param lh: distance between ac_w1 with ac_w2 (horizontal)
-#     :param h_ht: distance between ac_w1 with ac_w2 (vertical)
-#     :param A: Aspect Ratio of wing
-#     :param CLaw: Wing Lift curve slope
-#     :return: de/dalpha
-#     """
-#     r = lh * 2 / b
-#     mtv = h_ht * 2 / b  # Approximation
-#     Keps = (0.1124 + 0.1265 * Lambda_quarter_chord + 0.1766 * Lambda_quarter_chord ** 2) / r ** 2 + 0.1024 / r + 2
-#     Keps0 = 0.1124 / r ** 2 + 0.1024 / r + 2
-#     v = 1 + (r ** 2 / (r ** 2 + 0.7915 + 5.0734 * mtv ** 2)) ** (0.3113)
-#     de_da = Keps / Keps0 * CLaw / (np.pi * A) * (
-#             r / (r ** 2 + mtv ** 2) * 0.4876 / (np.sqrt(r ** 2 + 0.6319 + mtv ** 2)) + v * (
-#             1 - np.sqrt(mtv ** 2 / (1 + mtv ** 2))))
+# vt_sizing = VT_sizing(W,h,xcg,lfus,hfus,wfus,V0,Vstall,M0,CD0,theta0,
+#                       CLfwd,CLrear,CLafwd,CLarear,
+#                       Cmacfwd,Cmacrear,Sfwd,Srear,Afwd,Arear,0,0,cfwd,crear,bfwd,brear,taper)
 #
-#     # print("Configuration %.0f de/da = %.4f "%(conf,de_da))
-#     return de_da
-# lh = np.linspace(0.1,20,150)
-# deda = deps_da(0,bfwd,lh,hfus,Afwd,CLafwd)
-# plt.plot(lh,deda)
-# plt.show()
+# elevator_effect = 1.4
+# d = 0
+# dx = 0.1
+#
+# nE = 16
+# Tt0 = 4000
+# yE = bfwd/2
+# lv = lfus-xcg
+# vt_sizing.plotting(nE,Tt0,yE,lv,br_bv=0.87,cr_cv=0.4)
+# # xcg_middle = (0.2187 + 3.3439) / 2
+# # wps.hover_calc.fail_rotors([0, 3, 5, 6])
+# # xcgs = np.linspace(xcg_middle - 2, xcg_middle + 2, 100)
+# # acais = []
+# # for xcg in xcgs:
+# #     acais.append((wps.hover_calc.acai([xcg, 0])))
+# # plt.plot(xcgs, acais)
+# # plt.axvline(xcg_middle)
+# # plt.axhline(0)
+# # plt.title("[0, 3, 5, 6]")
+# # plt.figure()
+# #
+# # wps.hover_calc.fail_rotors([1, 2, 4, 7])
+# # acais = []
+# # for xcg in xcgs:
+# #     acais.append((wps.hover_calc.acai([xcg, 0])))
+# # plt.plot(xcgs, acais)
+# # plt.axvline(xcg_middle)
+# # plt.axhline(0)
+# # plt.title("[1, 2, 4, 7]")
+# # plt.show()
+#
+# wps.plotting(0, lfus, dx, elevator_effect, d)

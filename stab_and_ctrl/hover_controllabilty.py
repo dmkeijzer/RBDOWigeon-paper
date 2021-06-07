@@ -247,15 +247,13 @@ class HoverControlCalcBase:
         return controllable_combos
 
     def calc_crit_x_cg_range(self, x_min: float, x_max: float, dx: float,
-                             y: float, failure_eval_cg: list,
-                             n_failures: list) -> list:
+                             failure_eval_cg: list, n_failures: list) -> list:
         """
         Calculate the allowable CG range in x-direction for a given y-location,
         such that the CG location is not critical for controllability
         :param x_min: Minimum x-location in the considered CG range
         :param x_max: Maximum x-location in the considered CG range
         :param dx: Resolution of CG range evaluation
-        :param y: y-location of the CG of the aircraft
         :param failure_eval_cg: [x, y]-location of the CG that is used to
         find the maximum allowable rotor failures.
         :param n_failures: List of the different numbers of engine failures
@@ -281,7 +279,8 @@ class HoverControlCalcBase:
             limiting_failures_front, limiting_failures_aft = None, None
             for combo in failures:
                 self.fail_rotors(combo)
-                _x_front, _x_aft = self.calc_x_cg_range(x_min, x_max, dx, y)
+                _x_front, _x_aft = self.calc_x_cg_range(x_min, x_max, dx,
+                                                        failure_eval_cg[1])
 
                 # go to the next combination if this one cannot be controllable
                 # with the given CG
