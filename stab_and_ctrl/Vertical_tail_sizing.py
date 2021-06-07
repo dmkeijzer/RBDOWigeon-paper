@@ -4,8 +4,8 @@ from matplotlib import pyplot as plt
 from matplotlib import colors as mc
 from Aero_tools import ISA
 class VT_sizing:
-    def __init__(self,W,h,xcg,lfus,hfus,wfus,V0,Vstall,CD0,theta0,CLfwd,CLrear,
-                 CLafwd,CLarear, Cmacfwd,Cmacrear,
+    def __init__(self,W,h,xcg,lfus,hfus,wfus,V0,Vstall,CD0,CLfwd,CLrear,
+                 CLafwd,CLarear,
                  Sfwd,Srear,Afwd,Arear,Lambda_c4_fwd,Lambda_c4_rear,cfwd,crear,bfwd,brear,taper,ARv):
         self.W = W         # Weight [N]
         self.h = h     # Height [m]
@@ -30,12 +30,11 @@ class VT_sizing:
         self.Sweepc4rear = Lambda_c4_rear # Sweep at c/2 [rad]
         self.Sweepc2fwd = self.Sweep(Afwd,self.Sweepc4fwd,50,25)
         self.Sweepc2rear = self.Sweep(Arear, self.Sweepc4rear, 50, 25)
-        self.th0 = theta0  # Initial pitch angle [rad]
         self.V0 = V0       # Initial speed [m/s]
         self.M0 = self.V0/(1.4*287*self.T) # Initial mach number [-]
         self.Re = self.rho*self.V0*self.lfus/self.mu
         self.CLafwd, self.CLarear = CLafwd, CLarear # Wing lift curve slopes for both wings [1/rad]
-        self.Cmacfwd, self.Cmacrear = Cmacfwd,Cmacrear
+        # self.Cmacfwd, self.Cmacrear = Cmacfwd,Cmacrear
         self.CD0 = CD0 # C_D_0 of forward wing
         self.xacfwd = 0.25*self.cfwd
         self.xacrear = self.lfus - (1 - 0.25) * self.crear
@@ -46,6 +45,7 @@ class VT_sizing:
         self.xcg = xcg
         self.c = self.Sfwd/self.S*self.cfwd+self.Srear/self.S*self.crear
         self.ARv = ARv
+        self.Sweep_v_c2 = self.Sweep(self.ARv, 0, 50, 100)
 
     def Sweep(self,AR,Sweepm,n,m):
         """
@@ -72,6 +72,7 @@ class VT_sizing:
         """
         M= self.M0
         beta = np.sqrt(1 - M ** 2)
+        # print("Lambda_1/2c = ",Lambda_half)
         value = 2 * np.pi * A / (2 + np.sqrt(4 + ((A * beta / eta) ** 2) * (1 + (np.tan(Lambda_half) / beta) ** 2)))
         return value
     def initial_VT(self,lv,VT = 0.04):
@@ -88,17 +89,17 @@ class VT_sizing:
         C_v = Sv/bv
         C_vr = 3/2*C_v*(1+self.taper_v)/(1+self.taper_v+self.taper_v**2)
         C_vt = self.taper_v*C_vr
-        Sweep_v_c2 = 15*np.pi/180
+        Sweep_v_c2 = self.Sweep(self.ARv,0,50,100)
         return Sv,ARv,bv,C_v,Sweep_v_c2,C_vr,C_vt
 
-    def tau(self,Cr,Cv):
+    def tau(self,Cr_Cv):
         """
         Inputs:
         :param Cr: MAC of rudder [m]
         :param Cv: MAC vertical tail [m]
         :return: rudder effectiveness [-]
         """
-        return 1.129*(Cr/Cv)**0.4044 - 0.1772
+        return 1.129*(Cr_Cv)**0.4044 - 0.1772
 
     def VT_controllability(self,nE,Tt0,yE,lv,br_bv,cr_cv):
         """
@@ -114,8 +115,8 @@ class VT_sizing:
         Sr_Sv = 0.2
         dr_max = 25*np.pi/180
         C_rudder = self.initial_VT(lv)[3]*cr_cv
-        tau_r = self.tau(C_rudder,self.initial_VT(lv)[3])
-        CLa_v = self.C_L_a(self.initial_VT(lv)[1],self.initial_VT(lv)[4])
+        tau_r = self.tau(cr_cv)
+        CLa_v = self.C_L_a(self.ARv, self.initial_VT(lv)[4])
         Vv_V = 1
         Sv = N_total/(0.5*self.rho*self.Vmc**2*CLa_v*lv*Vv_V**2*tau_r*br_bv*dr_max)
         return Sv
@@ -144,7 +145,7 @@ class VT_sizing:
                                     6*(self.xacrear-self.xcg)*np.sin(self.Sweepc4rear)/(self.Arear*self.c)))
         # print("Cnbw_fwd, Cnbw_rear = ",Cnb_w_fwd,Cnb_w_rear)
         # print("Cn_fus = %.4f [1/rad]"%(Cnb_fus))
-        CYb_v = -self.C_L_a(self.initial_VT(lv)[1],self.initial_VT(lv)[4])
+        CYb_v = -self.C_L_a(self.ARv,self.initial_VT(lv)[4])
         # print("CYb_v = %.3f "%(CYb_v))
         Cnb = 0.06
         Sv = self.S*(Cnb-Cnb_fus-Cnb_w_fwd*self.Sfwd*self.bfwd/(self.S*bmax)-
@@ -162,9 +163,11 @@ class VT_sizing:
         """
         if isinstance(br_bv,float) and isinstance(self.ARv,float):
             Sv = max(self.VT_controllability(nE,Tt0,yE,lv,br_bv,cr_cv),self.VT_stability(lv))
+            # print("Stability: ", self.VT_stability(lv))
+            # print("Controllability: ", self.VT_controllability(nE,Tt0,yE,lv,br_bv,cr_cv))
         else:
             Sv = self.VT_controllability(nE,Tt0,yE,lv,br_bv,cr_cv)
-        ARv = 1.25
+        ARv = self.ARv
         bv = np.sqrt(ARv*Sv)
         C_v = Sv/bv
         C_vr = 3/2*C_v*(1+self.taper_v)/(1+self.taper_v+self.taper_v**2)
@@ -196,6 +199,7 @@ class VT_sizing:
             y_r = np.array([y_down, y_down, y_up, y_up, y_down])
             x_points = np.array([x_LE_0, x_TE_1, x_TE_2, x_LE_3, 0])
             y_points = np.array([y_LE_0, y_TE_1, y_TE_2, y_LE_3, 0])
+            Sv_estimate = (x_TE_1+(x_TE_1-x_LE_3))/2*y_TE_2
             plt.plot(x_points, y_points, label="Vertical tail")
             plt.plot(x_r, y_r, label="Rudder")
             plt.legend()
@@ -211,31 +215,39 @@ class VT_sizing:
             # plt.clabel(Svstab)
             Svstab = self.VT_stability(lv)
             Svcontrol = self.VT_controllability(nE,Tt0,yE,lv,br_bv,cr_cv)
+            bv = self.final_VT_rudder(nE,Tt0,yE,lv,br_bv,cr_cv)[3]
             # cbar = plt.colorbar(cp, orientation="horizontal")
             # cbar.set_label(r"$S_v$")
             # plt.ylabel(r"$b_r/b_v$ [-]", fontsize=12)
             # plt.xlabel(r"$c_r/c_v$ [-]", fontsize=12)
             # plt.show()
+            Sv_estimate = None
             plt.plot(self.ARv,Svstab,label="Stability Curve")
             plt.plot(self.ARv,Svcontrol,label="Controllability for OEI condition")
             plt.xlabel(r"$AR_v [-]$")
             plt.ylabel(r"$S_v [m^2]$")
             plt.legend()
             plt.show()
+            plt.plot(self.ARv,bv)
+            plt.xlabel(r"$AR_v [-]$")
+            plt.ylabel(r"$b_v [m]$")
+            plt.show()
         else:
             X, Y = np.meshgrid(cr_cv, br_bv)
             Z = self.final_VT_rudder(nE, Tt0, yE, lv, Y, X)[0]
             fig, ax = plt.subplots(1, 1)
+            Sv_estimate = None
             # ax.add_artist(ab)
             # levels = [0,0.1,1,1.]
-            cp = ax.contourf(X, Y, Z, cmap='coolwarm')
+            cp = ax.contourf(X, Y, Z, cmap='coolwarm',levels=20)
             Svstab = ax.contour(X, Y, Z, [self.VT_stability(lv)], colors=["k"])
-            plt.clabel(Svstab)
+            plt.clabel(Svstab,fmt=r"Min. :  %.3f"%(self.VT_stability(lv)))
             cbar = plt.colorbar(cp, orientation="horizontal")
-            cbar.set_label(r"$S_v$")
+            cbar.set_label(r"$S_v$ $[m^2]$")
             plt.ylabel(r"$b_r/b_v$ [-]", fontsize=12)
             plt.xlabel(r"$c_r/c_v$ [-]", fontsize=12)
             plt.show()
+        return Sv_estimate
 
 
 

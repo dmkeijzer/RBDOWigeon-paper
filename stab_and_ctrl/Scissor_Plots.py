@@ -38,6 +38,7 @@ class Wing_placement_sizing:
         self.Sweepc4rear = Lambda_c4_rear # Sweep at c/4 [rad]
         self.Sweepc2fwd = self.Sweep(Afwd,self.Sweepc4fwd,50,25)
         self.Sweepc2rear = self.Sweep(Arear, self.Sweepc4rear, 50, 25)
+        print("Sweep at c/2:",self.Sweepc2fwd*180/np.pi)
         self.V0 = V0       # Initial speed [m/s]
         self.M0 = self.V0/(1.4*287*self.T)       # Initial mach number [-]
         self.Gamma_fwd = Gamma # Forward wing dihedral [rad]
@@ -60,14 +61,14 @@ class Wing_placement_sizing:
         self.CLdesfwd = CLdesfwd
         self.CLdesrear = CLdesrear
         self.de_da = self.deps_da(self.Sweepc4fwd,self.bfwd,self.lh(),self.hfus-self.dy,self.Afwd,self.CLafwd)
-        print("de/da = %.3f"%(self.de_da))
+        # print("de/da = %.3f"%(self.de_da))
         self.Zcg = Zcg
         self.hover_calc = HoverControlCalcTandem(W / consts.g, n_rot_f,
                                                  n_rot_r, self.xacfwd,
                                                  self.xacrear, rot_y_range_f,
                                                  rot_y_range_r, K, ku)
     def lh(self):
-        return abs(self.xacfwd - self.xacrear)
+        return abs(self.xacfwd-self.d - self.xacrear)
 
     def deps_da(self,Lambda_quarter_chord, b, lh, h_ht, A, CLaw):
         """
@@ -137,11 +138,13 @@ class Wing_placement_sizing:
         CDfwd = self.CD0 + self.CLfwd ** 2 / (np.pi * self.Afwd * self.efwd)
         CDrear = self.CD0 + self.CLrear ** 2 / (np.pi * self.Arear * self.erear)
         c = self.Sfwd / (self.Sfwd + self.Srear) * self.cfwd + self.Srear / (self.Srear + self.Sfwd) * self.crear
-        # CDafwd = 2*CLafwd*CLfwd/(np.pi*Afwd*e)
-        # CDarear = 2*CLarear*CLrear/(np.pi*Afwd*e)
+        CDafwd = 2*self.CLafwd*self.CLdesfwd/(np.pi*self.Afwd*self.efwd)
+        CDarear = 2*self.CLarear*self.CLdesrear/(np.pi*self.Afwd*self.erear)
+        # print("CD_alpha = ",CDafwd)
         deda = self.de_da
         # print("de/da = ",deda)
-        SrSfwd_stab = self.CLafwd * (Xcg - self.xacfwd) / (self.CLarear * (1 - deda) * (self.xacrear  - Xcg))
+        SrSfwd_stab = (-self.CLafwd * (Xcg - self.xacfwd) +CDafwd*(self.Zcg-self.dy)*0)/ \
+                      (-self.CLarear * (1 - deda) * (self.xacrear  - Xcg)+CDarear*(self.hfus-self.Zcg)*0)
         SrSfwd_control = (-self.Cmacfwd * self.cfwd + CDfwd * (self.Zcg-self.dy) - CLfwd * (Xcg - self.xacfwd) / (
                         CDrear * (self.hfus-self.Zcg) - self.CLrear * (self.xacrear - Xcg) + self.Cmacrear * self.crear))
         return SrSfwd_stab ** (-1), SrSfwd_control ** (-1)

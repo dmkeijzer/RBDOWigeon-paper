@@ -33,6 +33,7 @@ class Control_surface:
         self.Vmc = 1.2*self.Vs # Minimum controllable speed [m/s]
         # self.xcg = xcg
         self.c = self.Sfwd/self.S*self.cfwd+self.Srear/self.S*self.crear
+        self.taper_a = 0.65
 
     def Sweep(self,AR,Sweepm,n,m):
         """
@@ -93,8 +94,8 @@ class Control_surface:
         return Clp
 
     def plotting(self,Sa_S,b1,b2,rear):
-        if isinstance(Sa_S,float):
-            da_max = 30*np.pi/180
+        if isinstance(Sa_S,(float,int)) and not isinstance(b2,(float,int)):
+            da_max = 30*np.pi/180*0.85
             dphi_dt = 60*np.pi/180/1.3
             minClda = -(dphi_dt)*self.Clp()*max(self.bfwd,self.brear)/(2*self.Vmc*da_max)
             minClda = np.ones(len(b2))*minClda
@@ -108,8 +109,43 @@ class Control_surface:
             plt.xlim(min(b2))
             plt.legend()
             plt.show()
+
+        elif isinstance(Sa_S,(float,int)) and isinstance(b2,(float,int)):
+            x_1 = 0
+            y_1 = 0
+            x_2 = self.bfwd / 2
+            y_2 = np.tan(self.Sweep(self.Afwd, 0, 100, 25)) * self.bfwd / 2
+            y_2 = abs(y_2)
+            x_4 = 0
+            y_4 = self.cfwd * 3 / 2 * (1 + self.taper) / (1 + self.taper + self.taper ** 2)
+            x_p_3 = np.tan(self.Sweep(self.Afwd, 0, 0, 25)) * self.bfwd / 2
+            x_3 = self.bfwd / 2
+            y_3 = abs(y_4 - x_p_3)
+            x_points = [x_1, x_2, x_3, x_4, x_1]
+            y_points = [y_1, y_2, y_3, y_4, y_1]
+            xa_1 = b1/100*self.bfwd/2
+            ya_1= abs(b1/100*self.bfwd/2*np.tan(self.Sweep(self.Afwd, 0, 100, 25)))
+            xa_2 = b2/100*self.bfwd/2
+            ya_2 = abs(b2/100*self.bfwd/2*np.tan(self.Sweep(self.Afwd, 0, 100, 25)))
+            #### Aileron geometry ####
+            ba = (b2-b1)/100*self.bfwd/2*2
+            ca = Sa_S*self.Sfwd/ba
+            # print("c_a = ",ca)
+            ca_r = ca * 3 / 2 * (1 + self.taper_a) / (1 + self.taper_a + self.taper_a ** 2)
+            # print("ca_root = ",ca_r)
+            ca_t = ca_r*self.taper_a
+            xa_3 = xa_2
+            ya_3 = ca_t+ya_2
+            xa_4 = xa_1
+            ya_4 = ya_1+ca_r
+            xa_points= [xa_1,xa_2,xa_3,xa_4,xa_1]
+            ya_points= [ya_1,ya_2,ya_3,ya_4,ya_1]
+            plt.plot(x_points, y_points,label="Forward Wing")
+            plt.plot(xa_points,ya_points,label="Aileron")
+            plt.legend()
+            plt.show()
         else:
-            da_max = 30 * np.pi / 180
+            da_max = 30 * np.pi / 180*0.75
             dphi_dt = 60 * np.pi / 180 /1.3
             minClda = -(dphi_dt) * self.Clp() * max(self.bfwd, self.brear) / (2 * self.Vmc * da_max)
             X, Y = np.meshgrid(b2, Sa_S)
@@ -117,9 +153,9 @@ class Control_surface:
             fig, ax = plt.subplots(1, 1)
             # ax.add_artist(ab)
             # levels = [0,0.1,1,1.]
-            cp = ax.contourf(X, Y, Z, cmap='coolwarm')
+            cp = ax.contourf(X, Y, Z, cmap='coolwarm',levels=20)
             minimum = ax.contour(X, Y, Z, [minClda], colors=["k"])
-            plt.clabel(minimum,fmt="Roll requirement")
+            plt.clabel(minimum,fmt="Min. : %.3f"%(minClda))
             cbar = plt.colorbar(cp, orientation="horizontal")
             cbar.set_label(r"$C_{l_{\delta_a}} [1/rad]$")
             plt.ylabel(r"$S_a/S_{fwd}$ [-]", fontsize=12)
