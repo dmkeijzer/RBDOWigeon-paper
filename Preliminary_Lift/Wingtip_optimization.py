@@ -83,45 +83,38 @@ airfoil = airfoil_stats()
 tc = 0.12 #NACA0012 for winglets and Vtail
 xcm = 0.3 #NACA0012 for winglets and Vtail
 CL_CDmin = airfoil[2]
-CL_lst = np.arange(-0.5,1.7,0.100)
+CL_lst = np.arange(0,1.3,0.001)
 #Other parameters
 S_v = 0.6
-S_t = 0
 
+h_list = b* np.array([0, 0.025,0.05,0.1,0.15,0.2])
 
-Drag = componentdrag('tandem',S_ref,l1,l2,l3,d_eq,Vcruise,rho,MAC,AR,e,Mach(Vcruise,a),k,flamf,flamw,mu,tc,xcm,0,SweepLE,u,0,h_d,IF_f,IF_w, IF_v, CL_CDmin,Abase, S_v, s1, s2, h_wl1, h_wl2)
+for h_wl1 in h_list:
+    print(h_wl1)
+    Drag = componentdrag('tandem',S_ref,l1,l2,l3,d_eq,Vcruise,rho,MAC,AR,e,Mach(Vcruise,a),k,flamf,flamw,mu,tc,xcm,0,SweepLE,u,C_t,h_d,IF_f,IF_w, IF_v, CL_CDmin,Abase, S_v, s1, s2, h_wl1, h_wl1)
+    if h_wl1 == 0:
+        CD_lst0 = Drag.CD(CL_lst)
+        print("lmao1")
+    if h_wl1/b == 0.025:
+        CD_lst1 = Drag.CD(CL_lst)
+        print("lmao2")
+    if h_wl1/b == 0.05:
+        CD_lst2 = Drag.CD(CL_lst)
+        print("lmao3")
+    if h_wl1/b == 0.1:
+        CD_lst3 = Drag.CD(CL_lst)
+        print("lmao4")
+    if h_wl1/b == 0.15:
+        CD_lst4 = Drag.CD(CL_lst)
+        print("lmao4")
+    if h_wl1/b == 0.2:
+        CD_lst5 = Drag.CD(CL_lst)
+        print("lmao5")
 
-
-CL_design = Drag.CL_des()[0]
-Cd_des= Drag.Cd_w(CL_design)
-print("CL_des",CL_design)
-print("Cd",Cd_des )
-#Stall
-stall = Wing_params.CLmax_s()
-CLmax = stall[0]
-
-CDs = Drag.CD(CLmax)
-CDs_f = Drag.CD0_f
-CDs_w = CDs - CDs_f
-#Post stall
-Afus = np.pi *d_eq**2/4
-post_stall = Wing_params.post_stall_lift_drag(tc, CDs, CDs_f, Afus)
-
-alpha_lst = np.arange(0,89,0.1)
-Cl_alpha_curve = Wing_params.CLa(tc, CDs, CDs_f, Afus, alpha_lst)
-
-CD_a_w = Wing_params.CDa_poststall(tc, CDs, CDs_f, Afus, alpha_lst, "wing", Drag.CD)
-CD_a_f = Wing_params.CDa_poststall(tc, CDs, CDs_f, Afus, alpha_lst, "fus", Drag.CD)
-
-plt.plot(alpha_lst, CD_a_w)
+plt.plot(CL_lst, CD_lst0)
+plt.plot(CL_lst, CD_lst1)
+plt.plot(CL_lst, CD_lst2)
+plt.plot(CL_lst, CD_lst3)
+plt.plot(CL_lst, CD_lst4)
+plt.plot(CL_lst, CD_lst5)
 plt.show()
-
-
-
-
-
-
-
-
-
-
