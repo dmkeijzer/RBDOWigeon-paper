@@ -9,8 +9,10 @@ import Airfoil_analysis_midterm2 as airfoil
 
 import prelim_ADT as ADT
 import engine_sizing_positioning_midterm2 as eng_siz
+import battery_midterm2 as bat
 
 import performance_analysis_midterm2 as perf
+import Flight_performance_final_midterm2 as energy_calc
 
 import Vertical_tail_sizing_midterm2 as vert_tail
 import Weight_midterm2 as weight
@@ -51,17 +53,14 @@ l_fus = l1_fus + l2_fus + l3_fus
 h_fus = const.h_fuselage
 fus_upsweep = const.upsweep
 
-# Airfoil parameters
-# TODO: Implement airfoil parameters
 
 # --------------------- Initial estimates ---------------------
-# TODO: revise these values
 # Aero
 CLmax = 1.46916
 s1, s2 = const.s1, const.s2   # Ratio of front and back wing areas to total area
-S1, S2 = 5.5, 5.5             # surface areas of wing one and two
+S1, S2 = 5.25, 5.25           # surface areas of wing one and two
 S_tot = S1+S2                 # Total wing surface area
-AR_wing = 8                   # Aspect ratio of a wing, not aircraft
+AR_wing = 8                  # Aspect ratio of a wing, not aircraft
 AR_tot = AR_wing/2            # Aspect ratio of aircraft
 
 # Wingtips
@@ -229,7 +228,6 @@ while iterate:
 
     S1, S2 = S_tot*s1, S_tot*s2
 
-
     # Cruise CL of the wings
     L_cr = MTOM*g0
     L_cr_1 = L_cr/2
@@ -237,6 +235,18 @@ while iterate:
 
     CL_cr_1 = 2*L_cr_1/(rho * V_cr**2 * S1)
     CL_cr_2 = 2*L_cr_2/(rho * V_cr**2 * S2)
+
+    # Energy sizing
+    mission = energy_calc.mission(MTOM, h_cr, V_cr, S_tot)
+
+    # Get approximate overall efficiency
+    eff_overall = 0.91 * 0.57 + 0.699 * 0.43
+    energy = 1.2 * mission.total_energy()[0] * 2.77778e-7 * 1000 / eff_overall  # From [J] to [Wh]
+
+    # Battery sizing
+    battery = bat.Battery(500, 1000, energy, 1)
+
+    m_bat = battery.mass()
 
     # -------------------- Update weight ------------------------
     # TODO update battery weight
@@ -266,4 +276,9 @@ vertical_tail = vert_tail.VT_sizing(MTOM*g0, h_cr, x_CG_MTOM, l_fus, h_fus, w_fu
                                     wing_plan_1[3], wing_plan_2[3], wing_plan_1[0], wing_plan_2[0], taper, ARv=1.25)
 
 print("Converged MTOM:", MTOM, "[kg]")
+
+print("Energy:", energy)
+print("Battery mass:", m_bat)
+print("Wing surface:", S_tot)
+
 print(" ")
