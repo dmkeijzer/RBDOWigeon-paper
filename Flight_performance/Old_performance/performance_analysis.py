@@ -3,15 +3,16 @@ import matplotlib.pyplot as plt
 from Aero_tools import ISA
 import json
 from Transition_simulation import transition_EOM
-
+from Preliminary_Lift.Airfoil_analysis import airfoil_stats
 
 class initial_sizing:
-    def __init__(self, h, path, concept):
+    def __init__(self, h, path, drag_polar, V_stall, V_max, n_turn, ROC, V_cr, ROC_hover, MTOW, CD_vertical):
+
+        # Make the drag polar object an attribute
+        self.drag_polar = drag_polar
 
         self.path = path
         datafile = open(self.path, "r")
-
-        self.concept = concept
 
         # Read data from json file
         self.data = json.load(datafile)
@@ -19,13 +20,8 @@ class initial_sizing:
 
         # Extracting aerodynamic data
         aero        = self.data["Aerodynamics"]
-        self.CLmax  = aero["CLmax_front"]
-        self.A      = aero["AR"]
-        self.e      = aero["e"]
-        self.CLmin  = aero["CLforCDmin"]
-        self.CDmin  = aero["CDmin"]
-        self.StotSw = aero["Stot/Sw"]
-        self.k      = 1/(np.pi*self.A*self.e)
+        self.CLmax,_,_,_,_,_,_,_,_  = airfoil_stats()
+        self.CD_vertical = 1    # Drag polar for the fuselage at 90 degrees TODO: IMPLEMENT
 
         # Atmospherics
         atm_flight  = ISA(h)    # atmospheric conditions during flight
@@ -35,25 +31,21 @@ class initial_sizing:
 
         # Requirements, and others
         reqs        = self.data["Requirements"]
-        self.Vs     = reqs["V_stall"]
-        self.Vmax   = reqs["V_max"]
-        self.ROC    = reqs["ROC"]
-        self.nmax   = reqs["n_turn"]
-        self.Vcr    = 70
+        self.Vs     = V_stall
+        self.Vmax   = V_max
+        self.ROC    = ROC
+        self.nmax   = n_turn
+        self.Vcr    = V_cr
 
-        self.ROC_ho = reqs["ROC_hover"]
+        self.ROC_ho = ROC_hover
 
         # Propulsion constants
-        prop            = self.data["Propulsion"]
         self.eff_prop   = prop["eff_cruise"]    # [-] Propeller efficiency during normal flight
         self.eff_hover  = prop["eff_hover"]     # [-] Propeller efficiency during hover
-        self.Ncr        = prop["N_cruise"]      # [-] Number of engines used in cruise
-        self.Nho        = prop["N_hover"]       # [-] Number of dedicated hover engines
         self.TA         = prop["TA"]            # [kg/m^2]  Disk loading for ducted fans
 
         # Structures data
-        struc           = self.data["Structures"]
-        self.MTOW       = struc["MTOW"]  # [N] Maximum take-off weight in newtons
+        self.MTOW       = MTOW
 
         # Preparing matplotlib
         fig = plt.figure()
@@ -62,8 +54,8 @@ class initial_sizing:
 
         # ======= Drag polar calculations =======
         # Range of CL values, ignoring negative values as they are not relevant
-        CL  = np.linspace(0.0001, self.CLmax, 10000)
-        CD  = self.CDmin + (((CL - self.CLmin)**2)*self.k)
+        CL  = np.linspace(0.0001, self.CLmax, 1000)
+        CD  = drag_polar.CD(CL)     # Get the drag coefficient from the aerodynamics department
 
         # Get the index of the minimum CD/CL
         idx         = np.argmin(CD/CL)
@@ -72,7 +64,7 @@ class initial_sizing:
         idx_climb   = np.argmax((CL**3)/(CD**2))
 
         # CL for minimum CD/CL
-        self.CL_range   = CL[idx]
+        self.CL_range   = drag_polar.CL_des()
 
         # Get the CL
         self.CL_climb   = CL[idx_climb]
@@ -97,7 +89,7 @@ class initial_sizing:
         CL = 2*WS/(self.rho_flight*self.Vmax*self.Vmax)
 
         # Max speed (Reduction of power with altitude was neglected, as no combustion is involved (revise this for H2))
-        return self.eff_prop*(((self.CDmin + self.k*((CL - self.CLmin)**2)) *
+        return self.eff_prop*((self.drag_polar.CD(CL) *
                0.5*self.rho_flight*self.Vmax*self.Vmax*self.Vmax/WS)**-1)
 
     def climb(self, WS, climb_rate):
@@ -106,12 +98,14 @@ class initial_sizing:
         V = np.sqrt(2*WS/(self.rho_flight*self.CL_climb))
 
         # Climb performance
-        return ((climb_rate + (self.CDmin + self.k*((self.CL_climb - self.CLmin)**2)) *
+        return ((climb_rate + (self.drag_polar.CD(self.CL_climb)) *
                 0.5*self.rho_flight*(V**3)/WS)**-1)*self.eff_prop
 
     def turn(self, WS, V, n_turn):
+
+        CL_turn = 2*n_turn*WS/(self.rho_flight*V*V)
         # Turning performance (at high altitude and max speed)
-        return self.eff_prop*(((self.CDmin + self.k*((2*n_turn*WS/(self.rho_flight*V*V) - self.CLmin)**2)) *
+        return self.eff_prop*(((self.drag_polar.CD(CL_turn)) *
                0.5*self.rho_flight*V*V*V/WS)**-1)
 
     def vertical_flight(self, WS, ROC_hover):
@@ -119,7 +113,7 @@ class initial_sizing:
         # Comprehensive preliminary sizing/resizing method for a fixed wing – VTOL electric UAV
 
         # Thrust-to-weight required to allow for a sufficient rate of climb, plus a safety factor for acceleration
-        TWR = 1.2*(1 + ((ROC_hover**2)*self.rho_LTO*self.StotSw/WS))
+        TWR = 1.2*(1 + CD_vertical)
 
         # Obtaining Power to weight based on the TWR required
         return (TWR*np.sqrt(self.TA/(2*self.rho_LTO))/self.eff_hover)**-1
@@ -191,7 +185,7 @@ class initial_sizing:
         plt.tight_layout()
 
         # Save the figure
-        path = 'C:/Users/Egon Beyne/Desktop/DSE/Plots/wing_power_loading_' + str(self.concept) + '.pdf'
+        path = '../Flight_performance/Figures/wing_power_loading.pdf'
         plt.savefig(path)
 
         plt.show()
