@@ -28,7 +28,7 @@ def winglet_dAR(AR, h_wl, b): # Gundmundsson 10.5 Wingtip design
 
 class wing_design:
 
-    def __init__(self, AR, s1, sweepc41, s2, sweepc42, M, S, lh, h_ht, w, h_wl1,h_wl2):
+    def __init__(self, AR, s1, sweepc41, s2, sweepc42, M, S, lh, h_ht, w, h_wl1, h_wl2):
         self.AR_b = AR
         self.s1 = s1
         self.S1 = s1 * S

@@ -72,9 +72,6 @@ class Weight:
         self.oem = (self.wmass + self.pmass + self.lmass + self.fmass + self.bmass)
         self.mtom = (self.wmass + self.pmass + self.lmass + self.fmass + self.cmass + self.bmass + self.tot_m_pax)
 
-    def MTOM(self):
-        return self.mtom
-
     def print_weight_fractions(self):
         d = {}
         d["Front wing"] = [self.wing.mass[0], self.wing.mass[0]/self.oem, self.wing.mass[0]/self.mtom]
@@ -92,7 +89,7 @@ class Weight:
             mass, oem_frac, mtom_frac = v
             print("{:<15} {:<20} {:<25} {:<15}".format(k, mass, oem_frac, mtom_frac))
         print('')
-        print(f'Where OEM is {self.oem}kg with CG of {self.oem_cg}m, and MTOM is {self.mtom}kg with CG of {self.mtom_cg}m')
+        print(f'Where OEM is {self.oem} kg with CG of {self.oem_cg} m, and MTOM is {self.mtom} kg with CG of {self.mtom_cg} m')
         # for key in d:
         #     d[key] = {k: list(i) if isinstance(i, np.ndarray) else i for k, i in zip(["mass", "fracOEM", "fracEM"], d[key])}
         # return d
