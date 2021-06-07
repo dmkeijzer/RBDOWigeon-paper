@@ -104,7 +104,7 @@ CDs = Drag.CD(CLmax)
 CDs_f = Drag.CD0_f
 CDs_w = CDs - CDs_f
 #Post stall
-Afus = np.pi *d_eq/4
+Afus = np.pi *d_eq**2/4
 post_stall = Wing_params.post_stall_lift_drag(tc, CDs, CDs_f, Afus)
 
 alpha_lst = np.arange(0,89,0.1)
