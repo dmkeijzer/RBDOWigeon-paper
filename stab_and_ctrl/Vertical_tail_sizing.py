@@ -4,7 +4,7 @@ from matplotlib import pyplot as plt
 from matplotlib import colors as mc
 from Aero_tools import ISA
 class VT_sizing:
-    def __init__(self,W,h,xcg,lfus,hfus,wfus,V0,Vstall,CD0,theta0,CLfwd,CLrear,
+    def __init__(self,W,h,xcg,lfus,hfus,wfus,V0,Vstall,CD0,CLfwd,CLrear,
                  CLafwd,CLarear, Cmacfwd,Cmacrear,
                  Sfwd,Srear,Afwd,Arear,Lambda_c4_fwd,Lambda_c4_rear,cfwd,crear,bfwd,brear,taper,ARv):
         self.W = W         # Weight [N]
@@ -30,7 +30,6 @@ class VT_sizing:
         self.Sweepc4rear = Lambda_c4_rear # Sweep at c/2 [rad]
         self.Sweepc2fwd = self.Sweep(Afwd,self.Sweepc4fwd,50,25)
         self.Sweepc2rear = self.Sweep(Arear, self.Sweepc4rear, 50, 25)
-        self.th0 = theta0  # Initial pitch angle [rad]
         self.V0 = V0       # Initial speed [m/s]
         self.M0 = self.V0/(1.4*287*self.T) # Initial mach number [-]
         self.Re = self.rho*self.V0*self.lfus/self.mu

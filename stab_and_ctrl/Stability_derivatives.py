@@ -8,8 +8,9 @@ from stab_and_ctrl.Aileron_Sizing import Control_surface
 class Stab_Derivatives:
     def __init__(self,W,h,lfus,hfus,wfus, d,dy,xcg,zcg,cfwd,crear,Afwd,Arear,Vstall,
                  V0,T0,CLfwd0,CLrear0,CD0,CL0,theta0,alpha0,
-                 Clafwd,Clarear, Cd0fwd, Cd0rear, CLafwd,CLarear,Sfwd,Srear,Gamma, efwd,erear,Lambda_c4,taper,
-                 bv,Sv,ARv,Pbr,C_D_0):
+                 Clafwd,Clarear, Cd0fwd, Cd0rear, CLafwd,CLarear,Sfwd,Srear,Gamma_fwd,Gamma_rear,
+                 efwd,erear,Lambda_c4_fwd,Lambda_c4_rear,taper,taper_v,
+                 bv,Sv,ARv,Pbr,C_D_0,eta_v):
         self.W = W         # Weight [N]
         self.h = h     # Height [m]
         Aero = ISA(self.h) # Initialises Aero object
@@ -27,8 +28,10 @@ class Stab_Derivatives:
         self.c = self.cfwd*self.Sfwd/(self.S) + self.crear*self.Srear/(self.S)
         self.bfwd = np.sqrt(self.Afwd*self.Sfwd)     # Wing span [m]
         self.brear = np.sqrt(self.Arear*self.Srear) # Wing span [m]
-        self.Sweepc4 = Lambda_c4 # Sweep at c/4 [rad]
-        self.taper = taper
+        self.Sweepc4 = Lambda_c4_fwd # Sweep at c/4 [rad]
+        self.Sweepc4_rear = Lambda_c4_rear # Sweep at c/4 [rad]
+        self.taper = taper # Wing taper ratio [-]
+        self.taper_v = taper_v # Vertical tail taper ratio [-]
         self.efwd,self.erear = efwd, erear # Span efficiency factors of both wings
         self.bv = bv       # Vertical tail span [m]
         self.Sv = Sv       # Vertical tail area [m^2]
@@ -43,7 +46,8 @@ class Stab_Derivatives:
         self.CLrear0 = CLrear0 # Initial lift coefficient of rear wing [-]
         self.CD0 = CD0     # Initial total drag coefficient (not profile CD_0)[-]
         self.T0 = T0       # Initial thrust [N]
-        self.Gamma_fwd = Gamma # Forward wing dihedral [rad]
+        self.Gamma_fwd = Gamma_fwd # Forward wing dihedral [rad]
+        self.Gamma_rear = Gamma_rear  # Rear wing dihedral [rad]
         self.CLafwd, self.CLarear = CLafwd, CLarear # Wing lift curve slopes for both wings [1/rad]
         self.Clafwd, self.Clarear = Clafwd,Clarear # Airfoil lift curve slopes
         self.Cd0fwd,self.Cd0rear = Cd0fwd,Cd0rear # Airfoil base drag
@@ -51,14 +55,16 @@ class Stab_Derivatives:
         self.dy = dy
         self.xacfwd = 0.25 * self.cfwd + self.d
         self.xacrear = self.lfus - (1 - 0.25) * self.crear
-        self.Pbr = Pbr
-        self.zcg=zcg
+        self.Pbr = Pbr # Shaft power per engine [W]
+        self.zcg = zcg
         self.ARv = ARv
         self.b = max(self.bfwd,self.brear)
         self.CD_0 = C_D_0 # PROFILE DRAG for one wing [-]
         self.Vstall = Vstall # Stall speed [m/s]
         self.Vrear_Vfwd = 1
+        self.eta_v = eta_v
         ### It is assumed that aeroelastic effects are neglected ###
+
     def lh_arm(self):
         return abs(self.xacfwd-self.d - self.xacrear)
 
@@ -160,14 +166,14 @@ class Stab_Derivatives:
         CX_q  =0
         CZ_q = -self.CLafwd*(self.xcg-self.xacfwd)*self.Sfwd/(self.S*self.c)+\
                self.CLarear*(self.xacrear-self.xcg)*self.Srear/(self.S*self.c)
-        Cm_q = -(self.CLafwd*(self.xcg-self.xacfwd)**2*self.Sfwd/(self.S*self.c**2)+\
-               self.CLarear*(self.xacrear-self.xcg)**2*self.Srear/(self.S*self.c**2))
+        Cm_q = -(self.CLafwd*(self.xcg-self.xacfwd)**2*self.Sfwd/(self.S*self.c**2)+
+                 self.CLarear*(self.xacrear-self.xcg)**2*self.Srear/(self.S*self.c**2))
         return CX_q,CZ_q,Cm_q
 
     def alpha_dot_derivatives(self):
         """
         Analytical estimates of stability derivatives wrt AoA_dot (alpha_dot*c/V).
-        :return:
+        :return: C_X_alpha_dot, C_Z_alpha_dot, C_m_alpha_dot
         """
         CX_adot = 0
         darear_dadot = self.deps_da(self.Sweepc4,self.hfus-self.dy,self.CLafwd)*self.lh_arm()/self.c
@@ -181,8 +187,8 @@ class Stab_Derivatives:
         :return: C_Y_r, C_l_r, C_n_r
         """
         CY_r = 2*self.C_L_a(self.ARv,self.Sweep(self.ARv*4,0.4,0,50,100))*(self.lfus-self.xcg)*\
-                    self.Sv/(self.S*self.b)
-        Pos_MAC_v = self.bv
+                    self.Sv/(self.S*self.b)*self.eta_v
+        Pos_MAC_v = self.bv/6*((1+2*self.taper_v)/(1+self.taper_v))*2
         zv = self.hfus+Pos_MAC_v-self.zcg
         Cl_r_v = zv/self.b*CY_r
         Cl_r_fwd = self.CLfwd0/4
@@ -204,12 +210,40 @@ class Stab_Derivatives:
                                self.Clafwd,self.Clarear,self.Cd0fwd,self.Cd0rear,self.Sfwd,self.Srear,
                                self.Afwd,self.Arear,self.cfwd,self.crear,self.bfwd,self.brear,self.taper)
         Cl_p = Ctrl.Clp()
-        eta_v = 1
+        eta_v = self.eta_v
         CY_p = -8/(3*np.pi)*eta_v*(self.bv*self.Sv/(self.S*self.b))*self.C_L_a(self.ARv,self.Sweep(self.ARv*4,0.4,0,50,100))
         Cn_p_v = -(self.lfus-self.xcg)/(self.b)*CY_p
         Cn_p_wings = -1/8*(self.CLfwd0*self.Sfwd/self.S + self.CLrear0*self.Srear/self.S)
         Cn_p = Cn_p_v+Cn_p_wings
         return CY_p, Cl_p,Cn_p
+
+    def beta_derivatives(self):
+        """
+        Analytical estimates of stability derivatives wrt side slip angle beta.
+        :return: C_Y_beta, C_l_beta, C_n_beta
+        """
+        dsigma_dbeta = 0
+        CY_b = -self.C_L_a(self.ARv,self.Sweep(self.ARv*4,self.taper_v,0,50,100))*(1-dsigma_dbeta)*self.eta_v*self.Sv/(self.S)
+        Cn_b_v = -CY_b*(self.lfus-self.xcg)/self.b
+        a = self.lfus/2
+        b = self.wfus/2
+        V = 2*np.pi/4*b**2*(self.lfus/2-(self.lfus/2)**3/(3*a**2))
+        bmax = max(self.bfwd,self.brear)
+        Cnb_fus = -2*V/(self.S*bmax)
+        Cnb_w_fwd = self.CLfwd0**2*(1/(4*np.pi*self.Afwd)-
+                                   (np.tan(self.Sweepc4)/(np.pi*self.Afwd+4*np.cos(self.Sweepc4)))*
+                                   (np.cos(self.Sweepc4)-self.Afwd/2-self.Afwd**2/(8*np.cos(self.Sweepc4))-
+                                    6*(self.xacfwd-self.xcg)*np.sin(self.Sweepc4)/(self.Afwd*self.c)))
+        Cnb_w_rear = self.CLrear0**2*(1/(4*np.pi*self.Arear)-
+                                   (np.tan(self.Sweepc4_rear)/(np.pi*self.Arear+4*np.cos(self.Sweepc4_rear)))*
+                                   (np.cos(self.Sweepc4_rear)-self.Afwd/2-self.Arear**2/(8*np.cos(self.Sweepc4_rear))-
+                                    6*(self.xacrear-self.xcg)*np.sin(self.Sweepc4_rear)/(self.Arear*self.c)))
+        Cn_b_wings = Cnb_w_fwd*self.Sfwd*self.bfwd/(self.S*bmax)+Cnb_w_rear*self.Srear*self.brear/(self.S*bmax)
+        Cn_b = Cnb_fus+Cn_b_wings+Cn_b_v
+        Cl_b = 0
+        return CY_b, Cl_b,Cn_b
+
+
 
 
 

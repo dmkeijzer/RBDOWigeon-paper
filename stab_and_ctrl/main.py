@@ -85,7 +85,7 @@ crcv = np.linspace(0.1,0.4,150)
 # print("Sv = ",vt_sizing.VT_stability(lv))
 
 ARv = 1.5
-vt_sizing = VT_sizing(W,h,xcg,lfus,hfus,wfus,V0,Vstall,CD0,theta0,
+vt_sizing = VT_sizing(W,h,xcg,lfus,hfus,wfus,V0,Vstall,CD0,
                       CLdesfwd,CLdesrear,CLafwd,CLarear,
                       Cmacfwd,Cmacrear,Sfwd,Srear,Afwd,Arear,Lambda_c4_fwd,Lambda_c4_rear,
                       cfwd,crear,bfwd,brear,taper,ARv=ARv)
