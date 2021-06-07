@@ -3,13 +3,13 @@ from scipy.integrate import quad
 from MathFunctions.Trigonometry import cos, pi
 
 class Material:
-    def __init__(self, E, density, o_yield, o_ult, Paris=(None, None), name=None, poisson=0.33, **others):
+    def __init__(self, E, density, o_yield, o_ult, Paris=(None, None), name=None, poisson=0.33, SNm = 4, SNC = 3.15e14, **others):
         self.E, self.rho, self.oy, self.oult, self.v = E, density, o_yield, o_ult, poisson
         self.C, self.m = Paris
         self.props = others
         self.name = name
-        self.G = E / (2 * (1 + poisson))
-    
+        self.SNm, self.SNC = SNm, SNC
+        
     __repr__ = __str__ = lambda self: (self.name if self.name else "Material")+f"(E={self.E}, ρ={self.rho}, σy={self.oy}, σult={self.oult})"
     
     def buckling(self, shorterSideOfSkin, skinThickness):
@@ -36,11 +36,12 @@ class Material:
 
     @staticmethod
     def StressConcentration(beta, a, o):
-        return beta * o*1e-6 * (pi * a) ** 0.5
-
+        return beta * o * (pi * a) ** 0.5
+    
     def ParisFatigueN(self, dS, w, ai, af):
         def integrand(a):
-            beta = self.beta(a/w, False)
+            beta = self.beta(a/w)
             return 1 / self.StressConcentration(beta, a, dS)**self.m
         N = (1/self.C) * quad(integrand, ai, af)[0]
         return N
+    BasquinLaw = lambda self, S: self.SNC / (S ** self.SNm)

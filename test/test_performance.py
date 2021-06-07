@@ -2,6 +2,8 @@ import unittest
 import numpy as np
 from Aero_tools import ISA
 from Flight_performance.Flight_performance_final import evtol_performance
+import scipy.optimize as optimize
+from constants import g
 
 class testPerformance(unittest.TestCase):
     def test_max_speed(self):
@@ -31,8 +33,25 @@ class testPerformance(unittest.TestCase):
 
         V_max = V
 
-        performance = evtol_performance(300, 60)
+        performance = evtol_performance(300, 60, S = 10, CL_max = 1.5, mass = 2000, battery_capacity = 500e6,
+                                        EOM = 1500, loiter_time = 30*60, CD_vertical = 1)
         V_max_RC    = performance.climb_performance(testing = True)
 
         self.assertAlmostEqual(V_max, V_max_RC, delta = 5)
+
+    def test_vertical_climb(self):
+
+        performance = evtol_performance(cruising_alt=300, cruise_speed=60, S = 10, CL_max = 1.5, mass = 2000,
+                                        battery_capacity = 500e6, EOM = 1500, loiter_time = 30*60, CD_vertical = 1)
+
+        rho    = ISA(0).density()
+
+        # Prediction using terminal velocity
+        V_fall  = -np.sqrt(2*performance.W/(performance.CD_vert*rho*performance.S))
+
+        # Prediction using actual model
+        V_mod   = performance.vertical_equilibrium(300, testing = True, test_thrust = 0)
+
+        self.assertAlmostEqual(V_fall, V_mod, delta = 2)
+
 
