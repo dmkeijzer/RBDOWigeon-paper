@@ -38,7 +38,7 @@ class Wing_placement_sizing:
         self.Sweepc4rear = Lambda_c4_rear # Sweep at c/4 [rad]
         self.Sweepc2fwd = self.Sweep(Afwd,self.Sweepc4fwd,50,25)
         self.Sweepc2rear = self.Sweep(Arear, self.Sweepc4rear, 50, 25)
-        print("Sweep at c/2:",self.Sweepc2fwd*180/np.pi)
+        # print("Sweep at c/2:",self.Sweepc2fwd*180/np.pi)
         self.V0 = V0       # Initial speed [m/s]
         self.M0 = self.V0/(1.4*287*self.T)       # Initial mach number [-]
         self.Gamma_fwd = Gamma # Forward wing dihedral [rad]
@@ -139,7 +139,7 @@ class Wing_placement_sizing:
         CDrear = self.CD0 + self.CLrear ** 2 / (np.pi * self.Arear * self.erear)
         c = self.Sfwd / (self.Sfwd + self.Srear) * self.cfwd + self.Srear / (self.Srear + self.Sfwd) * self.crear
         CDafwd = 2*self.CLafwd*self.CLdesfwd/(np.pi*self.Afwd*self.efwd)
-        CDarear = 2*self.CLarear*self.CLdesrear/(np.pi*self.Afwd*self.erear)
+        CDarear = 2*self.CLarear*self.CLdesrear/(np.pi*self.Arear*self.erear)
         # print("CD_alpha = ",CDafwd)
         deda = self.de_da
         # print("de/da = ",deda)

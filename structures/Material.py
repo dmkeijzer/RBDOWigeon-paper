@@ -36,7 +36,7 @@ class Material:
 
     @staticmethod
     def StressConcentration(beta, a, o):
-        return beta * o*1e-6 * (pi * a) ** 0.5
+        return beta * o * (pi * a) ** 0.5
     
     def ParisFatigueN(self, dS, w, ai, af):
         def integrand(a):
@@ -44,3 +44,4 @@ class Material:
             return 1 / self.StressConcentration(beta, a, dS)**self.m
         N = (1/self.C) * quad(integrand, ai, af)[0]
         return N
+    BasquinLaw = lambda self, S: self.SNC / (S ** self.SNm)
