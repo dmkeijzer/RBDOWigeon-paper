@@ -139,7 +139,7 @@ class Wing_placement_sizing:
         CDrear = self.CD0 + self.CLrear ** 2 / (np.pi * self.Arear * self.erear)
         c = self.Sfwd / (self.Sfwd + self.Srear) * self.cfwd + self.Srear / (self.Srear + self.Sfwd) * self.crear
         CDafwd = 2*self.CLafwd*self.CLdesfwd/(np.pi*self.Afwd*self.efwd)
-        CDarear = 2*self.CLarear*self.CLdesrear/(np.pi*self.Afwd*self.erear)
+        CDarear = 2*self.CLarear*self.CLdesrear/(np.pi*self.Arear*self.erear)
         # print("CD_alpha = ",CDafwd)
         deda = self.de_da
         # print("de/da = ",deda)

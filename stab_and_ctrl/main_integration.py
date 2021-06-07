@@ -14,6 +14,11 @@ import stab_and_ctrl.Scissor_Plots as sp
 
 @dataclass
 class Fuselage:
+    """
+    Class containing all input fields from the fuselage to stability and
+    controllability
+    @author Jakob Schoser
+    """
     m_empty: float  # empty fuselage mass (excl. battery, incl. vertical
     #                      tail and landing gear)
     m_cargo: float  # cargo mass
@@ -37,6 +42,11 @@ class Fuselage:
 
 @dataclass
 class Wing:
+    """
+    Class containing all input fields from a wing to stability and
+    controllability
+    @author Jakob Schoser
+    """
     m: float  # wing mass (excl. engines)
     Cd0_af: float  # zero-lift drag coefficient (aerofoil)
     Cd0: float  # zero-lift drag coefficient (wing)
@@ -57,6 +67,11 @@ class Wing:
 
 @dataclass
 class PropAndPower:
+    """
+    Class containing all input fields from propulsion and power to stability
+    and controllability
+    @author Jakob Schoser
+    """
     n_engf: int  # number of engines on front wing
     n_engr: int  # number of engines on rear wing
     m_peng: float  # mass per engine (incl. propeller)
@@ -70,6 +85,11 @@ class PropAndPower:
 
 @dataclass
 class Performance:
+    """
+    Class containing all input fields from general performance to stability and
+    controllability
+    @author Jakob Schoser
+    """
     v_stall: float  # stall speed
     v_cruise: float  # cruise speed
     v_max: float  # maximum speed
@@ -78,11 +98,20 @@ class Performance:
 
 @dataclass
 class TailAndCtrlSurf:
+    """
+    Class containing all output fields from stability and controllability
+    pertaining to the vertical tail and control surfaces
+    @author Jakob Schoser
+    """
     pass
 
 
 @dataclass
 class StabAndControlOutputs:
+    """
+    Class containing all output fields from stability and controllability
+    @author Jakob Schoser
+    """
     cg_bat: list  # battery CG
     Sf_Sr: float  # ratio between front wing area and rear wing area
     cg_wf: list  # [x, z]-coordinate of the front wing CG
@@ -97,6 +126,17 @@ class StabAndControlOutputs:
 
 def stab_and_ctrl_main(fus: Fuselage, wf: Wing, wr: Wing, pnp: PropAndPower,
                        perf: Performance):
+    """
+    Function that takes input values to calculate relevant outputs based on
+    stability and control considerations.
+    @author Jakob Schoser
+    :param fus: Fuselage parameters
+    :param wf: Forward wing parameters
+    :param wr: Rear wing parameters
+    :param pnp: Propulsion and power parameters
+    :param perf: General performance parameters
+    :return:
+    """
     x_cg_margin = 0.1
     theta = np.deg2rad(15)
     phi = np.deg2rad(7)
