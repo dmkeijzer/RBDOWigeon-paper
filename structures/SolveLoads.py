@@ -5,6 +5,7 @@ from sklearn.linear_model import LinearRegression
 from MathFunctions.Mechanics import StepFunction
 import rainflow
 import numpy as np
+import pandas as pd
 
 class Engines:
     def __init__(self, ThrustHover, ThrustCruise, positions: list[float, int], weight):
@@ -23,7 +24,7 @@ class WingLoads:
         self.ViVx, self.ViMy = [None]*2
         
         self.box = WingBox(self.tsk, self.tsp, self.frac, self.toc)
-        self.box.StrPlacement(self.nStrT, self.nStrB, self.StrA)
+        self.box.StrPlacement(self.nStrT, self.nStrB, self.StrA, self.strGeo, self.strType)
         self.wing = WingStructure(self.span, self.taper, self.cr, self.box)
         self.acp = (self.xac - 0.45) * self.mac # Redefine
         
@@ -101,9 +102,9 @@ class WingLoads:
         
         x, y = np.array(coordinates).T
         sigma = root.o(x, y, self.Mx(0), self.My(0))
-        tau = [root.tau(ix, iy, self.Vx(0), self.Vy(0), self.T(0)) for ix, iy in coordinates]
+        tau = np.array([root.tau(ix, iy, self.Vx(0), self.Vy(0), self.T(0)) for ix, iy in coordinates])
         
-        return np.array(coordinates), sigma, np.array(tau)
+        return np.array(coordinates), sigma, tau, np.sqrt(3*tau**2 + sigma**2)
 
     def stressesVTO(self):
         root = self.wing(0)
@@ -113,9 +114,9 @@ class WingLoads:
         
         x, y = np.array(coordinates).T
         sigma = root.o(x, y, Mx = 0, My = self.ViMy(0))
-        tau = [root.tau(ix, iy, Vx = self.ViVx(0), Vy = 0, T = 0) for ix, iy in coordinates]
+        tau = np.array([root.tau(ix, iy, Vx = self.ViVx(0), Vy = 0, T = 0) for ix, iy in coordinates])
         
-        return np.array(coordinates), sigma, np.array(tau)
+        return np.array(coordinates), sigma, tau, np.sqrt(3*tau**2 + sigma**2)
     
     @staticmethod
     def extreme(coord, arr):
