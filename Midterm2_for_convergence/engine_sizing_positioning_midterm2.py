@@ -31,6 +31,9 @@ class PropSizing:
     def diameter(self):
         return 2*self.radius()
 
+    def area_prop(self):
+        return np.pi*(self.radius()**2 - (self.xi_0*self.radius())**2)
+
     def disk_loading(self):
         """
         Calculate disk loading in hover based on propeller area and MTOM
@@ -38,6 +41,5 @@ class PropSizing:
 
         :return: Disk loading in kg/m^2
         """
-        area_prop = np.pi*(self.radius()**2 - (self.xi_0*self.radius())**2)
-        area_tot = self.N_tot*area_prop
+        area_tot = self.N_tot * self.area_prop()
         return self.MTOM/area_tot

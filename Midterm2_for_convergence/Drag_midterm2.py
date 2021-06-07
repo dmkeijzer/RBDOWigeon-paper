@@ -1,8 +1,8 @@
 import numpy as np
 from math import *
-from Preliminary_Lift.Airfoil_analysis import Cd
-from Preliminary_Lift.Wing_design import winglet_dAR
-#
+from Airfoil_analysis_midterm2 import Cd
+from Wing_design_midterm2 import winglet_dAR
+
 # From BOX WING FUNDAMENTALS - A DESIGN PERSPECTIVE
 # Oswald efficiency factor depending on the wing type
 # h = 0.2, b = 1 can be used for a ratio of 0.2 which is a reasonable initial estimation
@@ -53,7 +53,8 @@ def e_OS(AR):
 # CD0 component build up
 
 class componentdrag:
-    def __init__(self, type, S_ref, l1, l2, l3, d, V_cr, rho, MAC, AR, e, M_cr, k, frac_lam_f, frac_lam_w, mu, tc,xcm,sweepm, sweepLE, u, c_t,h, IF_f, IF_w,IF_v, C_L_minD, Abase, S_v, S_t,s1,s2, h_wl1,h_wl2):
+    def __init__(self, type, S_ref, l1, l2, l3, d, V_cr, rho, MAC, AR, e, M_cr, k, frac_lam_f, frac_lam_w, mu, tc, xcm,
+                 sweepm, sweepLE, u, c_t,h, IF_f, IF_w,IF_v, C_L_minD, Abase, S_v, S_t, s1, s2, h_wl1, h_wl2):
         self.S_ref = S_ref
         self.l1 = l1
         self.l2 = l2
@@ -146,11 +147,11 @@ class componentdrag:
 
     def Cd_w(self, C_L):
 
-        return self.IF_w*Cd(C_L/(np.cos(self.SweepLE)**2))
+        return self.IF_w * Cd(C_L/(np.cos(self.SweepLE)**2))
 
     def CD(self, C_L):
 
-        return self.CD0()+self.CDi(C_L) + self.CD_base() +self.CD_upsweep() + self.Cd_w(C_L)
+        return self.CD0()+self.CDi(C_L) + self.CD_base() + self.CD_upsweep() + self.Cd_w(C_L)
 
     def Drag(self, C_L):
 
