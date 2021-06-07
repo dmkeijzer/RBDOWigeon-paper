@@ -11,13 +11,13 @@ from Wing_design import deps_da
 
 # INPUTS
 alpha   = 9         # Geometric angle of attack at root, degrees
-span    = 8.57        # Wing span
-root    = 0.875        # Root chord
-tip     = 0.35         # Tip chord
+span    = 7.24        # Wing span
+root    = 0.999        # Root chord
+tip     = 0.449        # Tip chord
 sweep   = 0        # Sweep of quarter-chord, degrees
 washout = 0        # Downward twist at tip, degrees
 npoints = 10        # Number of points to evaluate on wing half
-
+AR= 10
 # WING
 def slope(y2, y1, x2, x1): return (y2 - y1) / (x2 - x1)
 
@@ -122,7 +122,7 @@ def l_function(lam, spc, y, n):
 
     return weissl
 
-def weissinger_l(wing, al, m):
+def weissinger_l(wing, al, m, AR):
     """ Weissinger-L method for a swept, tapered, twisted wing.
         wing.span: span
         wing.root: chord at the root
@@ -245,7 +245,8 @@ def weissinger_l(wing, al, m):
     CL /= area
     CDi /= area
 
-    return y*wing.span/2., cl, ccl, al_i*180./pi, CL, CDi
+    e = ((CL**2)/(np.pi*AR*CDi))
+    return y*wing.span/2., cl, ccl, al_i*180./pi, CL, CDi, e
 
 # RUN_WEISSINGER
 def create_plot(wing, y, cl, ccl, CL, CDi):
@@ -297,12 +298,13 @@ def create_plot_comp(wing, y, cl, ccl, CL, CDi,  cl2, ccl2, CL2, CDi2):
 if __name__ == "__main__":
 
     wing = Wing(span, root, tip, sweep,washout)
-    y, cl, ccl, al_i, CL, CDi = weissinger_l(wing, alpha, 2*npoints-1)
+    y, cl, ccl, al_i, CL, CDi , e= weissinger_l(wing, alpha, 2*npoints-1, AR)
 
     de_da = deps_da(0, span, 6, 1.25, wing.aspect_ratio, 5.27)
     alpha2 = alpha * (1 - de_da)
+    print("downwash", de_da)
     wing2 = Wing(span, root, tip, sweep,washout)
-    y2, cl2, ccl2, al_i2, CL2, CDi2 = weissinger_l(wing2, alpha2, 2*npoints-1)
+    y2, cl2, ccl2, al_i2, CL2, CDi2, e = weissinger_l(wing2, alpha2, 2*npoints-1, AR)
 
     print(cl,len(cl))
     print(cl2,len(cl2))
@@ -312,6 +314,7 @@ if __name__ == "__main__":
     print("{:<6}".format("MAC: ") + str(wing.cbar))
     print("{:<6}".format("CL: ") + str(CL))
     print("{:<6}".format("CDi: ") + str(CDi))
+    print("{:<6}".format("e: ") + str(e))
 
     create_plot(wing, y, cl, ccl, CL, CDi)
     create_plot(wing2, y2, cl2, ccl2, CL2, CDi2)
