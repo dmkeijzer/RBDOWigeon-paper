@@ -81,7 +81,7 @@ ROC_hover = 2
 
 
 # Propulsion
-n_prop = 16                 # Number of engines [-]
+n_prop = 12                 # Number of engines [-]
 disk_load = 250             # [kg/m^2]
 clearance_fus_prop = 0.2    # Horizontal separation between the fuselage and the first propeller [m]
 clearance_prop_prop = 0.2   # Horizontal separation between propellers [m]
@@ -117,8 +117,10 @@ pos_frontwing, pos_backwing = 0.5, 7    # positions of the wings away from the n
 
 mass_per_prop = 480 / n_prop
 m_prop = [mass_per_prop] * n_prop       # list of mass of engines (so 30 kg per engine with nacelle and propeller)
-pos_prop = [0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 7.0, 7.0, 7.0, 7.0, 7.0, 7.0, 7.0,
-            7.0]  # 8 on front wing and 8 on back wing
+# pos_prop = [0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 7.0, 7.0, 7.0, 7.0, 7.0, 7.0, 7.0,
+#             7.0]  # 8 on front wing and 8 on back wing
+pos_prop = [0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 7.0, 7.0, 7.0, 7.0, 7.0, 7.0]  # 6 on front wing and 6 on back wing
+
 
 # ------------- Initial mass estimate -------------
 wing = weight.Wing(MTOM, S1, S2, n_ult, AR_wing, [pos_frontwing, pos_backwing])
@@ -277,8 +279,17 @@ vertical_tail = vert_tail.VT_sizing(MTOM*g0, h_cr, x_CG_MTOM, l_fus, h_fus, w_fu
 
 print("Converged MTOM:", MTOM, "[kg]")
 
-print("Energy:", energy)
-print("Battery mass:", m_bat)
-print("Wing surface:", S_tot)
+print("Energy:", energy, "[kWh]")
+print("Battery mass:", m_bat, "[kg]")
+print("Wing surface:", S_tot, "[m^2]")
+print("")
+print("Propeller radius:", prop_radius, "[m]")
+print("Disk loading:", disk_load, "[kg/m^2]")
+print("Cruise drag:", D_cr, "[N]")
+print("Thrust per engine at cruise:", D_cr/16, "[N]")
+print("")
+print("Cruise speed:", V_cr, "[m/s]")
+print("Cruise height:", h_cr, "[m]")
 
+# print("Vertical tail surface", vertical_tail.final_VT_rudder(n_prop, ))
 print(" ")
