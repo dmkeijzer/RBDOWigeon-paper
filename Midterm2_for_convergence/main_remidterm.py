@@ -4,11 +4,13 @@ import constants as const
 import Aero_tools as at
 
 import Drag_midterm2 as drag_comp
-import Wing_design_midterm2 as wing_design
+import Wing_design_midterm2 as wing_des
 import Airfoil_analysis_midterm2 as airfoil
 
 import prelim_ADT as ADT
 import engine_sizing_positioning_midterm2 as eng_siz
+
+import performance_analysis_midterm2 as perf
 
 import Vertical_tail_sizing_midterm2 as vert_tail
 import Weight_midterm2 as weight
@@ -56,39 +58,50 @@ fus_upsweep = const.upsweep
 # TODO: revise these values
 # Aero
 CLmax = 1.46916
-S1, S2 = 5.5, 5.5  # surface areas of wing one and two
-AR_wing = 10        # Aspect ratio of a wing, not aircraft
-AR_tot = AR_wing/2  # Aspect ratio of aircraft
+s1, s2 = const.s1, const.s2   # Ratio of front and back wing areas to total area
+S1, S2 = 5.5, 5.5             # surface areas of wing one and two
+S_tot = S1+S2                 # Total wing surface area
+AR_wing = 8                   # Aspect ratio of a wing, not aircraft
+AR_tot = AR_wing/2            # Aspect ratio of aircraft
 
 # Wingtips
-S_wt = 0  # Surface of the wingtips
-h_wt_fwd = 0
-h_wt_bck = 0
+S_wt = 0    # Surface of the winglets
+h_wt_1 = 0  # Height of front wingtips
+h_wt_2 = 0  # Height of back wingtips
 
 
 # Performance
-h_cr = 1
-V_cr = 1
-ISA = at.ISA(h_cr)
+h_cr = 1000
+V_cr = 52.87
+C_L_cr = 0.8
+V_stall = 40
+V_max = 100
+n_turn = 2
+ROC = 10
+ROC_hover = 2
 
 
 # Propulsion
-n_prop = 16  # number of engines
-disk_load = 250  # [kg/m^2]
+n_prop = 16                 # Number of engines [-]
+disk_load = 250             # [kg/m^2]
+clearance_fus_prop = 0.2    # Horizontal separation between the fuselage and the first propeller [m]
+clearance_prop_prop = 0.2   # Horizontal separation between propellers [m]
+xi_0 = 0.1                  # r/R ratio of hub diameter to out diameters [-]
+m_bat = 483.15              # Initial estimate for battery mass [kg]
+
 
 # Structures
 # TODO: Revise initial mass
-MTOM = 1972  # maximum take-off mass from statistical data - Class I estimation
+MTOM = 3000         # maximum take-off mass from statistical data - Class I estimation
 
-n_ult = 3.2 * 1.5  # 3.2 is the max we found, 1.5 is the safety factor
+n_ult = 3.2 * 1.5   # 3.2 is the max we found, 1.5 is the safety factor
 
 
 # Stability
-S_v = 5  # Area of the vertical tail [m^2]
-
+S_v = 1.063     # Area of the vertical tail [m^2]
+h_tail = 1.152  # Height of vertical tail [m]
 
 # ------------------ Constants for weight estimation ----------------
-
 # TODO: revise Pmax
 Pmax = 15.25  # this is defined as maximum perimeter in Roskam, so i took top down view of the fuselage perimeter
 
@@ -113,66 +126,144 @@ wing = weight.Wing(MTOM, S1, S2, n_ult, AR_wing, [pos_frontwing, pos_backwing])
 fuselage = weight.Fuselage(MTOM, Pmax, l_fus, n_pax, pos_fus)
 lgear = weight.LandingGear(MTOM, pos_lgear)
 props = weight.Propulsion(n_prop, m_prop, pos_prop)
-Mass = weight.Weight(m_pax, wing, fuselage, lgear, props, cargo_m=cargo_m, cargo_pos=6, battery_m=400, battery_pos=3.6,
-                p_pax=[1.5, 3, 3, 4.2, 4.2])
+Mass = weight.Weight(m_pax, wing, fuselage, lgear, props, cargo_m=cargo_m, cargo_pos=6, battery_m=m_bat,
+                     battery_pos=3.6, p_pax=[1.5, 3, 3, 4.2, 4.2])
 
-# Initial estiate for the mass
-MTOM = Mass.MTOM()
+# Initial estimate for the mass
+MTOM = Mass.mtom
+
+# TODO: revise approach of reiterating
+# Reiterate once because wing uses value for MTOM
+wing = weight.Wing(MTOM, S1, S2, n_ult, AR_wing, [pos_frontwing, pos_backwing])
+fuselage = weight.Fuselage(MTOM, Pmax, l_fus, n_pax, pos_fus)
+lgear = weight.LandingGear(MTOM, pos_lgear)
+props = weight.Propulsion(n_prop, m_prop, pos_prop)
+Mass = weight.Weight(m_pax, wing, fuselage, lgear, props, cargo_m=cargo_m, cargo_pos=6, battery_m=m_bat,
+                     battery_pos=3.6, p_pax=[1.5, 3, 3, 4.2, 4.2])
+
+# Initial estimate for the mass
+MTOM = Mass.mtom
+print("Initial MTOM:", MTOM, "[kg]")
+print(" ")
 
 iterate = True
-
 while iterate:
 
+    # Get atmospheric values at cruise
+    ISA = at.ISA(h_cr)
+    rho = ISA.density()             # Density
+    a = ISA.soundspeed()            # Speed of sound
+    dyn_vis = ISA.viscosity_dyn()   # Dynamic viscosity
 
-    # TODO: inputs from performance
-    M = 1
-    S = 1
+    M = V_cr/a                      # Cruise Mach number
 
     # Aero
-    wing_design = wing_design.wing_design(AR_tot, 0.5, 0, 0.5, 0, M, S, l_fus-1, h_fus-0.3, w_fus, 0, 0)
+    wing_design = wing_des.wing_design(AR_tot, s1, 0, s2, 0, M, S_tot, l_fus-1, h_fus-0.3, w_fus, h_wt_1, h_wt_2)
 
     # [b2, c_r2, c_t2, c_MAC2, y_MAC2, X_LEMAC2]
     wing_plan_1, wing_plan_2 = wing_design.wing_planform_double()
 
+    taper = wing_plan_1[2]/wing_plan_1[1]
+
     # CL_max
     CLmax = wing_design.CLmax_s()[0]
 
-    # Drag
-    # 'tandem', S, l1_fus, l2_fus, l3_fus, np.sqrt(w_fus*h_fus),
-    # h, IF_f, IF_w,IF_v, C_L_minD, Abase, S_v, S_t,s1,s2, h_wl1,h_wl2):
+    # Lift slope
+    CL_alpha_1 = wing_design.liftslope()
+    CL_alpha_2 = wing_design.liftslope()
+
+    # ------ Drag ------
 
     # Oswald efficiency factor
     e = drag_comp.e_OS(AR_tot) * drag_comp.e_factor('tandem', h_fus-0.3, wing_plan_1[0], drag_comp.e_OS(AR_tot))
 
-    # Airfoil
+    # Airfoil characteristics
     airfoil_stats = airfoil.airfoil_stats()
-    S_t = 0
 
-    drag = drag_comp.componentdrag('tandem', S, l1_fus, l2_fus, l3_fus, np.sqrt(w_fus*h_fus), V_cr, rho, wing_plan_1[3],
-                                   AR_tot, e, M, const.k, const.flamf, const.flamw, dyn_vis, const.tc, const.xcm, 0,
-                                   wing_design.sweep_atx(0), fus_upsweep, wing_plan_1[2], h_fus-0.3, const.IF_f,
-                                   const.IF_w, const.IF_v, airfoil_stats[2], const.Abase, S_v, S_t, 0.5, 0.5, 0, 0)
+    drag = drag_comp.componentdrag('tandem', S_tot, l1_fus, l2_fus, l3_fus, np.sqrt(w_fus*h_fus), V_cr, rho,
+                                   wing_plan_1[3], AR_tot, e, M, const.k, const.flamf, const.flamw, dyn_vis, const.tc,
+                                   const.xcm, 0, wing_design.sweep_atx(0)[0], fus_upsweep, wing_plan_1[2], h_fus-0.3,
+                                   const.IF_f, const.IF_w, const.IF_v, airfoil_stats[2], const.Abase, S_v, S_wt,
+                                   s1, s2, h_wt_1, h_wt_2)
 
     # TODO: get CL for cruise
-    CD = drag.CD(C_L=1)
+    CD0 = drag.CD0()
+    CD_cr = drag.CD(C_L=C_L_cr)
+
+    # ----------------- Vertical drag -------------------
+    Afus = np.pi * np.sqrt(w_fus * h_fus)**2 / 4
+
+    CDs = drag.CD(CLmax)
+    CDs_f = drag.CD0_f
+    CDs_w = CDs - CDs_f
+
+    CD_a_w = wing_design.CDa_poststall(const.tc, CDs_w, CDs_f, Afus, 0, "wing", drag.CD)
+    CD_a_f = wing_design.CDa_poststall(const.tc, CDs_w, CDs_f, Afus, 90, "fus", drag.CD)
+
+    CD_vertical = CD_a_w + CD_a_f
 
     # Propulsion
+    # Get drag at cruise
+    D_cr = CD_cr * 0.5 * rho * V_cr**2 * S_tot
 
-    act_disk = ADT.ActDisk(TW_ratio, MTOM, v_e, V_cr, D, D)
+    # Size the propellers
+    prop_sizing = eng_siz.PropSizing(wing_plan_1[0], w_fus, n_prop, clearance_fus_prop, clearance_prop_prop, MTOM, xi_0)
+
+    prop_radius = prop_sizing.radius()
+    prop_area = prop_sizing.area_prop()
+    disk_load = prop_sizing.disk_loading()
+
+    # act_disk = ADT.ActDisk(TW_ratio, MTOM, v_e, V_cr, D, D)
     # With fuselage shape and span we can have size of the engines
-    # From that we can use BEM to design the blades (here number of blades is an input, so we can optimise it if necessary,
-    # or just assume one
+    # From that we can use BEM to design the blades (here number of blades is an input,
+    # so we can optimise it if necessary, or just assume one
+
+    # ----------------------- Performance ------------------------
+    init_sizing = perf.initial_sizing(h_cr, None, drag, V_stall, V_max, n_turn, ROC, V_cr, ROC_hover, MTOM*g0,
+                                      CD_vertical, const.eff_prop, const.eff_hover, disk_load)
+
+    # Get wing loading and from that the area
+    WS = init_sizing.sizing()[0]
+
+    S_tot = MTOM*g0/WS
+
+    S1, S2 = S_tot*s1, S_tot*s2
 
 
+    # Cruise CL of the wings
+    L_cr = MTOM*g0
+    L_cr_1 = L_cr/2
+    L_cr_2 = L_cr/2
 
-    # Performance
+    CL_cr_1 = 2*L_cr_1/(rho * V_cr**2 * S1)
+    CL_cr_2 = 2*L_cr_2/(rho * V_cr**2 * S2)
 
+    # -------------------- Update weight ------------------------
+    # TODO update battery weight
+    wing = weight.Wing(MTOM, S1, S2, n_ult, AR_wing, [pos_frontwing, pos_backwing])
+    fuselage = weight.Fuselage(MTOM, Pmax, l_fus, n_pax, pos_fus)
+    lgear = weight.LandingGear(MTOM, pos_lgear)
+    props = weight.Propulsion(n_prop, m_prop, pos_prop)
+    Mass = weight.Weight(m_pax, wing, fuselage, lgear, props, cargo_m=cargo_m, cargo_pos=6, battery_m=m_bat,
+                         battery_pos=3.6, p_pax=[1.5, 3, 3, 4.2, 4.2])
 
+    # Update mass and get CG
+    MTOM_new = Mass.mtom
+    x_CG_MTOM = Mass.mtom_cg
 
-    # Update weight
+    if (MTOM_new-MTOM)/MTOM < 0.01:
+        iterate = False
+        MTOM = MTOM_new
 
-    MTOW = weight.Weight()
+    else:
+        MTOM = MTOM_new
+    print("New MTOM:", MTOM)
+    print(" ")
 
 # Stability
-# W,h,xcg,lfus,hfus,wfus,V0,Vstall,CD0,CLfwd,CLrear,CLafwd,CLarear,Sfwd,Srear,Afwd,Arear,Lambda_c4_fwd,Lambda_c4_rear,cfwd,crear,bfwd,brear,taper,ARv):
-vertical_tail = vert_tail.VT_sizing()
+vertical_tail = vert_tail.VT_sizing(MTOM*g0, h_cr, x_CG_MTOM, l_fus, h_fus, w_fus, V_cr, V_stall, CD0,
+                                    CL_cr_1, CL_cr_2, CL_alpha_1, CL_alpha_2, S1, S2, AR_wing, AR_wing, 0, 0,
+                                    wing_plan_1[3], wing_plan_2[3], wing_plan_1[0], wing_plan_2[0], taper, ARv=1.25)
+
+print("Converged MTOM:", MTOM, "[kg]")
+print(" ")
