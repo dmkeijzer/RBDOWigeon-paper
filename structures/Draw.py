@@ -72,3 +72,16 @@ def Deflections(x0, x1, pi, **defs):
         title="Deflection Diagram")
 
     return fig
+
+def DrawFatigue(t, y):
+    fig = make_subplots(rows=1, cols=1, shared_xaxes=True)
+    fig.append_trace(go.Scatter(
+        x=t,
+        y=y,
+        name='Fatigue Cycle',
+    ), row=1, col=1)
+    fig.update_yaxes(title_text='Stress [MPa]', row=1, col=1)
+
+    fig.update_xaxes(title_text="Time [hours]", row=1, col=1)
+    fig.update_layout(template="plotly_dark", title='Fatigue Cycle')
+    return fig
