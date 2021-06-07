@@ -72,6 +72,9 @@ class Weight:
         self.oem = (self.wmass + self.pmass + self.lmass + self.fmass + self.bmass)
         self.mtom = (self.wmass + self.pmass + self.lmass + self.fmass + self.cmass + self.bmass + self.tot_m_pax)
 
+    def MTOM(self):
+        return self.mtom
+
     def print_weight_fractions(self):
         d = {}
         d["Front wing"] = [self.wing.mass[0], self.wing.mass[0]/self.oem, self.wing.mass[0]/self.mtom]
