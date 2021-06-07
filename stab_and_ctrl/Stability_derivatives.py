@@ -10,7 +10,7 @@ class Stab_Derivatives:
                  V0,T0,CLfwd0,CLrear0,CD0,CL0,theta0,alpha0,
                  Clafwd,Clarear, Cd0fwd, Cd0rear, CLafwd,CLarear,Sfwd,Srear,Gamma_fwd,Gamma_rear,
                  efwd,erear,Lambda_c4_fwd,Lambda_c4_rear,taper,taper_v,
-                 bv,Sv,ARv,Pbr,C_D_0,eta_v):
+                 bv,Sv,ARv,Pbr,C_D_0,eta_rear,eta_v):
         self.W = W         # Weight [N]
         self.h = h     # Height [m]
         Aero = ISA(self.h) # Initialises Aero object
@@ -61,7 +61,7 @@ class Stab_Derivatives:
         self.b = max(self.bfwd,self.brear)
         self.CD_0 = C_D_0 # PROFILE DRAG for one wing [-]
         self.Vstall = Vstall # Stall speed [m/s]
-        self.Vrear_Vfwd = 1
+        self.eta_rear = eta_rear
         self.eta_v = eta_v
         ### It is assumed that aeroelastic effects are neglected ###
 
@@ -240,8 +240,44 @@ class Stab_Derivatives:
                                     6*(self.xacrear-self.xcg)*np.sin(self.Sweepc4_rear)/(self.Arear*self.c)))
         Cn_b_wings = Cnb_w_fwd*self.Sfwd*self.bfwd/(self.S*bmax)+Cnb_w_rear*self.Srear*self.brear/(self.S*bmax)
         Cn_b = Cnb_fus+Cn_b_wings+Cn_b_v
-        Cl_b = 0
+        Pos_MAC_v = self.bv / 6 * ((1 + 2 * self.taper_v) / (1 + self.taper_v)) * 2
+        Cl_b_v = (self.hfus+Pos_MAC_v-self.zcg)/self.b*CY_b
+        Cl_b_wf_fwd = -1.2*np.sqrt(self.Afwd)*(self.dy-self.hfus/2)/self.b**2*(self.lfus+self.wfus)
+        Cl_b_wf_rear = -1.2*np.sqrt(self.Arear)*(self.hfus/2)/self.b**2*(self.lfus+self.wfus)
+        # Cl_b = -0.110
+        Cl_b_fwd = -self.CLafwd*self.Gamma_fwd/4*(2/3*(1+2*self.taper)/(1+self.taper))
+        print(self.CLafwd,self.Gamma_fwd,self.taper)
+        Cl_b = Cl_b_wf_rear*self.Srear/self.S + Cl_b_wf_fwd*self.Sfwd/self.S + Cl_b_v + Cl_b_fwd*self.Sfwd/self.S
+        print(Cl_b_v, Cl_b_wf_fwd, Cl_b_wf_rear,Cl_b_fwd)
+        # sin_Gamma = (Cl_b-Cl_b_v-Cl_b_wf_fwd*self.Sfwd/self.S-Cl_b_wf_rear*self.Srear/self.S)/(-2/(3*np.pi)*self.CLafwd)
+        # Gamma_raymer = -(Cl_b-Cl_b_v-Cl_b_wf_fwd*self.Sfwd/self.S-Cl_b_wf_rear*self.Srear/self.S)*4/self.CLafwd*(3*(1+self.taper)/(2*(1+2*self.taper)))
         return CY_b, Cl_b,Cn_b
+
+    def tau_e(self,Se_S):
+        """
+        Inputs:
+        :param Se_S: Elevator surface to wing ratio [-]
+        :return: Elevator Effectiveness [-]
+        """
+        x = Se_S
+        tau_e = -6.624*x**4+12.07*x**3-8.292*x**2+3.295*x+0.004942
+        return tau_e
+
+    def de_derivatives(self,Se_S,be_b):
+        """
+        Analytical estimate of control derivatives wrt elevator deflection (delta_e)
+        :param Se_S: Elevator surface to wing ratio [-]
+        :param be_b: Elevator span to wing ratio [-]
+        :return: C_X_de, C_Z_de, C_m_de
+        """
+        CX_de = 0
+        CL_de = self.CLafwd*self.tau_e(Se_S)*be_b*self.eta_rear*self.Sfwd/self.S
+        CZ_de = -CL_de
+        Cm_de = -CZ_de*(self.xcg-self.xacfwd)/self.c
+        return CX_de, CZ_de, Cm_de
+
+
+
 
 
 
