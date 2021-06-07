@@ -1,9 +1,13 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from Aero_tools import ISA, speeds
-import scipy.optimize as optimize
+import scipy.interpolate as interpolate
 import sys
 from constants import g
+
+# TODO: Remove this import in the integrated program, make sure aerodynamics is called first and the variables have the
+# same names
+from Preliminary_Lift.main_aero import Cl_alpha_curve, CD_a_w, CD_a_f, alpha_lst, Drag
 
 
 class mission:
@@ -68,18 +72,18 @@ class mission:
         :param angle_of_attack: angle of attack experienced by the wing [rad]
         :return: CL and CD
         """
+        alpha = np.degrees(angle_of_attack)
 
+        # Interpolate CL, CD vs alpha
+        CL_alpha = interpolate.interp1d(alpha_lst, Cl_alpha_curve)
+        CD_alpha = interpolate.interp1d(alpha_lst, CD_a_w)
+        CD_f     = interpolate.interp1d(alpha_lst, CD_a_f)(0)
 
+        # Get the CL of the wings at the angle of attack
+        CL = CL_alpha(alpha)
 
-        # Placeholder values for the lift and drag coefficients
-        if angle_of_attack < np.radians(20):
-            CL = angle_of_attack * 2 * np.pi
-
-        else:
-            CL = np.maximum(np.radians(15) * 2 * np.pi - (2*(angle_of_attack - np.radians(20))), 0)
-
-        # Change according to the name given to the componentdrag class
-        CD = componentdrag.CD(CL)
+        # Drag, assuming the fuselage is parallel to te incoming flow
+        CD = CD_alpha(alpha) + CD_f
 
         return CL, CD
 
@@ -317,7 +321,7 @@ class mission:
         CL_cruise   = 2*mass*g/(speed*speed*self.S*rho)
 
         # Drag coefficient !!!!! UPDATE !!!!!
-        CD_cruise   = 0.05 + .05*CL_cruise*CL_cruise
+        CD_cruise   = Drag.CD(CL_cruise)
         eff_cruise  = 0.95
 
         P           = CD_cruise*self.m*g*self.v_cruise/(CL_cruise*eff_cruise)
@@ -389,7 +393,7 @@ class evtol_performance:
         - Vertical flight CD
         - Efficiencies
     """
-    def __init__(self, cruising_alt, cruise_speed, S, CL_max, mass, battery_capacity, EOM, loiter_time, CD_vertical):
+    def __init__(self, cruising_alt, cruise_speed, S, CL_max, mass, battery_capacity, EOM, loiter_time):
         """
         :param cruising_alt:        [m]
         :param cruise_speed:        [m/s]
@@ -411,7 +415,10 @@ class evtol_performance:
         self.h_cruise = cruising_alt
         self.EOM    = EOM
         self.t_loiter = loiter_time
-        self.CD_vert = CD_vertical
+
+        CD_f_alpha = interpolate.interp1d(alpha_lst, CD_a_f)
+        CD_w_alpha = interpolate.interp1d(alpha_lst, CD_a_w)
+        self.CD_vert = CD_f_alpha(90) + CD_w_alpha(90)
 
         plt.rcParams.update({'font.size': 16})
         self.path = '../Flight_performance/Figures/'
@@ -442,7 +449,7 @@ class evtol_performance:
             CL  = 2*self.W/(rho*V*V*self.S)
 
             # Drag coefficient !!! CHANGE !!!
-            CD  = 0.05 + 0.05*CL*CL
+            CD  = Drag.CD(CL)
 
             # Drag
             D   = CD*0.5*rho*V*V*self.S
