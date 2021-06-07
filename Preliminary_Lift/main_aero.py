@@ -58,11 +58,17 @@ d_eq = np.sqrt(h_max*w_max)
 #Winglets
 h_wl1 =0
 h_wl2 = 0
-Wing_params = wing_design(AR,s1,sweepc41,s2,sweepc42,M,S_ref, l_h,h_d,w_max,"None",h_wl1,h_wl2)
+Wing_params = wing_design(AR,s1,sweepc41,s2,sweepc42,M,S_ref, l_h,h_d,w_max,h_wl1,h_wl2)
+b = Wing_params.wing_planform_double()[0][0]
+C_r = Wing_params.wing_planform_double()[0][1]
+C_t = Wing_params.wing_planform_double()[0][2]
+print(b,C_r,C_t)
 MAC = Wing_params.wing_planform_double()[0][3]
 SweepLE = Wing_params.sweep_atx(0)[0]
 Slope1 = Wing_params.liftslope()[1]
-print(Slope1*np.pi/180)
+
+CLmax = Wing_params.CLmax_s()
+
 #For Drag estimation
 k = 0.634 * 10**(-5) # Smooth paint from adsee 2 L2
 flamf =0.1  # From ADSEE 2 L2 GA aircraft
@@ -85,8 +91,11 @@ S_t = 0
 
 Drag = componentdrag('tandem',S_ref,l1,l2,l3,d_eq,Vcruise,rho,MAC,AR,e,Mach(Vcruise,a),k,flamf,flamw,mu,tc,xcm,0,SweepLE,u,0,h_d,IF_f,IF_w, IF_v, CL_CDmin,Abase, S_v, S_t, s1, s2, h_wl1, h_wl2)
 
-CL_design = Drag.CL_des()
+
+CL_design = Drag.CL_des()[0]
+Cd_des= Drag.Cd_w(CL_design)
 print("CL_des",CL_design)
+print("Cd",Cd_des )
 #Stall
 stall = Wing_params.CLmax_s()
 CLmax = stall[0]
@@ -98,12 +107,14 @@ CDs_w = CDs - CDs_f
 Afus = np.pi *d_eq/4
 post_stall = Wing_params.post_stall_lift_drag(tc, CDs, CDs_f, Afus)
 
-alpha_lst = np.arange(0,90,0.1)
+alpha_lst = np.arange(0,89,0.1)
 Cl_alpha_curve = Wing_params.CLa(tc, CDs, CDs_f, Afus, alpha_lst)
 
 CD_a_w = Wing_params.CDa_poststall(tc, CDs, CDs_f, Afus, alpha_lst, "wing", Drag.CD)
 CD_a_f = Wing_params.CDa_poststall(tc, CDs, CDs_f, Afus, alpha_lst, "fus", Drag.CD)
 
+plt.plot(alpha_lst, CD_a_w)
+plt.show()
 
 
 
