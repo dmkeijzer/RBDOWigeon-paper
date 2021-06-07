@@ -5,7 +5,7 @@ from matplotlib import colors as mc
 from Aero_tools import ISA
 class VT_sizing:
     def __init__(self,W,h,xcg,lfus,hfus,wfus,V0,Vstall,CD0,CLfwd,CLrear,
-                 CLafwd,CLarear, Cmacfwd,Cmacrear,
+                 CLafwd,CLarear,
                  Sfwd,Srear,Afwd,Arear,Lambda_c4_fwd,Lambda_c4_rear,cfwd,crear,bfwd,brear,taper,ARv):
         self.W = W         # Weight [N]
         self.h = h     # Height [m]
@@ -34,7 +34,7 @@ class VT_sizing:
         self.M0 = self.V0/(1.4*287*self.T) # Initial mach number [-]
         self.Re = self.rho*self.V0*self.lfus/self.mu
         self.CLafwd, self.CLarear = CLafwd, CLarear # Wing lift curve slopes for both wings [1/rad]
-        self.Cmacfwd, self.Cmacrear = Cmacfwd,Cmacrear
+        # self.Cmacfwd, self.Cmacrear = Cmacfwd,Cmacrear
         self.CD0 = CD0 # C_D_0 of forward wing
         self.xacfwd = 0.25*self.cfwd
         self.xacrear = self.lfus - (1 - 0.25) * self.crear
