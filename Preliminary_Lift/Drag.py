@@ -162,8 +162,8 @@ class componentdrag:
         return CDmin, K
 
     def CL_des(self):
-        C_L_lst = np.arange(0,1.5,0.01)
+        C_L_lst = np.arange(0,1.5,0.001)
         LD = C_L_lst/self.CD(C_L_lst)
-        print(np.max(LD))
+        np.max(LD)
         index = np.where(LD==np.max(LD))
-        return float(C_L_lst[index])
+        return float(C_L_lst[index]), np.max(LD)
