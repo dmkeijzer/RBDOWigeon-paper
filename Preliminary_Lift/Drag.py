@@ -53,7 +53,7 @@ def e_OS(AR):
 # CD0 component build up
 
 class componentdrag:
-    def __init__(self, type, S_ref, l1, l2, l3, d, V_cr, rho, MAC, AR, e, M_cr, k, frac_lam_f, frac_lam_w, mu, tc,xcm,sweepm, sweepLE, u, c_t,h, IF_f, IF_w,IF_v, C_L_minD, Abase, S_v, S_t,s1,s2, h_wl1,h_wl2):
+    def __init__(self, type, S_ref, l1, l2, l3, d, V_cr, rho, MAC, AR, e, M_cr, k, frac_lam_f, frac_lam_w, mu, tc,xcm,sweepm, sweepLE, u, c_t,h, IF_f, IF_w,IF_v, C_L_minD, Abase, S_v,s1,s2, h_wl1,h_wl2):
         self.S_ref = S_ref
         self.l1 = l1
         self.l2 = l2
@@ -78,13 +78,13 @@ class componentdrag:
         self.IF_v = IF_v
         self.IF_w = IF_w
         self.IF_f = IF_f
-        self.C_L_minD = C_L_minD
         self.Abase = Abase
         if self.type == 'box':
             self.S_c = c_t*h
         self.S_v = S_v
-        self.S_t = S_t
+        self.S_t = (1.4*c_t)*h_wl1*2+(1.4*c_t)*h_wl2*2
         self.SweepLE = sweepLE
+        self.C_L_minD = C_L_minD / (np.cos(self.SweepLE) ** 2)
     def Swet_f(self):
 
         return (np.pi * self.d/4)* (((1/(3*self.l1**2))*((4*self.l1**2 +((self.d**2)/4))**1.5 -((self.d**3)/8)) ) -self.d + 4*self.l2 + 2 * np.sqrt(self.l3**2 + (self.d**2)/4 ))
