@@ -62,49 +62,52 @@ def lambda_c4_to_lambda_c2(A, taper, lambda_c4):
 def stab_sensitivity():
     Cmacf = -0.0645
     Cmacr = -0.0645
-    CLfmax = 1.781
-    CLrmax = 1.737
-    CLfdes = 0.82
-    CLrdes = 0.82
-    CD0f = 0.03254
-    CD0r = 0.03254
-    Af = 10
-    Ar = 10
+    CLfmax = 1.44333
+    CLrmax = 1.44333
+    CLfdes = 0.7382799
+    CLrdes = 0.7382799
+    CD0f = 0.00822
+    CD0r = 0.00822
+    Af = 9
+    Ar = 9
     taper = 0.45
     Lambda_c4 = 0
-    lambda_c2 = lambda_c4_to_lambda_c2(Af, taper, 0)
     ef = 0.958
     er = 0.958
-    Clfa = 6
-    Clra = 6
-    CLfa = CLa(Clfa, Af, lambda_c2)
-    CLra = CLa(Clra, Ar, lambda_c2)
-    cf = 0.65
-    cr = 0.65
-    xf = 1/4 * cf
-    xr = 7.2 - 3/4 * cr
-    zf = 0
-    zr = 1.705
+    Clfa = 6.1879
+    Clra = 6.1879
+    cf = 1.014129367767935
+    cr = 1.014129367767935
+    zf = 0.5
+    zr = 1.2
     zcg = 0.7
-    Vr_Vf_2 = 1
+    Vr_Vf_2 = 0.8
     Sr_Sf = 1
     elev_fac = 1.4
 
     rho = 1.225
     Pbr = 110024/1.2 * 0.9 /12
-    S = 10.5
-    Sf = S / 2
-    Sr = S - Sf
-    bf = np.sqrt(Sf * Af)
-    W = 3652.352770706565*9.80665
+    S = 8.417113787320769 * 2
+    W = 2939.949692*9.80665
 
-    xf_range = np.linspace(0, 3)
-    xr_range = np.linspace(5, 7.5)
-    zf_range = np.linspace(0, 1.5)
-    zr_range = np.linspace(1.5, 3)
-    Sr_Sf_range = np.linspace(0, 2.5)
-    Af_range = np.linspace(1, 20)
-    Ar_range = np.linspace(1, 20)
+    # variables calculated based on the the parameters above
+    xf = 1 / 4 * cf + 0.5
+    xr = 7.2 - 3 / 4 * cr - 0.5
+    Sf = S / (1 + Sr_Sf)
+    Sr = S / (1 + Sr_Sf)
+    lambda_c2 = lambda_c4_to_lambda_c2(Af, taper, 0)
+    bf = np.sqrt(Sf * Af)
+    CLfa = CLa(Clfa, Af, lambda_c2)
+    CLra = CLa(Clra, Ar, lambda_c2)
+
+    res = 1000
+    xf_range = np.linspace(0, 3, res)
+    xr_range = np.linspace(5, 7.5, res)
+    zf_range = np.linspace(0, 1.5, res)
+    zr_range = np.linspace(0.5, 2.5, res)
+    Sr_Sf_range = np.linspace(0, 4, res)
+    Af_range = np.linspace(1, 15, res)
+    Ar_range = np.linspace(1, 15, res)
 
     plt.subplot(221)
     plt.title("xf")
@@ -182,7 +185,7 @@ def stab_sensitivity():
     plt.subplot(211)
     plt.title("Af")
     bf_range = np.sqrt(Sf * Af_range)
-    cf_range = cf * np.sqrt(Sf / Af_range) / np.sqrt(Sf / Af_range)
+    cf_range = cf * np.sqrt(Sf / Af_range) / np.sqrt(Sf / Af)
     CLfa_range = CLa(Clfa, Af_range, lambda_c2)
     de_da = deps_da(Lambda_c4, bf_range, xr - xf, zr - zf, Af_range,
                     CLfa_range, rho, Pbr, Sf, CLfdes, W)
@@ -197,7 +200,7 @@ def stab_sensitivity():
 
     plt.subplot(212)
     plt.title("Ar")
-    cr_range = cr * np.sqrt(Sr / Ar_range) / np.sqrt(Sr / Ar_range)
+    cr_range = cr * np.sqrt(Sr / Ar_range) / np.sqrt(Sr / Ar)
     CLra_range = CLa(Clra, Ar_range, lambda_c2)
     de_da = deps_da(Lambda_c4, bf, xr - xf, zr - zf, Af,
                     CLfa, rho, Pbr, Sf, CLfdes, W)
@@ -209,6 +212,44 @@ def stab_sensitivity():
     plt.axvline(Ar)
     plt.plot(Ar_range, x_cg_stab)
     plt.plot(Ar_range, x_cg_ctrl)
+
+    plt.figure()
+    Sr_Sf_grid, Af_grid = np.meshgrid(Sr_Sf_range, Af_range)
+    Sf_grid = S / (1 + Sr_Sf_grid)
+    bf_grid = np.sqrt(Sf_grid * Af_grid)
+    cf_grid = cf * np.sqrt(Sf_grid / Af_grid) / np.sqrt(Sf / Af)
+    Sr_grid = S - Sf_grid
+    br_grid = np.sqrt(Sr_grid * Ar)
+    cr_grid = cr * np.sqrt(Sr_grid / Ar) / np.sqrt(Sr / Ar)
+    CLfa_grid = CLa(Clfa, Af_grid, lambda_c2)
+    de_da = deps_da(Lambda_c4, bf_grid, xr - xf, zr - zf, Af_grid,
+                    CLfa_grid, rho, Pbr, Sf_grid, CLfdes, W)
+    x_cg_stab = xcg_stab(CLfa_grid, CLra, CLfdes, CLrdes, Af_grid, Ar, ef,
+                         er, xf, xr, zf, zr, zcg, Vr_Vf_2, Sr_Sf_grid, de_da)
+    x_cg_ctrl = xcg_ctrl(Cmacf, Cmacr, CLfmax * elev_fac, CLrmax, CD0f, CD0r,
+                         Af_grid, Ar, ef, er, cf_grid, cr_grid, xf, xr, zf,
+                         zr, zcg, Vr_Vf_2, Sr_Sf_grid)
+    # plt.pcolormesh(Sr_Sf_grid, Af_grid, x_cg_stab - x_cg_ctrl, vmin=-1.5, vmax=1.5, cmap="coolwarm")
+    plt.pcolormesh(Sr_Sf_grid, Af_grid, bf_grid, cmap="rainbow")
+    plt.colorbar()
+    # plt.contour(Sr_Sf_grid, Af_grid, x_cg_stab - x_cg_ctrl, [0], colors=["tab:blue"])
+
+    xcg_rear = 3.1
+    xcg_front = 2.9
+    cf_max = 2
+    cr_max = 2
+    bf_min = 4
+    br_max = 14
+
+    plt.contour(Sr_Sf_grid, Af_grid, x_cg_stab, [xcg_rear], colors=["tab:purple"])  # needs to be on the right of this
+    plt.contour(Sr_Sf_grid, Af_grid, x_cg_ctrl, [xcg_front], colors=["tab:brown"])  # needs to be on the left of this
+    plt.contour(Sr_Sf_grid, Af_grid, cf_grid, [cf_max], colors=["tab:orange"])  # needs to be above this
+    plt.contour(Sr_Sf_grid, Af_grid, cr_grid, [cr_max], colors=["tab:green"])  # needs to be on the left of this
+    plt.contour(Sr_Sf_grid, Af_grid, bf_grid, [bf_min], colors=["tab:red"])  # needs to be above this
+    plt.contour(Sr_Sf_grid, Af_grid, br_grid, [br_max], colors=["tab:pink"])  # needs to be on the left of this
+
+    plt.xlabel("Sr/Sf")
+    plt.ylabel("Af")
 
     plt.show()
 
