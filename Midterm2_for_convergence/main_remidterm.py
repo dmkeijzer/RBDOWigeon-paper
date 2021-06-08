@@ -302,7 +302,7 @@ vertical_tail = vert_tail.VT_sizing(MTOM*g0, h_cr, x_CG_MTOM, l_fus, h_fus, w_fu
                                     CL_cr_1, CL_cr_2, 0, 0, S1, S2, AR_wing, AR_wing, 0, 0,
                                     wing_plan_1[3], wing_plan_2[3], wing_plan_1[0], wing_plan_2[0], taper, ARv=1.25)
 
-S_v = vertical_tail.final_VT_rudder(n_prop, D_cr, wing_plan_1[0]/2, l_fus-x_CG_MTOM, 0.9, 0.35)[0]
+v_tail = vertical_tail.final_VT_rudder(n_prop, D_cr, wing_plan_1[0]/2, l_fus-x_CG_MTOM, 0.9, 0.35)
 
 print("Converged MTOM:", MTOM, "[kg]")
 print("CG position:", x_CG_MTOM)
@@ -316,7 +316,9 @@ print("Propeller radius:", prop_radius, "[m]")
 print("Disk loading:", disk_load, "[kg/m^2]")
 print("Cruise drag:", D_cr, "[N]")
 print("Thrust per engine at cruise:", D_cr/n_prop, "[N]")
+print("")
 print("Span:", wing_plan_1[0])
+print("MAC:", wing_plan_1[3])
 print("")
 print("Cruise speed:", V_cr, "[m/s]")
 print("Cruise height:", h_cr, "[m]")
@@ -324,7 +326,8 @@ print("")
 print("CL_cr:", C_L_cr, "CD_cr:", CD_cr, "L/D at cr:", C_L_cr/CD_cr)
 print("W/D:", MTOM*g0/D_cr)
 print("")
-print("New S_v:", S_v)
+
+# Sv,C_vr,C_vt,bv,Sweep_v_c2,c_r,c_r_root,c_r_tip,b_r,ARv
 
 # print("Params for Miguel")
 # print("CG", x_CG_MTOM)
@@ -335,9 +338,15 @@ print("New S_v:", S_v)
 # print("S1, S2", S1, S2)
 # print("AR:", AR_wing)
 # print("MAC", wing_plan_1[3], wing_plan_2[3])
-# print("Spans:", wing_plan_1[0], wing_plan_2[0])
-# print("Taper:", taper)
-
+print("Spans:", wing_plan_1[0], wing_plan_2[0])
+print("Taper:", taper)
+# [b2, c_r2, c_t2, c_MAC2, y_MAC2, X_LEMAC2]
+print("C_r", wing_plan_1[1], wing_plan_2[1])
+print("")
+print("New S_v:", v_tail[0])
+print("C_vr:", v_tail[1])
+print("C_vt:", v_tail[2])
+print("b_v:", v_tail[3])
 
 # print("Vertical tail surface", vertical_tail.final_VT_rudder(n_prop, ))
 print(" ")
