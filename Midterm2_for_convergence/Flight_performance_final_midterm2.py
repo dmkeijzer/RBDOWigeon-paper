@@ -7,7 +7,7 @@ from constants import g
 
 # TODO: Remove this import in the integrated program, make sure aerodynamics is called first and the variables have the
 # same names
-from Midterm2_for_convergence.main_aero_midterm2 import Cl_alpha_curve, CD_a_w, CD_a_f, alpha_lst, Drag
+# from Midterm2_for_convergence.main_aero_midterm2 import Cl_alpha_curve, CD_a_w, CD_a_f, alpha_lst, Drag
 
 
 class mission:
@@ -26,8 +26,8 @@ class mission:
         - Efficiencies
     """
 
-    def __init__(self, mass, cruising_alt, cruise_speed, CL_max, wing_surface, t_loiter=30 * 60, rotational_rate=5,
-                 roc=5, rod=5, mission_dist=300e3, plotting=False):
+    def __init__(self, mass, cruising_alt, cruise_speed, CL_max, wing_surface, Cl_alpha_curve, CD_a_w, CD_a_f,
+                 alpha_lst, Drag, t_loiter=30 * 60, rotational_rate=5, roc=5, rod=5, mission_dist=300e3, plotting=False):
 
         """
         :param mass:            [kg]    Aircraft mass
@@ -66,6 +66,12 @@ class mission:
         self.path = '../Flight_performance/Figures/'
         self.plotting = plotting
 
+        self.Cl_alpha_curve = Cl_alpha_curve
+        self.CD_a_w = CD_a_w
+        self.CD_a_f = CD_a_f
+        self.alpha_lst = alpha_lst
+        self.Drag = Drag
+
     def aero_coefficients(self, angle_of_attack):
         """
         Calculates the lift and drag coefficients of the aircraft for a given angle of attack.
@@ -76,15 +82,15 @@ class mission:
 
         alpha = np.degrees(angle_of_attack)
 
-        #if alpha < -1:
-            # print('small angle of attack:', alpha)
+        # if alpha < -1:
+        #     print('small angle of attack:', alpha)
 
         alpha = np.maximum(np.minimum(88.8, alpha), 0)
 
         # Interpolate CL, CD vs alpha
-        CL_alpha = interpolate.interp1d(alpha_lst, Cl_alpha_curve)
-        CD_alpha = interpolate.interp1d(alpha_lst, CD_a_w)
-        CD_f = interpolate.interp1d(alpha_lst, CD_a_f)(0)
+        CL_alpha = interpolate.interp1d(self.alpha_lst, self.Cl_alpha_curve)
+        CD_alpha = interpolate.interp1d(self.alpha_lst, self.CD_a_w)
+        CD_f = interpolate.interp1d(self.alpha_lst, self.CD_a_f)(0)
 
         # Get the CL of the wings at the angle of attack
         CL = CL_alpha(alpha)
@@ -238,8 +244,8 @@ class mission:
             if abs(vx - vx_tgt) < 0.5 and abs(y - y_tgt) < 0.5 and abs(vy) < 0.5 and t >= 5 or t > 600:
                 running = False
 
-                #if t > 600:
-                    # print("Take-off takes longer than 10 minutes")
+                # if t > 600:
+                #     print("Take-off takes longer than 10 minutes")
 
         # Convert everything to arrays
         y_arr = np.array(y_lst)
@@ -322,7 +328,7 @@ class mission:
         CL_cruise = 2 * mass * g / (speed * speed * self.S * rho)
 
         # Drag coefficient !!!!! UPDATE !!!!!
-        CD_cruise = Drag.CD(CL_cruise)
+        CD_cruise = self.Drag.CD(CL_cruise)
         eff_cruise = 0.95
 
         P = CD_cruise * self.m * g * self.v_cruise / (CL_cruise * eff_cruise)
@@ -348,7 +354,7 @@ class mission:
         # Get the brake power used in cruise
         P_cruise = self.power_cruise_config(self.h_cruise, self.v_cruise, self.m)
 
-        V = speeds(altitude=self.h_cruise, m=self.m, CLmax=self.CL_max, S=self.S, componentdrag_object=Drag)
+        V = speeds(altitude=self.h_cruise, m=self.m, CLmax=self.CL_max, S=self.S, componentdrag_object=self.Drag)
 
         # Loiter power
         V_loit = V.climb()

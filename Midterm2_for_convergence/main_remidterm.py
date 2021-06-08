@@ -10,6 +10,8 @@ import Airfoil_analysis_midterm2 as airfoil
 import prelim_ADT as ADT
 import engine_sizing_positioning_midterm2 as eng_siz
 import battery_midterm2 as bat
+import PropandPower.BEM as BEM
+import PropandPower.Blade_plotter as bp
 
 import performance_analysis_midterm2 as perf
 import Flight_performance_final_midterm2 as energy_calc
@@ -60,7 +62,7 @@ CLmax = 1.46916
 s1, s2 = const.s1, const.s2   # Ratio of front and back wing areas to total area
 S1, S2 = 5.25, 5.25           # surface areas of wing one and two
 S_tot = S1+S2                 # Total wing surface area
-AR_wing = 8                   # Aspect ratio of a wing, not aircraft
+AR_wing = 9                   # Aspect ratio of a wing, not aircraft
 AR_tot = AR_wing/2            # Aspect ratio of aircraft
 
 # Wingtips
@@ -83,8 +85,8 @@ ROC_hover = 2
 # Propulsion
 n_prop = 12                 # Number of engines [-]
 disk_load = 250             # [kg/m^2]
-clearance_fus_prop = 0.2    # Horizontal separation between the fuselage and the first propeller [m]
-clearance_prop_prop = 0.2   # Horizontal separation between propellers [m]
+clearance_fus_prop = 0.3    # Horizontal separation between the fuselage and the first propeller [m]
+clearance_prop_prop = 0.3   # Horizontal separation between propellers [m]
 xi_0 = 0.1                  # r/R ratio of hub diameter to out diameters [-]
 m_bat = 483.15              # Initial estimate for battery mass [kg]
 
@@ -97,8 +99,8 @@ n_ult = 3.2 * 1.5   # 3.2 is the max we found, 1.5 is the safety factor
 
 
 # Stability
-S_v = 1.063     # Area of the vertical tail [m^2]
-h_tail = 1.152  # Height of vertical tail [m]
+S_v = 1.558     # Area of the vertical tail [m^2]
+h_tail = 1.396  # Height of vertical tail [m]
 
 # ------------------ Constants for weight estimation ----------------
 # TODO: revise Pmax
@@ -148,7 +150,8 @@ print("Initial MTOM:", MTOM, "[kg]")
 print(" ")
 
 iterate = True
-while iterate:
+count = 0
+while iterate or (count < 5):
 
     # Get atmospheric values at cruise
     ISA = at.ISA(h_cr)
@@ -169,9 +172,9 @@ while iterate:
     # CL_max
     CLmax = wing_design.CLmax_s()[0]
 
-    # Lift slope
-    CL_alpha_1 = wing_design.liftslope()
-    CL_alpha_2 = wing_design.liftslope()
+    # # Lift slope
+    # CL_alpha_1 = wing_design.liftslope()
+    # CL_alpha_2 = wing_design.liftslope()
 
     # ------ Drag ------
 
@@ -198,10 +201,10 @@ while iterate:
     CDs_f = drag.CD0_f
     CDs_w = CDs - CDs_f
 
-    CD_a_w = wing_design.CDa_poststall(const.tc, CDs_w, CDs_f, Afus, 0, "wing", drag.CD)
-    CD_a_f = wing_design.CDa_poststall(const.tc, CDs_w, CDs_f, Afus, 90, "fus", drag.CD)
+    CD_a_w_v = wing_design.CDa_poststall(const.tc, CDs_w, CDs_f, Afus, 0, "wing", drag.CD)
+    CD_a_f_v = wing_design.CDa_poststall(const.tc, CDs_w, CDs_f, Afus, 90, "fus", drag.CD)
 
-    CD_vertical = CD_a_w + CD_a_f
+    CD_vertical = CD_a_w_v + CD_a_f_v
 
     # Propulsion
     # Get drag at cruise
@@ -220,6 +223,10 @@ while iterate:
     # so we can optimise it if necessary, or just assume one
 
     # ----------------------- Performance ------------------------
+    # Cl_alpha_curve, CD_a_w, CD_a_f, alpha_lst, Drag
+
+    # post_stall = Wing_params.post_stall_lift_drag(tc, CDs, CDs_f, Afus)
+
     init_sizing = perf.initial_sizing(h_cr, None, drag, V_stall, V_max, n_turn, ROC, V_cr, ROC_hover, MTOM*g0,
                                       CD_vertical, const.eff_prop, const.eff_hover, disk_load)
 
@@ -233,9 +240,12 @@ while iterate:
     V = at.speeds(h_cr, MTOM, CLmax, S_tot, drag)
 
     # Cruise speed
-    V_cr, CL_cr = V.cruise()
+    V_cr, CL_cr_check = V.cruise()
 
-    print("CL comparison:", CL_cr, C_L_cr, V_cr)
+    # # Stall speed
+    # V_stall = V.stall()
+
+    # print("CL comparison:", CL_cr_check, C_L_cr, V_cr)
 
     # Cruise CL of the wings
     L_cr = MTOM*g0
@@ -246,8 +256,14 @@ while iterate:
     CL_cr_2 = 2*L_cr_2/(rho * V_cr**2 * S2)
     C_L_cr = CL_cr_2
 
+    # Aero to pass to mission
+    alpha_lst = np.arange(0, 89, 0.1)
+    Cl_alpha_curve = wing_design.CLa(const.tc, CDs, CDs_f, Afus, alpha_lst)
+    CD_a_w = wing_design.CDa_poststall(const.tc, CDs, CDs_f, Afus, alpha_lst, "wing", drag.CD)
+    CD_a_f = wing_design.CDa_poststall(const.tc, CDs, CDs_f, Afus, alpha_lst, "fus", drag.CD)
+
     # Energy sizing
-    mission = energy_calc.mission(MTOM, h_cr, V_cr, CLmax, S_tot)
+    mission = energy_calc.mission(MTOM, h_cr, V_cr, CLmax, S_tot, Cl_alpha_curve, CD_a_w, CD_a_f, alpha_lst, drag)
 
     # Get approximate overall efficiency
     eff_overall = 0.91 * 0.57 + 0.699 * 0.43
@@ -279,13 +295,18 @@ while iterate:
         MTOM = MTOM_new
     print("New MTOM:", MTOM)
     print(" ")
+    count += 1
 
 # Stability
 vertical_tail = vert_tail.VT_sizing(MTOM*g0, h_cr, x_CG_MTOM, l_fus, h_fus, w_fus, V_cr, V_stall, CD0,
-                                    CL_cr_1, CL_cr_2, CL_alpha_1, CL_alpha_2, S1, S2, AR_wing, AR_wing, 0, 0,
+                                    CL_cr_1, CL_cr_2, 0, 0, S1, S2, AR_wing, AR_wing, 0, 0,
                                     wing_plan_1[3], wing_plan_2[3], wing_plan_1[0], wing_plan_2[0], taper, ARv=1.25)
 
+v_tail = vertical_tail.final_VT_rudder(n_prop, D_cr, wing_plan_1[0]/2, l_fus-x_CG_MTOM, 0.9, 0.35)
+
 print("Converged MTOM:", MTOM, "[kg]")
+print("CG position:", x_CG_MTOM)
+print("")
 
 print("Energy:", energy, "[kWh]")
 print("Battery mass:", m_bat, "[kg]")
@@ -294,15 +315,115 @@ print("")
 print("Propeller radius:", prop_radius, "[m]")
 print("Disk loading:", disk_load, "[kg/m^2]")
 print("Cruise drag:", D_cr, "[N]")
-print("Thrust per engine at cruise:", D_cr/16, "[N]")
+print("Thrust per engine at cruise:", D_cr/n_prop, "[N]")
+print("")
 print("Span:", wing_plan_1[0])
+print("MAC:", wing_plan_1[3])
 print("")
 print("Cruise speed:", V_cr, "[m/s]")
 print("Cruise height:", h_cr, "[m]")
 print("")
-print(C_L_cr, CD_cr, C_L_cr/CD_cr)
+print("CL_cr:", C_L_cr, "CD_cr:", CD_cr, "L/D at cr:", C_L_cr/CD_cr)
+print("W/D:", MTOM*g0/D_cr)
 print("")
-print(MTOM*g0/D_cr)
+
+# Sv,C_vr,C_vt,bv,Sweep_v_c2,c_r,c_r_root,c_r_tip,b_r,ARv
+
+# print("Params for Miguel")
+# print("CG", x_CG_MTOM)
+# print("V_cr", V_cr)
+# print("V_stall", V_stall)
+# print("CLmax", CLmax)
+# print("CLalpha", CL_alpha_1, CL_alpha_2)
+# print("S1, S2", S1, S2)
+# print("AR:", AR_wing)
+# print("MAC", wing_plan_1[3], wing_plan_2[3])
+print("Spans:", wing_plan_1[0], wing_plan_2[0])
+print("Taper:", taper)
+# [b2, c_r2, c_t2, c_MAC2, y_MAC2, X_LEMAC2]
+print("C_r", wing_plan_1[1], wing_plan_2[1])
+print("")
+print("New S_v:", v_tail[0])
+print("C_vr:", v_tail[1])
+print("C_vt:", v_tail[2])
+print("b_v:", v_tail[3])
 
 # print("Vertical tail surface", vertical_tail.final_VT_rudder(n_prop, ))
 print(" ")
+
+
+# Propeller blade design
+B = 5
+M_tip = 0.5
+omega = M_tip*a/prop_radius
+rpm = omega/0.10472
+print("Propeller rpm:", rpm)
+
+# rpm = 1500
+# omega = rpm * 0.10472
+
+# V_tip = omega*prop_radius
+
+print("Propeller blade")
+blade = BEM.BEM(B, prop_radius, rpm, xi_0, rho, dyn_vis, V_cr, 20, a, 100000, 10*D_cr/n_prop)
+# blade = BEM.BEM(B, prop_radius, rpm, xi_0, rho, dyn_vis, V_cr, 20, a, 100000, MTOM*g0)
+
+design = blade.optimise_blade(0)[1]
+
+print("Chord per station:", design[0])
+print("")
+print("Pitch per station in deg:", np.rad2deg(design[1]))
+print("")
+print("AoA per station in [deg]:", np.rad2deg(design[2]))
+print("")
+print("Radial coordinates [m]:", design[3])
+print("")
+print("D/L ratio per station:", design[4])
+print("")
+print("Propeller efficiency:", design[5])
+print("")
+print("Thrust coefficient:", design[6])
+print("")
+print("Power coefficient:", design[7])
+print("")
+# print("Exit speed per station:", V_e)
+# print("")
+# print("Average exit speed per station:", np.average(V_e))
+# print("")
+# print("Propulsive efficiency:", 2/(1 + np.average(V_e)/V_cruise))
+
+
+plotter = bp.PlotBlade(design[0], design[1], design[3], prop_radius, xi_0)
+
+plotter.plot_blade()
+plotter.plot_3D_blade()
+
+# Polinomial regression for smooth distribution
+coef_chords = np.polynomial.polynomial.polyfit(design[3], design[0], 5)
+coef_pitchs = np.polynomial.polynomial.polyfit(design[3], design[1], 5)
+
+radial_stations_Koen = np.array([2/12, 3/12, 4/12, 5/12, 6/12, 7/12, 8/12, 9/12, 10/12, 11/12, 12/12-0.001])*prop_radius
+
+
+chord_fun = np.polynomial.polynomial.Polynomial(coef_chords)
+pitch_fun = np.polynomial.polynomial.Polynomial(coef_pitchs)
+
+koen_chords = chord_fun(radial_stations_Koen) * 1000
+koen_pitch = np.rad2deg(pitch_fun(radial_stations_Koen))
+
+print("Koen chords:", koen_chords)
+print("Koen pitchs:", koen_pitch)
+print("Hub radius:", xi_0)
+
+# # Plot
+# axs[1].axis('equal')
+#
+# # Plot actual points
+# axs[1].scatter(self.radial_coords, y_maxs)
+# axs[1].scatter(self.radial_coords, y_mins)
+#
+# # Plot smooth distribution  TODO: revise
+# radius = np.linspace(self.xi_0, self.R, 200)
+# axs[1].plot(radius, y_min_fun(radius))
+# axs[1].plot(radius, y_max_fun(radius))
+
