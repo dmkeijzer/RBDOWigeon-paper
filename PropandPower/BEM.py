@@ -284,8 +284,8 @@ class BEM:
                 filename1 = "4412_Re%d_up.txt" % RN
                 filename2 = "4412_Re%d_dwn.txt" % RN
 
-                file_up = open('Airfoil_Data/'+filename1, "r")
-                file_down = open('Airfoil_Data/'+filename2, "r")
+                file_up = open('../PropandPower/Airfoil_Data/'+filename1, "r")
+                file_down = open('../PropandPower/Airfoil_Data/'+filename2, "r")
 
                 # Read lines
                 lines_up = file_up.readlines()
@@ -357,8 +357,9 @@ class BEM:
                 index = np.argmin(np.abs(airfoil_data_check[:, 1]))
 
                 # Obtain the Cd and AoA from the line where Cl difference is min
-                Cd_ret = airfoil_data[index, 2]                   # Retrieved Cd
-                alpha_ret = np.deg2rad(airfoil_data[index, 0])    # Retrieved AoA convert from deg to rad
+                # Correct the Cd obtained for Mach number
+                Cd_ret = airfoil_data[index, 2]/self.PG(self.M(stations_r[station]))  # Retrieved Cd
+                alpha_ret = np.deg2rad(airfoil_data[index, 0])                        # Retrieved AoA (from deg to rad)
 
                 # Compute D/L ration
                 eps = Cd_ret / lift_coef
@@ -397,7 +398,8 @@ class BEM:
             betas[station] = beta
 
             # Exist speed per station TODO: revise
-            Ves[station] = self.V*(1 + 2*a)
+            # Ves[station] = self.V*(1 + 2*a)
+            Ves[station] = self.V * (1 + zeta*np.cos(phis[station]))
 
         # # Possibly implement a function for eps as a function of r/R (xi)
         # eps_fun = spinplt.interp1d(E, stations_r/self.R, fill_value="extrapolate")
