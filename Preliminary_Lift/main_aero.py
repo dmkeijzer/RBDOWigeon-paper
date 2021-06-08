@@ -104,19 +104,19 @@ CDs_w = CDs - CDs_f
 Afus = np.pi *d_eq**2/4
 post_stall = Wing_params.post_stall_lift_drag(tc, CDs, CDs_f, Afus)
 
-alpha_lst = np.arange(0,89,0.1)
+alpha_lst = np.arange(-3,89,0.1)
 Cl_alpha_curve = Wing_params.CLa(tc, CDs, CDs_f, Afus, alpha_lst)
 
 CD_a_w = Wing_params.CDa_poststall(tc, CDs, CDs_f, Afus, alpha_lst, "wing", Drag.CD)
 CD_a_f = Wing_params.CDa_poststall(tc, CDs, CDs_f, Afus, alpha_lst, "fus", Drag.CD)
 
-#plt.plot(alpha_lst, CD_a_w)
-#plt.show()
+plt.plot(alpha_lst, Cl_alpha_curve)
+plt.show()
 
 x = optimize_wingtips(0,0.2,0.005, 1.5, 'tandem',S_ref,l1,l2,l3,d_eq,Vcruise,rho,MAC,AR,Mach(Vcruise,a),k,flamf,flamw,mu,tc,xcm,0,SweepLE,u,C_t,h_d,IF_f,IF_w, IF_v, CL_CDmin,Abase, S_v, s1, s2)
 #                  Drag = componentdrag('tandem',S_ref,l1,l2,l3,d_eq,Vcruise,rho,MAC,AR,Mach(Vcruise,a),k,flamf,flamw,mu,tc,xcm,0,SweepLE,u,C_t,h_d,IF_f,IF_w, IF_v, CL_CDmin,Abase, S_v, s1, s2, h_wl1, h_wl1)
 #
-print(x)
+#print(x)
 
 
 
