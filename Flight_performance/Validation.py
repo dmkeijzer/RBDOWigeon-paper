@@ -40,6 +40,10 @@ class monte_carlo:
 
     def monte_carlo_sim(self):
 
+        for par in self.params:
+            for
+
+
 
 monte_carlo(2000, 300, 60)
 

@@ -9,8 +9,10 @@ import Airfoil_analysis_midterm2 as airfoil
 
 import prelim_ADT as ADT
 import engine_sizing_positioning_midterm2 as eng_siz
+import battery_midterm2 as bat
 
 import performance_analysis_midterm2 as perf
+import Flight_performance_final_midterm2 as energy_calc
 
 import Vertical_tail_sizing_midterm2 as vert_tail
 import Weight_midterm2 as weight
@@ -51,15 +53,12 @@ l_fus = l1_fus + l2_fus + l3_fus
 h_fus = const.h_fuselage
 fus_upsweep = const.upsweep
 
-# Airfoil parameters
-# TODO: Implement airfoil parameters
 
 # --------------------- Initial estimates ---------------------
-# TODO: revise these values
 # Aero
 CLmax = 1.46916
 s1, s2 = const.s1, const.s2   # Ratio of front and back wing areas to total area
-S1, S2 = 5.5, 5.5             # surface areas of wing one and two
+S1, S2 = 5.25, 5.25           # surface areas of wing one and two
 S_tot = S1+S2                 # Total wing surface area
 AR_wing = 8                   # Aspect ratio of a wing, not aircraft
 AR_tot = AR_wing/2            # Aspect ratio of aircraft
@@ -82,7 +81,7 @@ ROC_hover = 2
 
 
 # Propulsion
-n_prop = 16                 # Number of engines [-]
+n_prop = 12                 # Number of engines [-]
 disk_load = 250             # [kg/m^2]
 clearance_fus_prop = 0.2    # Horizontal separation between the fuselage and the first propeller [m]
 clearance_prop_prop = 0.2   # Horizontal separation between propellers [m]
@@ -118,8 +117,10 @@ pos_frontwing, pos_backwing = 0.5, 7    # positions of the wings away from the n
 
 mass_per_prop = 480 / n_prop
 m_prop = [mass_per_prop] * n_prop       # list of mass of engines (so 30 kg per engine with nacelle and propeller)
-pos_prop = [0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 7.0, 7.0, 7.0, 7.0, 7.0, 7.0, 7.0,
-            7.0]  # 8 on front wing and 8 on back wing
+# pos_prop = [0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 7.0, 7.0, 7.0, 7.0, 7.0, 7.0, 7.0,
+#             7.0]  # 8 on front wing and 8 on back wing
+pos_prop = [0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 7.0, 7.0, 7.0, 7.0, 7.0, 7.0]  # 6 on front wing and 6 on back wing
+
 
 # ------------- Initial mass estimate -------------
 wing = weight.Wing(MTOM, S1, S2, n_ult, AR_wing, [pos_frontwing, pos_backwing])
@@ -229,6 +230,12 @@ while iterate:
 
     S1, S2 = S_tot*s1, S_tot*s2
 
+    V = at.speeds(h_cr, MTOM, CLmax, S_tot, drag)
+
+    # Cruise speed
+    V_cr, CL_cr = V.cruise()
+
+    print("CL comparison:", CL_cr, C_L_cr, V_cr)
 
     # Cruise CL of the wings
     L_cr = MTOM*g0
@@ -237,6 +244,19 @@ while iterate:
 
     CL_cr_1 = 2*L_cr_1/(rho * V_cr**2 * S1)
     CL_cr_2 = 2*L_cr_2/(rho * V_cr**2 * S2)
+    C_L_cr = CL_cr_2
+
+    # Energy sizing
+    mission = energy_calc.mission(MTOM, h_cr, V_cr, CLmax, S_tot)
+
+    # Get approximate overall efficiency
+    eff_overall = 0.91 * 0.57 + 0.699 * 0.43
+    energy = 1.2 * mission.total_energy()[0] * 2.77778e-7 * 1000 / eff_overall  # From [J] to [Wh]
+
+    # Battery sizing
+    battery = bat.Battery(500, 1000, energy, 1)
+
+    m_bat = battery.mass()
 
     # -------------------- Update weight ------------------------
     # TODO update battery weight
@@ -251,7 +271,7 @@ while iterate:
     MTOM_new = Mass.mtom
     x_CG_MTOM = Mass.mtom_cg
 
-    if (MTOM_new-MTOM)/MTOM < 0.01:
+    if (MTOM_new-MTOM)/MTOM < 0.001:
         iterate = False
         MTOM = MTOM_new
 
@@ -266,4 +286,23 @@ vertical_tail = vert_tail.VT_sizing(MTOM*g0, h_cr, x_CG_MTOM, l_fus, h_fus, w_fu
                                     wing_plan_1[3], wing_plan_2[3], wing_plan_1[0], wing_plan_2[0], taper, ARv=1.25)
 
 print("Converged MTOM:", MTOM, "[kg]")
+
+print("Energy:", energy, "[kWh]")
+print("Battery mass:", m_bat, "[kg]")
+print("Wing surface:", S_tot, "[m^2]")
+print("")
+print("Propeller radius:", prop_radius, "[m]")
+print("Disk loading:", disk_load, "[kg/m^2]")
+print("Cruise drag:", D_cr, "[N]")
+print("Thrust per engine at cruise:", D_cr/16, "[N]")
+print("Span:", wing_plan_1[0])
+print("")
+print("Cruise speed:", V_cr, "[m/s]")
+print("Cruise height:", h_cr, "[m]")
+print("")
+print(C_L_cr, CD_cr, C_L_cr/CD_cr)
+print("")
+print(MTOM*g0/D_cr)
+
+# print("Vertical tail surface", vertical_tail.final_VT_rudder(n_prop, ))
 print(" ")

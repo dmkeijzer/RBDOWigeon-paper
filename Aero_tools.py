@@ -1,7 +1,7 @@
 import numpy as np
 from constants import*
 import warnings
-
+import Preliminary_Lift.Drag
 
 class ISA:
     """
@@ -65,26 +65,46 @@ class speeds:
         - Add climb and cruise speed (once drag polar is done)
         - Add aircraft parameters from datafile
     """
-    def __init__(self, altitude, m):
+    def __init__(self, altitude, m, CLmax, S, componentdrag_object):
 
         # To be added from datafile:
-        self.CLmax  = 1.5
-        self.S      = 10
+        self.CLmax  = CLmax
+        self.S      = S
 
         self.rho    = ISA(altitude).density()
         self.W      = m*g
 
+        self.CL = np.linspace(0, self.CLmax, 1000)
+
+        self.CD = componentdrag_object.CD(self.CL)
+
     def stall(self):
+
         return np.sqrt(2*self.W/(self.rho*self.S*self.CLmax))
 
     def climb(self):
-        # !!!! IMPLEMENT !!!
-        return 50
+
+        CL3CD2 = (self.CL**3)/(self.CD**2)
+
+        idx = np.argmax(CL3CD2)
+
+        CL_climb = self.CL[idx]
+
+        V_climb  = np.sqrt(2*self.W/(self.rho*self.S*CL_climb))
+
+        return V_climb
 
     def cruise(self):
-        # !!!! IMPLEMENT !!!!
-        # ADD WIND EFFECT
-        return 60
+
+        CLCD    = self.CL/self.CD
+
+        idx     = np.argmax(CLCD)
+
+        CL_cr   = self.CL[idx]
+
+        V_cr    = np.sqrt(2 * self.W / (self.rho * self.S * CL_cr))
+
+        return V_cr, CL_cr
 
 
 

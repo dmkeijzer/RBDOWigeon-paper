@@ -5,8 +5,7 @@ from matplotlib import colors as mc
 from Aero_tools import ISA
 class VT_sizing:
     def __init__(self,W,h,xcg,lfus,hfus,wfus,V0,Vstall,CD0,CLfwd,CLrear,
-                 CLafwd,CLarear,
-                 Sfwd,Srear,Afwd,Arear,Lambda_c4_fwd,Lambda_c4_rear,cfwd,crear,bfwd,brear,taper,ARv):
+                 CLafwd,CLarear,Sfwd,Srear,Afwd,Arear,Lambda_c4_fwd,Lambda_c4_rear,cfwd,crear,bfwd,brear,taper,ARv):
         self.W = W         # Weight [N]
         self.h = h     # Height [m]
         Aero = ISA(self.h)
@@ -239,9 +238,10 @@ class VT_sizing:
             Sv_estimate = None
             # ax.add_artist(ab)
             # levels = [0,0.1,1,1.]
-            cp = ax.contourf(X, Y, Z, cmap='coolwarm',levels=20)
+            cp = ax.contourf(X, Y, Z, cmap='coolwarm',levels=25)
             Svstab = ax.contour(X, Y, Z, [self.VT_stability(lv)], colors=["k"])
-            plt.clabel(Svstab,fmt=r"Min. :  %.3f"%(self.VT_stability(lv)))
+            # print("Sv_stability = ",self.VT_stability(lv))
+            plt.clabel(Svstab,fmt=r"Min. :  %.1f"%(self.VT_stability(lv)))
             cbar = plt.colorbar(cp, orientation="horizontal")
             cbar.set_label(r"$S_v$ $[m^2]$")
             plt.ylabel(r"$b_r/b_v$ [-]", fontsize=12)

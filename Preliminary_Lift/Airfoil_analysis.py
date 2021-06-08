@@ -5,8 +5,8 @@ from scipy.interpolate import interp1d
 
 
 def airfoil_stats():
-    df1 = pd.read_csv("Airfoil_data/NACA44017_Re2.300.csv")
-    df2 = pd.read_csv("Airfoil_data/NACA44017_Re1.700.csv")
+    df1 = pd.read_csv("../Preliminary_Lift/Airfoil_data/NACA44017_Re2.300.csv")
+    df2 = pd.read_csv("../Preliminary_Lift/Airfoil_data/NACA44017_Re1.700.csv")
     df1["cl/cd"] = df1["CL"]/df1["CD"]
 
     Clmax = np.max(df2["CL"])
@@ -27,15 +27,15 @@ def airfoil_stats():
 def airfoil_datapoint(type, Re, alpha):
 
     if Re == "Stall":
-        df = pd.read_csv("Airfoil_data/NACA44017_Re1.700.csv")
+        df = pd.read_csv("../Preliminary_Lift/Airfoil_data/NACA44017_Re1.700.csv")
     else:
-        df = pd.read_csv("Airfoil_data/NACA44017_Re2.300.csv")
+        df = pd.read_csv("../Preliminary_Lift/Airfoil_data/NACA44017_Re2.300.csv")
 
     return np.average(df[type][df["alpha"] == alpha])
 
 
 def Cd(CL):
-    df = pd.read_csv("Airfoil_data/NACA44017_Re2.300.csv")
+    df = pd.read_csv("../Preliminary_Lift/Airfoil_data/NACA44017_Re2.300.csv")
     Cl_vals = np.array(df["CL"][df["alpha"]<17])
     Cd_vals = np.array(df["CD"][df["alpha"]<17])
     #print(Cl_vals)
