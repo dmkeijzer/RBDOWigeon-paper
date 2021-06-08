@@ -9,21 +9,22 @@ import os
 import json
 import matplotlib.pyplot as plt
 root_path = os.path.join(os.getcwd(), os.pardir)
+from constants import g
 
 datafile = open(os.path.join(root_path, "data/inputs_config_1.json"), "r")
 data = json.load(datafile)
 datafile.close()
 FP = data["Flight performance"]
 STR = data["Structures"]
-AR = 5
+AR = 4
 
 
-W = STR["MTOW"] #[N]
-Vcruise = 60#FP["V_cruise"] #[m/s]
-Wing_loading = FP["WS"]
+W = 2602*g#STR["MTOW"] #[N]
+Vcruise = 62#FP["V_cruise"] #[m/s]
+Wing_loading = W/14.9#FP["WS"]
 
 #Cruise conditions
-h = 400 # cruise height[m]
+h = 1000 # cruise height[m]
 atm_flight  = ISA(h)
 rho = atm_flight.density() # cte.rho
 mu = atm_flight.viscosity_dyn()

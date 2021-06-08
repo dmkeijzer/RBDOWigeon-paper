@@ -230,6 +230,13 @@ while iterate:
 
     S1, S2 = S_tot*s1, S_tot*s2
 
+    V = at.speeds(h_cr, MTOM, CLmax, S_tot, drag)
+
+    # Cruise speed
+    V_cr, CL_cr = V.cruise()
+
+    print("CL comparison:", CL_cr, C_L_cr, V_cr)
+
     # Cruise CL of the wings
     L_cr = MTOM*g0
     L_cr_1 = L_cr/2
@@ -240,7 +247,7 @@ while iterate:
     C_L_cr = CL_cr_2
 
     # Energy sizing
-    mission = energy_calc.mission(MTOM, h_cr, V_cr, S_tot)
+    mission = energy_calc.mission(MTOM, h_cr, V_cr, CLmax, S_tot)
 
     # Get approximate overall efficiency
     eff_overall = 0.91 * 0.57 + 0.699 * 0.43
