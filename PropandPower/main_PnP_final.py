@@ -60,7 +60,7 @@ dyn_visc = ISA.viscosity_dyn()
 
 # Midterm
 # B, R, rpm, xi_0, rho, dyn_vis, V_fr, N_stations, a, RN_spacing, T=None, P=None
-B = 6
+B = 3
 xi_0 = 0.1
 R = 0.39
 A_prop = np.pi*R**2
@@ -75,16 +75,16 @@ V_h = 52
 N_stations = 20
 RN_spacing = 100000
 
-T_cr_per_eng = 27.55
+T_cr_per_eng = 27.55*2
 T_h_per_eng = MTOM*9.80665 / 12
 
-# propeller = BEM.BEM(B, R, rpm, xi_0, rho, dyn_visc, V_cruise, N_stations, a, RN_spacing, T=T_cr_per_eng)
-propeller = BEM.BEM(B, R, rpm, xi_0, rho, dyn_visc, V_h, N_stations, a, RN_spacing, T=T_h_per_eng)
+propeller = BEM.BEM(B, R, rpm, xi_0, rho, dyn_visc, V_cruise, N_stations, a, RN_spacing, T=T_cr_per_eng)
+# propeller = BEM.BEM(B, R, rpm, xi_0, rho, dyn_visc, V_h, N_stations, a, RN_spacing, T=T_h_per_eng)
 
 
 # Zeta init
 zeta_init = 0
-zeta, design = propeller.optimise_blade(zeta_init)
+zeta, design, V_e = propeller.optimise_blade(zeta_init)
 
 print("Displacement velocity ratio (zeta):", zeta)
 print("")
@@ -106,6 +106,14 @@ print("")
 print("Thrust coefficient:", design[6])
 print("")
 print("Power coefficient:", design[7])
+print("")
+print("Exit speed per station:", V_e)
+print("")
+print("Average exit speed per station:", np.average(V_e))
+print("")
+print("Propulsive efficiency:", 2/(1 + np.average(V_e)/V_cruise))
+
+
 
 # Load blade plotter
 plotter = BP.PlotBlade(design[0], design[1], design[3], R, xi_0)

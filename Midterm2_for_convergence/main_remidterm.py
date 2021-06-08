@@ -60,7 +60,7 @@ CLmax = 1.46916
 s1, s2 = const.s1, const.s2   # Ratio of front and back wing areas to total area
 S1, S2 = 5.25, 5.25           # surface areas of wing one and two
 S_tot = S1+S2                 # Total wing surface area
-AR_wing = 8                  # Aspect ratio of a wing, not aircraft
+AR_wing = 8                   # Aspect ratio of a wing, not aircraft
 AR_tot = AR_wing/2            # Aspect ratio of aircraft
 
 # Wingtips
@@ -237,6 +237,7 @@ while iterate:
 
     CL_cr_1 = 2*L_cr_1/(rho * V_cr**2 * S1)
     CL_cr_2 = 2*L_cr_2/(rho * V_cr**2 * S2)
+    C_L_cr = CL_cr_2
 
     # Energy sizing
     mission = energy_calc.mission(MTOM, h_cr, V_cr, S_tot)
@@ -263,7 +264,7 @@ while iterate:
     MTOM_new = Mass.mtom
     x_CG_MTOM = Mass.mtom_cg
 
-    if (MTOM_new-MTOM)/MTOM < 0.01:
+    if (MTOM_new-MTOM)/MTOM < 0.001:
         iterate = False
         MTOM = MTOM_new
 
@@ -287,9 +288,14 @@ print("Propeller radius:", prop_radius, "[m]")
 print("Disk loading:", disk_load, "[kg/m^2]")
 print("Cruise drag:", D_cr, "[N]")
 print("Thrust per engine at cruise:", D_cr/16, "[N]")
+print("Span:", wing_plan_1[0])
 print("")
 print("Cruise speed:", V_cr, "[m/s]")
 print("Cruise height:", h_cr, "[m]")
+print("")
+print(C_L_cr, CD_cr, C_L_cr/CD_cr)
+print("")
+print(MTOM*g0/D_cr)
 
 # print("Vertical tail surface", vertical_tail.final_VT_rudder(n_prop, ))
 print(" ")
