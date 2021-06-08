@@ -3,7 +3,7 @@ import numpy as np
 
 class Wing:
     # Roskam method (not accurate because does not take into account density of material but good enough for comparison
-    def __init__(self, mtom, S1, S2, n_ult, A, pos = []):
+    def __init__(self, mtom, S1, S2, n_ult, A, pos=[]):
         self.S1_ft, self.S2_ft = S1 * 3.28084 ** 2, S2 * 3.28084 ** 2
         self.n_ult, self.A = n_ult, A
         self.mtow_lbs = 2.20462 * mtom

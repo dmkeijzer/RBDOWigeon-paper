@@ -144,7 +144,7 @@ class Wing_placement_sizing:
         deda = self.de_da
         # print("de/da = ",deda)
         SrSfwd_stab = (-self.CLafwd * (Xcg - self.xacfwd) +CDafwd*(self.Zcg-self.dy))/ \
-                      (-self.CLarear * (1 - deda) * (self.xacrear  - Xcg)+CDarear*(self.hfus-self.Zcg) * (1 - deda))
+                      (-self.CLarear * (1 - deda) * (self.xacrear  - Xcg)+CDarear*(self.hfus-self.Zcg)*(1-deda))
         SrSfwd_control = (-self.Cmacfwd * self.cfwd + CDfwd * (self.Zcg-self.dy) - CLfwd * (Xcg - self.xacfwd) / (
                         CDrear * (self.hfus-self.Zcg) - self.CLrear * (self.xacrear - Xcg) + self.Cmacrear * self.crear))
         return SrSfwd_stab ** (-1), SrSfwd_control ** (-1)

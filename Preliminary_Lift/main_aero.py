@@ -89,7 +89,7 @@ S_v = 0.6
 S_t = 0
 
 
-Drag = componentdrag('tandem',S_ref,l1,l2,l3,d_eq,Vcruise,rho,MAC,AR,e,Mach(Vcruise,a),k,flamf,flamw,mu,tc,xcm,0,SweepLE,u,0,h_d,IF_f,IF_w, IF_v, CL_CDmin,Abase, S_v, S_t, s1, s2, h_wl1, h_wl2)
+Drag = componentdrag('tandem',S_ref,l1,l2,l3,d_eq,Vcruise,rho,MAC,AR,e,Mach(Vcruise,a),k,flamf,flamw,mu,tc,xcm,0,SweepLE,u,0,h_d,IF_f,IF_w, IF_v, CL_CDmin,Abase, S_v, s1, s2, h_wl1, h_wl2)
 
 
 CL_design = Drag.CL_des()[0]
@@ -104,7 +104,7 @@ CDs = Drag.CD(CLmax)
 CDs_f = Drag.CD0_f
 CDs_w = CDs - CDs_f
 #Post stall
-Afus = np.pi *d_eq/4
+Afus = np.pi *d_eq**2/4
 post_stall = Wing_params.post_stall_lift_drag(tc, CDs, CDs_f, Afus)
 
 alpha_lst = np.arange(0,89,0.1)

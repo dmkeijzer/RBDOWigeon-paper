@@ -7,6 +7,7 @@ import numpy as np
 from math import *
 from matplotlib import pyplot as plt
 from Wing_design import deps_da
+from Aero_tools import ISA
 
 
 # INPUTS
@@ -16,7 +17,7 @@ root    = 0.999        # Root chord
 tip     = 0.449        # Tip chord
 sweep   = 0        # Sweep of quarter-chord, degrees
 washout = 0        # Downward twist at tip, degrees
-npoints = 10        # Number of points to evaluate on wing half
+npoints = 21        # Number of points to evaluate on wing half
 AR= 10
 # WING
 def slope(y2, y1, x2, x1): return (y2 - y1) / (x2 - x1)
@@ -295,6 +296,27 @@ def create_plot_comp(wing, y, cl, ccl, CL, CDi,  cl2, ccl2, CL2, CDi2):
     wing.plot(axarr[1])
     plt.show()
 
+def create_plot_induced(wing, y, al_i,al_i2):
+    """ Plots lift distribution and wing geometry """
+
+    # Mirror to left side for plotting
+    npt = y.shape[0]
+    y = np.hstack((y, np.flipud(-y[0:npt-1])))
+    al_i = np.hstack((al_i, np.flipud(al_i[0:npt-1])))
+    al_i2 = np.hstack((al_i2, np.flipud(al_i2[0:npt-1])))
+
+    fig, axarr = plt.subplots(2, sharex=True)
+
+    axarr[0].plot(y, al_i, 'r', y, al_i2, 'b' )
+    axarr[0].set_xlabel('y')
+    axarr[0].set_ylabel('Induced AOA $\\alpha_i$')
+    axarr[0].legend(['Fore Wing', 'Hind Wing'], numpoints=1)
+    axarr[0].grid()
+    axarr[0].annotate("Fore CL: {:.4f}\nFore CDi: {:.5f}\n Hind CL {:.4f}\nHind CDi: {:.5f}".format(CL,CDi, CL2, CDi2), xy=(0.72,0.43), xycoords='axes fraction', verticalalignment='top',  bbox=dict(boxstyle='square', fc='w', ec='m'), color='m')
+
+    wing.plot(axarr[1])
+    plt.show()
+
 if __name__ == "__main__":
 
     wing = Wing(span, root, tip, sweep,washout)
@@ -319,3 +341,13 @@ if __name__ == "__main__":
     create_plot(wing, y, cl, ccl, CL, CDi)
     create_plot(wing2, y2, cl2, ccl2, CL2, CDi2)
     create_plot_comp(wing, y, cl, ccl, CL, CDi, cl2, ccl2, CL2, CDi2)
+    create_plot_induced(wing,y,al_i,al_i2)
+
+def sectional_lift(ccl, q_inf):
+    return q_inf * ccl
+
+ISA = ISA(400)
+rho = ISA.density()
+Vc = 55 # V_cruise
+Ldash = sectional_lift(ccl, 0.5 * rho * Vc ** 2 ) # Sectional Lift Fore Wing [N/m]
+Ldash2 = sectional_lift(ccl2, 0.5 * rho * Vc ** 2 ) # Sectional Lift Hind Wing [N/m]

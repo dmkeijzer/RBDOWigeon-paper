@@ -46,6 +46,7 @@ class BEM:
         if T is not None:
             self.Tc = 2 * T / (rho * V_fr**2 * np.pi * R**2)
             self.Pc = None
+
         elif P is not None:
             self.Pc = 2 * P / (rho * V_fr**3 * np.pi * R**2)
             self.Tc = None

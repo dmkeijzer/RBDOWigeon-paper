@@ -1,9 +1,11 @@
-from Analysis import Stringer, WingBox, WingStructure
+from Geometry import Stringer, WingBox, WingStructure
 from Equilibrium import PointLoad, Moment, RunningLoad, EquilibriumEquation, DistributedMoment
 from sklearn.preprocessing import PolynomialFeatures
 from sklearn.linear_model import LinearRegression
 from MathFunctions.Mechanics import StepFunction
 import rainflow
+import numpy as np
+import pandas as pd
 
 class Engines:
     def __init__(self, ThrustHover, ThrustCruise, positions: list[float, int], weight):
@@ -22,7 +24,7 @@ class WingLoads:
         self.ViVx, self.ViMy = [None]*2
         
         self.box = WingBox(self.tsk, self.tsp, self.frac, self.toc)
-        self.box.StrPlacement(self.nStrT, self.nStrB, self.StrA)
+        self.box.StrPlacement(self.nStrT, self.nStrB, self.StrA, self.strGeo, self.strType)
         self.wing = WingStructure(self.span, self.taper, self.cr, self.box)
         self.acp = (self.xac - 0.45) * self.mac # Redefine
         
@@ -50,8 +52,8 @@ class WingLoads:
         self.RFx, self.RFy, self.RFz, self.RMx, self.RMy, self.RMz = solved = eqn.SolveEquation()
         return solved
     
-    def equilibriumVTO(self, wingWeight):
-        Thrusts = [PointLoad([-self.engines.Thover + self.engines.w, 0, 0],
+    def equilibriumVTO(self, wingWeight, ground = False):
+        Thrusts = [PointLoad([(-self.engines.Thover if not ground else 0) + self.engines.w, 0, 0],
                              [-0.45*self.wing(p).b/self.frac, 0, p]) for p in self.engines.pos] # Redefine x, y
         weights = RunningLoad(values=[[wingWeight / self.span]*2, [0]*2], positions=[0, self.span/2], axis=2)
         eqtn = EquilibriumEquation(kloads=[weights] + Thrusts,
@@ -85,41 +87,40 @@ class WingLoads:
         self.My, self.Mx = self.Vx.integral(self.RMy), self.Vy.integral(-self.RMx)
         return lift, wgt
 
-    def internalLoadsVTO(self, wingWeight):
+    def internalLoadsVTO(self, wingWeight, ground = False):
         wgt = StepFunction([[wingWeight / self.span, 0, 0]]) # Fx
-        Thrusts = StepFunction([[-self.engines.Thover+self.engines.w, p, 0] for p in self.engines.pos]) # Fx
+        Thrusts = StepFunction([[(-self.engines.Thover if not ground else 0)+self.engines.w, p, 0] for p in self.engines.pos]) # Fx
         self.ViVx = Vx = -(Thrusts + wgt.integral() + self.VFx)
         self.ViMy = My = Vx.integral(self.VMy)
         return Vx, My
     
-    def stresses(self):
+    def stressesCruise(self):
         root = self.wing(0)
-        tauv = root.tau(0, root.h/2, Vx=self.ViVx(0), Vy=0, T=0)
-        ldt = dict(Vx=self.Vx(0), Vy=self.Vy(0), T=self.T(0))
-        ytaucmax = StepFunction.optimize(lambda y: root.tau(root.b/2, y, **ldt), -root.h/2, root.h/2)
-        tauc1 = root.tau(-root.b/2, ytaucmax, **ldt)
+        # q, tau, o
+        coordinates = [[x, root.h/2] for x in np.linspace(-root.b/2, root.b/2, 1000)] + [[root.b/2, y] for y in np.linspace(root.h/2, -root.h/2, 1000)] \
+        + [[x, -root.h/2] for x in np.linspace(-root.b/2, root.b/2, 1000)] + [[-root.b/2, y] for y in np.linspace(root.h/2, -root.h/2, 1000)]
         
-        xtaucmax = StepFunction.optimize(lambda x: root.tau(x, root.h/2, **ldt), -root.b/2, root.b/2)
-        tauc2 = root.tau(xtaucmax, -root.h/2, Vx=self.Vx(0), Vy=self.Vy(0), T=self.T(0))
-        tauc = [tauc1, tauc2][np.argmax([abs(tauc1), abs(tauc2)])]
+        x, y = np.array(coordinates).T
+        sigma = root.o(x, y, self.Mx(0), self.My(0))
+        tau = np.array([root.tau(ix, iy, self.Vx(0), self.Vy(0), self.T(0)) for ix, iy in coordinates])
         
-        ov = root.o(root.b/2, 0, Mx=0, My=self.ViMy(0))
-        lds = dict(My=self.My(0), Mx=self.Mx(0))
-        yocmax = StepFunction.optimize(lambda y: root.o(-root.b/2, y, **lds), -root.h/2, root.h/2)
-        oc1 = root.o(-root.b/2, ytaucmax, **lds)
-        xocmax = StepFunction.optimize(lambda x: root.o(x, root.h/2, **lds), -root.b/2, root.b/2)
-        oc2 = root.o(xocmax, root.h/2, **lds)
-        oc = [oc1, oc2][np.argmax([abs(oc1), abs(oc2)])]
-        stressc = [(root.tau(x, root.h/2, **ldt), root.o(x, root.h/2, **lds)) for x in np.linspace(-root.b/2, root.b/2, 100)] + \
-                  [(root.tau(-root.b/2, y, **ldt), root.o(-root.b/2, y, **lds)) for y in np.linspace(-root.h/2, root.h/2, 100)]
-        
-        stressv = [(root.tau(x, root.h/2, Vx=self.ViVx(0)), root.o(x, root.h/2, My=self.ViMy(0))) for x in np.linspace(-root.b/2, root.b/2, 100)] + \
-                  [(root.tau(-root.b/2, y, Vx=self.ViVx(0)), root.o(-root.b/2, y, My=self.ViMy(0))) for y in np.linspace(-root.h/2, root.h/2, 100)]
+        return np.array(coordinates), sigma, tau, np.sqrt(3*tau**2 + sigma**2)
 
-        Yc, Yv = [[(3*tau ** 2 + o ** 2) ** 0.5 for tau, o in stres] for stres in [stressc, stressv]]
-        return tuple([max([a[0] for a in stressc]), max([a[0] for a in stressv]),
-                     max([a[1] for a in stressc]), max([a[1] for a in stressv]),
-                     np.max(Yc), np.max(Yv)])
+    def stressesVTO(self):
+        root = self.wing(0)
+        # q, tau, o
+        coordinates = [[x, root.h/2] for x in np.linspace(-root.b/2, root.b/2, 1000)] + [[root.b/2, y] for y in np.linspace(root.h/2, -root.h/2, 1000)] \
+        + [[x, -root.h/2] for x in np.linspace(-root.b/2, root.b/2, 1000)] + [[-root.b/2, y] for y in np.linspace(root.h/2, -root.h/2, 1000)]
+        
+        x, y = np.array(coordinates).T
+        sigma = root.o(x, y, Mx = 0, My = self.ViMy(0))
+        tau = np.array([root.tau(ix, iy, Vx = self.ViVx(0), Vy = 0, T = 0) for ix, iy in coordinates])
+        
+        return np.array(coordinates), sigma, tau, np.sqrt(3*tau**2 + sigma**2)
+    
+    @staticmethod
+    def extreme(coord, arr):
+        return np.array([*coord[np.argmax(np.abs(arr))], arr[np.argmax(np.abs(arr))]])
 
 class Fatigue:
     def __init__(self, Sground, Stakeoff, Scruise, airTime, turnOver, takeOffTime, mat):
