@@ -73,7 +73,7 @@ dx = 0.1
 
 #### Plotting Vertical Tail ####
 nE = 12
-Tt0 = 1000
+Tt0 = 1500
 yE = bfwd/2
 lv = lfus-xcg
 brbv = np.linspace(0.75,1,150)
@@ -84,20 +84,24 @@ crcv = np.linspace(0.1,0.4,150)
 #         vt_br = vt_sizing.final_VT_rudder(nE,Tt0,yE,lv,br_bv=brbv[i],cr_cv=j)
 # print("Sv = ",vt_sizing.VT_stability(lv))
 
-ARv = 1.25
-sweepTE = 25
+ARv = 1.5
+sweepTE =25.0
 vt_sizing = VT_sizing(W,h,xcg,lfus,hfus,wfus,V0,Vstall,CD0,CLdesfwd,CLdesrear,CLafwd,CLarear,
                  Sfwd,Srear,Afwd,Arear,Lambda_c4_fwd,Lambda_c4_rear,cfwd,crear,bfwd,brear,taper,ARv,sweepTE)
-if isinstance(ARv,float):
-    vt_sizing.plotting(nE,Tt0,yE,br_bv=brbv,cr_cv=crcv)
+if isinstance(ARv,(float,int)) and isinstance(sweepTE,(float,int)):
+    vt_sizing.plotting(nE,Tt0,yE,br_bv=brbv,cr_cv=crcv,ARv=ARv,sweepTE=sweepTE)
     # print(vt_sizing.plotting(nE, Tt0, yE, lv, br_bv=0.85, cr_cv=0.3))
-    vt_sizing.plotting(nE, Tt0, yE, br_bv=0.85, cr_cv=0.4)
-    Sv = vt_sizing.final_VT_rudder(nE,Tt0,yE,br_bv=0.85,cr_cv=0.4)[0]
-    bv =  vt_sizing.final_VT_rudder(nE,Tt0,yE,br_bv=0.85,cr_cv=0.4)[3]
-    print("Sv, bv=", Sv,bv)
+    vt_sizing.plotting(nE, Tt0, yE, br_bv=0.85, cr_cv=0.4,ARv=ARv,sweepTE=sweepTE)
+    Sv = vt_sizing.final_VT_rudder(nE,Tt0,yE,br_bv=0.85,cr_cv=0.4,ARv=ARv,sweepTE=sweepTE)[0]
+    Svstab = vt_sizing.VT_stability(ARv,sweepTE)
+    Svctrl = vt_sizing.VT_controllability(nE,Tt0,yE,br_bv=0.85, cr_cv=0.4,ARv=ARv,sweepTE=sweepTE)
+    bv =  vt_sizing.final_VT_rudder(nE,Tt0,yE,br_bv=0.85,cr_cv=0.4,ARv=ARv,sweepTE=sweepTE)[3]
+    print("Stability outside: Sv = ",Svstab)
+    print("Controllability outside: Sv = ", Svctrl)
+    print("Final: Sv, bv=", Sv,bv)
     # print(Sv)
 else:
-    vt_sizing.plotting(nE,Tt0,yE,lv,br_bv=0.85,cr_cv=0.3)
+    vt_sizing.plotting(nE,Tt0,yE,br_bv=0.85,cr_cv=0.4,ARv=ARv,sweepTE=sweepTE)
 # vt_sizing.plotting(nE,Tt0,yE,lv,br_bv=0.65,cr_cv=0.4)
 # vt_sizing.plotting(nE,Tt0,yE,lv,br_bv=0.55,cr_cv=0.4)
 
@@ -122,9 +126,10 @@ wps.plotting(0, lfus, dx, elevator_effect, d)
 CL0 = 0.82
 A = Afwd/2
 CD0_a = CD0+CL0**2/(np.pi*A*e)
-stability_derivatives = Stab_Derivatives(W,h,lfus,hfus,wfus, d,dy,xcg,Zcg,cfwd,crear,Afwd,Arear,Vstall,
-                 V0,Tt0,CLdesfwd,CLdesrear,CD0_a,CL0,2*np.pi/180,0,
-                 Clafwd,Clarear, Cd0fwd, Cd0rear, CLafwd,CLarear,Sfwd,Srear,5*np.pi/180/6,0,
-                 efwd,erear,Lambda_c4_fwd,Lambda_c4_rear,taper,0.4,
-                 bv,Sv,ARv,Pbr,CD0,eta_rear=1,eta_v=1)
-print(stability_derivatives.q_derivatives())
+if isinstance(ARv,float) and isinstance(sweepTE,float):
+    stability_derivatives = Stab_Derivatives(W,h,lfus,hfus,wfus, d,dy,xcg,Zcg,cfwd,crear,Afwd,Arear,Vstall,
+                     V0,Tt0,CLdesfwd,CLdesrear,CD0_a,CL0,2*np.pi/180,0,
+                     Clafwd,Clarear, Cd0fwd, Cd0rear, CLafwd,CLarear,Sfwd,Srear,5*np.pi/180/6,0,
+                     efwd,erear,Lambda_c4_fwd,Lambda_c4_rear,taper,0.4,
+                     bv,Sv,ARv,Pbr,CD0,eta_rear=1,eta_v=1)
+    print(stability_derivatives.q_derivatives())
