@@ -3,8 +3,8 @@ import numpy as np
 
 class Wing:
     # Roskam method (not accurate because does not take into account density of material but good enough for comparison
-    def __init__(self, mtom, S1, S2, n_ult, A, pos = []):
-        self.S1_ft, self.S2_ft = S1 * 3.28084 ** 2, S2 * 3.28084 ** 2
+    def __init__(self, mtom, S1, S2, n_ult, A, pos = [], wmac = 0.8, toc = 0.17):
+        self.S1_ft, self.S2_ft, self.S1, self.S2 = S1 * 3.28084 ** 2, S2 * 3.28084 ** 2, S1, S2
         self.n_ult, self.A = n_ult, A
         self.mtow_lbs = 2.20462 * mtom
         self.pos1, self.pos2 = pos
@@ -12,12 +12,13 @@ class Wing:
         self.wweight2 = 0.04674*(self.mtow_lbs**0.397)*(self.S2_ft**0.36)*(self.n_ult**0.397)*(self.A**1.712)
         self.mass = [self.wweight1, self.wweight2]
         self.moment = np.array(self.mass)*np.array(pos)
+        self.wmac, self.toc = wmac, toc
 
 class Fuselage:
     # Roskam method (not accurate because does not take into account density of material but good enough for comparison
-    def __init__(self, mtom, Pmax, lf, npax, pos):
+    def __init__(self, mtom, Pmax, lf, npax, pos, wf=1.55):
         self.mtow_lbs = 2.20462 * mtom
-        self.lf_ft = lf*3.28084
+        self.lf_ft, self.lf = lf*3.28084, lf
         self.Pmax_ft = Pmax*3.28084
         self.pos = pos
         self.npax = npax
@@ -26,6 +27,7 @@ class Fuselage:
         self.fweight = (self.fweight_high + self.fweight_low)/2
         self.mass = self.fweight*0.453592
         self.moment = self.mass * self.pos
+        self.wf = wf
 
 class LandingGear:
     def __init__(self, mtom, pos):
@@ -93,6 +95,37 @@ class Weight:
         # for key in d:
         #     d[key] = {k: list(i) if isinstance(i, np.ndarray) else i for k, i in zip(["mass", "fracOEM", "fracEM"], d[key])}
         # return d
+    def MMI(self):
+        # fuselage  - modeled as a hollow cylinder with wall thickness of 5 cm
+        irad = (self.fuselage.wf - 0.05)
+        fus_mmi_y = self.fmass * (self.fuselage.lf**2 + 3*self.fuselage.wf**2 + 3*irad**2)/12
+        fus_mmi_z = fus_mmi_y
+        fus_mmi_x = self.fmass * (self.fuselage.wf**2 + irad**2)/2
+
+        # wing - modeled as a prism with span, average thickness and width at mac
+        t = self.wing.wmac * self.wing.toc
+        span = np.sqrt(self.wing.A * self.wing.S1)
+
+        wing_mmi_x, wing_mmi_y, wing_mmi_z = self.wing.mass[0]*(span**2 + t**2)/12, self.wing.mass[0]*(span**2 + self.wing.wmac**2)/12, \
+                                             self.wing.mass[0] * (self.wing.wmac ** 2 + t ** 2) / 12
+
+        # propulsion - modeled as a solid cylinder
+        m_prop = self.pmass/self.prop.nprop
+        lprop, rprop = 0.4, 0.15
+        prop_mmi_x, prop_mmi_y, prop_mmi_z = m_prop*(rprop**2)/2, m_prop*(lprop**2 + 3 * rprop**2)/12, m_prop*(lprop**2 + 3 * rprop**2)/12
+
+        # battery - modeled as a prism
+        lbat, tbat, wbat = 0.4*self.fuselage.lf, 0.2, 1
+        bat_mmi_x, bat_mmi_y, bat_mmi_z = self.bmass*(wbat**2 + tbat**2)/12, self.bmass*(wbat**2 + lbat**2)/12, self.bmass*(tbat**2 + lbat**2)/12
+
+        # actual mass moment of inertias
+        oem_mmi_x = fus_mmi_x + 2 * (
+                    wing_mmi_x + self.wmass/2 * (1.705 /2)**2) + \
+                    4*np.sum(m_prop * (np.sqrt((np.linspace(0.2, 10/2, 4))**2 + 1.705/2 ** 2))**2) + self.prop.nprop * prop_mmi_x + bat_mmi_x + self.bmass * (1.705/2) ** 2
+        oem_mmi_y = fus_mmi_y + 2* (wing_mmi_y + self.wmass/2*(self.wing.pos1)**2) +\
+                    np.sum(4*m_prop*(np.sqrt((np.linspace(0.2, 10/2, 4))**2 + self.wing.pos1 ** 2))**2) + self.prop.nprop*prop_mmi_y + bat_mmi_y
+        oem_mmi_z = fus_mmi_z + (wing_mmi_z + self.wmass/2 * (np.sqrt((1.705/2)**2 + self.wing.pos1**2))**2)*2 + bat_mmi_z * (1.705/2)**2 + ((np.sqrt((1.705/2)**2 + self.wing.pos1**2))**2 + prop_mmi_z)*self.prop.nprop
+        return oem_mmi_x, oem_mmi_y, oem_mmi_z
 
 if __name__ == '__main__':
     mtom = 1972 # maximum take-off mass from statistical data - Class I estimation
@@ -115,3 +148,4 @@ if __name__ == '__main__':
     props = Propulsion(n_prop, m_prop, pos_prop)
     weight = Weight(m_pax, wing, fuselage, lgear, props, cargo_m = 85, cargo_pos = 6, battery_m = 400, battery_pos = 3.6, p_pax = [1.5, 3, 3, 4.2, 4.2])
     print(weight.print_weight_fractions())
+    print(weight.MMI())

@@ -13,11 +13,11 @@ class Stringer:
     Iyy = lambda self: self.a * self.x**2
 
 class ZStringer(Stringer):
-    def __init__(self, area = 0.001, point = (0, 0), bflange = 0.05, tflange = 0.05, vflange = 0.05, tstr = 0.001):
-        super().__init__(area, point)
+    def __init__(self, point = (0, 0), bflange = 0.05, tflange = 0.05, vflange = 0.05, tstr = 0.001):
+        super().__init__((tflange + bflange1 + bflange2 + 2*vflange)*tstr, point)
         self.bflange, self.tflange, self.vflange, self.t = bflange, tflange, vflange, tstr
 
-    ccarea = lambda self: (self.tflange + self.bflange + self.vflange) * self.t
+    ccarea = lambda self: self.a
     
     __repr__ = __str__ = lambda self: "Z-Stringer(" + ', '.join(f"{k}={self.__dict__[k]}" for k in self.__dict__) + ")"
     
@@ -35,14 +35,14 @@ class ZStringer(Stringer):
                 + sdict['ccstress3'] * self.t * self.vflange) / self.ccarea()
     
 class HatStringer(Stringer):
-    def __init__(self, area = 0.001, point = (0, 0), bflange1 = 0.05, bflange2 =0.05, tflange = 0.05, vflange = 0.05, tstr = 0.001):
-        super().__init__(area, point)
+    def __init__(self, point = (0, 0), bflange1 = 0.05, bflange2 =0.05, tflange = 0.05, vflange = 0.05, tstr = 0.001):
+        super().__init__((tflange + bflange1 + bflange2 + 2*vflange)*tstr, point)
         self.bflange1, self.bflange2, self.tflange, self.vflange, self.t = bflange1, bflange2, tflange, vflange, tstr
     
     __repr__ = __str__ = lambda self: "HAT-Stringer(" + ', '.join(f"{k}={self.__dict__[k]}" for k in self.__dict__) + ")"
-
-    ccarea = lambda self: (self.tflange + self.bflange1 + self.bflange2 + 2*self.vflange) * self.t
     
+    ccarea = lambda self: self.a
+
     def cripplingStress(self, E, v, sigma_y):
         alpha, n = 0.8, 0.6
         sdict = {}
@@ -58,11 +58,11 @@ class HatStringer(Stringer):
                 + 2 * sdict['ccstress24'] * self.t * self.vflange + sdict['ccstress3'] * self.t * self.tflange) / self.ccarea()
 
 class JStringer(Stringer):
-    def __init__(self, area = 0.001, point = (0, 0), bflange1 = 0.05, bflange2 =0.05, tflange = 0.05, vflange = 0.05, tstr = 0.001):
-        super().__init__(area, point)
+    def __init__(self, point = (0, 0), bflange1 = 0.05, bflange2 =0.05, tflange = 0.05, vflange = 0.05, tstr = 0.001):
+        super().__init__((tflange + bflange1 + bflange2 + 2*vflange)*tstr, point)
         self.bflange1, self.bflange2, self.tflange, self.vflange, self.t = bflange1, bflange2, tflange, vflange, tstr
         
-    ccarea = lambda self: (self.bflange1 + self.bflange2 + self.vflange + self.tflange) * self.t
+    ccarea = lambda self: self.a
     
     __repr__ = __str__ = lambda self: "J-Stringer(" + ', '.join(f"{k}={self.__dict__[k]}" for k in self.__dict__) + ")"
     
@@ -99,11 +99,10 @@ class WingBox:
     
     Vc = Ixy = lambda self: 0
     
-    def StrPlacement(self, nstr_top:int , nstr_bottom:int , area, stringerGeometry = {}, stringerType = 'Point'):
+    def StrPlacement(self, nstr_top:int , nstr_bottom:int, stringerGeometry = {}, stringerType = 'Point'):
         strtype = {'Z':ZStringer, 'Hat':HatStringer, 'J':JStringer, 'Point': Stringer}[stringerType]
-        topstringers = [strtype(area, point = (i*self.b/(nstr_top + 1) - self.b/2, self.h/2), **stringerGeometry) for i in range(1, nstr_top+1)]
-        bottomstringers = [strtype(area,
-                                   point = (i*self.b/(nstr_bottom + 1) - self.b/2, -self.h/2), **stringerGeometry) for i in range(1, nstr_bottom+1)]
+        topstringers = [strtype(point = (i*self.b/(nstr_top + 1) - self.b/2, self.h/2), **stringerGeometry) for i in range(1, nstr_top+1)]
+        bottomstringers = [strtype(point = (i*self.b/(nstr_bottom + 1) - self.b/2, -self.h/2), **stringerGeometry) for i in range(1, nstr_bottom+1)]
         self.tspitch, self.bspitch = self.b/(nstr_top + 1), self.b/(nstr_bottom + 1)
         self.str = self.str.copy() + topstringers + bottomstringers
         
@@ -164,9 +163,12 @@ class WingBox:
         pitch = self.tspitch if top_panel else self.bspitch
         sigma_crskin = 4 * (np.pi ** 2 * Esk/(12 * (1 - vsk)**2))*(self.tsk / (pitch))**2
         C = 6.98 if pitch/self.tsk > 75 else 4
-        we = self.tsk * np.sqrt(np.pi ** 2 * C * Esk/(ccstr*12*(1-vsk**2)))
+        we = 0 # self.tsk * np.sqrt(np.pi ** 2 * C * Esk/(ccstr*12*(1-vsk**2)))
         new_pitch = pitch - we
         new_sigma_crskin = 4 * (np.pi ** 2 * Esk/(12 * (1 - vsk)**2))*(self.tsk / (new_pitch))**2
+        print(f"{new_pitch, sigma_crskin*1e-6, ccstr *1e-6 = }")
+        if new_pitch < 0:
+            raise ValueError("Invalid pitch length: " + str(new_pitch))
         return (new_sigma_crskin * new_pitch * self.tsk + ccstr * (ccarea + we * self.tsk))/ (new_pitch * self.tsk + (ccarea + we * self.tsk))
 
 class WingStructure:
