@@ -5,6 +5,7 @@ import json
 from Transition_simulation import transition_EOM
 from Preliminary_Lift.Airfoil_analysis import airfoil_stats
 
+
 class initial_sizing:
     def __init__(self, h, path, drag_polar, V_stall, V_max, n_turn, ROC, V_cr, ROC_hover, MTOW, CD_vertical):
 

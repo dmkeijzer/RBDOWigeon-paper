@@ -25,7 +25,7 @@ class mission:
         - Add optimum speeds part
         - Efficiencies
     """
-    def __init__(self, mass, cruising_alt, cruise_speed, wing_surface = 10, t_loiter = 30*60, rotational_rate = 5,
+    def __init__(self, mass, cruising_alt, cruise_speed, CL_max, wing_surface, t_loiter = 30*60, rotational_rate = 5,
                  roc = 5, rod = 5, mission_dist = 300e3, plotting = False):
 
         """
@@ -45,6 +45,7 @@ class mission:
         self.m = mass
         self.S = wing_surface
         self.max_rot = np.radians(rotational_rate)
+        self.CL_max = CL_max
 
         # Design variables
         self.ax_target_climb = 0.5*g
@@ -345,7 +346,7 @@ class mission:
         # Get the brake power used in cruise
         P_cruise = self.power_cruise_config(self.h_cruise, self.v_cruise, self.m)
 
-        V = speeds(self.h_cruise, self.m)
+        V = speeds(altitude = self.h_cruise, m = self.m, CLmax = self.CL_max, S = self.S, componentdrag_object=Drag)
 
         # Loiter power
         V_loit = V.climb()
@@ -543,7 +544,7 @@ class evtol_performance:
         # Power needed for cruise
         P_cr = energy.power_cruise_config(altitude = cruising_altitude, speed = cruise_speed, mass = mass)
 
-        V = speeds(altitude = cruising_altitude, m = mass)
+        V = speeds(altitude = cruising_altitude, m = mass, CLmax = self.CL_max, S = self.S, componentdrag_object=Drag)
 
         # Power needed for loiter
         P_lt = energy.power_cruise_config(altitude = cruising_altitude, speed = V.climb(), mass = mass)

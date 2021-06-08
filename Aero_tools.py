@@ -65,20 +65,21 @@ class speeds:
         - Add climb and cruise speed (once drag polar is done)
         - Add aircraft parameters from datafile
     """
-    def __init__(self, altitude, W, CLmax, S, componentdrag_object):
+    def __init__(self, altitude, m, CLmax, S, componentdrag_object):
 
         # To be added from datafile:
         self.CLmax  = CLmax
         self.S      = S
 
         self.rho    = ISA(altitude).density()
-        self.W      = W
+        self.W      = m*g
 
         self.CL = np.linspace(0, self.CLmax, 1000)
 
-        self.CD = componentdrag_object.CD(self.CD)
+        self.CD = componentdrag_object.CD(self.CL)
 
     def stall(self):
+
         return np.sqrt(2*self.W/(self.rho*self.S*self.CLmax))
 
     def climb(self):
@@ -103,7 +104,7 @@ class speeds:
 
         V_cr    = np.sqrt(2 * self.W / (self.rho * self.S * CL_cr))
 
-        return V_cr
+        return V_cr, CL_cr
 
 
 

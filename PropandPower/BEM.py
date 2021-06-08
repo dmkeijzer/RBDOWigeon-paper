@@ -253,6 +253,7 @@ class BEM:
         E = np.ones(self.N_s)
         cs = np.ones(self.N_s)
         betas = np.ones(self.N_s)
+        Ves = np.ones(self.N_s)
 
         # Optimise each station for min D/L
         for station in stations:
@@ -395,6 +396,9 @@ class BEM:
             beta = local_AoA + phis[station]
             betas[station] = beta
 
+            # Exist speed per station TODO: revise
+            Ves[station] = self.V*(1 + 2*a)
+
         # # Possibly implement a function for eps as a function of r/R (xi)
         # eps_fun = spinplt.interp1d(E, stations_r/self.R, fill_value="extrapolate")
         #
@@ -427,7 +431,7 @@ class BEM:
             # Propeller efficiency
             eff = self.efficiency(self.Tc, Pc)
 
-            return zeta_new, [cs, betas, alpha, stations_r, E, eff, self.Tc, Pc]
+            return zeta_new, [cs, betas, alpha, stations_r, E, eff, self.Tc, Pc], Ves
 
         elif self.Pc is not None:
             zeta_new = -(J1/(2*J2)) + ((J1/(2*J2))**2 + self.Pc/J2)**(1/2)
@@ -436,7 +440,7 @@ class BEM:
             # Propeller efficiency
             eff = self.efficiency(Tc, self.Pc)
 
-            return zeta_new, [cs, betas, alpha, stations_r, E, eff, Tc, self.Pc]
+            return zeta_new, [cs, betas, alpha, stations_r, E, eff, Tc, self.Pc], Ves
 
     def optimise_blade(self, zeta_init):
         convergence = 1

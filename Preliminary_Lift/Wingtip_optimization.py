@@ -46,8 +46,7 @@ sweepc42=0
 b_d = b  # fixed due to span limitations
 h_d = 1.4  #  Vertical gap between wings. Based on fuselage size
 l_h = 5 # Horizontal gap between wings. Based on fuselgae size
-e_ref = e_OS(AR)
-e = e_factor('tandem', h_d,b_d,e_ref)
+
 #Fuselage dimensions
 l1 = 2.5
 l2 = 2
@@ -90,8 +89,7 @@ S_v = 0.6
 h_list = b* np.array([0, 0.025,0.05,0.1,0.15,0.2])
 
 for h_wl1 in h_list:
-    print(h_wl1)
-    Drag = componentdrag('tandem',S_ref,l1,l2,l3,d_eq,Vcruise,rho,MAC,AR,e,Mach(Vcruise,a),k,flamf,flamw,mu,tc,xcm,0,SweepLE,u,C_t,h_d,IF_f,IF_w, IF_v, CL_CDmin,Abase, S_v, s1, s2, h_wl1, h_wl1)
+    Drag = componentdrag('tandem',S_ref,l1,l2,l3,d_eq,Vcruise,rho,MAC,AR,Mach(Vcruise,a),k,flamf,flamw,mu,tc,xcm,0,SweepLE,u,C_t,h_d,IF_f,IF_w, IF_v, CL_CDmin,Abase, S_v, s1, s2, h_wl1, h_wl1)
     if h_wl1 == 0:
         CD_lst0 = Drag.CD(CL_lst)
         print("lmao1")
@@ -111,10 +109,28 @@ for h_wl1 in h_list:
         CD_lst5 = Drag.CD(CL_lst)
         print("lmao5")
 
-plt.plot(CL_lst, CD_lst0)
-plt.plot(CL_lst, CD_lst1)
-plt.plot(CL_lst, CD_lst2)
-plt.plot(CL_lst, CD_lst3)
-plt.plot(CL_lst, CD_lst4)
-plt.plot(CL_lst, CD_lst5)
+#plt.plot(CL_lst, CD_lst0)
+#plt.plot(CL_lst, CD_lst1)
+#plt.plot(CL_lst, CD_lst2)
+#plt.plot(CL_lst, CD_lst3)
+#plt.plot(CL_lst, CD_lst4)
+#plt.plot(CL_lst, CD_lst5)
+#plt.show()
+
+h_lst2 = b*np.arange(0,0.2,0.01)
+CL_lst = []
+LD_lst = []
+CL_desmin = Wing_loading/(0.5*rho*(58**2))
+for h_wl1 in h_lst2:
+    Drag = componentdrag('tandem',S_ref,l1,l2,l3,d_eq,Vcruise,rho,MAC,AR,Mach(Vcruise,a),k,flamf,flamw,mu,tc,xcm,0,SweepLE,u,C_t,h_d,IF_f,IF_w, IF_v, CL_CDmin,Abase, S_v, s1, s2, h_wl1, h_wl1)
+    CL_des = Drag.CL_des()[0]
+    LDmax = Drag.CL_des()[1]
+    CL_lst.append(CL_des)
+    LD_lst.append(LDmax)
+
+plt.plot(h_lst2/b, LD_lst)
+#plt.axhline(CL_desmin)
+plt.show()
+plt.plot(h_lst2/b, CL_lst)
+plt.axhline(CL_desmin)
 plt.show()

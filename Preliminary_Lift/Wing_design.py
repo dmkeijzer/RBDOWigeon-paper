@@ -157,7 +157,7 @@ class wing_design:
 
         drag_post = self.post_stall_lift_drag(tc, CDs_W, CDs_f, Afus)
         if type=="wing":
-            alpha_pre= np.arange(0,self.a_s[1], 0.1)
+            alpha_pre= np.arange(-3,self.a_s[1], 0.1)
             CL_lst = self.CLa(tc, CDs_W, CDs_f, Afus, alpha_pre)
             CD_pre_lst = CD(CL_lst)- CDs_f
             alpha = np.append(alpha_pre, drag_post[0]*180/np.pi)
@@ -165,7 +165,7 @@ class wing_design:
             fdrag = interp1d(alpha, drag_w)
             return fdrag(alpha_lst)
         elif type == "fus":
-            newal = np.arange(0,self.a_s[1] -1,1)
+            newal = np.arange(-3,self.a_s[1] -1,1)
             alpha = np.append(newal,drag_post[0]*180/np.pi)
             drag_f = np.append(CDs_f*np.ones(len(newal)), drag_post[3])
             print(alpha_lst)

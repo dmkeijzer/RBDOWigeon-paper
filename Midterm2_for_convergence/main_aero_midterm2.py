@@ -9,21 +9,22 @@ import os
 import json
 import matplotlib.pyplot as plt
 root_path = os.path.join(os.getcwd(), os.pardir)
+from constants import g
 
 datafile = open(os.path.join(root_path, "data/inputs_config_1.json"), "r")
 data = json.load(datafile)
 datafile.close()
 FP = data["Flight performance"]
 STR = data["Structures"]
-AR = 5
+AR = 4
 
 
-W = STR["MTOW"] #[N]
-Vcruise = 60#FP["V_cruise"] #[m/s]
-Wing_loading = FP["WS"]
+W = 2602*g#STR["MTOW"] #[N]
+Vcruise = 62#FP["V_cruise"] #[m/s]
+Wing_loading = W/14.9#FP["WS"]
 
 #Cruise conditions
-h = 400 # cruise height[m]
+h = 1000 # cruise height[m]
 atm_flight  = ISA(h)
 rho = atm_flight.density() # cte.rho
 mu = atm_flight.viscosity_dyn()
@@ -46,7 +47,8 @@ sweepc42=0
 b_d = b  # fixed due to span limitations
 h_d = 1.4  #  Vertical gap between wings. Based on fuselage size
 l_h = 5 # Horizontal gap between wings. Based on fuselgae size
-
+e_ref = e_OS(AR)
+e = e_factor('tandem', h_d,b_d,e_ref)
 #Fuselage dimensions
 l1 = 2.5
 l2 = 2
@@ -65,7 +67,7 @@ print(b,C_r,C_t)
 MAC = Wing_params.wing_planform_double()[0][3]
 SweepLE = Wing_params.sweep_atx(0)[0]
 Slope1 = Wing_params.liftslope()[1]
-print("Deps_Da", Wing_params.liftslope()[3])
+
 CLmax = Wing_params.CLmax_s()
 
 #For Drag estimation
@@ -88,11 +90,13 @@ S_v = 0.6
 S_t = 0
 
 
-Drag = componentdrag('tandem',S_ref,l1,l2,l3,d_eq,Vcruise,rho,MAC,AR,Mach(Vcruise,a),k,flamf,flamw,mu,tc,xcm,0,SweepLE,u,0,h_d,IF_f,IF_w, IF_v, CL_CDmin,Abase, S_v, s1, s2, h_wl1, h_wl2)
+Drag = componentdrag('tandem',S_ref,l1,l2,l3,d_eq,Vcruise,rho,MAC,AR,e,Mach(Vcruise,a),k,flamf,flamw,mu,tc,xcm,0,SweepLE,u,0,h_d,IF_f,IF_w, IF_v, CL_CDmin,Abase, S_v, s1, s2, h_wl1, h_wl2)
 
 
 CL_design = Drag.CL_des()[0]
 Cd_des= Drag.Cd_w(CL_design)
+print("CL_des",CL_design)
+print("Cd",Cd_des )
 #Stall
 stall = Wing_params.CLmax_s()
 CLmax = stall[0]
@@ -104,19 +108,14 @@ CDs_w = CDs - CDs_f
 Afus = np.pi *d_eq**2/4
 post_stall = Wing_params.post_stall_lift_drag(tc, CDs, CDs_f, Afus)
 
-alpha_lst = np.arange(-3,89,0.1)
+alpha_lst = np.arange(0,89,0.1)
 Cl_alpha_curve = Wing_params.CLa(tc, CDs, CDs_f, Afus, alpha_lst)
 
 CD_a_w = Wing_params.CDa_poststall(tc, CDs, CDs_f, Afus, alpha_lst, "wing", Drag.CD)
 CD_a_f = Wing_params.CDa_poststall(tc, CDs, CDs_f, Afus, alpha_lst, "fus", Drag.CD)
 
-plt.plot(alpha_lst, Cl_alpha_curve)
+plt.plot(alpha_lst, CD_a_w)
 plt.show()
-
-x = optimize_wingtips(0,0.2,0.005, 1.5, 'tandem',S_ref,l1,l2,l3,d_eq,Vcruise,rho,MAC,AR,Mach(Vcruise,a),k,flamf,flamw,mu,tc,xcm,0,SweepLE,u,C_t,h_d,IF_f,IF_w, IF_v, CL_CDmin,Abase, S_v, s1, s2)
-#                  Drag = componentdrag('tandem',S_ref,l1,l2,l3,d_eq,Vcruise,rho,MAC,AR,Mach(Vcruise,a),k,flamf,flamw,mu,tc,xcm,0,SweepLE,u,C_t,h_d,IF_f,IF_w, IF_v, CL_CDmin,Abase, S_v, s1, s2, h_wl1, h_wl1)
-#
-#print(x)
 
 
 

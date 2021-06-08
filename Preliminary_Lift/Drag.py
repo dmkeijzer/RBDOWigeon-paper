@@ -2,24 +2,11 @@ import numpy as np
 from math import *
 from Preliminary_Lift.Airfoil_analysis import Cd
 from Preliminary_Lift.Wing_design import winglet_dAR
+import matplotlib.pyplot as plt
 #
 # From BOX WING FUNDAMENTALS - A DESIGN PERSPECTIVE
 # Oswald efficiency factor depending on the wing type
 # h = 0.2, b = 1 can be used for a ratio of 0.2 which is a reasonable initial estimation
-def e_factor(type,h, b, e_ref):
-    """
-    h = height difference between wings
-    b = span
-    """
-    if type == 'box':
-        ratio = h/b
-        return e_ref * (0.44 + ratio* 2.219)/(0.44 + ratio * 0.9594)
-    if type == 'tandem':
-        ratio = h/b
-        factor = 0.5 + (1-0.66 * ratio)/(2.1 + 7.4 * ratio)
-        return e_ref * factor ** (-1)
-    if type == 'normal':
-        return e_ref
 
 # Parasite Drag
 """
@@ -48,12 +35,9 @@ def C_L(phase, CDmin, AR, e, C_LforCDmin):
     if phase == 'loiter':
         return np.sqrt(3 * np.pi * AR * e * CDmin) +C_LforCDmin
 
-def e_OS(AR):
-    return 1.78 * (1-0.045*AR**0.68)-0.64
-# CD0 component build up
 
 class componentdrag:
-    def __init__(self, type, S_ref, l1, l2, l3, d, V_cr, rho, MAC, AR, e, M_cr, k, frac_lam_f, frac_lam_w, mu, tc,xcm,sweepm, sweepLE, u, c_t,h, IF_f, IF_w,IF_v, C_L_minD, Abase, S_v,s1,s2, h_wl1,h_wl2):
+    def __init__(self, type, S_ref, l1, l2, l3, d, V_cr, rho, MAC, AR, M_cr, k, frac_lam_f, frac_lam_w, mu, tc,xcm,sweepm, sweepLE, u, c_t,h, IF_f, IF_w,IF_v, C_L_minD, Abase, S_v,s1,s2, h_wl1,h_wl2):
         self.S_ref = S_ref
         self.l1 = l1
         self.l2 = l2
@@ -62,7 +46,10 @@ class componentdrag:
         self.V = V_cr
         self.rho = rho
         self.c = MAC
-        self.AR = AR + s1*winglet_dAR(AR*2,h_wl1, np.sqrt(AR*S_ref))+ s2*winglet_dAR(AR*2,h_wl2, np.sqrt(AR*S_ref))
+        self.b = np.sqrt(AR*S_ref)
+        self.h_wl1 = h_wl1
+        self.h_wl2 = h_wl2
+        self.AR = AR + s1*winglet_dAR(AR*2,self.h_wl1, np.sqrt(AR*S_ref))+ s2*winglet_dAR(AR*2,self.h_wl2, np.sqrt(AR*S_ref))
         self.e = e
         self.M = M_cr
         self.k = k
@@ -82,9 +69,28 @@ class componentdrag:
         if self.type == 'box':
             self.S_c = c_t*h
         self.S_v = S_v
-        self.S_t = (1.4*c_t)*h_wl1*2+(1.4*c_t)*h_wl2*2
+        self.S_t = 0.5*(1.4*c_t)*h_wl1*2+0.5*(1.4*c_t)*h_wl2*2
         self.SweepLE = sweepLE
         self.C_L_minD = C_L_minD / (np.cos(self.SweepLE) ** 2)
+        self.h = h
+
+    def e_OS(self):
+        return 1.78 * (1 - 0.045 * self.AR ** 0.68) - 0.64
+
+    def e_factor(self):
+        """
+        h = height difference between wings
+        b = span
+        """
+        if self.type == 'box':
+            ratio = self.h / self.b
+            return self.e_OS() * (0.44 + ratio * 2.219) / (0.44 + ratio * 0.9594)
+        if self.type == 'tandem':
+            ratio = self.h / self.b
+            factor = 0.5 + (1 - 0.66 * ratio) / (2.1 + 7.4 * ratio)
+            return self.e_OS() * factor ** (-1)
+        if self.type == 'normal':
+            return self.e_OS()
     def Swet_f(self):
 
         return (np.pi * self.d/4)* (((1/(3*self.l1**2))*((4*self.l1**2 +((self.d**2)/4))**1.5 -((self.d**3)/8)) ) -self.d + 4*self.l2 + 2 * np.sqrt(self.l3**2 + (self.d**2)/4 ))
@@ -142,7 +148,7 @@ class componentdrag:
 
     def CDi(self, C_L):
 
-        return ((C_L-self.C_L_minD)**2)/(np.pi *self.AR *self.e)
+        return ((C_L-self.C_L_minD)**2)/(np.pi *self.AR *self.e_factor())
 
     def Cd_w(self, C_L):
 
@@ -158,12 +164,44 @@ class componentdrag:
 
     def Drag_polar(self):
         CDmin = self.CD0()+ self.CD_base() +self.CD_upsweep()
-        K = 1/(np.pi*self.AR*self.e)
+        K = 1/(np.pi*self.AR*self.e_factor())
         return CDmin, K
 
     def CL_des(self):
         C_L_lst = np.arange(0,1.5,0.001)
         LD = C_L_lst/self.CD(C_L_lst)
-        np.max(LD)
         index = np.where(LD==np.max(LD))
         return float(C_L_lst[index]), np.max(LD)
+
+
+def optimize_wingtips( minh, maxh, interval, CL_des_max,  type, S_ref, l1, l2, l3, d, V_cr, rho, MAC, AR, M_cr, k, frac_lam_f, frac_lam_w, mu, tc,xcm,sweepm, sweepLE, u, c_t,h, IF_f, IF_w,IF_v, C_L_minD, Abase, S_v,s1,s2 ):
+    b = np.sqrt(AR*S_ref)
+    h_wl1 = b*np.arange(minh,maxh,interval)
+    CL_lst = []
+    LD_lst = []
+    for h_wl in h_wl1:
+        Drag = componentdrag(type, S_ref, l1, l2, l3, d, V_cr, rho, MAC, AR, M_cr, k, frac_lam_f, frac_lam_w, mu, tc,xcm,sweepm, sweepLE, u, c_t,h, IF_f, IF_w,IF_v, C_L_minD, Abase, S_v,s1,s2, h_wl, h_wl )
+
+        CL_des = Drag.CL_des()[0]
+        LDmax = Drag.CL_des()[1]
+        CL_lst.append(CL_des)
+        LD_lst.append(LDmax)
+    plt.plot(h_wl1/b,LD_lst)
+    plt.show()
+    CLdes = np.array(CL_lst)
+    LDmax = np.array(LD_lst)
+    index = np.where(LDmax == np.max(LDmax))
+    if CL_des_max < CLdes[index] :
+        arr = CLdes[CLdes < CL_des_max]
+        CLdesnew = np.max(arr)
+        indexnew = np.where(CLdes == CLdesnew)
+        LD = LDmax[indexnew]
+        return CLdesnew, LD, h_wl1[indexnew]/b
+    else:
+        LD = np.max(LDmax)
+        CLdesnew = CLdes[index]
+        return CLdesnew, LD, h_wl1[index]/b
+
+
+
+
