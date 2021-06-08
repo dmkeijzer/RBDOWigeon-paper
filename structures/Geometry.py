@@ -102,8 +102,7 @@ class WingBox:
     def StrPlacement(self, nstr_top:int , nstr_bottom:int, stringerGeometry = {}, stringerType = 'Point'):
         strtype = {'Z':ZStringer, 'Hat':HatStringer, 'J':JStringer, 'Point': Stringer}[stringerType]
         topstringers = [strtype(point = (i*self.b/(nstr_top + 1) - self.b/2, self.h/2), **stringerGeometry) for i in range(1, nstr_top+1)]
-        bottomstringers = [strtype(area,
-                                   point = (i*self.b/(nstr_bottom + 1) - self.b/2, -self.h/2), **stringerGeometry) for i in range(1, nstr_bottom+1)]
+        bottomstringers = [strtype(point = (i*self.b/(nstr_bottom + 1) - self.b/2, -self.h/2), **stringerGeometry) for i in range(1, nstr_bottom+1)]
         self.tspitch, self.bspitch = self.b/(nstr_top + 1), self.b/(nstr_bottom + 1)
         self.str = self.str.copy() + topstringers + bottomstringers
         
