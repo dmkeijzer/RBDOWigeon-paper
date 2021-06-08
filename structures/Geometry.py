@@ -84,8 +84,9 @@ class WingBox:
     def __init__(self, thicknessOfSkin, thicknessOfSpar, base, height, stringers = []):
         self.b, self.h, self.tsk, self.tsp = base, height, thicknessOfSkin, thicknessOfSpar
         self.str = stringers
-        self.tspitch = 0
-        self.bspitch = 0
+        tstrs, bstrs = sum(1 for stringer in stringers if stringer.y > 0), sum(1 for stringer in stringers if stringer.y < 0)
+        self.tspitch, self.bspitch = self.b/(tstrs + 1), self.b/(bstrs + 1)
+
     
     __str__ = __repr__ = lambda self: \
     f"Wingbox(Height={str(self.h)}, Base={str(self.b)}, Tsk = {str(self.tsk)}, Tsp = {str(self.tsp)}, Stringers = {len(self.str)})"
@@ -161,12 +162,11 @@ class WingBox:
         
         # pitch depends on which panel is taken, top or bottom
         pitch = self.tspitch if top_panel else self.bspitch
-        sigma_crskin = 4 * (np.pi ** 2 * E/(12 * (1 - vsk)**2))*(self.tsk / (pitch))**2
+        sigma_crskin = 4 * (np.pi ** 2 * Esk/(12 * (1 - vsk)**2))*(self.tsk / (pitch))**2
         C = 6.98 if pitch/self.tsk > 75 else 4
         we = self.tsk * np.sqrt(np.pi ** 2 * C * Esk/(ccstr*12*(1-vsk**2)))
         new_pitch = pitch - we
-        new_sigma_crskin = 4 * (np.pi ** 2 * E/(12 * (1 - vsk)**2))*(self.tsk / (new_pitch))**2
-        print(pitch, new_pitch, sigma_crskin*1e-6, new_sigma_crskin*1e-6, ccstr*1e-6, C)
+        new_sigma_crskin = 4 * (np.pi ** 2 * Esk/(12 * (1 - vsk)**2))*(self.tsk / (new_pitch))**2
         return (new_sigma_crskin * new_pitch * self.tsk + ccstr * (ccarea + we * self.tsk))/ (new_pitch * self.tsk + (ccarea + we * self.tsk))
 
 class WingStructure:

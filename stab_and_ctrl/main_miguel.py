@@ -3,6 +3,7 @@ from stab_and_ctrl.Scissor_Plots import Wing_placement_sizing
 from stab_and_ctrl.Vertical_tail_sizing import VT_sizing
 from stab_and_ctrl.Aileron_Sizing import Control_surface
 from stab_and_ctrl.Elevator_sizing import Elevator_sizing
+from stab_and_ctrl.Stability_derivatives import Stab_Derivatives
 import constants as const
 from matplotlib import pyplot as plt
 
@@ -55,10 +56,10 @@ rot_y_range_f = [0.5 * bfwd * 0.1, 0.5 * bfwd * 0.9]
 rot_y_range_r = [0.5 * brear * 0.1, 0.5 * brear * 0.9]
 K = 4959.86
 ku = 0.1
-Zcg = 0.85
+Zcg = 0.70
 
 d = 0
-dy = 0
+dy = 0.2
 wps = Wing_placement_sizing(W,h, lfus, hfus, wfus, V0, CD0fwd, CLfwd,
                  CLrear,CLdesfwd,CLdesrear, Clafwd,Clarear,Cmacfwd, Cmacrear, Sfwd, Srear,
                  Afwd, Arear, Gamma, Lambda_c4_fwd, Lambda_c4_rear, cfwd,
@@ -84,16 +85,15 @@ crcv = np.linspace(0.1,0.4,150)
 #         vt_br = vt_sizing.final_VT_rudder(nE,Tt0,yE,lv,br_bv=brbv[i],cr_cv=j)
 # print("Sv = ",vt_sizing.VT_stability(lv))
 
-ARv = 1.5
-vt_sizing = VT_sizing(W,h,xcg,lfus,hfus,wfus,V0,Vstall,CD0,theta0,
-                      CLdesfwd,CLdesrear,CLafwd,CLarear,
-                      Cmacfwd,Cmacrear,Sfwd,Srear,Afwd,Arear,Lambda_c4_fwd,Lambda_c4_rear,
-                      cfwd,crear,bfwd,brear,taper,ARv=ARv)
+ARv = 1.25
+vt_sizing = VT_sizing(W,h,xcg,lfus,hfus,wfus,V0,Vstall,CD0,CLdesfwd,CLdesrear,CLafwd,CLarear,
+                 Sfwd,Srear,Afwd,Arear,Lambda_c4_fwd,Lambda_c4_rear,cfwd,crear,bfwd,brear,taper,ARv)
 if isinstance(ARv,float):
     vt_sizing.plotting(nE,Tt0,yE,lv,br_bv=brbv,cr_cv=crcv)
     # print(vt_sizing.plotting(nE, Tt0, yE, lv, br_bv=0.85, cr_cv=0.3))
     vt_sizing.plotting(nE, Tt0, yE, lv, br_bv=0.9, cr_cv=0.35)
-    Sv = vt_sizing.final_VT_rudder(nE,Tt0,yE,lv,br_bv=0.9,cr_cv=0.35)[0]
+    Sv = vt_sizing.final_VT_rudder(nE,Tt0,yE,lv,br_bv=0.9,cr_cv=0.4)[0]
+    bv =  vt_sizing.final_VT_rudder(nE,Tt0,yE,lv,br_bv=0.9,cr_cv=0.4)[3]
     # print(Sv)
 else:
     vt_sizing.plotting(nE,Tt0,yE,lv,br_bv=0.85,cr_cv=0.3)
@@ -115,53 +115,15 @@ beb = np.linspace(10,100,150)
 SeS = np.linspace(0.1,0.4,150)
 de_max = 17.5
 elevator.plotting(SeS,beb,de_max)
-# xcg_middle = (0.2187 + 3.3439) / 2
-# wps.hover_calc.fail_rotors([0, 3, 5, 6])
-# xcgs = np.linspace(xcg_middle - 2, xcg_middle + 2, 100)
-# acais = []
-# for xcg in xcgs:
-#     acais.append((wps.hover_calc.acai([xcg, 0])))
-# plt.plot(xcgs, acais)
-# plt.axvline(xcg_middle)
-# plt.axhline(0)
-# plt.title("[0, 3, 5, 6]")
-# plt.figure()
-#
-# wps.hover_calc.fail_rotors([1, 2, 4, 7])
-# acais = []
-# for xcg in xcgs:
-#     acais.append((wps.hover_calc.acai([xcg, 0])))
-# plt.plot(xcgs, acais)
-# plt.axvline(xcg_middle)
-# plt.axhline(0)
-# plt.title("[1, 2, 4, 7]")
-# plt.show()
 
 wps.plotting(0, lfus, dx, elevator_effect, d)
 
-
-# def deps_da(Lambda_quarter_chord, b, lh, h_ht, A, CLaw):
-#     """
-#     Inputs:
-#     :param Lambda_quarter_chord: Sweep Angle at c/4 [RAD]
-#     :param lh: distance between ac_w1 with ac_w2 (horizontal)
-#     :param h_ht: distance between ac_w1 with ac_w2 (vertical)
-#     :param A: Aspect Ratio of wing
-#     :param CLaw: Wing Lift curve slope
-#     :return: de/dalpha
-#     """
-#     r = lh * 2 / b
-#     mtv = h_ht * 2 / b  # Approximation
-#     Keps = (0.1124 + 0.1265 * Lambda_quarter_chord + 0.1766 * Lambda_quarter_chord ** 2) / r ** 2 + 0.1024 / r + 2
-#     Keps0 = 0.1124 / r ** 2 + 0.1024 / r + 2
-#     v = 1 + (r ** 2 / (r ** 2 + 0.7915 + 5.0734 * mtv ** 2)) ** (0.3113)
-#     de_da = Keps / Keps0 * CLaw / (np.pi * A) * (
-#             r / (r ** 2 + mtv ** 2) * 0.4876 / (np.sqrt(r ** 2 + 0.6319 + mtv ** 2)) + v * (
-#             1 - np.sqrt(mtv ** 2 / (1 + mtv ** 2))))
-#
-#     # print("Configuration %.0f de/da = %.4f "%(conf,de_da))
-#     return de_da
-# lh = np.linspace(0.1,20,150)
-# deda = deps_da(0,bfwd,lh,hfus,Afwd,CLafwd)
-# plt.plot(lh,deda)
-# plt.show()
+CL0 = 0.82
+A = Afwd/2
+CD0_a = CD0+CL0**2/(np.pi*A*e)
+stability_derivatives = Stab_Derivatives(W,h,lfus,hfus,wfus, d,dy,xcg,Zcg,cfwd,crear,Afwd,Arear,Vstall,
+                 V0,Tt0,CLdesfwd,CLdesrear,CD0_a,CL0,2*np.pi/180,0,
+                 Clafwd,Clarear, Cd0fwd, Cd0rear, CLafwd,CLarear,Sfwd,Srear,5*np.pi/180/6,0,
+                 efwd,erear,Lambda_c4_fwd,Lambda_c4_rear,taper,0.4,
+                 bv,Sv,ARv,Pbr,CD0,eta_rear=1,eta_v=1)
+stability_derivatives.asym_stability_req(0.012*W/9.80665*bfwd**2,0.037*W/9.80665*bfwd**2,0.002*W/9.80665*bfwd**2,0.15,60,97.5,0.4,0.9)
