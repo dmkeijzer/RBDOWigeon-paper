@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from Aero_tools import ISA, speeds
 import scipy.interpolate as interpolate
 import sys
-from constants import g
+from constants import g, eff_hover, eff_prop
 
 # TODO: Remove this import in the integrated program, make sure aerodynamics is called first and the variables have the
 # same names
@@ -102,6 +102,10 @@ class mission:
         """
 
         P_a = T*V + 1.2*T*(-V/2 + np.sqrt(V**2/4 + T/(2*1.225*3)))  # TODO: IMPLEMENT Power and propulsion method
+
+        eff = np.where(V > 5, eff_prop, eff_hover)
+
+        P_r = P_a/eff
 
         return P_a
 
@@ -251,10 +255,7 @@ class mission:
         # ======= Get Required outputs =======
 
         # Get the available power
-        P_a = self.thrust_to_power(T_arr, V_arr)
-
-        # Convert to brake power
-        P_r = P_a/0.95  # IMPLEMENT EFFICIENCY
+        P_a, P_r = self.thrust_to_power(T_arr, V_arr)
 
         # Add to total energy
 
