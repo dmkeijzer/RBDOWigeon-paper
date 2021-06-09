@@ -114,10 +114,8 @@ class mission:
         P_a = T * V + 1.2 * T * (
                     -V / 2 + np.sqrt(V ** 2 / 4 + T / (2 * 1.225 * 3)))  # TODO: IMPLEMENT Power and propulsion method
 
-        if V > 5:
-            eff = eff_prop
-        else:
-            eff = eff_hover
+
+        eff = np.where(V > 5, eff_prop, eff_hover)
 
         P_r = P_a/eff
 
@@ -271,7 +269,8 @@ class mission:
         # Get the available power
         P_a, P_r = self.thrust_to_power(T_arr, V_arr)
 
-        P_tot   = P_r + self.P_systems + self.P_peak
+        # TODO: IMPLEMENT
+        P_tot   = P_r #+ self.P_systems + self.P_peak
 
         # Add to total energy
 
