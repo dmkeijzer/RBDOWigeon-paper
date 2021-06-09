@@ -9,7 +9,7 @@ from matplotlib import pyplot as plt
 from Wing_design import deps_da
 from Aero_tools import ISA
 from scipy.interpolate import interp1d
-from scipy.integrate import quad
+from scipy.integrate import quad, trapz
 
 # INPUTS
 alpha   = 9         # Geometric angle of attack at root, degrees
@@ -250,7 +250,20 @@ def weissinger_l(wing, al, m, AR, a_w):
     e = ((CL**2)/(np.pi*AR*CDi))
     return y*wing.span/2., cl, ccl, al_i*180./pi, CL, CDi, e
 
-# RUN_WEISSINGER
+def gety(wing, m):
+    # Convert angles to radians
+    phi = np.zeros((m))
+    y = np.zeros((m))
+
+
+    # Compute phi, y, chord, span/chord, and twist on full span
+    for i in range(m):
+        phi[i] = (i + 1) * pi / float(m + 1)  # b[v,v] goes to infinity at phi=0
+        y[i] = cos(phi[i])  # y* = y/l
+
+    return y*wing.span/2
+
+    # RUN_WEISSINGER
 def create_plot(wing, y, cl, ccl, CL, CDi):
     """ Plots lift distribution and wing geometry """
 
@@ -318,32 +331,39 @@ def create_plot_induced(wing, y, al_i,al_i2):
     wing.plot(axarr[1])
     plt.show()
 
-def downwash_fore(c,y,Cl, x_h, z_h, V_inf):
+def downwash_fore(c,y, y2,Cl, x_h, z_h, V_inf):
+
     Circ = 0.5*Cl*V_inf*c
     w = []
     w2 = []
     c = np.append(np.array(c), np.flip(np.array(c[:-1])))
     y = np.append(np.array(y), -1*np.flip(np.array(y[:-1])))
+    y2 = np.append(np.array(y2), -1 * np.flip(np.array(y2[:-1])))
+
     Circ1 = np.append(np.array(Circ), np.flip(np.array(Circ[:-1])))
     dCirc_int = np.append(np.diff(Circ),[0])
     dCirc = np.append(dCirc_int,-1*np.flip(np.diff(Circ)))
-    print(Circ1)
-    print(dCirc)
+
     for i in range(len(c)):
+
         r_avg = np.sqrt(x_h**2 + z_h**2)
-        thetas = np.arctan2(r_avg, y- y[i])
+        thetas = np.arctan2(r_avg, y- y2[i])
         Circwsin = Circ1*np.sin(thetas)
-        f = interp1d(thetas, Circwsin)
+        #f = interp1d(thetas, Circwsin)
 
-        integral = quad(f,thetas[0],thetas[-1], limit = 500)
-        w.append(integral[0]*(1/(np.pi*4*r_avg)))
+        #integral = quad(f,thetas[0],thetas[-1], limit = 500)
+        integral = trapz(Circwsin,thetas)
+        w.append(integral*(1/(np.pi*4*r_avg)))
     for i in range(len(c)):
 
-        vertang = np.arctan2(z_h,y- y[i] )
-        rs = np.sqrt(z_h**2+(y-y[i])**2)
+        vertang = np.arctan2(z_h,y- y2[i] )
+        rs = np.sqrt(z_h**2+(y-y2[i])**2)
         phias = np.arctan2(rs,x_h)
+
         Vlst = (dCirc/(4*np.pi*rs))*(np.cos(phias)+1)*np.cos(vertang)
+
         w2.append(np.sum(Vlst))
+
     w_final = np.array(w)
     cang = np.arctan2(z_h,x_h)
     a_w = np.arctan2(np.cos(cang)*w_final,np.sin(cang)*w_final + V_inf)
@@ -353,6 +373,7 @@ def downwash_fore(c,y,Cl, x_h, z_h, V_inf):
     #print(a2final)
     a_wfinal = a2final
     return a_wfinal + a_w
+
 def LLT2wings(span1, AR1,root1, tip1, sweep1, alpha1, z_h, x_h,span2, AR2, root2,tip2,sweep2, alpha2, V_cr):
     npoints = 21
     washout = 0
@@ -362,27 +383,24 @@ def LLT2wings(span1, AR1,root1, tip1, sweep1, alpha1, z_h, x_h,span2, AR2, root2
 
     wing2 = Wing(span2, root2, tip2, sweep2,washout)
     y2, cl2, ccl2, al_i2, CL2, CDi2, e2 = weissinger_l(wing2, alpha2, 2*npoints-1, AR2, np.zeros(43))
-    a_w = downwash_fore(np.append(0, ccl2[1:] / cl2[1:]), y2, cl2, x_h, z_h, V_cr)
+    a_w = downwash_fore(np.append(0, ccl[1:] / cl[1:]), y, y2, cl, x_h, z_h, V_cr)
     y3, cl3, ccl3, al_i3, CL3, CDi3, e3 = weissinger_l(wing2, alpha2, 2 * npoints - 1, AR2, a_w)
     de_da = np.average(a_w)*(180/(np.pi*alpha1))
-    #print("deps_da", np.average(a_w)*(180/np.pi)/alpha)
-    #print(cl,len(cl))
-    #print(cl2,len(cl2))
 
-    #print("{:<6}".format("Area: ") + str(wing.area))
-    #print("{:<6}".format("AR: ") + str(wing.aspect_ratio))
-    #print("{:<6}".format("MAC: ") + str(wing.cbar))
-    #print("{:<6}".format("CL: ") + str(CL))
-    #print("{:<6}".format("CDi: ") + str(CDi))
-    #print("{:<6}".format("e: ") + str(e2))
-
-    #create_plot(wing, y, cl, ccl, CL, CDi)
-    #create_plot(wing2, y2, cl2, ccl2, CL2, CDi2)
-    #create_plot_comp(wing, y, cl, ccl, CL, CDi, cl2, ccl2, CL2, CDi2)
-    #create_plot_induced(wing,y,al_i,al_i2)
-    #print(ccl)
-    #print(cl)
     return CL, CL3, CDi, CDi3, e, e3, e2, de_da
+
+def downwash(span1, AR1,root1, tip1, sweep1, alpha1, z_h, x_h,span2, root2,tip2,sweep2,V_cr):
+    npoints = 21
+    washout = 0
+    wing = Wing(span1, root1, tip1, sweep1, washout)
+    y, cl, ccl, al_i, CL, CDi, e = weissinger_l(wing, alpha1, 2 * npoints - 1, AR1, np.zeros(2*npoints+1))
+    wing2 = Wing(span2, root2, tip2, sweep2,washout)
+    y2 = gety(wing2,2*npoints-1)
+    a_w = downwash_fore(np.append(0, ccl[1:] / cl[1:]), y, y2, cl, x_h, z_h, V_cr)
+    de_da = np.average(a_w) * (180 / (np.pi * alpha1))
+
+    return de_da
+
 def LLT1wing(span1, AR1,root1, tip1, sweep1, alpha1):
     npoints = 21
     washout = 0

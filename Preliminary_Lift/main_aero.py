@@ -8,7 +8,7 @@ from Preliminary_Lift.Airfoil_analysis import airfoil_stats
 import os
 import json
 import matplotlib.pyplot as plt
-from LLTtest2 import LLT1wing , LLT2wings
+from LLTtest2 import LLT1wing , LLT2wings, downwash
 root_path = os.path.join(os.getcwd(), os.pardir)
 
 datafile = open(os.path.join(root_path, "data/inputs_config_1.json"), "r")
@@ -123,7 +123,7 @@ plt.show()
 #
 #print(x)
 
-x = LLT2wings(b,AR*2,C_r,C_t,0,5, h_d, l_h,b,AR*2,C_r,C_t,0,5, 70)
+x = downwash(b,AR*2,C_r,C_t,0,5, h_d, l_h,b,C_r,C_t,0, 70)
 print(b,C_t, C_r)
 #x = LLT1wing
 print(x)
