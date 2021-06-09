@@ -3,7 +3,7 @@ import numpy as np
 import constants as const
 import Aero_tools as at
 
-import Drag_midterm2 as drag_comp
+import Drag_midterm2_2 as drag_comp
 import Wing_design_midterm2 as wing_des
 import Airfoil_analysis_midterm2 as airfoil
 
@@ -88,7 +88,7 @@ disk_load = 250             # [kg/m^2]
 clearance_fus_prop = 0.3    # Horizontal separation between the fuselage and the first propeller [m]
 clearance_prop_prop = 0.3   # Horizontal separation between propellers [m]
 xi_0 = 0.1                  # r/R ratio of hub diameter to out diameters [-]
-m_bat = 483.15              # Initial estimate for battery mass [kg]
+m_bat = 433.15              # Initial estimate for battery mass [kg]
 
 
 # Structures
@@ -179,15 +179,15 @@ while iterate or (count < 5):
     # ------ Drag ------
 
     # Oswald efficiency factor
-    e = drag_comp.e_OS(AR_tot) * drag_comp.e_factor('tandem', h_fus-0.3, wing_plan_1[0], drag_comp.e_OS(AR_tot))
+    # e = drag_comp.e_OS(AR_tot) * drag_comp.e_factor('tandem', h_fus-0.3, wing_plan_1[0], drag_comp.e_OS(AR_tot))
 
     # Airfoil characteristics
     airfoil_stats = airfoil.airfoil_stats()
 
     drag = drag_comp.componentdrag('tandem', S_tot, l1_fus, l2_fus, l3_fus, np.sqrt(w_fus*h_fus), V_cr, rho,
-                                   wing_plan_1[3], AR_tot, e, M, const.k, const.flamf, const.flamw, dyn_vis, const.tc,
+                                   wing_plan_1[3], AR_tot, M, const.k, const.flamf, const.flamw, dyn_vis, const.tc,
                                    const.xcm, 0, wing_design.sweep_atx(0)[0], fus_upsweep, wing_plan_1[2], h_fus-0.3,
-                                   const.IF_f, const.IF_w, const.IF_v, airfoil_stats[2], const.Abase, S_v, S_wt,
+                                   const.IF_f, const.IF_w, const.IF_v, airfoil_stats[2], const.Abase, S_v,
                                    s1, s2, h_wt_1, h_wt_2)
 
     # TODO: get CL for cruise
@@ -354,7 +354,7 @@ print(" ")
 
 # Propeller blade design
 B = 5
-M_tip = 0.5
+M_tip = 0.4
 omega = M_tip*a/prop_radius
 rpm = omega/0.10472
 print("Propeller rpm:", rpm)
