@@ -75,7 +75,7 @@ class componentdrag:
         self.h = h
 
     def e_OS(self):
-        return 1.78 * (1 - 0.045 * self.AR ** 0.68) - 0.64
+        return 0.95 #1.78 * (1 - 0.045 * self.AR ** 0.68) - 0.64
 
     def e_factor(self):
         """

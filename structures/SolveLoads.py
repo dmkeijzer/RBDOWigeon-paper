@@ -103,6 +103,7 @@ class WingLoads:
         x, y = np.array(coordinates).T
         sigma = root.o(x, y, self.Mx(0), self.My(0))
         tau = np.array([root.tau(ix, iy, self.Vx(0), self.Vy(0), self.T(0)) for ix, iy in coordinates])
+        print(root.q(-root.b/2, 0, self.Vx(0), self.Vy(0), self.T(0)))
         
         return np.array(coordinates), sigma, tau, np.sqrt(3*tau**2 + sigma**2)
 

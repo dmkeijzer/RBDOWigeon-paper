@@ -8,6 +8,7 @@ from Preliminary_Lift.Airfoil_analysis import airfoil_stats
 import os
 import json
 import matplotlib.pyplot as plt
+from LLTtest2 import LLT1wing , LLT2wings, downwash
 root_path = os.path.join(os.getcwd(), os.pardir)
 
 datafile = open(os.path.join(root_path, "data/inputs_config_1.json"), "r")
@@ -31,7 +32,7 @@ a = atm_flight.soundspeed()
 M = Mach(Vcruise,a)
 
 #Wing planform
-S_ref = W/Wing_loading #[m**2] PLACEHOLDER
+S_ref = 16.6 #W/Wing_loading #[m**2] PLACEHOLDER
 print("S", S_ref)
 b = np.sqrt(AR*S_ref) # Due to reqs
 
@@ -45,7 +46,7 @@ sweepc42=0
 #Other paramters
 b_d = b  # fixed due to span limitations
 h_d = 1.4  #  Vertical gap between wings. Based on fuselage size
-l_h = 5 # Horizontal gap between wings. Based on fuselgae size
+l_h = 6 # Horizontal gap between wings. Based on fuselgae size
 
 #Fuselage dimensions
 l1 = 2.5
@@ -117,14 +118,15 @@ CD_a_f = Wing_params.CDa_poststall(tc, CDs_w, CDs_f, Afus, alpha_lst, "fus", Dra
 plt.plot(alpha_lst, CD_a_w)
 plt.show()
 
-x = optimize_wingtips(0,0.2,0.005, 1.5, 'tandem',S_ref,l1,l2,l3,d_eq,Vcruise,rho,MAC,AR,Mach(Vcruise,a),k,flamf,flamw,mu,tc,xcm,0,SweepLE,u,C_t,h_d,IF_f,IF_w, IF_v, CL_CDmin,Abase, S_v, s1, s2)
+#x = optimize_wingtips(0,0.2,0.005, 1.5, 'tandem',S_ref,l1,l2,l3,d_eq,Vcruise,rho,MAC,AR,Mach(Vcruise,a),k,flamf,flamw,mu,tc,xcm,0,SweepLE,u,C_t,h_d,IF_f,IF_w, IF_v, CL_CDmin,Abase, S_v, s1, s2)
 #                  Drag = componentdrag('tandem',S_ref,l1,l2,l3,d_eq,Vcruise,rho,MAC,AR,Mach(Vcruise,a),k,flamf,flamw,mu,tc,xcm,0,SweepLE,u,C_t,h_d,IF_f,IF_w, IF_v, CL_CDmin,Abase, S_v, s1, s2, h_wl1, h_wl1)
 #
 #print(x)
 
-
-
-
+x = downwash(b,AR*2,C_r,C_t,0,5, h_d, l_h,b,C_r,C_t,0, 70)
+print(b,C_t, C_r)
+#x = LLT1wing
+print(x)
 
 
 
