@@ -1,9 +1,10 @@
 import numpy as np
+from scipy import optimize
 from matplotlib import pyplot as plt
 
 
-def xcg_stab(CLfa, CLra, CLf, CLr, Af, Ar, ef, er, xf, xr, zf, zr, zcg, Vr_Vf_2,
-             Sr_Sf, de_da):
+def xcg_stab(CLfa, CLra, CLf, CLr, Af, Ar, ef, er, xf, xr, zf, zr, zcg,
+             Vr_Vf_2, Sr_Sf, de_da):
     num = (2 * CLf / (np.pi * Af * ef) * CLfa * (zcg - zf)
            - 2 * CLr / (np.pi * Ar * er) * CLra * (zr - zcg) * (1 - de_da)
            + CLfa * xf
@@ -57,6 +58,13 @@ def lambda_c4_to_lambda_c2(A, taper, lambda_c4):
     tanSweep_c4 = np.tan(lambda_c4)
     tanSweep_c2 = tanSweep_c4 - 4/A*(50-25)/100*(1-taper)/(1+taper)
     return np.arctan(tanSweep_c2)
+
+
+def find_mac_and_cr(S, b, taper):
+    cavg = S / b
+    cr = 2 / (1 + taper) * cavg
+    mac = 2/3 * cr * (1 + taper + taper ** 2) / (1 + taper)
+    return mac, cr
 
 
 def stab_sensitivity():
@@ -254,5 +262,169 @@ def stab_sensitivity():
     plt.show()
 
 
+def cost(Cmacf, Cmacr, CLmaxf, CLmaxr, CLdesf, CLdesr, CD0f, CD0r,
+         taperf, taperr, lambda_c4f, lambda_c4r, ef, er, Claf, Clar,
+         zcg, Vr_Vf_2, elev_fac, rho, Pbr, S, W, xrangef,
+         xranger, zrangef, zranger, crmaxf, crmaxr, bmaxf, bmaxr,
+         xcgrange, Af, Ar, xf, xr, zf, zr, Sr_Sf, inf=1e6):
+
+    if not xrangef[0] < xf < xrangef[1] or not xranger[0] < xr < xranger[1]:
+        return inf
+
+    if not zrangef[0] < zf < zrangef[1] or not zranger[0] < zr < zranger[1]:
+        return inf
+
+    Sf = S / (1 + Sr_Sf)
+    Sr = S - Sf
+    bf = np.sqrt(Sf * Af)
+    br = np.sqrt(Sr * Ar)
+
+    if bf > bmaxf or br > bmaxr:
+        return inf
+
+    macf, crf = find_mac_and_cr(Sf, bf, taperf)
+    macr, crr = find_mac_and_cr(Sr, br, taperr)
+
+    if crf > crmaxf or crr > crmaxr:
+        return inf
+
+    lambda_c2f = lambda_c4_to_lambda_c2(Af, taperf, lambda_c4f)
+    lambda_c2r = lambda_c4_to_lambda_c2(Ar, taperr, lambda_c4r)
+    CLaf = CLa(Claf, Af, lambda_c2f)
+    CLar = CLa(Clar, Ar, lambda_c2r)
+    de_da = deps_da(lambda_c4f, bf, xr - xf, zr - zf,
+                    Af, CLaf, rho, Pbr, Sf, CLdesf, W)
+    xstab = xcg_stab(CLaf, CLar, CLdesf, CLdesr, Af, Ar, ef, er, xf, xr,
+                     zf, zr, zcg, Vr_Vf_2, Sr_Sf, de_da)
+    xctrl = xcg_ctrl(Cmacf, Cmacr, CLmaxf * elev_fac, CLmaxr, CD0f,
+                     CD0r, Af, Ar, ef, er, macf, macr, xf, xr, zf, zr,
+                     zcg, Vr_Vf_2, Sr_Sf)
+
+    if xstab < xcgrange[1] or xctrl > xcgrange[0]:
+        return inf
+
+    return 1/bf
+
+
+def optimise_wings(Cmacf, Cmacr, CLmaxf, CLmaxr, CLdesf, CLdesr, CD0f, CD0r,
+                   taperf, taperr, lambda_c4f, lambda_c4r, ef, er, Claf, Clar,
+                   zcg, Vr_Vf_2, elev_fac, rho, Pbr, S, W, xrangef,
+                   xranger, zrangef, zranger, crmaxf, crmaxr, bmaxf, bmaxr,
+                   xcgrange, init_Af=5, init_Ar=10, init_xf=0.5, init_xr=6.5,
+                   init_zf=0.5, init_zr=1.5, init_Sr_Sf=1):
+    # FIXME: span efficiency factor is assumed to be constant
+    """
+    Optimise for maximum wingspan on the front wing while meeting stability
+    and controllability requirements and structural constraints.
+
+    Parameters to be optimised:
+        - Aspect ratios of both wings
+        - x-positions of both wings
+        - z-positions of both wings
+        - Sr/Sf (relative size of the wings)
+
+    Constraints:
+        - Allowable x-range for both wings
+        - Allowable z-range for both wings
+        - Maximum root chord for both wings
+        - Maximum wingspan for both wings
+        - Minimum x-position of rear CG
+        - Maximum x-position of front CG
+
+    Optimisation goal:
+        - Maximise wingspan of the front wing
+
+    :param Cmacf:
+    :param Cmacr:
+    :param CLmaxf:
+    :param CLmaxr:
+    :param CLdesf:
+    :param CLdesr:
+    :param CD0f:
+    :param CD0e:
+    :param taperf:
+    :param taperr:
+    :param lambda_c4f:
+    :param lambdac4:
+    :param r:
+    :param ef:
+    :param er:
+    :param Claf:
+    :param Clar:
+    :param zcg:
+    :param Vr_Vf_2:
+    :param elev_fac:
+    :param rho:
+    :param Pbr:
+    :param S:
+    :param W:
+    :param xrangef:
+    :param xranger:
+    :param zrangef:
+    :param zranger:
+    :param crmaxf:
+    :param crmaxr:
+    :param bmaxf:
+    :param bmaxr:
+    :param xcgrange:
+    :return:
+    """
+    x0 = np.array([init_Af, init_Ar, init_xf, init_xr,
+                   init_zf, init_zr, init_Sr_Sf])
+
+    def costfunc(x):
+        Af, Ar, xf, xr, zf, zr, Sr_Sf = x
+        return cost(Cmacf, Cmacr, CLmaxf, CLmaxr, CLdesf, CLdesr, CD0f, CD0r,
+                    taperf, taperr, lambda_c4f, lambda_c4r, ef, er, Claf,
+                    Clar, zcg, Vr_Vf_2, elev_fac, rho, Pbr, S, W, xrangef,
+                    xranger, zrangef, zranger, crmaxf, crmaxr, bmaxf, bmaxr,
+                    xcgrange, Af, Ar, xf, xr, zf, zr, Sr_Sf)
+
+    result = optimize.minimize(costfunc, x0)
+    print(result)
+
+    if not result.success:
+        return None
+
+    return result.x
+
+
 if __name__ == "__main__":
-    stab_sensitivity()
+    Cmacf = -0.0645
+    Cmacr = -0.0645
+    CLfmax = 1.44333
+    CLrmax = 1.44333
+    CLfdes = 0.7382799
+    CLrdes = 0.7382799
+    CD0f = 0.00822
+    CD0r = 0.00822
+    Af = 9
+    Ar = 9
+    taper = 0.45
+    Lambda_c4 = 0
+    ef = 0.958
+    er = 0.958
+    Clfa = 6.1879
+    Clra = 6.1879
+    zcg = 0.7
+    Vr_Vf_2 = 0.8
+    Sr_Sf = 1
+    elev_fac = 1.4
+    rho = 1.225
+    Pbr = 110024 / 1.2 * 0.9 / 12
+    S = 8.417113787320769 * 2
+    W = 2939.949692 * 9.80665
+
+    xf = [0, 2.5]
+    xr = [4.5, 7]
+    zf = [0, 1]
+    zr = [1, 1.7]
+    crmaxf = 2
+    crmaxr = 2.5
+    bmax = 14
+    xcgrange = [2.9, 3.1]
+
+    print(optimise_wings(Cmacf, Cmacr, CLfmax, CLrmax, CLfdes, CLrdes, CD0f,
+                         CD0r, taper, taper, Lambda_c4, Lambda_c4, ef, er,
+                         Clfa, Clra, zcg, Vr_Vf_2, elev_fac, rho, Pbr, S, W,
+                         xf, xr, zf, zr, crmaxf, crmaxf, bmax, bmax, xcgrange))
