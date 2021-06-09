@@ -357,13 +357,13 @@ class mission:
         t_cruise = d_cruise / self.v_cruise
 
         # Get the brake power used in cruise
-        P_cruise = self.power_cruise_config(self.h_cruise, self.v_cruise, self.m) + self.P_systems
+        P_cruise = self.power_cruise_config(self.h_cruise, self.v_cruise, self.m)  # + self.P_systems
 
         V = speeds(altitude=self.h_cruise, m=self.m, CLmax=self.CL_max, S=self.S, componentdrag_object=self.Drag)
 
         # Loiter power
         V_loit = V.climb()
-        P_loiter = self.power_cruise_config(altitude=self.h_cruise, speed=V_loit, mass=self.m) + self.P_systems
+        P_loiter = self.power_cruise_config(altitude=self.h_cruise, speed=V_loit, mass=self.m)  # + self.P_systems
 
         # Cruise energy
         E_cruise = P_cruise * t_cruise
