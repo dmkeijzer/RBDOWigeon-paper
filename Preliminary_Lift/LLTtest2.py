@@ -382,12 +382,12 @@ def LLT2wings(span1, AR1,root1, tip1, sweep1, alpha1, z_h, x_h,span2, AR2, root2
 
 
     wing2 = Wing(span2, root2, tip2, sweep2,washout)
-    y2, cl2, ccl2, al_i2, CL2, CDi2, e2 = weissinger_l(wing2, alpha2, 2*npoints-1, AR2, np.zeros(43))
+    y2 = gety(wing2, 2 * npoints - 1)
     a_w = downwash_fore(np.append(0, ccl[1:] / cl[1:]), y, y2, cl, x_h, z_h, V_cr)
     y3, cl3, ccl3, al_i3, CL3, CDi3, e3 = weissinger_l(wing2, alpha2, 2 * npoints - 1, AR2, a_w)
     de_da = np.average(a_w)*(180/(np.pi*alpha1))
 
-    return CL, CL3, CDi, CDi3, e, e3, e2, de_da
+    return CL, CL3, CDi, CDi3, e, e3, de_da
 
 def downwash(span1, AR1,root1, tip1, sweep1, alpha1, z_h, x_h,span2, root2,tip2,sweep2,V_cr):
     npoints = 21
