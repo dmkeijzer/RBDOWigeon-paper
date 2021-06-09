@@ -8,11 +8,11 @@ import constants as const
 from matplotlib import pyplot as plt
 
 # example values based on inputs_config_1.json
-W = 28315.27
-h = 0
-lfus = 4
-hfus = 1.6
-wfus = 1.3
+W = 3652.352770706565*9.80665
+h = 305
+lfus = 7.2
+hfus = 1.705
+wfus = 1.38
 xcg = 1.680
 V0 = 52
 Vstall = 40
@@ -29,18 +29,18 @@ Cmacfwd = -0.0645
 Cmacrear = -0.0645
 Sfwd = 5.25
 Srear = 5.25
-Afwd = 7
-Arear = 7
+Afwd = 10
+Arear = 10
 Gamma = 0
 Lambda_c4_fwd = 0
 Lambda_c4_rear = 0
-cfwd = 0.8748
-crear = 0.8748
+cfwd = 0.65
+crear = 0.65
 bfwd = np.sqrt(Sfwd * Afwd)
 brear = np.sqrt(Srear * Arear)
-efwd = 1.1302
-erear = 1.1302
-taper = 0.4
+efwd = 0.958
+erear = 0.958
+taper = 0.45
 n_rot_f = 6
 n_rot_r = 6
 rot_y_range_f = [0.5 * bfwd * 0.1, 0.5 * bfwd * 0.9]
@@ -80,8 +80,8 @@ y_max_rotor = bfwd * 0.9
 z_rotor_line_root = z_wf + 0.1
 rotor_rad = 0.5
 fus_back_bottom = [x_cargo, 0]
-fus_back_top = [7.5, 2]
-x_cg_margin = 0.1
+fus_back_top = [lfus, hfus]
+x_cg_margin = 0.05
 theta = np.deg2rad(15)
 phi = np.deg2rad(7)
 psi = np.deg2rad(55)
@@ -119,6 +119,10 @@ while not done:
     if tw > max_tw:
         # TODO: do something to fix it and iterate
         print("Warning: track width too large!")
+
+    print("nose gear x:", x_ng, "main landing gear x:", x_mlg)
+    lgcalc.plot_lg(x_range, x_cg_margin, z_range[1], x_ng, x_mlg, tw, h_mlg)
+    plt.show()
 
     x_min_test, x_max_test = 0, lfus
     dx = 0.1

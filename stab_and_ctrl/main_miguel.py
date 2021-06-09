@@ -8,22 +8,22 @@ import constants as const
 from matplotlib import pyplot as plt
 
 # example values based on inputs_config_1.json
-W = 3652.352770706565*9.80665
-h = 305
+W = 2939.949692*9.80665
+h = 1000
 lfus = 7.2
 hfus = 1.705
 wfus = 1.38
-xcg = 3
-V0 = 52
+xcg = 3.0
+V0 = 64.72389428906716
 Vstall = 40
-Pbr = 110024/1.2 * 0.9 /16
+Pbr = 110024/1.2 * 0.9 /12
 # M0 = V0 / np.sqrt(const.gamma * const.R * 288.15)
 CD0 = 0.03254
 theta0 = 0
-CLfwd = 1.781
-CLrear = 1.737
-CLdesfwd = 0.82
-CLdesrear = 0.82
+CLfwd = 1.44333
+CLrear = 1.44333
+CLdesfwd = 0.7382799
+CLdesrear = 0.7382799
 CLafwd = 5.1685
 Clafwd = 6.1879
 Clarear=Clafwd
@@ -34,16 +34,15 @@ CD0rear = CD0fwd
 CLarear = CLafwd
 Cmacfwd = -0.0645
 Cmacrear = -0.0645
-S = 10.5
-Sfwd = 1/2*S
-Srear = S-Sfwd
-Afwd = 5*2
-Arear = 5*2
+Sfwd = 8.417113787320769
+Srear = 8.417113787320769
+Afwd = 9*1
+Arear = 9
 Gamma = 0
 Lambda_c4_fwd = 0.0*np.pi/180
 Lambda_c4_rear = 0.0*np.pi/180
-cfwd = 0.65
-crear = 0.65
+cfwd = 1.014129367767935
+crear = 1.014129367767935
 bfwd = np.sqrt(Sfwd * Afwd)
 brear = np.sqrt(Srear * Arear)
 e = 1.1302
@@ -64,7 +63,7 @@ wps = Wing_placement_sizing(W,h, lfus, hfus, wfus, V0, CD0fwd, CLfwd,
                  CLrear,CLdesfwd,CLdesrear, Clafwd,Clarear,Cmacfwd, Cmacrear, Sfwd, Srear,
                  Afwd, Arear, Gamma, Lambda_c4_fwd, Lambda_c4_rear, cfwd,
                  crear, bfwd, brear, efwd, erear, taper, n_rot_f, n_rot_r,
-                 rot_y_range_f, rot_y_range_r, K, ku,Zcg,d,dy,Pbr)
+                 rot_y_range_f, rot_y_range_r, K, ku,Zcg,d,dy,Pbr,1)
 
 
 aileron = Control_surface(V0,Vstall,CLfwd,CLrear,CLafwd,CLarear,Clafwd,Clarear,Cd0fwd,Cd0rear,
@@ -73,8 +72,8 @@ elevator_effect = 1.4
 dx = 0.1
 
 #### Plotting Vertical Tail ####
-nE = 16
-Tt0 = 8500
+nE = 12
+Tt0 = 1500
 yE = bfwd/2
 lv = lfus-xcg
 brbv = np.linspace(0.75,1,150)
@@ -85,18 +84,24 @@ crcv = np.linspace(0.1,0.4,150)
 #         vt_br = vt_sizing.final_VT_rudder(nE,Tt0,yE,lv,br_bv=brbv[i],cr_cv=j)
 # print("Sv = ",vt_sizing.VT_stability(lv))
 
-ARv = 1.25
+ARv = 1.5
+sweepTE =25.0
 vt_sizing = VT_sizing(W,h,xcg,lfus,hfus,wfus,V0,Vstall,CD0,CLdesfwd,CLdesrear,CLafwd,CLarear,
-                 Sfwd,Srear,Afwd,Arear,Lambda_c4_fwd,Lambda_c4_rear,cfwd,crear,bfwd,brear,taper,ARv)
-if isinstance(ARv,float):
-    vt_sizing.plotting(nE,Tt0,yE,lv,br_bv=brbv,cr_cv=crcv)
+                 Sfwd,Srear,Afwd,Arear,Lambda_c4_fwd,Lambda_c4_rear,cfwd,crear,bfwd,brear,taper,ARv,sweepTE)
+if isinstance(ARv,(float,int)) and isinstance(sweepTE,(float,int)):
+    vt_sizing.plotting(nE,Tt0,yE,br_bv=brbv,cr_cv=crcv,ARv=ARv,sweepTE=sweepTE)
     # print(vt_sizing.plotting(nE, Tt0, yE, lv, br_bv=0.85, cr_cv=0.3))
-    vt_sizing.plotting(nE, Tt0, yE, lv, br_bv=0.9, cr_cv=0.35)
-    Sv = vt_sizing.final_VT_rudder(nE,Tt0,yE,lv,br_bv=0.9,cr_cv=0.4)[0]
-    bv =  vt_sizing.final_VT_rudder(nE,Tt0,yE,lv,br_bv=0.9,cr_cv=0.4)[3]
+    vt_sizing.plotting(nE, Tt0, yE, br_bv=0.85, cr_cv=0.4,ARv=ARv,sweepTE=sweepTE)
+    Sv = vt_sizing.final_VT_rudder(nE,Tt0,yE,br_bv=0.85,cr_cv=0.4,ARv=ARv,sweepTE=sweepTE)[0]
+    Svstab = vt_sizing.VT_stability(ARv,sweepTE)
+    Svctrl = vt_sizing.VT_controllability(nE,Tt0,yE,br_bv=0.85, cr_cv=0.4,ARv=ARv,sweepTE=sweepTE)
+    bv =  vt_sizing.final_VT_rudder(nE,Tt0,yE,br_bv=0.85,cr_cv=0.4,ARv=ARv,sweepTE=sweepTE)[3]
+    print("Stability outside: Sv = ",Svstab)
+    print("Controllability outside: Sv = ", Svctrl)
+    print("Final: Sv, bv=", Sv,bv)
     # print(Sv)
 else:
-    vt_sizing.plotting(nE,Tt0,yE,lv,br_bv=0.85,cr_cv=0.3)
+    vt_sizing.plotting(nE,Tt0,yE,br_bv=0.85,cr_cv=0.4,ARv=ARv,sweepTE=sweepTE)
 # vt_sizing.plotting(nE,Tt0,yE,lv,br_bv=0.65,cr_cv=0.4)
 # vt_sizing.plotting(nE,Tt0,yE,lv,br_bv=0.55,cr_cv=0.4)
 
@@ -121,9 +126,10 @@ wps.plotting(0, lfus, dx, elevator_effect, d)
 CL0 = 0.82
 A = Afwd/2
 CD0_a = CD0+CL0**2/(np.pi*A*e)
-stability_derivatives = Stab_Derivatives(W,h,lfus,hfus,wfus, d,dy,xcg,Zcg,cfwd,crear,Afwd,Arear,Vstall,
-                 V0,Tt0,CLdesfwd,CLdesrear,CD0_a,CL0,2*np.pi/180,0,
-                 Clafwd,Clarear, Cd0fwd, Cd0rear, CLafwd,CLarear,Sfwd,Srear,5*np.pi/180/6,0,
-                 efwd,erear,Lambda_c4_fwd,Lambda_c4_rear,taper,0.4,
-                 bv,Sv,ARv,Pbr,CD0,eta_rear=1,eta_v=1)
-stability_derivatives.asym_stability_req(0.012*W/9.80665*bfwd**2,0.037*W/9.80665*bfwd**2,0.002*W/9.80665*bfwd**2,0.15,60,97.5,0.4,0.9)
+if isinstance(ARv,float) and isinstance(sweepTE,float):
+    stability_derivatives = Stab_Derivatives(W,h,lfus,hfus,wfus, d,dy,xcg,Zcg,cfwd,crear,Afwd,Arear,Vstall,
+                     V0,Tt0,CLdesfwd,CLdesrear,CD0_a,CL0,2*np.pi/180,0,
+                     Clafwd,Clarear, Cd0fwd, Cd0rear, CLafwd,CLarear,Sfwd,Srear,5*np.pi/180/6,0,
+                     efwd,erear,Lambda_c4_fwd,Lambda_c4_rear,taper,0.4,
+                     bv,Sv,ARv,Pbr,CD0,eta_rear=1,eta_v=1)
+    print(stability_derivatives.q_derivatives())

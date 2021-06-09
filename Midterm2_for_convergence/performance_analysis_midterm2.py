@@ -48,10 +48,10 @@ class initial_sizing:
         # Structures data
         self.MTOW       = MTOW
 
-        # Preparing matplotlib
-        fig = plt.figure()
-        self.ax1 = fig.add_subplot(111)
-        self.ax2 = self.ax1.twiny()
+        # # Preparing matplotlib
+        # fig = plt.figure()
+        # self.ax1 = fig.add_subplot(111)
+        # self.ax2 = self.ax1.twiny()
 
         # ======= Drag polar calculations =======
         # Range of CL values, ignoring negative values as they are not relevant
@@ -137,14 +137,14 @@ class initial_sizing:
         # self.WP_turn_cruise     = self.turn(self.WS, self.Vcr, self.nmax)
         self.WP_hov             = self.vertical_flight(self.WS, self.ROC_ho)
 
-        # Plot wing and thrust loading diagrams
-        self.ax1.plot(self.WS, self.WP_speed, label = 'Maximum speed')
-        self.ax1.plot(self.WS, self.WP_climb, label = 'Rate of climb')
-        self.ax1.plot(self.WS, self.WP_turn_max_speed,  label = 'Turn performance @ $V_{max}$')
-        # self.ax1.plot(self.WS, self.WP_turn_cruise,     label='Turn performance @ $V_{cr}$')
-        # print(self.WP_hov)
-        self.ax1.plot(self.WS, self.WP_hov, label = 'Vertical flight requirements')
-        self.ax1.plot(np.ones(np.size(self.WS))*self.WS_stall, np.linspace(0, 0.1, np.size(self.WS)), label = 'Stall speed')
+        # # Plot wing and thrust loading diagrams
+        # self.ax1.plot(self.WS, self.WP_speed, label = 'Maximum speed')
+        # self.ax1.plot(self.WS, self.WP_climb, label = 'Rate of climb')
+        # self.ax1.plot(self.WS, self.WP_turn_max_speed,  label = 'Turn performance @ $V_{max}$')
+        # # self.ax1.plot(self.WS, self.WP_turn_cruise,     label='Turn performance @ $V_{cr}$')
+        # # print(self.WP_hov)
+        # self.ax1.plot(self.WS, self.WP_hov, label = 'Vertical flight requirements')
+        # self.ax1.plot(np.ones(np.size(self.WS))*self.WS_stall, np.linspace(0, 0.1, np.size(self.WS)), label = 'Stall speed')
 
     def design_point(self):
         """

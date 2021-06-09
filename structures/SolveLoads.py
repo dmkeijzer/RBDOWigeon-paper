@@ -24,7 +24,7 @@ class WingLoads:
         self.ViVx, self.ViMy = [None]*2
         
         self.box = WingBox(self.tsk, self.tsp, self.frac, self.toc)
-        self.box.StrPlacement(self.nStrT, self.nStrB, self.StrA, self.strGeo, self.strType)
+        self.box.StrPlacement(self.nStrT, self.nStrB, self.strGeo, self.strType)
         self.wing = WingStructure(self.span, self.taper, self.cr, self.box)
         self.acp = (self.xac - 0.45) * self.mac # Redefine
         
@@ -120,7 +120,8 @@ class WingLoads:
     
     @staticmethod
     def extreme(coord, arr):
-        return np.array([*coord[np.argmax(np.abs(arr))], arr[np.argmax(np.abs(arr))]])
+        h, l = np.argmax(arr), np.argmin(arr)
+        return ([coord[l], arr[l]], [coord[h], arr[h]])
 
 class Fatigue:
     def __init__(self, Sground, Stakeoff, Scruise, airTime, turnOver, takeOffTime, mat):

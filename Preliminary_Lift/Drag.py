@@ -148,7 +148,7 @@ class componentdrag:
 
     def CDi(self, C_L):
 
-        return ((C_L-self.C_L_minD)**2)/(np.pi *self.AR *self.e_factor())
+        return ((C_L)**2)/(np.pi *self.AR *self.e_factor())
 
     def Cd_w(self, C_L):
 
