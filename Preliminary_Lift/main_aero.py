@@ -97,7 +97,7 @@ Cd_des= Drag.Cd_w(CL_design)
 Swet_f = Drag.Swet_f()
 print("S_f", Swet_f)
 print("CLdes", CL_design)
-
+print("e", Drag.e_factor())
 #Stall
 stall = Wing_params.CLmax_s()
 CLmax = stall[0]
@@ -123,7 +123,7 @@ plt.show()
 #
 #print(x)
 
-x = downwash(b,AR*2,C_r,C_t,0,5, h_d, l_h,b,C_r,C_t,0, 70)
+x = LLT2wings(b,AR*2,C_r,C_t,0,5, h_d, l_h,b,AR*2,C_r,C_t,0,5, 70)
 print(b,C_t, C_r)
 #x = LLT1wing
 print(x)
