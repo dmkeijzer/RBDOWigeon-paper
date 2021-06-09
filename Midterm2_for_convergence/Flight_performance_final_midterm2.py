@@ -101,7 +101,7 @@ class mission:
 
         return CL, CD
 
-    def thrust_to_power(self, T, V):
+    def thrust_to_power(self, T, V, rho):
         """
         This function calculates the available power associated with a certain thrust level. Note that this power
         still needs to be converted to brake power later on. This will be implemented when more is known about this
@@ -112,10 +112,10 @@ class mission:
         :return: P_a: available power
         """
 
-        P_a = T * V + 1.2 * T * (
-                    -V / 2 + np.sqrt(V ** 2 / 4 + T / (2 * 1.225 * self.A_disk)))  # TODO: IMPLEMENT Power and propulsion method
+        P_a = T * V + 1.2 * T * (-V / 2 + np.sqrt(V ** 2 / 4 + T / (2 * rho * self.A_disk)))
 
-        eff = np.where(V > 5, eff_prop, eff_hover)
+        # Interpolate between efficiencies
+        eff = np.minimum(eff_hover + V*(eff_prop - eff_hover)/self.v_cruise, eff_prop)
 
         P_r = P_a/eff
 
@@ -124,11 +124,7 @@ class mission:
     def target_accelerations_new(self, vx, vy, y, y_tgt, vx_tgt, max_ax, max_ay, max_vy):
 
         # Limit altitude
-        vy_tgt = np.maximum(np.minimum(-0.5 * (y - y_tgt), max_vy), -max_vy)
-
-        # Change target speeds based on optimal values !!!! TODO: IMPLEMENT !!!!
-        #  y < 290:
-        #    a = 1
+        vy_tgt = np.maximum(np.minimum(-0.1 * (y - y_tgt), max_vy), -max_vy)
 
         # Slow down when approaching 15 m while going too fast in horizontal direction
         if 15 + (np.abs(vy) / self.ay_target_descend) > y > y_tgt and abs(vx) > 0.25:
@@ -142,6 +138,7 @@ class mission:
 
         # Limit speed
         ax_tgt = np.minimum(np.maximum(-0.5 * (vx - vx_tgt_1), -max_ax), max_ax)
+        #ax_tgt = -0.5*(vx - vx_tgt_1)
         ay_tgt = np.minimum(np.maximum(-0.5 * (vy - vy_tgt), -max_ay), max_ay)
 
         return ax_tgt, ay_tgt
@@ -179,6 +176,7 @@ class mission:
         t_lst = []
         ax_lst = []
         ay_lst = []
+        rho_lst = []
 
         # Preliminary calculations
         running = True
@@ -206,7 +204,7 @@ class mission:
 
             # If a constraint on rotational speed is added, calculate the limits in rotation
             th_min, th_max = th - self.max_rot * dt, th + self.max_rot * dt
-            T_min, T_max = T - 200, T + 200  # TODO: Sanity check
+            T_min, T_max = T - 500, T + 500  # TODO: Sanity check
 
             # Calculate the accelerations
             ax = (-D * np.cos(gamma) - L * np.sin(gamma) + T * np.cos(th)) / self.m
@@ -224,6 +222,7 @@ class mission:
 
             # Thrust can be calculated in two ways, result should be very close
             T = (self.m * ay_tgt + self.m * g - L * np.cos(gamma) + D * np.sin(gamma)) / np.sin(th)
+            #T = (self.m*ax_tgt + D*np.cos(gamma) + L*np.sin(gamma))/np.cos(th)
 
             T = np.maximum(np.minimum(np.maximum(T, T_min), T_max), 0)
 
@@ -244,9 +243,10 @@ class mission:
             t_lst.append(t)
             ax_lst.append(ax)
             ay_lst.append(ay)
+            rho_lst.append(rho)
 
             # Check if end conditions are satisfied
-            if abs(vx - vx_tgt) < 0.5 and abs(y - y_tgt) < 0.5 and abs(vy) < 0.5 and t >= 5 or t > 600:
+            if abs(vx - vx_tgt) < 0.8 and abs(y - y_tgt) < 0.5 and abs(vy) < 0.5 and t >= 5 or t > 600:
                 running = False
 
                 # if t > 600:
@@ -262,12 +262,13 @@ class mission:
         t_arr = np.array(t_lst)
         ax_arr = np.array(ax_lst)
         ay_arr = np.array(ay_lst)
+        rho_arr = np.array(rho_lst)
         V_arr = np.sqrt(vx_arr ** 2 + vy_arr ** 2)
 
         # ======= Get Required outputs =======
 
         # Get the available power
-        P_a, P_r = self.thrust_to_power(T_arr, V_arr)
+        P_a, P_r = self.thrust_to_power(T_arr, V_arr*np.cos(th_arr - np.tan(vy_arr/vx_arr)), rho_arr)
 
         # TODO: IMPLEMENT
         P_tot   = P_r #+ self.P_systems + self.P_peak
@@ -276,46 +277,58 @@ class mission:
 
         if self.plotting:
             fig, ax1 = plt.subplots()
-            ax1.plot(t_arr, np.degrees(th_arr), c='orange')
+            ax1.plot(t_arr, np.degrees(th_arr), c='orange', label = 'Wing angle')
             ax1.set_xlabel("Time [s]")
-            ax1.set_ylabel("Wing angle")
+            ax1.set_ylabel("Wing angle [deg]")
 
             ax2 = ax1.twinx()
-            ax2.plot(t_arr, T_arr)
+            ax2.plot(t_arr, T_arr, label = 'Thrust')
             ax2.set_xlabel("Time [s]")
-            ax2.set_ylabel("Thrust")
+            ax2.set_ylabel("Thrust [N]")
 
-            plt.tight_layout()
-            plt.grid()
+            ax1.grid()
+            fig.legend(loc = 'upper right', bbox_to_anchor=(1,1), bbox_transform=ax1.transAxes)#loc = 'upper center')
+            fig.tight_layout()
             plt.savefig(self.path + 'inputs_' + 'climb' * (y_tgt > 10) + 'descend' * (y_tgt < 10) + '.pdf')
             plt.show()
 
-            plt.subplot(221)
-            plt.plot(t_arr, vx_arr)
-            plt.xlabel("Time [s]")
-            plt.ylabel("v_x")
-            plt.grid()
 
-            plt.subplot(222)
+
+            #plt.subplot(221)
+            plt.plot(t_arr, V_arr)
+            plt.xlabel("Time [s]")
+            plt.ylabel("Speed [m/s]")
+            plt.grid()
+            plt.tight_layout()
+            plt.savefig(self.path + 'transition_' + 'climb' * (y_tgt > 10) + 'descend' * (y_tgt < 10) + '_V.pdf')
+            plt.show()
+
+            #plt.subplot(222)
             plt.plot(x_arr, y_arr)
             plt.xlabel("Distance")
             plt.ylabel("Altitude")
             plt.grid()
+            plt.tight_layout()
+            plt.savefig(self.path + 'transition_' + 'climb' * (y_tgt > 10) + 'descend' * (y_tgt < 10) + '_profile.pdf')
+            plt.show()
 
-            plt.subplot(223)
+            #plt.subplot(223)
             plt.plot(t_arr, vy_arr)
             plt.xlabel("Time [s]")
-            plt.ylabel("v_y")
+            plt.ylabel("$v_y$ [m/s]")
             plt.grid()
+            plt.tight_layout()
+            plt.savefig(self.path + 'transition_' + 'climb' * (y_tgt > 10) + 'descend' * (y_tgt < 10) + '_vy.pdf')
+            plt.show()
 
-            plt.subplot(224)
+            #plt.subplot(224)
             plt.plot(t_arr, np.sqrt((ay_arr + g) ** 2 + ax_arr ** 2) / g)
             plt.xlabel("Time [s]")
-            plt.ylabel("g-forces")
+            plt.ylabel("accelerations [g]")
             plt.grid()
 
             plt.tight_layout()
-            plt.savefig(self.path + 'transition_' + 'climb' * (y_tgt > 10) + 'descend' * (y_tgt < 10) + '.pdf')
+            plt.savefig(self.path + 'transition_' + 'climb' * (y_tgt > 10) + 'descend' * (y_tgt < 10) + '_g.pdf')
             plt.show()
 
         distance = x_lst[-1]
