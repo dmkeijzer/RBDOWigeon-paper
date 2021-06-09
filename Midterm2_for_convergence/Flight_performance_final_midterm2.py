@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from Aero_tools import ISA, speeds
 import scipy.interpolate as interpolate
 import sys
-from constants import g
+from constants import g, eff_hover, eff_prop
 
 # TODO: Remove this import in the integrated program, make sure aerodynamics is called first and the variables have the
 # same names
@@ -108,7 +108,14 @@ class mission:
         P_a = T * V + 1.2 * T * (
                     -V / 2 + np.sqrt(V ** 2 / 4 + T / (2 * 1.225 * 3)))  # TODO: IMPLEMENT Power and propulsion method
 
-        return P_a
+        if V > 5:
+            eff = eff_prop
+        else:
+            eff = eff_hover
+
+        P_r = P_a/eff
+
+        return P_a, P_r
 
     def target_accelerations_new(self, vx, vy, y, y_tgt, vx_tgt, max_ax, max_ay, max_vy):
 
@@ -256,10 +263,9 @@ class mission:
         # ======= Get Required outputs =======
 
         # Get the available power
-        P_a = self.thrust_to_power(T_arr, V_arr)
+        P_a, P_r = self.thrust_to_power(T_arr, V_arr)
 
-        # Convert to brake power
-        P_r = P_a / 0.95  # IMPLEMENT EFFICIENCY
+        P_tot   = P_r + self.P_systems + self.P_peak
 
         # Add to total energy
 
@@ -308,7 +314,7 @@ class mission:
             plt.show()
 
         distance = x_lst[-1]
-        energy = np.sum(P_r * dt)
+        energy = np.sum(P_tot * dt)
         time = t
 
         return distance, energy, time
@@ -346,13 +352,13 @@ class mission:
         t_cruise = d_cruise / self.v_cruise
 
         # Get the brake power used in cruise
-        P_cruise = self.power_cruise_config(self.h_cruise, self.v_cruise, self.m)
+        P_cruise = self.power_cruise_config(self.h_cruise, self.v_cruise, self.m) + self.P_systems
 
         V = speeds(altitude=self.h_cruise, m=self.m, CLmax=self.CL_max, S=self.S, componentdrag_object=Drag)
 
         # Loiter power
         V_loit = V.climb()
-        P_loiter = self.power_cruise_config(altitude=self.h_cruise, speed=V_loit, mass=self.m)
+        P_loiter = self.power_cruise_config(altitude=self.h_cruise, speed=V_loit, mass=self.m) + self.P_systems
 
         # Cruise energy
         E_cruise = P_cruise * t_cruise
