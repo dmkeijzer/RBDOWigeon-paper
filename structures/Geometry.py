@@ -3,6 +3,10 @@ from MathFunctions.Trigonometry import pi
 from MathFunctions.Mechanics import StepFunction
 import pandas as pd
 
+class StructuralError(Exception):
+    def __init__(self, msg):
+        super().__init__(msg)
+
 class Stringer:
     def __init__(self, area = 0.001, point = (0, 0), **kwargs):
         self.a, (self.x, self.y) = area, point
@@ -161,14 +165,14 @@ class WingBox:
         
         # pitch depends on which panel is taken, top or bottom
         pitch = self.tspitch if top_panel else self.bspitch
-        sigma_crskin = 4 * (np.pi ** 2 * Esk/(12 * (1 - vsk)**2))*(self.tsk / (pitch))**2
+        sigma_crskin = 4 * (np.pi ** 2 * Esk/(12 * (1 - vsk**2)))*(self.tsk / (pitch))**2
         C = 6.98 if pitch/self.tsk > 75 else 4
-        we = 0 # self.tsk * np.sqrt(np.pi ** 2 * C * Esk/(ccstr*12*(1-vsk**2)))
+        we = self.tsk * np.sqrt(np.pi ** 2 * C * Esk/(ccstr*12*(1-vsk**2)))
         new_pitch = pitch - we
-        new_sigma_crskin = 4 * (np.pi ** 2 * Esk/(12 * (1 - vsk)**2))*(self.tsk / (new_pitch))**2
-        print(f"{new_pitch, sigma_crskin*1e-6, ccstr *1e-6 = }")
+        new_sigma_crskin = 4 * (np.pi ** 2 * Esk/(12 * (1 - vsk**2)))*(self.tsk / (new_pitch))**2
+#         print(f"{pitch, new_pitch, sigma_crskin*1e-6, self.tsk/pitch, self.tsk, ccstr*1e-6= }")
         if new_pitch < 0:
-            raise ValueError("Invalid pitch length: " + str(new_pitch))
+            raise StructuralError("Invalid pitch length: " + str(new_pitch))
         return (new_sigma_crskin * new_pitch * self.tsk + ccstr * (ccarea + we * self.tsk))/ (new_pitch * self.tsk + (ccarea + we * self.tsk))
 
 class WingStructure:

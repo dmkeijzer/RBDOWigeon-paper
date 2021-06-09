@@ -264,7 +264,8 @@ while iterate or (count < 5):
     CD_a_f = wing_design.CDa_poststall(const.tc, CDs, CDs_f, Afus, alpha_lst, "fus", drag.CD)
 
     # Energy sizing
-    mission = energy_calc.mission(MTOM, h_cr, V_cr, CLmax, S_tot, Cl_alpha_curve, CD_a_w, CD_a_f, alpha_lst, drag)
+    mission = energy_calc.mission(MTOM, h_cr, V_cr, CLmax, S_tot, n_prop*prop_area, Cl_alpha_curve, CD_a_w, CD_a_f,
+                                  alpha_lst, drag)
 
     # Get approximate overall efficiency
     eff_overall = 0.91 * 0.57 + 0.699 * 0.43

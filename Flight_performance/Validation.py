@@ -38,12 +38,12 @@ class monte_carlo:
             m=mission(mass         = np.random.default_rng().uniform(low = self.mass*min_var, high = self.mass*max_var),
                       cruising_alt = np.random.default_rng().uniform(low = self.h_cr*min_var, high = self.h_cr*max_var),
                       cruise_speed = np.random.default_rng().uniform(low = self.v_cr*min_var, high = self.v_cr*max_var),
-                      CL_max       = self.CL_max,
-                      wing_surface = self.S,
+                      CL_max       = np.random.default_rng().uniform(low = self.CL_max*min_var, high = self.CL_max*max_var),
+                      wing_surface = np.random.default_rng().uniform(low = self.S*min_var, high = self.S*max_var),
                       t_loiter     = 30*60,
                       rotational_rate= np.random.default_rng().uniform(low = self.rot*min_var, high = self.rot*max_var),
-                      roc = np.random.default_rng().uniform(low = self.roc*min_var, high = self.roc*max_var),
-                      rod = np.random.default_rng().uniform(low = self.rod*min_var, high = self.rod*max_var))
+                      roc           = np.random.default_rng().uniform(low = self.roc*min_var, high = self.roc*max_var),
+                      rod           = np.random.default_rng().uniform(low = self.rod*min_var, high = self.rod*max_var))
 
             E[i], t[i] = m.total_energy()
 
@@ -52,7 +52,7 @@ class monte_carlo:
 
 
 validation = monte_carlo(2000, 300, 60, 1.5)
-validation.monte_carlo_sim(0.10, 1000)
+validation.monte_carlo_sim(0.10, 100)
 
 # class validation:
 #     """

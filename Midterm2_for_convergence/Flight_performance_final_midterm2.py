@@ -4,6 +4,8 @@ from Aero_tools import ISA, speeds
 import scipy.interpolate as interpolate
 import sys
 from constants import g, eff_hover, eff_prop
+import PropandPower.power_budget as pb
+
 
 # TODO: Remove this import in the integrated program, make sure aerodynamics is called first and the variables have the
 # same names
@@ -26,7 +28,7 @@ class mission:
         - Efficiencies
     """
 
-    def __init__(self, mass, cruising_alt, cruise_speed, CL_max, wing_surface, Cl_alpha_curve, CD_a_w, CD_a_f,
+    def __init__(self, mass, cruising_alt, cruise_speed, CL_max, wing_surface, A_disk, Cl_alpha_curve, CD_a_w, CD_a_f,
                  alpha_lst, Drag, t_loiter=30 * 60, rotational_rate=5, roc=5, rod=5, mission_dist=300e3, plotting=False):
 
         """
@@ -47,6 +49,7 @@ class mission:
         self.S = wing_surface
         self.max_rot = np.radians(rotational_rate)
         self.CL_max = CL_max
+        self.A_disk = A_disk
 
         # Design variables
         self.ax_target_climb = 0.5 * g
@@ -112,8 +115,7 @@ class mission:
         """
 
         P_a = T * V + 1.2 * T * (
-                    -V / 2 + np.sqrt(V ** 2 / 4 + T / (2 * 1.225 * 3)))  # TODO: IMPLEMENT Power and propulsion method
-
+                    -V / 2 + np.sqrt(V ** 2 / 4 + T / (2 * 1.225 * self.A_disk)))  # TODO: IMPLEMENT Power and propulsion method
 
         eff = np.where(V > 5, eff_prop, eff_hover)
 

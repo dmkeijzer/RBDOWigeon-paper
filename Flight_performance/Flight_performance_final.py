@@ -107,7 +107,7 @@ class mission:
 
         P_r = P_a/eff
 
-        return P_a
+        return P_a, P_r
 
     def target_accelerations_new(self, vx, vy, y, y_tgt, vx_tgt, max_ax, max_ay, max_vy):
 

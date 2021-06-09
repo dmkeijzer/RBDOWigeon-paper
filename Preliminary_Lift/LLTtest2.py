@@ -178,13 +178,10 @@ def weissinger_l(wing, al, m, AR, a_w):
     phiO1 = pi
     #print("y",y)
     # Construct the A matrix, which is the analog to the 2D lift slope
-    print("Calculating aerodynamics ...")
+    print("Calculating aerodynamics wing")
     a_ws = a_w[1:-1]
-    print(a_w)
-    print(a_ws)
-    print(twist)
+
     for j in range(m):
-        print("Point " + str(j+1) + " of " + str(m))
         rhs[j,0] = al + twist[j] - a_ws[j]
         for i in range(m):
             if i == j: b[j,i] = float(m+1)/(4.*sin(phi[j]))
@@ -233,10 +230,10 @@ def weissinger_l(wing, al, m, AR, a_w):
     al_i = np.zeros(nrhs)
     for i in range(nrhs):
         cl[i] = ccl[i]/c[i]
-        al_e = cl[i]/(2.*pi)
+        al_e = cl[i]/(2*np.pi)  #(5.8136)
         al_i[i] = al + twist[i] - al_e
-    print("induced_angle",al_i)
-    al_i = al_i
+
+    al_i = al_i #+ a_w[:22]
     CL = 0.
     CDi = 0.
     area = 0.
@@ -330,15 +327,15 @@ def downwash_fore(c,y,Cl, x_h, z_h, V_inf):
     Circ1 = np.append(np.array(Circ), np.flip(np.array(Circ[:-1])))
     dCirc_int = np.append(np.diff(Circ),[0])
     dCirc = np.append(dCirc_int,-1*np.flip(np.diff(Circ)))
-    #print(Circ1)
-    #print(dCirc)
+    print(Circ1)
+    print(dCirc)
     for i in range(len(c)):
         r_avg = np.sqrt(x_h**2 + z_h**2)
         thetas = np.arctan2(r_avg, y- y[i])
         Circwsin = Circ1*np.sin(thetas)
         f = interp1d(thetas, Circwsin)
 
-        integral = quad(f,thetas[0],thetas[-1], limit = 200)
+        integral = quad(f,thetas[0],thetas[-1], limit = 500)
         w.append(integral[0]*(1/(np.pi*4*r_avg)))
     for i in range(len(c)):
 
@@ -354,42 +351,56 @@ def downwash_fore(c,y,Cl, x_h, z_h, V_inf):
 
     a2final = np.array(w2)/V_inf
     #print(a2final)
-    a_wfinal = a_w + a2final
-    return a_wfinal
-def LLT2wings(span1,root1, tip1, sweep1, washout, z_h, x_h,span2,root2,tip2,sweep2 ):
+    a_wfinal = a2final
+    return a_wfinal + a_w
+def LLT2wings(span1, AR1,root1, tip1, sweep1, alpha1, z_h, x_h,span2, AR2, root2,tip2,sweep2, alpha2, V_cr):
     npoints = 21
-    wing = Wing(span, root, tip, sweep,washout)
-    y, cl, ccl, al_i, CL, CDi , e= weissinger_l(wing, alpha, 2*npoints-1, AR, np.zeros(43))
+    washout = 0
+    wing = Wing(span1, root1, tip1, sweep1,washout)
+    y, cl, ccl, al_i, CL, CDi , e= weissinger_l(wing, alpha1, 2*npoints-1, AR1, np.zeros(43))
 
-    a_w = downwash_fore(np.append(0,ccl[1:]/cl[1:]),y,cl, 6, 1.25, 60)
-    de_da = deps_da(0, span, 6, 1.25, wing.aspect_ratio, 5.27)
-    alpha2 = alpha #* (1 - de_da)
-    print("downwash", de_da)
-    wing2 = Wing(span, root, tip, sweep,washout)
-    y2, cl2, ccl2, al_i2, CL2, CDi2, e2 = weissinger_l(wing2, alpha2, 2*npoints-1, AR, a_w)
-    print("downwash", np.average(a_w)*(180/np.pi)/alpha)
-    print(cl,len(cl))
-    print(cl2,len(cl2))
 
-    print("{:<6}".format("Area: ") + str(wing.area))
-    print("{:<6}".format("AR: ") + str(wing.aspect_ratio))
-    print("{:<6}".format("MAC: ") + str(wing.cbar))
-    print("{:<6}".format("CL: ") + str(CL))
-    print("{:<6}".format("CDi: ") + str(CDi))
-    print("{:<6}".format("e: ") + str(e2))
+    wing2 = Wing(span2, root2, tip2, sweep2,washout)
+    y2, cl2, ccl2, al_i2, CL2, CDi2, e2 = weissinger_l(wing2, alpha2, 2*npoints-1, AR2, np.zeros(43))
+    a_w = downwash_fore(np.append(0, ccl2[1:] / cl2[1:]), y2, cl2, x_h, z_h, V_cr)
+    y3, cl3, ccl3, al_i3, CL3, CDi3, e3 = weissinger_l(wing2, alpha2, 2 * npoints - 1, AR2, a_w)
+    de_da = np.average(a_w)*(180/(np.pi*alpha1))
+    #print("deps_da", np.average(a_w)*(180/np.pi)/alpha)
+    #print(cl,len(cl))
+    #print(cl2,len(cl2))
 
-    create_plot(wing, y, cl, ccl, CL, CDi)
-    create_plot(wing2, y2, cl2, ccl2, CL2, CDi2)
-    create_plot_comp(wing, y, cl, ccl, CL, CDi, cl2, ccl2, CL2, CDi2)
-    create_plot_induced(wing,y,al_i,al_i2)
-    print(ccl)
-    print(cl)
+    #print("{:<6}".format("Area: ") + str(wing.area))
+    #print("{:<6}".format("AR: ") + str(wing.aspect_ratio))
+    #print("{:<6}".format("MAC: ") + str(wing.cbar))
+    #print("{:<6}".format("CL: ") + str(CL))
+    #print("{:<6}".format("CDi: ") + str(CDi))
+    #print("{:<6}".format("e: ") + str(e2))
+
+    #create_plot(wing, y, cl, ccl, CL, CDi)
+    #create_plot(wing2, y2, cl2, ccl2, CL2, CDi2)
+    #create_plot_comp(wing, y, cl, ccl, CL, CDi, cl2, ccl2, CL2, CDi2)
+    #create_plot_induced(wing,y,al_i,al_i2)
+    #print(ccl)
+    #print(cl)
+    return CL, CL3, CDi, CDi3, e, e3, e2, de_da
+def LLT1wing(span1, AR1,root1, tip1, sweep1, alpha1):
+    npoints = 21
+    washout = 0
+    wing = Wing(span1, root1, tip1, sweep1,washout)
+    y, cl, ccl, al_i, CL, CDi , e= weissinger_l(wing, alpha1, 2*npoints-1, AR1, np.zeros(43))
+
+
+
+
+    return CL, CDi, e,
 def sectional_lift(ccl, q_inf):
     return q_inf * ccl
 
-ISA = ISA(400)
-rho = ISA.density()
-Vc = 55 # V_cruise
-Ldash = sectional_lift(ccl, 0.5 * rho * Vc ** 2 ) # Sectional Lift Fore Wing [N/m]
-Ldash2 = sectional_lift(ccl2, 0.5 * rho * Vc ** 2 ) # Sectional Lift Hind Wing [N/m]
+#ISA = ISA(400)
+#rho = ISA.density()
+#Vc = 55 # V_cruise
+#Ldash = sectional_lift(ccl, 0.5 * rho * Vc ** 2 ) # Sectional Lift Fore Wing [N/m]
+#Ldash2 = sectional_lift(ccl2, 0.5 * rho * Vc ** 2 ) # Sectional Lift Hind Wing [N/m]
 
+#x = LLT2wings(7.24,10,1,0.45,0,9, 1.25,6,7.24,10,1,0.45,0,9,60)
+#print(x)
