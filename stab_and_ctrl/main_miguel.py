@@ -73,7 +73,7 @@ dx = 0.1
 
 #### Plotting Vertical Tail ####
 nE = 12
-Tt0 = 1500
+Tt0 = 4500
 yE = bfwd/2
 lv = lfus-xcg
 brbv = np.linspace(0.75,1,150)
@@ -85,12 +85,11 @@ crcv = np.linspace(0.1,0.4,150)
 # print("Sv = ",vt_sizing.VT_stability(lv))
 
 ARv = 1.5
-sweepTE =25.0
+sweepTE =25.0*np.pi/180
 vt_sizing = VT_sizing(W,h,xcg,lfus,hfus,wfus,V0,Vstall,CD0,CLdesfwd,CLdesrear,CLafwd,CLarear,
                  Sfwd,Srear,Afwd,Arear,Lambda_c4_fwd,Lambda_c4_rear,cfwd,crear,bfwd,brear,taper,ARv,sweepTE)
 if isinstance(ARv,(float,int)) and isinstance(sweepTE,(float,int)):
     vt_sizing.plotting(nE,Tt0,yE,br_bv=brbv,cr_cv=crcv,ARv=ARv,sweepTE=sweepTE)
-    # print(vt_sizing.plotting(nE, Tt0, yE, lv, br_bv=0.85, cr_cv=0.3))
     vt_sizing.plotting(nE, Tt0, yE, br_bv=0.85, cr_cv=0.4,ARv=ARv,sweepTE=sweepTE)
     Sv = vt_sizing.final_VT_rudder(nE,Tt0,yE,br_bv=0.85,cr_cv=0.4,ARv=ARv,sweepTE=sweepTE)[0]
     Svstab = vt_sizing.VT_stability(ARv,sweepTE)
@@ -99,11 +98,8 @@ if isinstance(ARv,(float,int)) and isinstance(sweepTE,(float,int)):
     print("Stability outside: Sv = ",Svstab)
     print("Controllability outside: Sv = ", Svctrl)
     print("Final: Sv, bv=", Sv,bv)
-    # print(Sv)
 else:
     vt_sizing.plotting(nE,Tt0,yE,br_bv=0.85,cr_cv=0.4,ARv=ARv,sweepTE=sweepTE)
-# vt_sizing.plotting(nE,Tt0,yE,lv,br_bv=0.65,cr_cv=0.4)
-# vt_sizing.plotting(nE,Tt0,yE,lv,br_bv=0.55,cr_cv=0.4)
 
 #### Plotting Aileron ####
 b1 = 60
@@ -111,7 +107,7 @@ b2 =np.linspace(b1,100,150)
 Sa_S = np.linspace(0.05,0.20,150)
 # elevon.plotting(0.15,b1,b2)
 aileron.plotting(Sa_S,b1,b2,True)
-aileron.plotting(Sa_S=0.085,b1=b1,b2=97.5,rear=True)
+aileron.plotting(Sa_S=0.090,b1=b1,b2=97.5,rear=True)
 
 #### Plotting Elevator ####
 elevator = Elevator_sizing(W,h,xcg,lfus,hfus,wfus,V0,Vstall,CD0,theta0,CLfwd,CLrear,CLafwd,CLarear,
