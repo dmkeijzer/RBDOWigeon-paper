@@ -36,7 +36,7 @@ class BEM:
         self.rho = rho
         self.dyn_vis = dyn_vis
         self.V = V_fr
-        self.phi_T = 1
+        # self.phi_T = 1
         self.lamb = V_fr/(self.Omega*R)  # Speed ratio
         self.N_s = N_stations
         self.a = a
@@ -475,4 +475,114 @@ class BEM:
 
     def solidity(self):
         # TODO: implement solidity equation (based on page 46 of Veldhuis' thesis)
+        return 1
+
+# Analyse the propeller in off-design conditions
+class OffDesignAnalysisBEM:
+    def __init__(self, V: float, B: int, R: float, chords: np.array, betas: np.array, r_stations: np.array, rpm: float,
+                 zeta: float, rho: float, dyn_vis: float, a: float, RN_spacing=100000):
+        """
+        hola
+        """
+        self.V = V
+        self.B = B
+        self.R = R
+        self.chords = chords
+        self.betas = betas
+        self.r_stations = r_stations
+        self.zeta = zeta
+
+        self.rpm = rpm
+        self.Omega = rpm * 2 * np.pi / 60  # rpm to rad/s
+        self.lamb = V / (self.Omega * R)  # Speed ratio
+
+        self.rho = rho
+        self.dyn_vis = dyn_vis
+        self.a = a
+
+        self.RN_spacing = RN_spacing
+
+    # Prandtl relation for tip loss
+    def F(self, r, zeta):
+        return (2 / np.pi) * np.arccos(np.exp(-self.f(r, zeta)))
+
+    # Exponent used for function above
+    def f(self, r, zeta):
+        return (self.B / 2) * (1 - self.Xi(r)) / (np.sin(self.phi_t(zeta)))
+
+    # Pitch of blade tip
+    def phi_t(self, zeta):
+        return np.arctan(self.lamb * (1 + zeta / 2))
+
+    # Non-dimensional radius, r/R
+    def Xi(self, r):
+        return r/self.R
+
+    # # Angle of local velocity of the blade wrt to disk plane
+    # def phi(self, r, zeta):
+    #     return np.arctan(np.tan(self.phi_t(zeta)) * self.R / r)
+
+    # Mach as a function of radius
+    def M(self, r):
+        return self.Omega*r/self.a
+
+    # Reynolds number
+    def RN(self, Wc):
+        # Reynolds number. Wc is speed times chord
+        return Wc * self.rho / self.dyn_vis
+
+    def W(self, a, a_prim, r):
+        return np.sqrt((self.V * (1 + a))**2 + (self.Omega * r * (1 - a_prim))**2)
+
+    # Cx and Cy coefficients from Cl and Cd
+    def Cy(self, Cl, Cd, phi):
+        return Cl * np.cos(phi) - Cd * np.sin(phi)
+
+    def Cx(self, Cl, Cd, phi):
+        return Cl * np.sin(phi) + Cd * np.cos(phi)
+
+    # Local solidity of a blade element
+    def solidity_local(self, c, r):
+        return self.B * c / (2 * np.pi * r)
+
+    # Variables used in interference factors
+    def K(self, Cl, Cd, phi):
+        return self.Cy(Cl, Cd, phi) / (4 * (np.sin(phi))**2)
+
+    def K_prim(self, Cl, Cd, phi):
+        return self.Cx(Cl, Cd, phi) / (4 * np.sin(phi) * np.cos(phi))
+
+    # Interference factors
+    def a(self, Cl, Cd, phi, c, r, zeta):
+        omega = self.solidity_local(c, r)  # Local solidity
+        K = self.K(Cl, Cd, phi)
+        return omega * K / (self.F(r, zeta) - omega*K)
+
+    def a_prim(self, Cl, Cd, phi, c, r, zeta):
+        omega = self.solidity_local(c, r)  # Local solidity
+        K_prim = self.K_prim(Cl, Cd, phi)
+        return omega * K_prim / (self.F(r, zeta) + omega * K_prim)
+
+    def phi(self, a, a_prim, r):
+        return self.V * (1 + a) / (self.Omega * r * (1 - a_prim))
+
+    def analyse_propeller(self):
+        # Initial estimate for phi
+        phi = np.arctan(self.lamb/self.Xi(self.r_stations))
+
+        # TODO: implement iteration
+        conv = 1
+        while conv > 0.01:
+
+            for station in self.r_stations:
+                W = 1
+                c = self.chords[station]
+                Cl = 1
+                Cd = 1
+                phi = 1
+
+                # Thrust and torque per unit radius
+                T_prim = 0.5 * self.rho * W**2 * self.B * c * self.Cy(Cl, Cd, phi)
+                Q_prim_r = 0.5 * self.rho * W**2 * self.B * c * self.Cx(Cl, Cd, phi)
+
         return 1

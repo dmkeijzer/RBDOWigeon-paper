@@ -6,7 +6,8 @@ https://github.com/montagdude/weissinger
 import numpy as np
 from math import *
 from matplotlib import pyplot as plt
-
+from scipy.interpolate import interp1d
+from scipy.integrate import quad
 # INPUTS
 alpha   = 9         # Geometric angle of attack at root, degrees
 span    = 8.57       # Wing span
@@ -307,7 +308,8 @@ def weissinger_l(wing, al, al_fore, m):
 
         # Construct the A matrix, which is the analog to the 2D lift slope
         print("Calculating aerodynamics ...")
-        for j in range(m):
+        for j in range(0.5*m+1):
+            print('m',m)
             print("Point " + str(j+1) + " of " + str(m))
             rhs[j,0] = al[j] + twist[j]
 

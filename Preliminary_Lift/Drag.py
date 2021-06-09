@@ -75,7 +75,7 @@ class componentdrag:
         self.h = h
 
     def e_OS(self):
-        return 1.78 * (1 - 0.045 * self.AR ** 0.68) - 0.64
+        return 0.95 #1.78 * (1 - 0.045 * self.AR ** 0.68) - 0.64
 
     def e_factor(self):
         """
@@ -148,7 +148,7 @@ class componentdrag:
 
     def CDi(self, C_L):
 
-        return ((C_L-self.C_L_minD)**2)/(np.pi *self.AR *self.e_factor())
+        return ((C_L)**2)/(np.pi *self.AR *self.e_factor())
 
     def Cd_w(self, C_L):
 

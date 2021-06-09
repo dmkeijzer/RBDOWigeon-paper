@@ -14,7 +14,7 @@ def airfoil_stats():
     Cl_Cdmin = np.average(df1["CL"][df1["CD"] == Cdmin])
     Cm = np.average(df1["Cm"][df1["CL"] == Cl_Cdmin])
 
-    Clalpha =   (np.average(df1["CL"][df1["alpha"] == 7]) -np.average(df1["CL"][df1["alpha"] == 1]))/6
+    Clalpha =   (np.average(df1["CL"][df1["alpha"] == 6]) -np.average(df1["CL"][df1["alpha"] == 0]))/6
     Clalpha1 = (np.average(df1["CL"][df1["alpha"] == 5]) - np.average(df1["CL"][df1["alpha"] == -1])) / 6
 
     clcdmax = np.max(df1["cl/cd"])
@@ -23,7 +23,7 @@ def airfoil_stats():
     a_0L = -np.average(df1["CL"][df1["alpha"] ==0])/Clalpha1
 
     return Clmax, Cdmin, Cl_Cdmin, Cm, Clalpha, clcdmax, Cl_maxld, a_clmax, a_0L
-
+print(airfoil_stats()[4])
 def airfoil_datapoint(type, Re, alpha):
 
     if Re == "Stall":

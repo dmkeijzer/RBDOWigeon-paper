@@ -73,7 +73,7 @@ dx = 0.1
 
 #### Plotting Vertical Tail ####
 nE = 12
-Tt0 = 1000
+Tt0 = 4500
 yE = bfwd/2
 lv = lfus-xcg
 brbv = np.linspace(0.75,1,150)
@@ -84,22 +84,22 @@ crcv = np.linspace(0.1,0.4,150)
 #         vt_br = vt_sizing.final_VT_rudder(nE,Tt0,yE,lv,br_bv=brbv[i],cr_cv=j)
 # print("Sv = ",vt_sizing.VT_stability(lv))
 
-ARv = 1.25
-sweepTE = 25
+ARv = 1.5
+sweepTE =25.0*np.pi/180
 vt_sizing = VT_sizing(W,h,xcg,lfus,hfus,wfus,V0,Vstall,CD0,CLdesfwd,CLdesrear,CLafwd,CLarear,
                  Sfwd,Srear,Afwd,Arear,Lambda_c4_fwd,Lambda_c4_rear,cfwd,crear,bfwd,brear,taper,ARv,sweepTE)
-if isinstance(ARv,float):
-    vt_sizing.plotting(nE,Tt0,yE,br_bv=brbv,cr_cv=crcv)
-    # print(vt_sizing.plotting(nE, Tt0, yE, lv, br_bv=0.85, cr_cv=0.3))
-    vt_sizing.plotting(nE, Tt0, yE, br_bv=0.85, cr_cv=0.4)
-    Sv = vt_sizing.final_VT_rudder(nE,Tt0,yE,br_bv=0.85,cr_cv=0.4)[0]
-    bv =  vt_sizing.final_VT_rudder(nE,Tt0,yE,br_bv=0.85,cr_cv=0.4)[3]
-    print("Sv, bv=", Sv,bv)
-    # print(Sv)
+if isinstance(ARv,(float,int)) and isinstance(sweepTE,(float,int)):
+    vt_sizing.plotting(nE,Tt0,yE,br_bv=brbv,cr_cv=crcv,ARv=ARv,sweepTE=sweepTE)
+    vt_sizing.plotting(nE, Tt0, yE, br_bv=0.85, cr_cv=0.4,ARv=ARv,sweepTE=sweepTE)
+    Sv = vt_sizing.final_VT_rudder(nE,Tt0,yE,br_bv=0.85,cr_cv=0.4,ARv=ARv,sweepTE=sweepTE)[0]
+    Svstab = vt_sizing.VT_stability(ARv,sweepTE)
+    Svctrl = vt_sizing.VT_controllability(nE,Tt0,yE,br_bv=0.85, cr_cv=0.4,ARv=ARv,sweepTE=sweepTE)
+    bv =  vt_sizing.final_VT_rudder(nE,Tt0,yE,br_bv=0.85,cr_cv=0.4,ARv=ARv,sweepTE=sweepTE)[3]
+    print("Stability outside: Sv = ",Svstab)
+    print("Controllability outside: Sv = ", Svctrl)
+    print("Final: Sv, bv=", Sv,bv)
 else:
-    vt_sizing.plotting(nE,Tt0,yE,lv,br_bv=0.85,cr_cv=0.3)
-# vt_sizing.plotting(nE,Tt0,yE,lv,br_bv=0.65,cr_cv=0.4)
-# vt_sizing.plotting(nE,Tt0,yE,lv,br_bv=0.55,cr_cv=0.4)
+    vt_sizing.plotting(nE,Tt0,yE,br_bv=0.85,cr_cv=0.4,ARv=ARv,sweepTE=sweepTE)
 
 #### Plotting Aileron ####
 b1 = 60
@@ -107,7 +107,7 @@ b2 =np.linspace(b1,100,150)
 Sa_S = np.linspace(0.05,0.20,150)
 # elevon.plotting(0.15,b1,b2)
 aileron.plotting(Sa_S,b1,b2,True)
-aileron.plotting(Sa_S=0.085,b1=b1,b2=97.5,rear=True)
+aileron.plotting(Sa_S=0.090,b1=b1,b2=97.5,rear=True)
 
 #### Plotting Elevator ####
 elevator = Elevator_sizing(W,h,xcg,lfus,hfus,wfus,V0,Vstall,CD0,theta0,CLfwd,CLrear,CLafwd,CLarear,
@@ -122,9 +122,10 @@ wps.plotting(0, lfus, dx, elevator_effect, d)
 CL0 = 0.82
 A = Afwd/2
 CD0_a = CD0+CL0**2/(np.pi*A*e)
-stability_derivatives = Stab_Derivatives(W,h,lfus,hfus,wfus, d,dy,xcg,Zcg,cfwd,crear,Afwd,Arear,Vstall,
-                 V0,Tt0,CLdesfwd,CLdesrear,CD0_a,CL0,2*np.pi/180,0,
-                 Clafwd,Clarear, Cd0fwd, Cd0rear, CLafwd,CLarear,Sfwd,Srear,5*np.pi/180/6,0,
-                 efwd,erear,Lambda_c4_fwd,Lambda_c4_rear,taper,0.4,
-                 bv,Sv,ARv,Pbr,CD0,eta_rear=1,eta_v=1)
-print(stability_derivatives.q_derivatives())
+if isinstance(ARv,float) and isinstance(sweepTE,float):
+    stability_derivatives = Stab_Derivatives(W,h,lfus,hfus,wfus, d,dy,xcg,Zcg,cfwd,crear,Afwd,Arear,Vstall,
+                     V0,Tt0,CLdesfwd,CLdesrear,CD0_a,CL0,2*np.pi/180,0,
+                     Clafwd,Clarear, Cd0fwd, Cd0rear, CLafwd,CLarear,Sfwd,Srear,5*np.pi/180/6,0,
+                     efwd,erear,Lambda_c4_fwd,Lambda_c4_rear,taper,0.4,
+                     bv,Sv,ARv,Pbr,CD0,eta_rear=1,eta_v=1)
+    print(stability_derivatives.q_derivatives())
