@@ -8,7 +8,7 @@ from Preliminary_Lift.Airfoil_analysis import airfoil_stats
 import os
 import json
 import matplotlib.pyplot as plt
-from LLTtest2 import LLT1wing , LLT2wings
+from LLTtest2 import LLT1wing , LLT2wings, downwash
 root_path = os.path.join(os.getcwd(), os.pardir)
 
 datafile = open(os.path.join(root_path, "data/inputs_config_1.json"), "r")
@@ -97,7 +97,7 @@ Cd_des= Drag.Cd_w(CL_design)
 Swet_f = Drag.Swet_f()
 print("S_f", Swet_f)
 print("CLdes", CL_design)
-
+print("e", Drag.e_factor())
 #Stall
 stall = Wing_params.CLmax_s()
 CLmax = stall[0]
