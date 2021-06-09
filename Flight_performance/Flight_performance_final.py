@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from Aero_tools import ISA, speeds
 import scipy.interpolate as interpolate
 import sys
-from constants import g
+from constants import g, eff_hover, eff_prop
 
 # TODO: Remove this import in the integrated program, make sure aerodynamics is called first and the variables have the
 # same names
@@ -75,10 +75,7 @@ class mission:
 
         alpha = np.degrees(angle_of_attack)
 
-        if alpha < -1:
-            print('small angle of attack:', alpha)
-
-        alpha = np.maximum(np.minimum(88.8, alpha), 0)
+        alpha = np.minimum(88.8, alpha)
 
         # Interpolate CL, CD vs alpha
         CL_alpha = interpolate.interp1d(alpha_lst, Cl_alpha_curve)
@@ -106,7 +103,11 @@ class mission:
 
         P_a = T*V + 1.2*T*(-V/2 + np.sqrt(V**2/4 + T/(2*1.225*3)))  # TODO: IMPLEMENT Power and propulsion method
 
-        return P_a
+        eff = np.where(V > 5, eff_prop, eff_hover)
+
+        P_r = P_a/eff
+
+        return P_a, P_r
 
     def target_accelerations_new(self, vx, vy, y, y_tgt, vx_tgt, max_ax, max_ay, max_vy):
 
@@ -254,10 +255,7 @@ class mission:
         # ======= Get Required outputs =======
 
         # Get the available power
-        P_a = self.thrust_to_power(T_arr, V_arr)
-
-        # Convert to brake power
-        P_r = P_a/0.95  # IMPLEMENT EFFICIENCY
+        P_a, P_r = self.thrust_to_power(T_arr, V_arr)
 
         # Add to total energy
 
@@ -290,9 +288,9 @@ class mission:
             plt.grid()
 
             plt.subplot(223)
-            plt.plot(t_arr, vy_arr)
+            plt.plot(t_arr, P_a)
             plt.xlabel("Time [s]")
-            plt.ylabel("v_y")
+            plt.ylabel("Power")
             plt.grid()
 
             plt.subplot(224)
@@ -357,6 +355,8 @@ class mission:
 
         # Loiter energy
         E_loiter = P_loiter*self.t_loiter
+
+        # Hover loiter
 
         # Get the total energy consumption
         E_tot = E_cruise + E_climb + E_desc + E_loiter
@@ -596,16 +596,16 @@ class evtol_performance:
         plt.show()
 
 #
-a = mission(2000, cruising_alt = 300, cruise_speed = 60, plotting = True)
-
-# Simulate descend
-a.numerical_simulation(vx_start = 60, y_start = 300, th_start = np.radians(5), y_tgt = 0, vx_tgt = 0)
-
-# Simulate climb
-a.numerical_simulation(vx_start = 0.001, y_start = 0, th_start = np.pi/2, y_tgt = 300, vx_tgt = 60)
-
-E_total, t_total = a.total_energy()
-print(E_total, t_total)
+# a = mission(2000, cruising_alt = 300, cruise_speed = 60, CL_max= 1.7, S = 14, plotting = True)
+#
+# # Simulate descend
+# a.numerical_simulation(vx_start = 60, y_start = 300, th_start = np.radians(5), y_tgt = 0, vx_tgt = 0)
+#
+# # Simulate climb
+# a.numerical_simulation(vx_start = 0.001, y_start = 0, th_start = np.pi/2, y_tgt = 300, vx_tgt = 60)
+#
+# E_total, t_total = a.total_energy()
+# print(E_total, t_total)
 
 # b = evtol_performance(cruising_alt = 300, cruise_speed = 60)
 # b.climb_performance()

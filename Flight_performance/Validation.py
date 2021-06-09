@@ -6,7 +6,7 @@ from constants import g
 import scipy.optimize as optimize
 
 class monte_carlo:
-    def __init__(self, mass, cruising_alt, cruise_speed, wing_surface = 10, t_loiter = 30*60, rotational_rate = 5,
+    def __init__(self, mass, cruising_alt, cruise_speed, CL_max, wing_surface = 10, t_loiter = 30*60, rotational_rate = 5,
                  roc = 5, rod = 5, mission_dist = 300e3):
 
         # Initial values for all the input parameters
@@ -14,6 +14,7 @@ class monte_carlo:
         self.h_cr = cruising_alt
         self.v_cr = cruise_speed
         self.S    = wing_surface
+        self.CL_max = CL_max
         self.t_lt = t_loiter
         self.rot  = rotational_rate
         self.roc  = roc
@@ -24,28 +25,34 @@ class monte_carlo:
         var     = 0.05    # [-] +- percentage variation
         N_pts   = 5       # [-] Number of different variations per parameter
 
+    def monte_carlo_sim(self, var, N_sim):
+
         max_var = 1 + var
         min_var = 1 - var
+        E = np.zeros(N_sim)
+        t = np.zeros(N_sim)
+        for i in range(N_sim):
 
-        # Put everything in an array, so it's easier to go over it
-        self.params = np.array([np.linspace(self.mass*min_var, self.mass*max_var, N_pts),
-                                np.linspace(self.h_cr*min_var, self.h_cr*max_var, N_pts),
-                                np.linspace(self.v_cr*min_var, self.v_cr*max_var, N_pts),
-                                np.linspace(self.S*min_var,    self.S*max_var, N_pts),
-                                np.linspace(self.t_lt*min_var, self.t_lt*max_var, N_pts),
-                                np.linspace(self.rot*min_var, self.rot*max_var, N_pts),
-                                np.linspace(self.roc*min_var, self.roc*max_var, N_pts),
-                                np.linspace(self.rod*min_var, self.rod*max_var, N_pts),
-                                np.linspace(self.dist*min_var, self.dist*max_var, N_pts)])
+            print('Progress:', np.round(100*i/N_sim), '%')
 
-    def monte_carlo_sim(self):
+            m=mission(mass         = np.random.default_rng().uniform(low = self.mass*min_var, high = self.mass*max_var),
+                      cruising_alt = np.random.default_rng().uniform(low = self.h_cr*min_var, high = self.h_cr*max_var),
+                      cruise_speed = np.random.default_rng().uniform(low = self.v_cr*min_var, high = self.v_cr*max_var),
+                      CL_max       = np.random.default_rng().uniform(low = self.CL_max*min_var, high = self.CL_max*max_var),
+                      wing_surface = np.random.default_rng().uniform(low = self.S*min_var, high = self.S*max_var),
+                      t_loiter     = 30*60,
+                      rotational_rate= np.random.default_rng().uniform(low = self.rot*min_var, high = self.rot*max_var),
+                      roc           = np.random.default_rng().uniform(low = self.roc*min_var, high = self.roc*max_var),
+                      rod           = np.random.default_rng().uniform(low = self.rod*min_var, high = self.rod*max_var))
 
-        for par in self.params:
-            for
+            E[i], t[i] = m.total_energy()
+
+        plt.hist(E)
+        plt.show()
 
 
-
-monte_carlo(2000, 300, 60)
+validation = monte_carlo(2000, 300, 60, 1.5)
+validation.monte_carlo_sim(0.10, 100)
 
 # class validation:
 #     """
