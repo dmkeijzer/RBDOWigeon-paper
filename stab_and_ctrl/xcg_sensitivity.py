@@ -15,6 +15,7 @@ def xcg_stab(CLfa, CLra, CLf, CLr, Af, Ar, ef, er, xf, xr, zf, zr, zcg,
     return num / den
 
 
+# TODO: improve downwash estimation
 def deps_da(lambda_c4, b, lh, h_ht, A, CLfa, rho, Pbr, Sf, CLfdes, W):
     r = lh * 2 / b
     mtv = h_ht * 2 / b  # Approximation
@@ -24,6 +25,7 @@ def deps_da(lambda_c4, b, lh, h_ht, A, CLfa, rho, Pbr, Sf, CLfdes, W):
     de_da = Keps / Keps0 * CLfa / (np.pi * A) * (
             r / (r ** 2 + mtv ** 2) * 0.4876 / (np.sqrt(r ** 2 + 0.6319 + mtv ** 2)) + v * (
             1 - np.sqrt(mtv ** 2 / (1 + mtv ** 2))))
+    # de_da2 = 1.3 * CLfa / (np.pi * A)
     phi = np.arcsin(mtv/r)
     dsde_da = np.where(
         np.logical_and(np.rad2deg(phi) < 30, np.rad2deg(phi) > 0),
@@ -60,11 +62,51 @@ def lambda_c4_to_lambda_c2(A, taper, lambda_c4):
     return np.arctan(tanSweep_c2)
 
 
-def find_mac_and_cr(S, b, taper):
+def find_mac(S, b, taper):
     cavg = S / b
     cr = 2 / (1 + taper) * cavg
     mac = 2/3 * cr * (1 + taper + taper ** 2) / (1 + taper)
-    return mac, cr
+    return mac
+
+
+def crf_crr(S, Sr_Sf, Af, Ar, taperf, taperr):
+    Sf = S / (1 + Sr_Sf)
+    Sr = S - Sf
+    bf = np.sqrt(Sf * Af)
+    br = np.sqrt(Sr * Ar)
+    cavgf = Sf / bf
+    cavgr = Sr / br
+    return cavgf * 2 / (1 + taperf), cavgr * 2 / (1 + taperr)
+
+
+def bf_br(S, Sr_Sf, Af, Ar):
+    Sf = S / (1 + Sr_Sf)
+    Sr = S - Sf
+    return np.sqrt(Sf * Af), np.sqrt(Sr * Ar)
+
+
+def xcglimits(Cmacf, Cmacr, CLmaxf, CLmaxr, CLdesf, CLdesr, CD0f, CD0r,
+            taperf, taperr, lambda_c4f, lambda_c4r, ef, er, Claf, Clar,
+            zcg, Vr_Vf_2, elev_fac, rho, Pbr, S, W, Af, Ar, xf, xr, zf,
+            zr, Sr_Sf):
+    Sf = S / (1 + Sr_Sf)
+    Sr = S - Sf
+    bf = np.sqrt(Sf * Af)
+    br = np.sqrt(Sr * Ar)
+    macf = find_mac(Sf, bf, taperf)
+    macr = find_mac(Sr, br, taperr)
+    lambda_c2f = lambda_c4_to_lambda_c2(Af, taperf, lambda_c4f)
+    lambda_c2r = lambda_c4_to_lambda_c2(Ar, taperr, lambda_c4r)
+    CLaf = CLa(Claf, Af, lambda_c2f)
+    CLar = CLa(Clar, Ar, lambda_c2r)
+    de_da = deps_da(lambda_c4f, bf, xr - xf, zr - zf,
+                    Af, CLaf, rho, Pbr, Sf, CLdesf, W)
+    xstab = xcg_stab(CLaf, CLar, CLdesf, CLdesr, Af, Ar, ef, er, xf, xr,
+                    zf, zr, zcg, Vr_Vf_2, Sr_Sf, de_da)
+    xctrl = xcg_ctrl(Cmacf, Cmacr, CLmaxf * elev_fac, CLmaxr, CD0f,
+                     CD0r, Af, Ar, ef, er, macf, macr, xf, xr, zf, zr,
+                     zcg, Vr_Vf_2, Sr_Sf)
+    return np.array([xctrl, xstab])
 
 
 def stab_sensitivity():
@@ -262,56 +304,57 @@ def stab_sensitivity():
     plt.show()
 
 
-def cost(Cmacf, Cmacr, CLmaxf, CLmaxr, CLdesf, CLdesr, CD0f, CD0r,
-         taperf, taperr, lambda_c4f, lambda_c4r, ef, er, Claf, Clar,
-         zcg, Vr_Vf_2, elev_fac, rho, Pbr, S, W, xrangef,
-         xranger, zrangef, zranger, crmaxf, crmaxr, bmaxf, bmaxr,
-         xcgrange, Af, Ar, xf, xr, zf, zr, Sr_Sf, inf=1e6):
-
-    if not xrangef[0] < xf < xrangef[1] or not xranger[0] < xr < xranger[1]:
-        return inf
-
-    if not zrangef[0] < zf < zrangef[1] or not zranger[0] < zr < zranger[1]:
-        return inf
-
-    Sf = S / (1 + Sr_Sf)
-    Sr = S - Sf
-    bf = np.sqrt(Sf * Af)
-    br = np.sqrt(Sr * Ar)
-
-    if bf > bmaxf or br > bmaxr:
-        return inf
-
-    macf, crf = find_mac_and_cr(Sf, bf, taperf)
-    macr, crr = find_mac_and_cr(Sr, br, taperr)
-
-    if crf > crmaxf or crr > crmaxr:
-        return inf
-
-    lambda_c2f = lambda_c4_to_lambda_c2(Af, taperf, lambda_c4f)
-    lambda_c2r = lambda_c4_to_lambda_c2(Ar, taperr, lambda_c4r)
-    CLaf = CLa(Claf, Af, lambda_c2f)
-    CLar = CLa(Clar, Ar, lambda_c2r)
-    de_da = deps_da(lambda_c4f, bf, xr - xf, zr - zf,
-                    Af, CLaf, rho, Pbr, Sf, CLdesf, W)
-    xstab = xcg_stab(CLaf, CLar, CLdesf, CLdesr, Af, Ar, ef, er, xf, xr,
-                     zf, zr, zcg, Vr_Vf_2, Sr_Sf, de_da)
-    xctrl = xcg_ctrl(Cmacf, Cmacr, CLmaxf * elev_fac, CLmaxr, CD0f,
-                     CD0r, Af, Ar, ef, er, macf, macr, xf, xr, zf, zr,
-                     zcg, Vr_Vf_2, Sr_Sf)
-
-    if xstab < xcgrange[1] or xctrl > xcgrange[0]:
-        return inf
-
-    return 1/bf
+# def cost(Cmacf, Cmacr, CLmaxf, CLmaxr, CLdesf, CLdesr, CD0f, CD0r,
+#          taperf, taperr, lambda_c4f, lambda_c4r, ef, er, Claf, Clar,
+#          zcg, Vr_Vf_2, elev_fac, rho, Pbr, S, W, xrangef,
+#          xranger, zrangef, zranger, crmaxf, crmaxr, bmaxf, bmaxr,
+#          xcgrange, Af, Ar, xf, xr, zf, zr, Sr_Sf, inf=1e6):
+#
+#     if not xrangef[0] < xf < xrangef[1] or not xranger[0] < xr < xranger[1]:
+#         return inf
+#
+#     if not zrangef[0] < zf < zrangef[1] or not zranger[0] < zr < zranger[1]:
+#         return inf
+#
+#     Sf = S / (1 + Sr_Sf)
+#     Sr = S - Sf
+#     bf = np.sqrt(Sf * Af)
+#     br = np.sqrt(Sr * Ar)
+#
+#     if bf > bmaxf or br > bmaxr:
+#         return inf
+#
+#     macf, crf = find_mac_and_cr(Sf, bf, taperf)
+#     macr, crr = find_mac_and_cr(Sr, br, taperr)
+#
+#     if crf > crmaxf or crr > crmaxr:
+#         return inf
+#
+#     lambda_c2f = lambda_c4_to_lambda_c2(Af, taperf, lambda_c4f)
+#     lambda_c2r = lambda_c4_to_lambda_c2(Ar, taperr, lambda_c4r)
+#     CLaf = CLa(Claf, Af, lambda_c2f)
+#     CLar = CLa(Clar, Ar, lambda_c2r)
+#     de_da = deps_da(lambda_c4f, bf, xr - xf, zr - zf,
+#                     Af, CLaf, rho, Pbr, Sf, CLdesf, W)
+#     xstab = xcg_stab(CLaf, CLar, CLdesf, CLdesr, Af, Ar, ef, er, xf, xr,
+#                      zf, zr, zcg, Vr_Vf_2, Sr_Sf, de_da)
+#     xctrl = xcg_ctrl(Cmacf, Cmacr, CLmaxf * elev_fac, CLmaxr, CD0f,
+#                      CD0r, Af, Ar, ef, er, macf, macr, xf, xr, zf, zr,
+#                      zcg, Vr_Vf_2, Sr_Sf)
+#
+#     if xstab < xcgrange[1] or xctrl > xcgrange[0]:
+#         return inf
+#
+#     return 1/bf
 
 
 def optimise_wings(Cmacf, Cmacr, CLmaxf, CLmaxr, CLdesf, CLdesr, CD0f, CD0r,
                    taperf, taperr, lambda_c4f, lambda_c4r, ef, er, Claf, Clar,
                    zcg, Vr_Vf_2, elev_fac, rho, Pbr, S, W, xrangef,
                    xranger, zrangef, zranger, crmaxf, crmaxr, bmaxf, bmaxr,
-                   xcgrange, init_Af=5, init_Ar=10, init_xf=0.5, init_xr=6.5,
-                   init_zf=0.5, init_zr=1.5, init_Sr_Sf=1):
+                   Arangef, Aranger, xcgrange, impose_stability=True,
+                   init_Af=1, init_Ar=7, init_xf=0.5, init_xr=6.5, init_zf=0.5,
+                   init_zr=1.5, init_Sr_Sf=1):
     # FIXME: span efficiency factor is assumed to be constant
     """
     Optimise for maximum wingspan on the front wing while meeting stability
@@ -372,18 +415,68 @@ def optimise_wings(Cmacf, Cmacr, CLmaxf, CLmaxr, CLdesf, CLdesr, CD0f, CD0r,
     x0 = np.array([init_Af, init_Ar, init_xf, init_xr,
                    init_zf, init_zr, init_Sr_Sf])
 
-    def costfunc(x):
-        Af, Ar, xf, xr, zf, zr, Sr_Sf = x
-        return cost(Cmacf, Cmacr, CLmaxf, CLmaxr, CLdesf, CLdesr, CD0f, CD0r,
-                    taperf, taperr, lambda_c4f, lambda_c4r, ef, er, Claf,
-                    Clar, zcg, Vr_Vf_2, elev_fac, rho, Pbr, S, W, xrangef,
-                    xranger, zrangef, zranger, crmaxf, crmaxr, bmaxf, bmaxr,
-                    xcgrange, Af, Ar, xf, xr, zf, zr, Sr_Sf)
+    input_constr = optimize.LinearConstraint(
+        np.array([
+            [1, 0, 0, 0, 0, 0, 0],
+            [0, 1, 0, 0, 0, 0, 0],
+            [0, 0, 1, 0, 0, 0, 0],
+            [0, 0, 0, 1, 0, 0, 0],
+            [0, 0, 0, 0, 1, 0, 0],
+            [0, 0, 0, 0, 0, 1, 0]
+        ]),
+        np.array([Arangef[0], Aranger[0], xrangef[0], xranger[0], zrangef[0], zranger[0]]),
+        np.array([Arangef[1], Aranger[1], xrangef[1], xranger[1], zrangef[1], zranger[1]])
+    )
 
-    result = optimize.minimize(costfunc, x0)
-    print(result)
+    crmaxf_constr = optimize.NonlinearConstraint(
+        lambda x: crf_crr(S, x[6], x[0], x[1], taperf, taperr)[0],
+        0, crmaxf
+    )
 
-    if not result.success:
+    crmaxr_constr = optimize.NonlinearConstraint(
+        lambda x: crf_crr(S, x[6], x[0], x[1], taperf, taperr)[1],
+        0, crmaxr
+    )
+
+    bmaxf_constr = optimize.NonlinearConstraint(
+        lambda x: bf_br(S, x[6], x[0], x[1])[0],
+        0, bmaxf
+    )
+
+    bmaxr_constr = optimize.NonlinearConstraint(
+        lambda x: bf_br(S, x[6], x[0], x[1])[1],
+        0, bmaxr
+    )
+
+    def find_cglimits(x):
+        return xcglimits(Cmacf, Cmacr, CLmaxf, CLmaxr, CLdesf, CLdesr, CD0f,
+                         CD0r, taperf, taperr, lambda_c4f, lambda_c4r, ef,
+                         er, Claf, Clar, zcg, Vr_Vf_2, elev_fac, rho, Pbr,
+                         S, W, x[0], x[1], x[2], x[3], x[4], x[5], x[6])
+
+    if impose_stability:
+        xcgrange_constr = optimize.NonlinearConstraint(
+            find_cglimits,
+            np.array([-np.inf, xcgrange[1]]), np.array([xcgrange[0], np.inf])
+        )
+    else:
+        xcgrange_constr = optimize.NonlinearConstraint(
+            lambda x: find_cglimits(x)[0],
+            0, xcgrange[0]  # TODO: come back to this
+        )
+
+    result = optimize.minimize(lambda x: (bf_br(S, x[6], x[0], x[1])[0] - bf_br(S, x[6], x[0], x[1])[1]) ** 2, x0,
+                               method='trust-constr',
+                               constraints=[
+                                   input_constr,
+                                   crmaxf_constr,
+                                   crmaxr_constr,
+                                   bmaxf_constr,
+                                   bmaxr_constr,
+                                   xcgrange_constr
+                               ], tol=1e-12)
+
+    if not result.success:  # or find_cglimits():
         return None
 
     return result.x
@@ -398,8 +491,6 @@ if __name__ == "__main__":
     CLrdes = 0.7382799
     CD0f = 0.00822
     CD0r = 0.00822
-    Af = 9
-    Ar = 9
     taper = 0.45
     Lambda_c4 = 0
     ef = 0.958
@@ -408,23 +499,91 @@ if __name__ == "__main__":
     Clra = 6.1879
     zcg = 0.7
     Vr_Vf_2 = 0.8
-    Sr_Sf = 1
     elev_fac = 1.4
     rho = 1.225
     Pbr = 110024 / 1.2 * 0.9 / 12
     S = 8.417113787320769 * 2
     W = 2939.949692 * 9.80665
 
-    xf = [0, 2.5]
-    xr = [4.5, 7]
+    xf = [0, 2]
+    xr = [4, 7]
     zf = [0, 1]
     zr = [1, 1.7]
     crmaxf = 2
     crmaxr = 2.5
     bmax = 14
-    xcgrange = [2.9, 3.1]
+    xcgrange = [2.85, 3.05]
+    Arange = [0.1, 12]
+    impose_stability = True
 
-    print(optimise_wings(Cmacf, Cmacr, CLfmax, CLrmax, CLfdes, CLrdes, CD0f,
-                         CD0r, taper, taper, Lambda_c4, Lambda_c4, ef, er,
-                         Clfa, Clra, zcg, Vr_Vf_2, elev_fac, rho, Pbr, S, W,
-                         xf, xr, zf, zr, crmaxf, crmaxf, bmax, bmax, xcgrange))
+    Af, Ar, xf, xr, zf, zr, Sr_Sf = optimise_wings(
+        Cmacf, Cmacr, CLfmax, CLrmax, CLfdes, CLrdes, CD0f,
+        CD0r, taper, taper, Lambda_c4, Lambda_c4, ef, er,
+        Clfa, Clra, zcg, Vr_Vf_2, elev_fac, rho, Pbr, S, W,
+        xf, xr, zf, zr, crmaxf, crmaxf, bmax, bmax, Arange, Arange, xcgrange,
+        impose_stability=impose_stability)
+    print("Af:", Af, "Ar:", Ar, "xf:", xf, "xr:",
+          xr, "zf:", zf, "zr:", zr, "Sr/Sf:", Sr_Sf)
+
+    Sf = S / (1 + Sr_Sf)
+    Sr = S - Sf
+    bf = np.sqrt(Sf * Af)
+    br = np.sqrt(Sr * Ar)
+    print("Sf:", Sf, "Sr:", Sr, "bf:", bf, "br:", br)
+
+    crf, crr = crf_crr(S, Sr_Sf, Af, Ar, taper, taper)
+    print("crf:", crf, "crr:", crr)
+
+    Sr_Sf_range = np.linspace(0.2, 4)
+    Af_range = np.linspace(2, 15)
+    Sr_Sf_grid, Af_grid = np.meshgrid(Sr_Sf_range, Af_range)
+    Sf_grid = S / (1 + Sr_Sf_grid)
+    bf_grid = np.sqrt(Sf_grid * Af_grid)
+    macf_grid = find_mac(Sf, bf, taper)
+    Sr_grid = S - Sf_grid
+    br_grid = np.sqrt(Sr_grid * Ar)
+    macr_grid = find_mac(Sr, br, taper)
+    lambda_c2f_grid = lambda_c4_to_lambda_c2(Af_grid, taper, Lambda_c4)
+    lambda_c2r = lambda_c4_to_lambda_c2(Ar, taper, Lambda_c4)
+    CLaf_grid = CLa(Clfa, Af_grid, lambda_c2f_grid)
+    CLar = CLa(Clra, Ar, lambda_c2r)
+    de_da = deps_da(Lambda_c4, bf_grid, xr - xf, zr - zf, Af_grid,
+                    CLaf_grid, rho, Pbr, Sf_grid, CLfdes, W)
+    x_cg_stab = xcg_stab(CLaf_grid, CLar, CLfdes, CLrdes, Af_grid, Ar, ef,
+                         er, xf, xr, zf, zr, zcg, Vr_Vf_2, Sr_Sf_grid, de_da)
+    x_cg_ctrl = xcg_ctrl(Cmacf, Cmacr, CLfmax * elev_fac, CLrmax, CD0f, CD0r,
+                         Af_grid, Ar, ef, er, macf_grid, macr_grid, xf, xr, zf,
+                         zr, zcg, Vr_Vf_2, Sr_Sf_grid)
+
+
+
+
+    CLaf = CLa(Clfa, Af, lambda_c4_to_lambda_c2(Af, taper, Lambda_c4))
+    macf = find_mac(Sf, bf, taper)
+    macr = find_mac(Sr, br, taper)
+    print("xcg_stab:", xcg_stab(CLaf, CLar, CLfdes, CLrdes, Af, Ar, ef, er, xf,
+                                xr, zf, zr, zcg, Vr_Vf_2, Sr_Sf,
+                                deps_da(Lambda_c4, bf, xr-xf, zr-zf, Af, CLaf,
+                                        rho, Pbr, Sf, CLfdes, W)))
+    print("de_da:", deps_da(Lambda_c4, bf, xr-xf, zr-zf, Af, CLaf,
+                                        rho, Pbr, Sf, CLfdes, W))
+    print("xcg_ctrl:", xcg_ctrl(Cmacf, Cmacr, CLfmax * elev_fac, CLrmax, CD0f, CD0r,
+                         Af, Ar, ef, er, macf, macr, xf, xr, zf,
+                         zr, zcg, Vr_Vf_2, Sr_Sf))
+
+
+
+
+
+
+    plt.pcolormesh(Sr_Sf_grid, Af_grid, x_cg_stab - x_cg_ctrl, cmap="coolwarm")
+    # plt.pcolormesh(Sr_Sf_grid, Af_grid, bf_grid, cmap="rainbow")
+    plt.colorbar()
+    # plt.contour(Sr_Sf_grid, Af_grid, x_cg_stab - x_cg_ctrl, [0], colors=["tab:blue"])
+    plt.contour(Sr_Sf_grid, Af_grid, x_cg_stab, [xcgrange[1]],
+                colors=["tab:purple"])  # needs to be on the right of this
+    plt.contour(Sr_Sf_grid, Af_grid, x_cg_ctrl, [xcgrange[0]],
+                colors=["tab:brown"])  # needs to be on the left of this
+    plt.scatter([Sr_Sf], [Af])
+    plt.show()
+
