@@ -4,6 +4,8 @@ from Aero_tools import ISA, speeds
 import scipy.interpolate as interpolate
 import sys
 from constants import g, eff_hover, eff_prop
+import PropandPower.power_budget as pb
+
 
 # TODO: Remove this import in the integrated program, make sure aerodynamics is called first and the variables have the
 # same names
