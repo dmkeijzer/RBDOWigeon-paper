@@ -62,13 +62,13 @@ CLmax = 1.46916
 s1, s2 = const.s1, const.s2   # Ratio of front and back wing areas to total area
 S1, S2 = 5.25, 5.25           # surface areas of wing one and two
 S_tot = S1+S2                 # Total wing surface area
-AR_wing = 9                   # Aspect ratio of a wing, not aircraft
+AR_wing = 7                   # Aspect ratio of a wing, not aircraft
 AR_tot = AR_wing/2            # Aspect ratio of aircraft
 
 # Wingtips
-S_wt = 0    # Surface of the winglets
-h_wt_1 = 0  # Height of front wingtips
-h_wt_2 = 0  # Height of back wingtips
+# S_wt = 0    # Surface of the winglets
+h_wt_1 = 0.5  # Height of front wingtips
+h_wt_2 = 0.5  # Height of back wingtips
 
 
 # Performance
@@ -83,12 +83,12 @@ ROC_hover = 2
 
 
 # Propulsion
-n_prop = 12                 # Number of engines [-]
+n_prop = 8                  # Number of engines [-]
 disk_load = 250             # [kg/m^2]
 clearance_fus_prop = 0.3    # Horizontal separation between the fuselage and the first propeller [m]
 clearance_prop_prop = 0.3   # Horizontal separation between propellers [m]
 xi_0 = 0.1                  # r/R ratio of hub diameter to out diameters [-]
-m_bat = 433.15              # Initial estimate for battery mass [kg]
+m_bat = 800                 # Initial estimate for battery mass [kg]
 
 
 # Structures
@@ -121,7 +121,8 @@ mass_per_prop = 480 / n_prop
 m_prop = [mass_per_prop] * n_prop       # list of mass of engines (so 30 kg per engine with nacelle and propeller)
 # pos_prop = [0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 7.0, 7.0, 7.0, 7.0, 7.0, 7.0, 7.0,
 #             7.0]  # 8 on front wing and 8 on back wing
-pos_prop = [0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 7.0, 7.0, 7.0, 7.0, 7.0, 7.0]  # 6 on front wing and 6 on back wing
+# pos_prop = [0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 7.0, 7.0, 7.0, 7.0, 7.0, 7.0]  # 6 on front wing and 6 on back wing
+pos_prop = [0.2, 0.2, 0.2, 0.2, 7.0, 7.0, 7.0, 7.0]  # 4 on front wing and 4 on back wing
 
 
 # ------------- Initial mass estimate -------------
@@ -365,7 +366,7 @@ print("Propeller rpm:", rpm)
 # V_tip = omega*prop_radius
 
 print("Propeller blade")
-blade = BEM.BEM(B, prop_radius, rpm, xi_0, rho, dyn_vis, V_cr, 20, a, 100000, 10*D_cr/n_prop)
+blade = BEM.BEM(B, prop_radius, rpm, xi_0, rho, dyn_vis, V_cr, 20, a, 100000, D_cr/n_prop)
 # blade = BEM.BEM(B, prop_radius, rpm, xi_0, rho, dyn_vis, V_cr, 20, a, 100000, MTOM*g0)
 
 design = blade.optimise_blade(0)[1]
