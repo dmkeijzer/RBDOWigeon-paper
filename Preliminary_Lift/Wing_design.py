@@ -168,8 +168,7 @@ class wing_design:
             newal = np.arange(-3,self.a_s[1] -1,1)
             alpha = np.append(newal,drag_post[0]*180/np.pi)
             drag_f = np.append(CDs_f*np.ones(len(newal)), drag_post[3])
-            print(alpha_lst)
-            print(newal, drag_f )
+
             fdrag = interp1d(alpha, drag_f)
             return fdrag(alpha_lst)
 
