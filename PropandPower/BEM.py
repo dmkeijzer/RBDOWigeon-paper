@@ -479,21 +479,26 @@ class BEM:
 
 # Analyse the propeller in off-design conditions
 class OffDesignAnalysisBEM:
-    def __init__(self, V: float, B: int, R: float, chords: np.array, betas: np.array, r_stations: np.array, rpm: float,
-                 zeta: float, rho: float, dyn_vis: float, a: float, RN_spacing=100000):
+    def __init__(self, V: float, B: int, R: float, chords: np.array, betas: np.array, r_stations: np.array,
+                 Cls: np.array, Cds: np.array, rpm: float, zeta: float, rho: float, dyn_vis: float, a: float,
+                 RN_spacing=100000):
         """
         hola
         """
         self.V = V
         self.B = B
         self.R = R
+        self.D = 2*R
         self.chords = chords
         self.betas = betas
+        self.Cls = Cls
+        self.Cds = Cds
         self.r_stations = r_stations
         self.zeta = zeta
 
         self.rpm = rpm
         self.Omega = rpm * 2 * np.pi / 60  # rpm to rad/s
+        self.n = self.Omega / (2 * np.pi)
         self.lamb = V / (self.Omega * R)  # Speed ratio
 
         self.rho = rho
@@ -523,13 +528,14 @@ class OffDesignAnalysisBEM:
     #     return np.arctan(np.tan(self.phi_t(zeta)) * self.R / r)
 
     # Mach as a function of radius
-    def M(self, r):
-        return self.Omega*r/self.a
+    def M(self, W):
+        # return self.Omega*r/self.a
+        return W/self.a
 
     # Reynolds number
-    def RN(self, Wc):
+    def RN(self, W, c):
         # Reynolds number. Wc is speed times chord
-        return Wc * self.rho / self.dyn_vis
+        return W * c * self.rho / self.dyn_vis
 
     def W(self, a, a_prim, r):
         return np.sqrt((self.V * (1 + a))**2 + (self.Omega * r * (1 - a_prim))**2)
@@ -553,36 +559,181 @@ class OffDesignAnalysisBEM:
         return self.Cx(Cl, Cd, phi) / (4 * np.sin(phi) * np.cos(phi))
 
     # Interference factors
-    def a(self, Cl, Cd, phi, c, r, zeta):
+    def a_fac(self, Cl, Cd, phi, c, r, zeta):
         omega = self.solidity_local(c, r)  # Local solidity
         K = self.K(Cl, Cd, phi)
-        return omega * K / (self.F(r, zeta) - omega*K)
 
-    def a_prim(self, Cl, Cd, phi, c, r, zeta):
+        # From Viterna and Janetzke
+        # magnitude = np.maximum(omega * K / (self.F(r, zeta) - omega*K), 0.7)
+        # TODO: check sign of a
+        print("a:", omega * K / (self.F(r, zeta) - omega*K))
+        return np.maximum(omega * K / (self.F(r, zeta) - omega*K), 0.7)
+
+    def a_prim_fac(self, Cl, Cd, phi, c, r, zeta):
         omega = self.solidity_local(c, r)  # Local solidity
         K_prim = self.K_prim(Cl, Cd, phi)
-        return omega * K_prim / (self.F(r, zeta) + omega * K_prim)
+        # TODO: check sign of a_prim
+        print("a_prim:", omega * K_prim / (self.F(r, zeta) + omega * K_prim))
+        print("")
+        return np.maximum(omega * K_prim / (self.F(r, zeta) + omega * K_prim), 0.7)
 
     def phi(self, a, a_prim, r):
         return self.V * (1 + a) / (self.Omega * r * (1 - a_prim))
 
+    def C_T(self, T):
+        return T / (self.rho * self.n**2 * self.D**4)
+
+    def C_P(self):
+        return 1
+
+    def eff(self):
+        return 1
+
+    # Prandtl-Glauert correction factor: sqrt(1 - M^2)
+    def PG(self, M):
+        return np.sqrt(1 - M**2)
+
     def analyse_propeller(self):
-        # Initial estimate for phi
+        # Initial estimate for phi and zeta
         phi = np.arctan(self.lamb/self.Xi(self.r_stations))
+        zeta = self.zeta
 
-        # TODO: implement iteration
-        conv = 1
-        while conv > 0.01:
+        # Get initial estimate of CL and Cd per station
+        Cls = self.Cls
+        Cds = self.Cds
 
-            for station in self.r_stations:
-                W = 1
-                c = self.chords[station]
-                Cl = 1
-                Cd = 1
-                phi = 1
+        # Calculate initial estimates for the interference factors
+        a_facs = self.a_fac(Cls, Cds, phi, self.chords, self.r_stations, zeta)
+        a_prims = self.a_fac(Cls, Cds, phi, self.chords, self.r_stations, zeta)
 
-                # Thrust and torque per unit radius
-                T_prim = 0.5 * self.rho * W**2 * self.B * c * self.Cy(Cl, Cd, phi)
-                Q_prim_r = 0.5 * self.rho * W**2 * self.B * c * self.Cx(Cl, Cd, phi)
+        # Iterate to get a convergent analysis
+        count = 0
+        iterate = True
+        while iterate or count < 5:
+            # Calculate AoA of the blade stations
+            alphas = self.betas - phi
+
+            # Calculate the speed
+            Ws = self.W(a_facs, a_prims, self.r_stations)
+
+            # Calculate the Reynolds number
+            Re = self.RN(Ws, self.chords)
+
+            for station in range(len(self.r_stations)):
+                # Get the Reynold's number per station
+                RN = Re[station]
+
+                # Maximum and minimum RN in database
+                if RN<100000:
+                    RN = 100000
+                if RN>5000000:
+                    RN = 5000000
+
+                # Look for corresponding airfoil data file for that RN
+                filename1 = "4412_Re%d_up.txt" % RN
+                filename2 = "4412_Re%d_dwn.txt" % RN
+
+                file_up = open('../PropandPower/Airfoil_Data/'+filename1, "r")
+                file_down = open('../PropandPower/Airfoil_Data/'+filename2, "r")
+
+                # Read lines
+                lines_up = file_up.readlines()
+                lines_down = file_up.readlines()
+
+                # Close files
+                file_up.close()
+                file_down.close()
+
+                # List and Boolean to save relevant lines
+                format_lines = []
+                save_lines = False
+
+                for line in lines_up:
+                    # Separate variables inside file
+                    a = line.split()
+
+                    # If the save_lines boolean is True (when the code gets to numerical values), save to list
+                    if save_lines:
+                        # Create a line with floats (instead of strings) to append to main list
+                        new_line = []
+                        for value in a:
+                            new_line.append(float(value))
+                        format_lines.append(new_line)
+
+                    # Protect against empty lines
+                    if len(a) > 0:
+                        # There is a line with ---- before the numbers, so once we get to this line, start saving
+                        if a[0].count('-') >= 1:
+                            save_lines = True
+
+                # Restart boolean for down file
+                save_lines = False
+
+                # Do the same process for down file and append to the same array as up
+                for line in lines_down:
+                    a = line.split()
+
+                    if save_lines:
+                        new_line = []
+                        for value in a:
+                            new_line.append(float(value))
+                        format_lines.append(new_line)
+
+                    if len(a) > 0:
+                        if a[0].count('-') >= 1:
+                            save_lines = True
+
+                # Convert to numpy array with airfoil data
+                airfoil_data = np.array(format_lines)
+
+                # ------------ Format of each line --------------
+                # alpha, CL, CD, Re(CL), CM, S_xtr, P_xtr, CDp
+
+                # Order airfoil data by angle of attack, this can be eliminated to save time if needed
+                airfoil_data = airfoil_data[airfoil_data[:, 0].argsort()]
+
+                # Save airfoil data array to have a copy to modify
+                airfoil_data_check = airfoil_data
+
+                # Subtract current AoA from list of AoAs
+                # Note that the AoA in the files is in degrees
+                airfoil_data_check[:, 0] -= np.rad2deg(alphas[station])
+
+                # Check what line has min AoA difference, and retrieve index of that column
+                index = np.argmin(np.abs(airfoil_data_check[:, 1]))
+
+                # Obtain the Cl and Cd from the line where Cl difference is min
+                # Correct the Cl/Cd obtained for Mach number
+                Cl_ret = airfoil_data[index, 1]/self.PG(self.M(Ws[station]))  # Retrieved Cl
+                Cd_ret = airfoil_data[index, 2]/self.PG(self.M(Ws[station]))  # Retrieved Cd
+
+                # Update the Cl and Cd at each station
+                Cls[station] = Cl_ret
+                Cds[station] = Cd_ret
+
+            # Update the interference factors
+            a_facs = self.a_fac(Cls, Cds, phi, self.chords, self.r_stations, zeta)
+            a_prims = self.a_fac(Cls, Cds, phi, self.chords, self.r_stations, zeta)
+
+            # Update phi
+            phi_new = self.phi(a_facs, a_prims, self.r_stations)
+
+            # Check convergence of the phi angles
+            conv = np.abs((phi - phi_new) / phi)
+
+            if np.max(conv) > 0.01:
+                pass
+            else:
+                iterate = False
+
+            # Update the phi angles
+            phi = phi_new
+
+            # Thrust and torque per unit radius
+            T_prim = 0.5 * self.rho * Ws**2 * self.B * self.chords * self.Cy(Cls, Cds, phi)
+            Q_prim_r = 0.5 * self.rho * Ws**2 * self.B * self.chords * self.Cx(Cls, Cds, phi)
+
+            # Increase count of iterations
+            count += 1
 
         return 1
