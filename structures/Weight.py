@@ -129,8 +129,8 @@ class Weight:
         oem_mmi_z = fus_mmi_z + (wing_mmi_z + self.wmass/2 * (
             np.sqrt((1.705 / 2) ** 2 + (self.wing.pos2/2) ** 2)) ** 2) * 2 + bat_mmi_z + self.bmass * (1.705 / 2) ** 2 + (
                                 m_prop * ((np.sqrt((1.705 / 2) ** 2 + (self.wing.pos2/2) ** 2)) ** 2) + prop_mmi_z) * self.prop.nprop
-
-        return oem_mmi_x, oem_mmi_y, oem_mmi_z
+        oem_mmi_xy = (self.wmass/2 * (1.705 / 2) * self.wing.pos1/2) * 2 + self.prop.nprop * (m_prop * (1.705 / 2) * self.wing.pos1/2)
+        return oem_mmi_x, oem_mmi_y, oem_mmi_z, oem_mmi_xy
 
 if __name__ == '__main__':
     mtom = 3000 # maximum take-off mass from statistical data - Class I estimation
