@@ -1,5 +1,6 @@
 import numpy as np
 import Aero_tools as at
+import constants_final as const
 
 # Aero
 import Preliminary_Lift.Drag as drag
@@ -22,6 +23,21 @@ import stab_and_ctrl.Vertical_tail_sizing as vert_tail
 import structures.Weight as wei
 import structures.StructuralAnalysis as SAD
 
+# --------------------- Fixed parameters and constants ------------------------
+# Constants from constants.py
+g0 = const.g
+rho0 = const.rho_0
+gamma = const.gamma
+R = const.R
+
+# Fuselage shape is fixed, so fixed variables (update in constants.py if needed)
+w_fus = const.w_fuselage
+l1_fus = const.l_nosecone
+l2_fus = const.l_cylinder
+# l3_fus = const.l_tailcone
+l_fus = l1_fus + l2_fus + l3_fus
+h_fus = const.h_fuselage
+fus_upsweep = const.upsweep
 
 
 class RunDSE:
@@ -33,5 +49,6 @@ class RunDSE:
 
 
     def run(self):
+
 
 
