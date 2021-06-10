@@ -75,7 +75,8 @@ class componentdrag:
         self.h = h
 
     def e_OS(self):
-        return 1.78 * (1 - 0.045 * self.AR ** 0.68) - 0.64
+        # return 1.78 * (1 - 0.045 * self.AR ** 0.68) - 0.64
+        return 0.98
 
     def e_factor(self):
         """
@@ -91,6 +92,7 @@ class componentdrag:
             return self.e_OS() * factor ** (-1)
         if self.type == 'normal':
             return self.e_OS()
+
     def Swet_f(self):
 
         return (np.pi * self.d/4)* (((1/(3*self.l1**2))*((4*self.l1**2 +((self.d**2)/4))**1.5 -((self.d**3)/8)) ) -self.d + 4*self.l2 + 2 * np.sqrt(self.l3**2 + (self.d**2)/4 ))
