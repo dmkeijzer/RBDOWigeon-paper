@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from Flight_performance.Flight_performance_final import mission, evtol_performance
 from Aero_tools import ISA, speeds
+from Preliminary_Lift.main_aero import Drag
 
 
 class sensitivity_analysis:
@@ -11,11 +12,19 @@ class sensitivity_analysis:
     TODO:
         - Add optimum speeds
     """
-    def __init__(self, MTOM):
+    def __init__(self, MTOM, CLmax, S, comp_drag, battery_capacity, EOM, loiter_time, A_disk, P_max):
 
         self.MTOM = MTOM
 
         self.h_cruise_opt = 305
+        self.CL_max = CLmax
+        self.S = S
+        self.Drag = comp_drag
+        self.bat_cap = battery_capacity
+        self.EOM = EOM
+        self.loiter_time = loiter_time
+        self.A_disk = A_disk
+        self.P_max = P_max
 
         plt.rcParams.update({'font.size': 16})
         self.path = '../Flight_performance/Figures/'
@@ -31,11 +40,14 @@ class sensitivity_analysis:
 
         for i, h in enumerate(altitude):
 
-            V = speeds(altitude = h, m = self.MTOM)
+            V = speeds(altitude = h, m = self.MTOM, CLmax=self.CL_max, S = self.S, componentdrag_object = self.Drag)
 
-            performance = evtol_performance(cruising_alt = h, cruise_speed = V.cruise())
+            performance = evtol_performance(cruising_alt = h,  cruise_speed = V.cruise()[0], S = self.S,
+                                            CL_max = self.CL_max, mass = self.MTOM, battery_capacity = self.bat_cap,
+                                            EOM = self.EOM, loiter_time = self.loiter_time, A_disk = self.A_disk,
+                                            P_max = self.P_max)
 
-            dist[i], time[i] = performance.range(cruising_altitude = h, cruise_speed = V.cruise(), mass = self.MTOM)
+            dist[i], time[i] = performance.range(cruising_altitude = h, cruise_speed = V.cruise()[0], mass = self.MTOM)
 
         # Plot results
         plt.plot(altitude, dist/1000)
@@ -57,7 +69,7 @@ class sensitivity_analysis:
     def cruise_speed(self, plotting = True):
 
         # Get the stall speed
-        V = speeds(self.h_cruise_opt, self.MTOM)
+        V = speeds(self.h_cruise_opt, self.MTOM, CLmax=self.CL_max, S = self.S, componentdrag_object = self.Drag)
         V_stall = V.stall()
 
         # Range of cruise speeds
@@ -69,7 +81,10 @@ class sensitivity_analysis:
 
         for i, V_cr in enumerate(cruise_speeds):
 
-            performance = evtol_performance(cruising_alt = self.h_cruise_opt, cruise_speed = V_cr)
+            performance = evtol_performance(cruising_alt = self.h_cruise_opt,  cruise_speed = V_cr, S = self.S,
+                                            CL_max = self.CL_max, mass = self.MTOM, battery_capacity = self.bat_cap,
+                                            EOM = self.EOM, loiter_time = self.loiter_time, A_disk = self.A_disk,
+                                            P_max = self.P_max)
 
             dist[i], time[i] = performance.range(cruising_altitude=self.h_cruise_opt,
                                                  cruise_speed = V_cr, mass = self.MTOM)
@@ -81,7 +96,7 @@ class sensitivity_analysis:
         if plotting:
             # Plot results
             plt.plot(cruise_speeds, dist / 1000)
-            plt.vlines(V.cruise(), 0, 300) # Implement
+            plt.vlines(V.cruise()[0], 0, 300)
             plt.xlabel('Cruise speed [m/s]')
             plt.ylabel('Range [km]')
             plt.grid()
@@ -110,17 +125,20 @@ class sensitivity_analysis:
         for i, wind in enumerate(winds):
 
             # Speed objects
-            V = speeds(altitude = self.h_cruise_opt, m = self.MTOM)
+            V = speeds(altitude = self.h_cruise_opt, m = self.MTOM, CLmax=self.CL_max,
+                       S = self.S, componentdrag_object = self.Drag)
 
-            performance = evtol_performance(cruising_alt=self.h_cruise_opt, cruise_speed = V.cruise())
+            performance = evtol_performance(cruising_alt = self.h_cruise_opt,  cruise_speed = V.cruise()[0], S = self.S,
+                                            CL_max = self.CL_max, mass = self.MTOM, battery_capacity = self.bat_cap,
+                                            EOM = self.EOM, loiter_time = self.loiter_time, A_disk = self.A_disk,
+                                            P_max = self.P_max)
 
             dist[i], time[i] = performance.range(cruising_altitude=self.h_cruise_opt,
-                                                 cruise_speed=V.cruise(), mass=self.MTOM, wind_speed = wind)
+                                                 cruise_speed=V.cruise()[0], mass=self.MTOM, wind_speed = wind)
 
         # Range with a headwind as high as the wind speed
         if testing:
-            performance = evtol_performance(cruising_alt=self.h_cruise_opt, cruise_speed=60)
-            test_dist,_ = performance.range(cruising_altitude=self.h_cruise_opt,
+            test_dist, _ = performance.range(cruising_altitude=self.h_cruise_opt,
                                           cruise_speed = 60, mass=self.MTOM, wind_speed = test_wind)
             return test_dist
 
@@ -143,9 +161,18 @@ class sensitivity_analysis:
             plt.show()
 
 
+# Data
+MTOM = 3000
+CLmax = 1.7
+S = 14
+comp_drag = Drag
+battery_capacity = 1e7
+EOM = 2500
+loiter_time = 30*60
+A_disk = 8
+P_max = 3e6
 
-
-sensitivity = sensitivity_analysis(2000)
+sensitivity = sensitivity_analysis(MTOM, CLmax, S, comp_drag, battery_capacity, EOM, loiter_time, A_disk, P_max)
 #sensitivity.cruising_altitude()
 #sensitivity.cruise_speed()
 sensitivity.wind()
