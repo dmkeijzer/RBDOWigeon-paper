@@ -2,8 +2,7 @@
 File created for incorporating other systems that require power
 """
 
-
-class power_budget:
+class Power_Budget:
     def __init__(self):
         # Constant required power
         self.avionics = 252  # [W]
@@ -20,4 +19,6 @@ class power_budget:
         self.wing_rot_mech = 3000 # [W]
 
     def P_continuous(self):
-        return
+        return self.avionics + self.airco + self.battery_cooling + self.autopilot + self.trim + self.passenger_power \
+               + self.external_lights + self.deice
+

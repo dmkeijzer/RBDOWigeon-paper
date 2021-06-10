@@ -269,7 +269,7 @@ while iterate or (count < 5):
 
     # Get approximate overall efficiency
     eff_overall = 0.91 * 0.57 + 0.699 * 0.43
-    energy = 1.2 * mission.total_energy()[0] * 2.77778e-7 * 1000 / eff_overall  # From [J] to [Wh]
+    energy = 1.05 * mission.total_energy()[0] * 2.77778e-7 * 1000 / eff_overall  # From [J] to [Wh]
 
     # Battery sizing
     battery = bat.Battery(500, 1000, energy, 1)

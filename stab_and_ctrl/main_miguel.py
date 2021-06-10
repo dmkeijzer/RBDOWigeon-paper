@@ -124,8 +124,11 @@ A = Afwd/2
 CD0_a = CD0+CL0**2/(np.pi*A*e)
 if isinstance(ARv,float) and isinstance(sweepTE,float):
     stability_derivatives = Stab_Derivatives(W,h,lfus,hfus,wfus, d,dy,xcg,Zcg,cfwd,crear,Afwd,Arear,Vstall,
-                     V0,Tt0,CLdesfwd,CLdesrear,CD0_a,CL0,2*np.pi/180,0,
+                     V0,Tt0,CLdesfwd,CLdesrear,CD0_a,CL0,1.5*np.pi/180,0,
                      Clafwd,Clarear, Cd0fwd, Cd0rear, CLafwd,CLarear,Sfwd,Srear,5*np.pi/180/6,0,
                      efwd,erear,Lambda_c4_fwd,Lambda_c4_rear,taper,0.4,
-                     bv,Sv,ARv,Pbr,CD0,eta_rear=1,eta_v=1)
-    print(stability_derivatives.q_derivatives())
+                     bv,Sv,ARv,Pbr,CD0,eta_rear=0.85,eta_v=1)
+    print("q-derivatives:",stability_derivatives.q_derivatives())
+    print("alpha-derivatives:",stability_derivatives.alpha_derivatives())
+    print("u-derivatives:",stability_derivatives.u_derivatives())
+    print("alpha_dot derivatives:",stability_derivatives.alpha_dot_derivatives())

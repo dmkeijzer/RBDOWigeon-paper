@@ -134,9 +134,9 @@ class Stab_Derivatives:
         CD_M = 0 # Incompressible flow
         CLfwd_M =  self.M0/(1-self.M0**2)*self.CLfwd0
         CLrear_M  =self.M0/(1-self.M0**2)*self.CLrear0
-        CX_u = -3*self.CD0-3*self.CL0*np.tan(self.th0+self.alpha0)-self.M0*CD_M
+        CX_u = -3*self.CD0-3*self.CL0*np.tan(self.th0+self.alpha0)-self.M0*CD_M -CZ_u*self.alpha0
         Cm_M = CLfwd_M*(self.xcg-self.xacfwd)*self.Sfwd/(self.S*self.c)-\
-               CLrear_M*(self.xacrear-self.xcg)*self.Srear/(self.S*self.c)
+               CLrear_M*(self.xacrear-self.xcg)*self.Srear/(self.S*self.c)*self.eta_rear
         Cm_u = self.M0*Cm_M
         return CX_u,CZ_u,Cm_u
 
@@ -148,14 +148,14 @@ class Stab_Derivatives:
         CDafwd = 2*self.CLafwd*self.CLfwd0/(np.pi*self.Afwd*self.efwd)
         CDarear = 2 * self.CLarear * self.CLrear0 / (np.pi * self.Arear * self.erear)
         de_da = self.deps_da(self.Sweepc4,self.hfus-self.dy,self.CLafwd)
-        CDa = CDafwd*self.Sfwd/self.S + CDarear*(1-de_da)*self.Srear/self.S
-        CLa = self.CLafwd*self.Sfwd/self.S + self.CLarear*(1-de_da)*self.Srear/self.S
+        CDa = CDafwd*self.Sfwd/self.S + CDarear*(1-de_da)*self.Srear/self.S*self.eta_rear
+        CLa = self.CLafwd*self.Sfwd/self.S + self.CLarear*(1-de_da)*self.Srear/self.S*self.eta_rear
         CX_a = -CDa + CLa*self.alpha0 + self.CL0
         CZ_a = -CDa*self.alpha0-self.CD0 -CLa
         Cm_a = -CDafwd*(self.zcg-self.dy)*self.Sfwd/(self.S*self.c)+\
                self.CLafwd*(self.xcg-self.xacfwd)*self.Sfwd/(self.S*self.c) + \
-               CDarear*(1-de_da)*(self.hfus-self.zcg)*self.Srear/(self.S*self.c)-\
-               self.CLarear*(1-de_da)*(self.xacrear-self.xcg)*self.Srear/(self.S*self.c)
+               CDarear*(1-de_da)*(self.hfus-self.zcg)*self.Srear/(self.S*self.c)*self.eta_rear-\
+               self.CLarear*(1-de_da)*(self.xacrear-self.xcg)*self.Srear/(self.S*self.c)*self.eta_rear
         return CX_a,CZ_a,Cm_a
 
     def q_derivatives(self):
@@ -165,9 +165,9 @@ class Stab_Derivatives:
         """
         CX_q  =0
         CZ_q = -self.CLafwd*(self.xcg-self.xacfwd)*self.Sfwd/(self.S*self.c)+\
-               self.CLarear*(self.xacrear-self.xcg)*self.Srear/(self.S*self.c)
+               self.CLarear*(self.xacrear-self.xcg)*self.Srear/(self.S*self.c)*self.eta_rear
         Cm_q = -(self.CLafwd*(self.xcg-self.xacfwd)**2*self.Sfwd/(self.S*self.c**2)+
-                 self.CLarear*(self.xacrear-self.xcg)**2*self.Srear/(self.S*self.c**2))
+                 self.CLarear*(self.xacrear-self.xcg)**2*self.Srear/(self.S*self.c**2)*self.eta_rear)
         return CX_q,CZ_q,Cm_q
 
     def alpha_dot_derivatives(self):
@@ -177,7 +177,8 @@ class Stab_Derivatives:
         """
         CX_adot = 0
         darear_dadot = self.deps_da(self.Sweepc4,self.hfus-self.dy,self.CLafwd)*self.lh_arm()/self.c
-        CLadot = self.Srear/self.S*self.CLarear*darear_dadot
+        print("dalpha_dalpha_dot = %.5f"%(darear_dadot))
+        CLadot = self.Srear/self.S*self.CLarear*darear_dadot*self.eta_rear
         CZ_adot = -CLadot
         Cm_adot = (self.xacrear-self.xcg)/self.c*CZ_adot
         return CX_adot,CZ_adot,Cm_adot
