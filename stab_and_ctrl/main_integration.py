@@ -6,7 +6,6 @@ import constants as const
 import stab_and_ctrl.hover_controllabilty as hc
 import stab_and_ctrl.landing_gear_placement as lgp
 import stab_and_ctrl.loading_diagram as ld
-import stab_and_ctrl.Scissor_Plots as sp
 
 # TODO: account for nose gear, battery, front wing, and pilot
 #  interfering with each other in the front
@@ -47,6 +46,9 @@ class Wing:
     controllability
     @author Jakob Schoser
     """
+    xcg: float
+    zcg: float
+
     m: float  # wing mass (excl. engines)
     Cd0_af: float  # zero-lift drag coefficient (aerofoil)
     Cd0: float  # zero-lift drag coefficient (wing)
@@ -97,31 +99,22 @@ class Performance:
 
 
 @dataclass
-class TailAndCtrlSurf:
-    """
-    Class containing all output fields from stability and controllability
-    pertaining to the vertical tail and control surfaces
-    @author Jakob Schoser
-    """
-    pass
-
-
-@dataclass
 class StabAndControlOutputs:
     """
     Class containing all output fields from stability and controllability
     @author Jakob Schoser
     """
-    cg_bat: list  # battery CG
-    Sf_Sr: float  # ratio between front wing area and rear wing area
-    cg_wf: list  # [x, z]-coordinate of the front wing CG
-    cg_wr: list  # [x, z]-coordinate of the rear wing CG
+    xcg_range: list
+    ycg_range: list
+    zcg_range: list
+    cruise_stable: bool  # static longitudinal stability in cruise?
+    stall_controllable: bool  # can be trimmed at stall?
+    hover_controllable: bool  # controllable in hover?
+    hover_controllable_oei: bool  # controllable in hover with OEI?
     x_ng: float  # x-coordinate of the nose gear
     x_mlg: float  # x-coordinate of the main landing gear
-    tw: float  # track width
+    tw: float  # track width of the main landing gear
     h_mlg: float  # height of the main landing gear
-    prop_dir: list  # propeller spinning directions
-    tail_and_ctrl_surf: TailAndCtrlSurf  # data about tail and control surfaces
 
 
 def stab_and_ctrl_main(fus: Fuselage, wf: Wing, wr: Wing, pnp: PropAndPower,
