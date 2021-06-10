@@ -96,6 +96,7 @@ class Weight:
         #     d[key] = {k: list(i) if isinstance(i, np.ndarray) else i for k, i in zip(["mass", "fracOEM", "fracEM"], d[key])}
         # return d
     def MMI(self):
+        # COORDINATE SYSTEM: x points towards drag, y points up, z points towards the left wing
         # fuselage  - modeled as a hollow cylinder with wall thickness of 5 cm
         irad = (self.fuselage.wf/2 - 0.05)
         fus_mmi_y = self.fmass * (self.fuselage.lf**2 + 3*(self.fuselage.wf/2)**2 + 3*irad**2)/12
