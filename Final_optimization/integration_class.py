@@ -110,8 +110,8 @@ pos_prop = [0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 7.0, 7.0, 7.0, 7.0, 7.0, 7.0]  # 6 on 
 
 
 # ------------- Initial mass estimate -------------
-def init_mass(MTOM, S1, S2, n_ult, AR_wing1, AR_wing2, pos_frontwing, pos_backwing, Pmax, l_fus, n_pax, pos_fus,
-              pos_lgear, n_prop, m_prop, pos_prop, m_pax):
+def mass(MTOM, S1, S2, n_ult, AR_wing1, AR_wing2, pos_frontwing, pos_backwing, Pmax, l_fus, n_pax, pos_fus,
+         pos_lgear, n_prop, m_prop, pos_prop, m_pax):
     wing = wei.Wing(MTOM, S1, S2, n_ult, AR_wing, [pos_frontwing, pos_backwing])
     fuselage = wei.Fuselage(MTOM, Pmax, l_fus, n_pax, pos_fus)
     lgear = wei.LandingGear(MTOM, pos_lgear)
@@ -125,6 +125,37 @@ class RunDSE:
     def __init__(self, fixed_inputs: np.array, initial_estimates: np.array):
         """
         This class integrates all the code and runs the optimisation
+
+                Fixed:
+        Range
+        Aerofoil (Clmax, Cmac, …)
+        Cabin design
+        Taper ratios
+        Quarter-chord sweep
+        Weight of propulsion system
+        Constraints on wing placement and dimensions
+        Change in CL on front and rear wing due to elevator
+        Clearance requirements
+
+                            Internal (first estimates):
+        Loading diagram (CG position and excursion)
+        Rotor diameter
+        Stall speed
+        Energy consumption
+        Peak power
+        Maximum take-off mass
+        Wing mass
+        Landing gear placement
+        Battery mass
+        MTOM
+
+                                    Optimisation variables:
+        Tail-cone length
+        Wing surface area
+        Aspect ratios
+        Relative wing sizes
+        Battery placement
+        Wing placement
 
         :param fixed_inputs:        These are the fixed inputs passed into the integrated code (from constants.py)
         :param initial_estimates:   These are the initial estimates for the changing internal variables, to initialise
@@ -141,20 +172,144 @@ class RunDSE:
         So for one set of optim inputs it results the optimisation outputs (e.g. mass and energy consumption)
         and also the internal parameters needed for iteration
 
-        Range
-        Aerofoil (Clmax, Cmac, …)
-        Cabin design
-        Taper ratios
-        Quarter-chord sweep
-        Weight of propulsion system
-        Constraints on wing placement and dimensions
-        Change in CL on front and rear wing due to elevator
-        Clearance requirements
+
         """
+        # TODO atmospheric values probably as fixed inputs if cruise height is fixed
+        # # Get atmospheric values at cruise
+        # ISA = at.ISA(h_cr)
+        # rho = ISA.density()  # Density
+        # a = ISA.soundspeed()  # Speed of sound
+        # dyn_vis = ISA.viscosity_dyn()  # Dynamic viscosity
+
+        M = V_cr / a  # Cruise Mach number
+
+        # Aero
+        wing_design = wing_des.wing_design(AR_tot, s1, 0, s2, 0, M, S_tot, l_fus - 1, h_fus - 0.3, w_fus, h_wt_1,
+                                           h_wt_2)
+
+        # [b2, c_r2, c_t2, c_MAC2, y_MAC2, X_LEMAC2]
+        wing_plan_1, wing_plan_2 = wing_design.wing_planform_double()
+
+        taper = wing_plan_1[2] / wing_plan_1[1]
+
+        # CL_max
+        CLmax = wing_design.CLmax_s()[0]
+
+        # # Lift slope
+        # CL_alpha_1 = wing_design.liftslope()
+        # CL_alpha_2 = wing_design.liftslope()
+
+        # ------ Drag ------
+
+        # Oswald efficiency factor
+        # e = drag_comp.e_OS(AR_tot) * drag_comp.e_factor('tandem', h_fus-0.3, wing_plan_1[0], drag_comp.e_OS(AR_tot))
+
+        # Airfoil characteristics
+        airfoil_stats = airfoil.airfoil_stats()
+
+        drag = drag_comp.componentdrag('tandem', S_tot, l1_fus, l2_fus, l3_fus, np.sqrt(w_fus * h_fus), V_cr, rho,
+                                       wing_plan_1[3], AR_tot, M, const.k, const.flamf, const.flamw, dyn_vis, const.tc,
+                                       const.xcm, 0, wing_design.sweep_atx(0)[0], fus_upsweep, wing_plan_1[2],
+                                       h_fus - 0.3,
+                                       const.IF_f, const.IF_w, const.IF_v, airfoil_stats[2], const.Abase, S_v,
+                                       s1, s2, h_wt_1, h_wt_2)
+
+        # TODO: get CL for cruise
+        CD0 = drag.CD0()
+        CD_cr = drag.CD(C_L=C_L_cr)
+
+        # ----------------- Vertical drag -------------------
+        Afus = np.pi * np.sqrt(w_fus * h_fus) ** 2 / 4
+
+        CDs = drag.CD(CLmax)
+        CDs_f = drag.CD0_f
+        CDs_w = CDs - CDs_f
+
+        CD_a_w_v = wing_design.CDa_poststall(const.tc, CDs_w, CDs_f, Afus, 0, "wing", drag.CD)
+        CD_a_f_v = wing_design.CDa_poststall(const.tc, CDs_w, CDs_f, Afus, 90, "fus", drag.CD)
+
+        CD_vertical = CD_a_w_v + CD_a_f_v
+
+        # Propulsion
+        # Get drag at cruise
+        D_cr = CD_cr * 0.5 * rho * V_cr ** 2 * S_tot
+
+        # Size the propellers
+        prop_sizing = eng_siz.PropSizing(wing_plan_1[0], w_fus, n_prop, clearance_fus_prop, clearance_prop_prop, MTOM,
+                                         xi_0)
+
+        prop_radius = prop_sizing.radius()
+        prop_area = prop_sizing.area_prop()
+        disk_load = prop_sizing.disk_loading()
+
+        # act_disk = ADT.ActDisk(TW_ratio, MTOM, v_e, V_cr, D, D)
+        # With fuselage shape and span we can have size of the engines
+        # From that we can use BEM to design the blades (here number of blades is an input,
+        # so we can optimise it if necessary, or just assume one
+
+        # ----------------------- Performance ------------------------
+        # Cl_alpha_curve, CD_a_w, CD_a_f, alpha_lst, Drag
+
+        # post_stall = Wing_params.post_stall_lift_drag(tc, CDs, CDs_f, Afus)
+
+        init_sizing = perf.initial_sizing(h_cr, None, drag, V_stall, V_max, n_turn, ROC, V_cr, ROC_hover, MTOM * g0,
+                                          CD_vertical, const.eff_prop, const.eff_hover, disk_load)
+
+        # TODO: maybe use S as an inout and not size for stall
+        # # Get wing loading and from that the area
+        # WS = init_sizing.sizing()[0]
+        #
+        # S_tot = MTOM * g0 / WS
+
+        S1, S2 = S_tot * s1, S_tot * s2
+
+        V = at.speeds(h_cr, MTOM, CLmax, S_tot, drag)
+
+        # Cruise speed
+        V_cr, CL_cr_check = V.cruise()
+
+        # # Stall speed
+        # V_stall = V.stall()
+
+        # print("CL comparison:", CL_cr_check, C_L_cr, V_cr)
+
+        # Cruise CL of the wings
+        L_cr = MTOM * g0
+        L_cr_1 = L_cr / 2
+        L_cr_2 = L_cr / 2
+
+        CL_cr_1 = 2 * L_cr_1 / (rho * V_cr ** 2 * S1)
+        CL_cr_2 = 2 * L_cr_2 / (rho * V_cr ** 2 * S2)
+        C_L_cr = CL_cr_2
+
+        # Aero to pass to mission
+        alpha_lst = np.arange(0, 89, 0.1)
+        Cl_alpha_curve = wing_design.CLa(const.tc, CDs, CDs_f, Afus, alpha_lst)
+        CD_a_w = wing_design.CDa_poststall(const.tc, CDs, CDs_f, Afus, alpha_lst, "wing", drag.CD)
+        CD_a_f = wing_design.CDa_poststall(const.tc, CDs, CDs_f, Afus, alpha_lst, "fus", drag.CD)
+
+        # Energy sizing
+        mission = energy_calc.mission(MTOM, h_cr, V_cr, CLmax, S_tot, n_prop * prop_area, Cl_alpha_curve, CD_a_w,
+                                      CD_a_f, alpha_lst, drag, m_bat)
+
+        # Get approximate overall efficiency
+        eff_overall = 0.91 * 0.57 + 0.699 * 0.43
+        energy = mission.total_energy()[0] * 2.77778e-7 * 1000 / eff_overall  # From [J] to [Wh]
+        # TODO: check safety factor (1.02 *)
+
+        # Battery sizing
+        battery = batt.Battery(500, 1000, energy, 1)
+
+        m_bat = battery.mass()
+
+        # -------------------- Update weight ------------------------
+        # TODO mass calculation from function
+
+
 
         return optim_outputs, internal_inputs
 
-    def multirun(self, N_iters, optim_inputs):  #, internal_inputs):
+    def multirun(self, N_iters, optim_inputs):
         """
         With this you can run the integrated code as many times as you want per optimisation, so that you get internal
         convergence of the internal parameters
@@ -162,7 +317,8 @@ class RunDSE:
         :param N_iters: Number of iterations of the code for each optimisation iteration
         """
         internal_inputs = self.initial_est
+
         for i in range(N_iters):
-            optim_outputs, internal_inputs = self.run(internal_inputs)
+            optim_outputs, internal_inputs = self.run(optim_inputs, internal_inputs)
 
         return optim_outputs, internal_inputs
