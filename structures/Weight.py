@@ -96,7 +96,7 @@ class Weight:
         #     d[key] = {k: list(i) if isinstance(i, np.ndarray) else i for k, i in zip(["mass", "fracOEM", "fracEM"], d[key])}
         # return d
     def MMI(self):
-        # COORDINATE SYSTEM: x points towards drag, y points up, z points towards the left wing
+        # COORDINATE SYSTEM: x points towards nose, y points towards right wing, z points down
         # fuselage  - modeled as a hollow cylinder with wall thickness of 5 cm
         irad = (self.fuselage.wf/2 - 0.05)
         fus_mmi_y = self.fmass * (self.fuselage.lf**2 + 3*(self.fuselage.wf/2)**2 + 3*irad**2)/12
@@ -114,7 +114,7 @@ class Weight:
         m_prop = self.pmass/self.prop.nprop
         lprop, rprop = 0.4, 0.12
         prop_mmi_x, prop_mmi_y, prop_mmi_z = m_prop*(rprop**2)/2, m_prop*(lprop**2 + 3 * rprop**2)/12, m_prop*(lprop**2 + 3 * rprop**2)/12
-        print(m_prop)
+
         # battery - modeled as a prism
         lbat, tbat, wbat = 0.4*self.fuselage.lf, 0.2, 1
         bat_mmi_x, bat_mmi_y, bat_mmi_z = self.bmass*(wbat**2 + tbat**2)/12, self.bmass*(wbat**2 + lbat**2)/12, self.bmass*(tbat**2 + lbat**2)/12
@@ -131,7 +131,7 @@ class Weight:
             np.sqrt((1.705 / 2) ** 2 + (self.wing.pos2/2) ** 2)) ** 2) * 2 + bat_mmi_z + self.bmass * (1.705 / 2) ** 2 + (
                                 m_prop * ((np.sqrt((1.705 / 2) ** 2 + (self.wing.pos2/2) ** 2)) ** 2) + prop_mmi_z) * self.prop.nprop
         oem_mmi_xy = (self.wmass/2 * (1.705 / 2) * self.wing.pos1/2) * 2 + self.prop.nprop * (m_prop * (1.705 / 2) * self.wing.pos1/2)
-        return oem_mmi_x, oem_mmi_y, oem_mmi_z, oem_mmi_xy
+        return oem_mmi_x, oem_mmi_z, oem_mmi_y, oem_mmi_xy
 
 if __name__ == '__main__':
     mtom = 3000 # maximum take-off mass from statistical data - Class I estimation
