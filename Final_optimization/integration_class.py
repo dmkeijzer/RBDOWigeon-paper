@@ -121,7 +121,6 @@ def init_mass(MTOM, S1, S2, n_ult, AR_wing1, AR_wing2, pos_frontwing, pos_backwi
     return Mass.mtom
 
 
-
 class RunDSE:
     def __init__(self, fixed_inputs: np.array, initial_estimates: np.array):
         """
@@ -155,7 +154,7 @@ class RunDSE:
 
         return optim_outputs, internal_inputs
 
-    def multirun(self, N_iters):
+    def multirun(self, N_iters, optim_inputs):  #, internal_inputs):
         """
         With this you can run the integrated code as many times as you want per optimisation, so that you get internal
         convergence of the internal parameters
@@ -165,4 +164,5 @@ class RunDSE:
         internal_inputs = self.initial_est
         for i in range(N_iters):
             optim_outputs, internal_inputs = self.run(internal_inputs)
+
         return optim_outputs, internal_inputs
