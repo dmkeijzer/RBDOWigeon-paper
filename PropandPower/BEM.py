@@ -1,3 +1,4 @@
+import matplotlib.pyplot as plt
 import numpy as np
 import scipy.integrate as spint
 import scipy.interpolate as spinplt
@@ -424,6 +425,11 @@ class BEM:
         # print("J1:", J1)
         # print("J2:", J2)
         # print("")
+        # plt.subplot(211)
+        # plt.plot(stations_r, Cl)
+        # plt.subplot(212)
+        # plt.plot(stations_r, cs)
+        # plt.show()
 
         # Calculate new speed ratio and Tc or Pc as required
         if self.Tc is not None:

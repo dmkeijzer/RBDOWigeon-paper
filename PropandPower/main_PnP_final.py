@@ -2,6 +2,7 @@ import numpy as np
 import BEM as BEM
 import Aero_tools as at
 import Blade_plotter as BP
+import matplotlib.pyplot as plt
 
 # ISA = at.ISA(1000)
 ISA = at.ISA(1000)
@@ -69,13 +70,14 @@ MTOM = 2628.22
 # M_t_max = 0.6
 # rpm = M_t_max*a*60 / (np.pi * 2*R)
 rpm = 2500
+# rpm = 1500
 
 V_cruise = 52.87
 V_h = 52
-N_stations = 20
+N_stations = 25
 RN_spacing = 100000
 
-T_cr_per_eng = 27.55*5
+T_cr_per_eng = 27.55*5  * 2
 T_h_per_eng = MTOM*9.80665 / 12
 
 propeller = BEM.BEM(B, R, rpm, xi_0, rho, dyn_visc, V_cruise, N_stations, a, RN_spacing, T=T_cr_per_eng)
@@ -113,42 +115,48 @@ print("Average exit speed per station:", np.average(V_e))
 print("")
 print("Propulsive efficiency:", 2/(1 + np.average(V_e)/V_cruise))
 
-# # Load blade plotter
-# plotter = BP.PlotBlade(design[0], design[1], design[3], R, xi_0)
+plt.subplot(211)
+plt.plot(design[3], coefs[0])
+plt.subplot(212)
+plt.plot(design[3], design[0])
+plt.show()
+
+# Load blade plotter
+plotter = BP.PlotBlade(design[0], design[1], design[3], R, xi_0)
+
+# Plot blade
+plotter.plot_blade()
+plotter.plot_3D_blade()
+
+# # ----------- Analyse in hover -------------
+# print("")
+# print("----------- Analyse in hover -------------")
+# ISA = at.ISA(0)
+# a = ISA.soundspeed()
+# rho = ISA.density()
+# dyn_visc = ISA.viscosity_dyn()
 #
-# # Plot blade
-# plotter.plot_blade()
-# plotter.plot_3D_blade()
-
-# ----------- Analyse in hover -------------
-print("")
-print("----------- Analyse in hover -------------")
-ISA = at.ISA(0)
-a = ISA.soundspeed()
-rho = ISA.density()
-dyn_visc = ISA.viscosity_dyn()
-
-# Polinomial regression for smooth distribution
-coef_chords = np.polynomial.polynomial.polyfit(design[3], design[0], 5)
-coef_pitchs = np.polynomial.polynomial.polyfit(design[3], design[1], 5)
-
-chord_fun = np.polynomial.polynomial.Polynomial(coef_chords)
-pitch_fun = np.polynomial.polynomial.Polynomial(coef_pitchs)
-
-new_chords = chord_fun(design[3])
-new_pitch = pitch_fun(design[3])
-
-M_tip = 0.5
-omega = M_tip*a/R
-
-rpm = omega/0.10472
-print("Propeller rpm at hover:", rpm)
-
-V = 0
-# zeta_new, [cs, betas, alpha, stations_r, E, eff, self.Tc, Pc], Ves, [Cl, Cd]
-blade_hover = BEM.OffDesignAnalysisBEM(V, B, R, new_chords, new_pitch, design[3], coefs[0], coefs[1], rpm, zeta, rho,
-                                       dyn_visc, a)
-
-blade_hover_analysis = blade_hover.analyse_propeller()
-
-print(blade_hover_analysis)
+# # Polinomial regression for smooth distribution
+# coef_chords = np.polynomial.polynomial.polyfit(design[3], design[0], 5)
+# coef_pitchs = np.polynomial.polynomial.polyfit(design[3], design[1], 5)
+#
+# chord_fun = np.polynomial.polynomial.Polynomial(coef_chords)
+# pitch_fun = np.polynomial.polynomial.Polynomial(coef_pitchs)
+#
+# new_chords = chord_fun(design[3])
+# new_pitch = pitch_fun(design[3])
+#
+# M_tip = 0.5
+# omega = M_tip*a/R
+#
+# rpm = omega/0.10472
+# print("Propeller rpm at hover:", rpm)
+#
+# V = 0
+# # zeta_new, [cs, betas, alpha, stations_r, E, eff, self.Tc, Pc], Ves, [Cl, Cd]
+# blade_hover = BEM.OffDesignAnalysisBEM(V, B, R, new_chords, new_pitch, design[3], coefs[0], coefs[1], rpm, zeta, rho,
+#                                        dyn_visc, a)
+#
+# blade_hover_analysis = blade_hover.analyse_propeller()
+#
+# print(blade_hover_analysis)

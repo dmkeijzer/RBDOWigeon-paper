@@ -15,8 +15,8 @@ l_cylinder = 2              # [m]
 upsweep = 8.43*np.pi/180    # [Degrees]
 
 # Aerodynamics
-s1 = 0.5                    # Fraction of total wing area for the 1st wing [-]
-s2 = 1-s1                   # Fraction of total wing area for the 2nd wing [-]
+# s1 = 0.5                    # Fraction of total wing area for the 1st wing [-]
+# s2 = 1-s1                   # Fraction of total wing area for the 2nd wing [-]
 sweepc41 = 0                # Sweep angle at quarter chord for 1st wing [rad]
 sweepc42 = 0                # Sweep angle at quarter chord for the 2nd wing
 k = 0.634 * 10**(-5)        # Smooth paint from adsee 2 L2  smoothness factor[-]
@@ -30,5 +30,7 @@ tc = 0.12                   # NACA0012 for winglets and Vtail [-]
 xcm = 0.3                   # NACA0012 for winglets and Vtail [-]
 
 # Propulsion
-eff_prop = 0.83     # [-] Propeller efficiency during normal flight
-eff_hover = 0.88    # [-] Propeller efficiency during hover
+c_fp = 0.3         # [m] Horizontal clearance between the widest part of the fuselage and the radius of the inboard prop
+c_pp = 0.3         # [m] Horizontal clearance between the propellers (closest point, tip to tip)
+eff_prop = 0.83    # [-] Propeller efficiency during normal flight
+eff_hover = 0.88   # [-] Propeller efficiency during hover
