@@ -2,6 +2,8 @@ import numpy as np
 from scipy import optimize
 from matplotlib import pyplot as plt
 
+from Preliminary_Lift.LLTtest2 import downwash
+
 
 def xcg_stab(CLaf, CLar, CLf, CLr, Af, Ar, ef, er, xf, xr, zf, zr, zcg,
              Vr_Vf_2, Sr_Sf, de_da):
@@ -38,7 +40,46 @@ def xcg_stab(CLaf, CLar, CLf, CLr, Af, Ar, ef, er, xf, xr, zf, zr, zcg,
 
 
 # TODO: improve downwash estimation
-def deps_da(lambda_c4f, bf, lh, h_ht, A, CLaf, rho, Pbr, Sf, CLf, W):
+def deps_da(bf, br, crf, crr, ctf, ctr, lambda_c4f, lambda_c4r, Sf, Af,
+            CLf, alphaf, lh, h_ht, rho, Pbr, W, V):
+    """
+    Estimate the downwash gradient of the front wing on the rear wing based
+    on lifting-line theory (accounting for additional downwash due to
+    propellers).
+    :param bf:
+    :param br:
+    :param crf:
+    :param crr:
+    :param ctf:
+    :param ctr:
+    :param lambda_c4f:
+    :param lambda_c4r:
+    :param Sf:
+    :param Af:
+    :param CLf:
+    :param alphaf:
+    :param lh:
+    :param h_ht:
+    :param rho:
+    :param Pbr:
+    :param W:
+    :param V:
+    :return:
+    """
+    r = lh * 2 / bf
+    mtv = h_ht * 2 / bf  # Approximation
+    de_da = downwash(bf, Af, crf, ctf, lambda_c4f, alphaf, h_ht, lh, br, crr, ctr, lambda_c4r, V)
+    phi = np.arcsin(mtv/r)
+    dsde_da = np.where(
+        np.logical_and(np.rad2deg(phi) < 30, np.rad2deg(phi) > 0),
+        6.5 * (rho * Pbr ** 2 * Sf ** 3 * CLf ** 3 / (lh ** 4 * W ** 3)) ** (1 / 4) * (np.sin(phi * 6)) ** 2.5,
+        0
+    )
+
+    return de_da+dsde_da
+
+
+def deps_da_old(lambda_c4f, bf, lh, h_ht, A, CLaf, rho, Pbr, Sf, CLf, W):
     """
     Estimate the downwash gradient of the front wing on the rear wing
     (accounting for additional downwash due to propellers).
@@ -73,6 +114,8 @@ def deps_da(lambda_c4f, bf, lh, h_ht, A, CLaf, rho, Pbr, Sf, CLf, W):
     return de_da+dsde_da
 
 
+
+# TODO: implement effect of aspect ratio on Cmac
 def xcg_ctrl(Cmacf, Cmacr, CLf, CLr, CD0f, CD0r, Af, Ar, ef, er, macf, macr,
              xf, xr, zf, zr, zcg, Vr_Vf_2, Sr_Sf):
     """
@@ -237,8 +280,15 @@ def xcg_limits(Cmacf, Cmacr, CLmaxf, CLmaxr, CLdesf, CLdesr, CD0f, CD0r,
     lambda_c2r = lambda_c4_to_lambda_c2(Ar, taperr, lambda_c4r)
     CLaf = CLa(Claf, Af, lambda_c2f)
     CLar = CLa(Clar, Ar, lambda_c2r)
-    de_da = deps_da(lambda_c4f, bf, xr - xf, zr - zf, Af, CLaf, rho, Pbr, Sf,
-                    CLdesf, W)
+    crf, crr = crf_crr(S, Sr_Sf, Af, Ar, taperf, taperr)
+    ctf = crf * taperf
+    ctr = crr * taperr
+    alphaf = np.deg2rad(6)
+    V = 50
+    de_da = deps_da(bf, br, crf, crr, ctf, ctr, lambda_c4f, lambda_c4r, Sf,
+                    Af, CLdesf, alphaf, xr - xf, zr - zf, rho, Pbr, W, V)
+    # de_da = deps_da(lambda_c4f, bf, xr - xf, zr - zf, Af, CLaf, rho, Pbr, Sf,
+    #                 CLdesf, W)
     xstab = xcg_stab(CLaf, CLar, CLdesf, CLdesr, Af, Ar, ef, er, xf, xr, zf,
                      zr, zcg, Vr_Vf_2, Sr_Sf, de_da)
     xctrl = xcg_ctrl(Cmacf, Cmacr, CLmaxf * elev_fac, CLmaxr, CD0f, CD0r, Af,
@@ -253,7 +303,7 @@ def optimise_wings(Cmacf, Cmacr, CLmaxf, CLmaxr, CLdesf, CLdesr, CD0f, CD0r,
                    xranger, zrangef, zranger, crmaxf, crmaxr, bmaxf, bmaxr,
                    Arangef, Aranger, xcg_range, impose_stability=True,
                    init_Af=1, init_Ar=7, init_xf=0.5, init_xr=6.5, init_zf=0.5,
-                   init_zr=1.5, init_Sr_Sf=1):
+                   init_zr=1.5, init_Sr_Sf=1, method='trust-constr'):
     # FIXME: span efficiency factor is assumed to be constant
     """
     Optimise for maximum wingspan on the front wing while meeting stability
@@ -315,6 +365,18 @@ def optimise_wings(Cmacf, Cmacr, CLmaxf, CLmaxr, CLdesf, CLdesr, CD0f, CD0r,
     x0 = np.array([init_Af, init_Ar, init_xf, init_xr,
                    init_zf, init_zr, init_Sr_Sf])
 
+    # cost function to choose between solutions
+    def cost(x):
+        return (bf_br(S, x[6], x[0], x[1])[0]
+                - bf_br(S, x[6], x[0], x[1])[1]) ** 2
+
+    # wrapper function for the CG limits for the optimisation of x
+    def find_cg_limits(x):
+        return xcg_limits(Cmacf, Cmacr, CLmaxf, CLmaxr, CLdesf, CLdesr, CD0f,
+                          CD0r, taperf, taperr, lambda_c4f, lambda_c4r, ef,
+                          er, Claf, Clar, zcg, Vr_Vf_2, elev_fac, rho, Pbr,
+                          S, W, x[0], x[1], x[2], x[3], x[4], x[5], x[6])
+
     # apply direct constraints to input parameters
     input_constr = optimize.LinearConstraint(
         np.array([
@@ -349,13 +411,6 @@ def optimise_wings(Cmacf, Cmacr, CLmaxf, CLmaxr, CLdesf, CLdesr, CD0f, CD0r,
         0, bmaxr
     )
 
-    # wrapper function for the CG limits for the optimisation of x
-    def find_cg_limits(x):
-        return xcg_limits(Cmacf, Cmacr, CLmaxf, CLmaxr, CLdesf, CLdesr, CD0f,
-                          CD0r, taperf, taperr, lambda_c4f, lambda_c4r, ef,
-                          er, Claf, Clar, zcg, Vr_Vf_2, elev_fac, rho, Pbr,
-                          S, W, x[0], x[1], x[2], x[3], x[4], x[5], x[6])
-
     # depending whether stability is required or not,
     # apply the appropriate constraints
     if impose_stability:
@@ -368,11 +423,6 @@ def optimise_wings(Cmacf, Cmacr, CLmaxf, CLmaxr, CLdesf, CLdesr, CD0f, CD0r,
             lambda x: find_cg_limits(x)[0],
             0, xcg_range[0]  # TODO: come back to this
         )
-
-    # cost function to choose between solutions
-    def cost(x):
-        return (bf_br(S, x[6], x[0], x[1])[0]
-                - bf_br(S, x[6], x[0], x[1])[1]) ** 2
 
     # optimise
     result = optimize.minimize(cost, x0, method='trust-constr',
