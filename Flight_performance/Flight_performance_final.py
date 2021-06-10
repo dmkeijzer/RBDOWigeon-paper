@@ -4,7 +4,7 @@ from Aero_tools import ISA, speeds
 import scipy.interpolate as interpolate
 import sys
 from constants import g, eff_hover, eff_prop
-
+import scipy.optimize as optimize
 # TODO: Remove this import in the integrated program, make sure aerodynamics is called first and the variables have the
 # same names
 from Preliminary_Lift.main_aero import Cl_alpha_curve, CD_a_w, CD_a_f, alpha_lst, Drag
@@ -26,8 +26,8 @@ class mission:
         - Efficiencies
     """
 
-    def __init__(self, mass, cruising_alt, cruise_speed, CL_max, wing_surface, A_disk, Cl_alpha_curve, CD_a_w, CD_a_f,
-                 alpha_lst, Drag, t_loiter=30 * 60, rotational_rate=5, roc=5, rod=5, mission_dist=300e3, plotting=False):
+    def __init__(self, mass, cruising_alt, cruise_speed, CL_max, wing_surface, A_disk,
+                 t_loiter=30 * 60, rotational_rate=5, roc=5, rod=5, mission_dist=300e3, plotting=False):
 
         """
         :param mass:            [kg]    Aircraft mass
@@ -146,8 +146,8 @@ class mission:
     def numerical_simulation(self, vx_start, y_start, th_start, y_tgt, vx_tgt):
 
         # Initialization
-        vx = vx_start
-        vy = 0
+        vx = float(vx_start)
+        vy = 0.
         t = 0
         x = 0
         y = y_start
@@ -419,7 +419,7 @@ class evtol_performance:
         - Vertical flight CD
         - Efficiencies
     """
-    def __init__(self, cruising_alt, cruise_speed, S, CL_max, mass, battery_capacity, EOM, loiter_time):
+    def __init__(self, cruising_alt, cruise_speed, S, CL_max, mass, battery_capacity, EOM, loiter_time, A_disk, P_max):
         """
         :param cruising_alt:        [m]
         :param cruise_speed:        [m/s]
@@ -441,6 +441,8 @@ class evtol_performance:
         self.h_cruise = cruising_alt
         self.EOM    = EOM
         self.t_loiter = loiter_time
+        self.A_disk = A_disk
+        self.P_max  = P_max
 
         CD_f_alpha = interpolate.interp1d(alpha_lst, CD_a_f)
         CD_w_alpha = interpolate.interp1d(alpha_lst, CD_a_w)
@@ -449,11 +451,38 @@ class evtol_performance:
         plt.rcParams.update({'font.size': 16})
         self.path = '../Flight_performance/Figures/'
 
+    def thrust_to_power(self, T, V, rho):
+        """
+        This function calculates the available power associated with a certain thrust level. Note that this power
+        still needs to be converted to brake power later on. This will be implemented when more is known about this
+        from the power and propulsion department
+
+        :param T: Thrust provided by the engines [N]
+        :param V: Airspeed [m/s]
+        :return: P_a: available power
+        """
+
+        P_a = T * V + 1.2 * T * (-V / 2 + np.sqrt(V ** 2 / 4 + T / (2 * rho * self.A_disk)))
+
+        # Interpolate between efficiencies
+        eff = eff_hover + V*(eff_prop - eff_hover)/self.v_cruise
+
+        P_r = P_a/eff
+
+        return P_r - self.P_max
+
     def max_thrust(self, rho, V):
 
-        eff = 0.9   # !!!!! IMPLEMENT changing efficiency !!!!!
-        P_max = 600000/eff
-        return np.minimum(P_max/V, 40000)*np.sqrt(rho/1.225)
+
+        if isinstance(V, np.ndarray):
+            Tlst = []
+            for v in V:
+                T_max  = optimize.newton(self.thrust_to_power, x0 = 20000, args=(v, rho))
+                Tlst.append(T_max)
+
+            return np.array(Tlst)
+        else:
+            return optimize.newton(self.thrust_to_power, x0 = 20000, args=(V, rho))
 
     def climb_performance(self, testing = False):
 
@@ -504,7 +533,7 @@ class evtol_performance:
         plt.savefig(self.path + 'Climb_performance_cruise' + '.pdf')
         plt.show()
 
-    def vertical_equilibrium(self, altitude, testing = False, test_thrust = 0):#rate_of_climb, altitude, m, testing = False, test_thrust = None):
+    def vertical_equilibrium(self, altitude, m, testing = False, test_thrust = 0):#rate_of_climb, altitude, m, testing = False, test_thrust = None):
 
         # Density at altitude
         rho     = ISA(altitude).density()
@@ -513,18 +542,24 @@ class evtol_performance:
         # if testing:
         #     thrust = test_thrust
 
-        RC_init     = 10
+        RC_init     = 20
         if testing:
             RC_init = -5
         err = 1
-
+        N_it = 0
         # Iterate until the rate-of-climb converges
         while err > 0.1:
             T       = self.max_thrust(rho, RC_init)
             if testing:
                 T = test_thrust
-            RC      = np.sqrt(abs(T - self.W)/(self.CD_vert*0.5*rho*self.S))
+            RC      = np.sqrt(abs(T - m*g)/(self.CD_vert*0.5*rho*self.S))
+
             err     = abs(RC - RC_init)
+            N_it += 1
+            if N_it > 500:
+                print('vertical_climb does not converge')
+                break
+
             RC_init = RC
 
         if T < self.W:
@@ -542,7 +577,7 @@ class evtol_performance:
             for i, h in enumerate(altitudes):
 
                 # Solve the equation for the rate of climb
-                RC[i] = self.vertical_equilibrium(h)#optimize.root_scalar(self.vertical_equilibrium, x0 = 5, args = (h, m, testing))#fsolve(self.vertical_equilibrium, 5, args = (h, m, testing))
+                RC[i] = self.vertical_equilibrium(h, m)#optimize.root_scalar(self.vertical_equilibrium, x0 = 5, args = (h, m, testing))#fsolve(self.vertical_equilibrium, 5, args = (h, m, testing))
 
             # Plot the results
             plt.plot(altitudes, RC, label = 'mass: ' + str(m))
@@ -558,7 +593,8 @@ class evtol_performance:
     def range(self, cruising_altitude, cruise_speed, mass, wind_speed = 0, loiter = False):
 
         # Call mission class
-        energy = mission(mass=mass, cruising_alt=cruising_altitude, cruise_speed=cruise_speed, plotting = True)
+        energy = mission(mass=mass, cruising_alt=cruising_altitude, cruise_speed=cruise_speed, CL_max = self.CL_max,
+                         wing_surface = self.S, A_disk = self.A_disk, plotting = False)
 
         # Get the distances and energy needed for take-off and landing
         d_la, E_la, t_la = energy.numerical_simulation(vx_start=cruise_speed, y_start=cruising_altitude,
@@ -610,7 +646,7 @@ class evtol_performance:
         for i, m in enumerate(mass):
 
             # Get the range
-            d_cr[i], t_cr[i] = self.range(cruising_altitude=self.h_cruise, cruise_speed = self.v_cruise,mass = m)
+            d_cr[i], t_cr[i] = self.range(cruising_altitude=self.h_cruise, cruise_speed = self.v_cruise,mass = m, loiter = True)
 
         # Plot results
         plt.plot(d_cr/1000, payload_mass)
@@ -621,19 +657,26 @@ class evtol_performance:
         plt.savefig(self.path + 'Payload_range' + '.pdf')
         plt.show()
 
-#
-# a = mission(2000, cruising_alt = 300, cruise_speed = 60, CL_max= 1.7, S = 14, plotting = True)
-#
-# # Simulate descend
-# a.numerical_simulation(vx_start = 60, y_start = 300, th_start = np.radians(5), y_tgt = 0, vx_tgt = 0)
-#
-# # Simulate climb
-# a.numerical_simulation(vx_start = 0.001, y_start = 0, th_start = np.pi/2, y_tgt = 300, vx_tgt = 60)
+
+# Test data
+m = 3000
+h_cr = 300
+v_cr = 65
+CLmax = 1.7
+S = 14
+A_disk = 8
+
+# a = mission(mass = m, cruising_alt = h_cr, cruise_speed = v_cr, CL_max= CLmax, wing_surface = S, t_loiter = 30*60,
+#             A_disk = A_disk, plotting = False)
 #
 # E_total, t_total = a.total_energy()
 # print(E_total, t_total)
-
-# b = evtol_performance(cruising_alt = 300, cruise_speed = 60)
+#
+# b = evtol_performance(cruising_alt = 300, cruise_speed = 60, CL_max=1.5, A_disk=10, S = 14, battery_capacity=E_total*1.2,
+#                       mass = m, EOM = m - 475, loiter_time = 30*60, P_max = 3000000)
+#
 # b.climb_performance()
 # b.payload_range()
 # b.vertical_climb()
+
+
