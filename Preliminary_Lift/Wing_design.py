@@ -172,3 +172,4 @@ class wing_design:
             fdrag = interp1d(alpha, drag_f)
             return fdrag(alpha_lst)
 
+
