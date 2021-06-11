@@ -3,11 +3,11 @@ File created for incorporating other systems that require power
 """
 
 class Power_Budget:
-    def __init__(self):
+    def __init__(self, m):
         # Constant required power
         self.avionics = 252  # [W]
         self.airco = 3000  # [W]
-        self.battery_cooling = 30 # [W] Per 72 kg.
+        self.battery_cooling = 30 * m/72  # [W] Per 72 kg.
         self.autopilot = 151  # [W]
         self.trim = 54  # [W]
         self.passenger_power = 400  # [W]
