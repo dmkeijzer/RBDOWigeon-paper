@@ -124,7 +124,7 @@ def l_function(lam, spc, y, n):
 
     return weissl
 
-def weissinger_l(wing, al, m, AR, a_w):
+def weissinger_l(wing, al, m, AR, a_w, iw):
     """ Weissinger-L method for a swept, tapered, twisted wing.
         wing.span: span
         wing.root: chord at the root
@@ -182,7 +182,7 @@ def weissinger_l(wing, al, m, AR, a_w):
     a_ws = a_w[1:-1]
 
     for j in range(m):
-        rhs[j,0] = al + twist[j] - a_ws[j]
+        rhs[j,0] = al + iw*np.pi/180 - a_ws[j]
         for i in range(m):
             if i == j: b[j,i] = float(m+1)/(4.*sin(phi[j]))
             else: b[j,i] = sin(phi[i]) / (cos(phi[i])-cos(phi[j]))**2. * \
@@ -374,26 +374,25 @@ def downwash_fore(c,y, y2,Cl, x_h, z_h, V_inf):
     a_wfinal = a2final
     return a_wfinal + a_w
 
-def LLT2wings(span1, AR1,root1, tip1, sweep1, alpha1, z_h, x_h,span2, AR2, root2,tip2,sweep2, alpha2, V_cr):
+def LLT2wings(span1, AR1,root1, tip1, sweep1, alpha1, z_h, x_h,span2, AR2, root2,tip2,sweep2, alpha2, V_cr, i1,i2):
     npoints = 21
     washout = 0
     wing = Wing(span1, root1, tip1, sweep1,washout)
-    y, cl, ccl, al_i, CL, CDi , e= weissinger_l(wing, alpha1, 2*npoints-1, AR1, np.zeros(43))
+    y, cl, ccl, al_i, CL, CDi , e= weissinger_l(wing, alpha1, 2*npoints-1, AR1, np.zeros(43), i1)
 
 
     wing2 = Wing(span2, root2, tip2, sweep2,washout)
     y2 = gety(wing2, 2 * npoints - 1)
     a_w = downwash_fore(np.append(0, ccl[1:] / cl[1:]), y, y2, cl, x_h, z_h, V_cr)
-    y3, cl3, ccl3, al_i3, CL3, CDi3, e3 = weissinger_l(wing2, alpha2, 2 * npoints - 1, AR2, a_w)
-    de_da = np.average(a_w)*(180/(np.pi*alpha1))
-
+    de_da = np.average(a_w) * (180 / (np.pi * alpha1))
+    y3, cl3, ccl3, al_i3, CL3, CDi3, e3 = weissinger_l(wing2, alpha2, 2 * npoints - 1, AR2, a_w, alpha*de_da)
     return CL, CL3, CDi, CDi3, e, e3, de_da
 
 def downwash(span1, AR1,root1, tip1, sweep1, alpha1, z_h, x_h,span2, root2,tip2,sweep2,V_cr):
     npoints = 21
     washout = 0
     wing = Wing(span1, root1, tip1, sweep1, washout)
-    y, cl, ccl, al_i, CL, CDi, e = weissinger_l(wing, alpha1, 2 * npoints - 1, AR1, np.zeros(2*npoints+1))
+    y, cl, ccl, al_i, CL, CDi, e = weissinger_l(wing, alpha1, 2 * npoints - 1, AR1, np.zeros(2*npoints+1),0)
     wing2 = Wing(span2, root2, tip2, sweep2,washout)
     y2 = gety(wing2,2*npoints-1)
     a_w = downwash_fore(np.append(0, ccl[1:] / cl[1:]), y, y2, cl, x_h, z_h, V_cr)
@@ -403,12 +402,12 @@ def downwash_upwash(span1, AR1,root1, tip1, sweep1, alpha1, z_h, x_h,span2,  AR2
     npoints = 21
     washout = 0
     wing = Wing(span1, root1, tip1, sweep1, washout)
-    y, cl, ccl, al_i, CL, CDi, e = weissinger_l(wing, alpha1, 2 * npoints - 1, AR1, np.zeros(2*npoints+1))
+    y, cl, ccl, al_i, CL, CDi, e = weissinger_l(wing, alpha1, 2 * npoints - 1, AR1, np.zeros(2*npoints+1),0)
     wing2 = Wing(span2, root2, tip2, sweep2,washout)
     y2 = gety(wing2,2*npoints-1)
     a_w = downwash_fore(np.append(0, ccl[1:] / cl[1:]), y, y2, cl, x_h, z_h, V_cr)
     de_da = np.average(a_w) * (180 / (np.pi * alpha1))
-    y3, cl3, ccl3, al_i3, CL3, CDi3, e3 = weissinger_l(wing2, alpha1, 2 * npoints - 1, AR2, a_w)
+    y3, cl3, ccl3, al_i3, CL3, CDi3, e3 = weissinger_l(wing2, alpha1, 2 * npoints - 1, AR2, a_w, 0)
     a_w2 = downwash_fore(np.append(0, ccl3[1:] / cl3[1:]), y3, y, cl3, -1*x_h, -1*z_h, V_cr)
     de_da2 = np.average(a_w2) * (180 / (np.pi * alpha1))
     return de_da, de_da2

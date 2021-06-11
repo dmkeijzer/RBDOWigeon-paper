@@ -34,3 +34,10 @@ c_fp = 0.3         # [m] Horizontal clearance between the widest part of the fus
 c_pp = 0.3         # [m] Horizontal clearance between the propellers (closest point, tip to tip)
 eff_prop = 0.83    # [-] Propeller efficiency during normal flight
 eff_hover = 0.88   # [-] Propeller efficiency during hover
+
+# Power
+sp_en_den = 500     # [Wh/kg] Specific energy density
+vol_en_den = 1000   # [Wh/l] Volumetric energy density
+bat_cost = 80       # [$/kg] Cost of batteries in US dollars per kilogram
+DoD = 80            # [-] Depth of Discharge of the total battery, as percentage
+P_den = 10000       # [W/kg] Power density of battery
