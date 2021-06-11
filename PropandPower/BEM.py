@@ -804,7 +804,7 @@ class OffDesignAnalysisBEM:
 
 class Optiblade:
     def __init__(self, B, R, rpm_cr, xi_0, rho_cr, dyn_vis_cr, V_cr, N_stations, a_cr, RN_spacing, max_M_tip, rho_h,
-                 dyn_vis_h, V_h, a_h, T_cr=None, P_cr=None, T_h=None, P_h=None):
+                 dyn_vis_h, V_h, a_h, rpm_h, delta_pitch, T_cr=None, P_cr=None, T_h=None, P_h=None):
         """
         This file is for the blade shape optimisation. It optimises the blade for cruise, and checks if the blade can
         meet hover thrust requirements. If not, it designs the blade for higher thrust levels and checks again, up until
@@ -835,6 +835,9 @@ class Optiblade:
         :param T_h: Thrust delivered BY the propeller [N]
         :param P_h: Power delivered TO the propeller [W]
         :param a_h: Speed of sound [m/s]
+        :param max_M_tip: Maximum allowable tip Mach [-]
+        :param rpm_h: rpm of the blade for hover (optimisation variable) [rpm]
+        :param delta_pitch: Change in pitch of the blade to obtain more thrust (optimisation variable) [rad]
         """
         self.B = B
         self.R = R
@@ -843,8 +846,6 @@ class Optiblade:
         self.N_s = N_stations
         self.xi_0 = xi_0
 
-        self.Omega_cr = rpm_cr * 2 * np.pi / 60  # rpm to rad/s
-
         self.rho_cr = rho_cr
         self.dyn_vis_cr = dyn_vis_cr
         self.V_cr = V_cr
@@ -852,6 +853,7 @@ class Optiblade:
         self.a_cr = a_cr
         self.T_cr = T_cr
         self.rpm_cr = rpm_cr
+        self.Omega_cr = rpm_cr * 2 * np.pi / 60  # rpm to rad/s
 
         self.rho_h = rho_h
         self.dyn_vis_h = dyn_vis_h
@@ -859,6 +861,8 @@ class Optiblade:
         self.a_h = a_h
         self.T_h = T_h
         self.max_M_tip = max_M_tip
+        self.rpm_h = rpm_h
+        self.delta_pitch = delta_pitch
 
     def blade_design(self, design_thrust_factor):
         # Design the propeller for given conditions
@@ -869,54 +873,54 @@ class Optiblade:
         zeta_init = 0
         zeta, design, V_e, coefs = propeller.optimise_blade(zeta_init)
 
-        # print("Displacement velocity ratio (zeta):", zeta)
-        # print("Advance ratio:", propeller.J())
-        # # [cs, betas, alpha, E, eff, Tc, self.Pc]
-        # print("Chord per station:", design[0])
-        # print("Pitch per station in [deg]:", np.rad2deg(design[1]))
-        # print("AoA per station in [deg]:", np.rad2deg(design[2]))
-        # print("Radial coordinates [m]:", design[3])
-        # print("D/L ratio per station:", design[4])
-        # print("Propeller efficiency:", design[5])
-        # print("Thrust coefficient:", design[6])
-        # print("Power coefficient:", design[7])
-        # print("Exit speed:", V_e)
-
         return zeta, design, V_e, coefs
 
-    def off_design_check(self, design_thrust_factor):
+    # Check the max thrust a certain design can produce
+    def max_T_check(self, blade):
         # Get the blade design
         # Out: zeta_new, [cs, betas, alpha, stations_r, E, eff, self.Tc, Pc], Ves, [Cl, Cd]
-        design_blade = self.blade_design(design_thrust_factor)
-        M_tip = 0.5
-        omega = M_tip*a/R
+        design_blade = blade
 
-        rpm = omega/0.10472
+        # Max tip speed and corresponding rpm
+        omega_max = self.max_M_tip*self.a_h/self.R
+        rpm_max = omega_max/0.10472
 
         # T, Q, eff
+        # TODO: implement max pitch for highest thrust: self.delta_pitch
         blade_hover = OffDesignAnalysisBEM(self.V_h, self.B, self.R, design_blade[1][0], design_blade[1][1],
-                                           design_blade[1][3], design_blade[3][0], design_blade[3][1], rpm,
+                                           design_blade[1][3], design_blade[3][0], design_blade[3][1], rpm_max,
                                            design_blade[0], self.rho_h, self.dyn_vis_h, self.a_h).analyse_propeller()
-
-        # T, Q, eff
-        return [1], [blade_hover[0], blade_hover[1], blade_hover[2]]
+        # Return max thrust
+        return blade_hover[0]
 
     def optimised_blade(self):
 
         # Multiply design (cruise) drag times factor
         thrust_factors = np.arange(1, np.floor(self.T_h / self.T_cr))
 
-        # Design it for as close to cruise thrust as possible
+        # Check if the design can meet thrust requirements, else design it or higher thrust
         index = 0
         max_thrust = 0
         while max_thrust < self.T_h:
             thrust_factor = thrust_factors[index]
-            blade = self.off_design_check(thrust_factor)
 
-            max_thrust = blade[1][1]
+            # Design optimum blade for the thrust condition
+            blade = self.blade_design(thrust_factor)
+
+            # Check whether the max thrust is enough, once it is the loop ends
+            max_thrust = self.max_T_check(blade)
+
             index += 1
-        # T, Q, eff
-        return 1
+
+        # Now we have a blade design that can provide the necessary max thrust
+        # Analyse the blade at optimum hover condition to optimise
+        blade_hover = OffDesignAnalysisBEM(self.V_h, self.B, self.R, blade[1][0], blade[1][1],
+                                           blade[1][3], blade[3][0], blade[3][1], self.rpm_h,
+                                           blade[0], self.rho_h, self.dyn_vis_h, self.a_h).analyse_propeller()
+
+        # Return [blade in cruise], [T, Q, eff] of blade in hover, and thrust factor at which the blade is designed
+        # The cost function should maximise both cruise and hover efficiency, so [0][1][5] and [1][2] TODO: check
+        return blade, blade_hover, thrust_factor
 
 
 # Old BEM class, just in case
