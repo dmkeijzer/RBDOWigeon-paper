@@ -30,8 +30,6 @@ class design_optimization(om.ExplicitComponent):
         raise NotImplementedError
 
 
-
-
 prob = om.Problem()
 prob.model.add_subsystem('Integrated_design', design_optimization(), promotes_inputs=['Tail_cone_length,'
                                                                                       'Wing_surface',

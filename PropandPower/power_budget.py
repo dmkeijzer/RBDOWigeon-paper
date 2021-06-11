@@ -1,5 +1,5 @@
 """
-File created for incorporating other systems that require power
+Contains constants for the power budget.
 """
 
 class Power_Budget:
@@ -16,7 +16,7 @@ class Power_Budget:
 
         # Non continuous power
         self.landing_gear = 50  # [W]
-        self.wing_rot_mech = 3000  # [W]
+        self.wing_rot_mech = 3000  # [W] # Might require checks if values are nonesensical
 
     def P_continuous(self):
         return self.avionics + self.airco + self.battery_cooling + self.autopilot + self.trim + self.passenger_power \
