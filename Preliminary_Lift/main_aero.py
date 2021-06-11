@@ -152,10 +152,11 @@ alpha_wp = np.arange(-3,21,0.25)
 Cl_alpha_curve2 = Wing_params.CLa(tc, CDs, CDs_f, Afus, alpha_wp, deda)
 CLwp = Wing_params.CLa_wprop(T, Vcruise,rho,D,ne1,ne2,tc,CDs_w, CDs_f, Afus, alpha_wp, deda)
 print("DeltaV",Wing_params.deltaV(T, Vcruise,rho,D, ne1, ne2))
-plt.plot(alpha_wp, CLwp)
+plt.plot(alpha_wp, CLwp[0])
 plt.plot(alpha_wp, Cl_alpha_curve2)
 plt.show()
 
+print("CLmax wop, CLmaxwp", CLmax, CLwp[1])
 
 
 
