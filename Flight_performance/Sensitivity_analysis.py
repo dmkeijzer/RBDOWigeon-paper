@@ -32,14 +32,14 @@ class sensitivity_analysis:
     def cruising_altitude(self):
 
         # Range of cruising altitudes
-        altitude = np.arange(300, 3000, 300)
+        altitude = np.linspace(300, 3000, 6)
 
         # Arrays to store values
         dist  = np.zeros(np.size(altitude))
         time  = np.zeros(np.size(altitude))
 
         for i, h in enumerate(altitude):
-
+            print(i)
             V = speeds(altitude = h, m = self.MTOM, CLmax=self.CL_max, S = self.S, componentdrag_object = self.Drag)
 
             performance = evtol_performance(cruising_alt = h,  cruise_speed = V.cruise()[0], S = self.S,
@@ -80,7 +80,7 @@ class sensitivity_analysis:
         time = np.zeros(np.size(cruise_speeds))
 
         for i, V_cr in enumerate(cruise_speeds):
-
+            print(i)
             performance = evtol_performance(cruising_alt = self.h_cruise_opt,  cruise_speed = V_cr, S = self.S,
                                             CL_max = self.CL_max, mass = self.MTOM, battery_capacity = self.bat_cap,
                                             EOM = self.EOM, loiter_time = self.loiter_time, A_disk = self.A_disk,
@@ -139,7 +139,7 @@ class sensitivity_analysis:
         # Range with a headwind as high as the wind speed
         if testing:
             test_dist, _ = performance.range(cruising_altitude=self.h_cruise_opt,
-                                          cruise_speed = 60, mass=self.MTOM, wind_speed = test_wind)
+                                             cruise_speed = 60, mass=self.MTOM, wind_speed = test_wind)
             return test_dist
 
         if plotting:
@@ -162,17 +162,18 @@ class sensitivity_analysis:
 
 
 # Data
-MTOM = 3000
-CLmax = 1.7
-S = 14
-comp_drag = Drag
-battery_capacity = 1e7
-EOM = 2500
-loiter_time = 30*60
+mass = 2300
+cruising_alt = 300
+cruise_speed = 62
+CL_max = 1.7
+wing_surface = 14
+EOM = 1500
 A_disk = 8
-P_max = 3e6
+P_max  = 1.4e6
 
-sensitivity = sensitivity_analysis(MTOM, CLmax, S, comp_drag, battery_capacity, EOM, loiter_time, A_disk, P_max)
+sensitivity = sensitivity_analysis(MTOM = mass, CLmax = CL_max, S = wing_surface, comp_drag=Drag,
+                                   battery_capacity=850e6, EOM=EOM, loiter_time= 30*60,
+                                   A_disk = A_disk, P_max = P_max)
 #sensitivity.cruising_altitude()
-#sensitivity.cruise_speed()
+sensitivity.cruise_speed()
 sensitivity.wind()
