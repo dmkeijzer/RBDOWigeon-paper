@@ -20,7 +20,8 @@ def deps_da(Lambda_quarter_chord, b,lh, h_ht, A, CLaw):
             r / (r ** 2 + mtv ** 2) * 0.4876 / (np.sqrt(r ** 2 + 0.6319 + mtv ** 2)) + v * (
             1 - np.sqrt(mtv ** 2 / (1 + mtv ** 2))))
     #print("Configuration %.0f de/da = %.4f "%(conf,de_da))
-    return de_da
+    #print(de_da)
+    return de_da*0.5
 
 def winglet_dAR(AR, h_wl, b): # Gundmundsson 10.5 Wingtip design
 
@@ -28,8 +29,9 @@ def winglet_dAR(AR, h_wl, b): # Gundmundsson 10.5 Wingtip design
 
 class wing_design:
 
-    def __init__(self, AR, s1, sweepc41, s2, sweepc42, M, S, lh, h_ht, w, h_wl1,h_wl2):
-        self.AR_b = AR
+    def __init__(self, AR1, AR2, s1, sweepc41, s2, sweepc42, M, S, lh, h_ht, w, h_wl1,h_wl2):
+        self.AR1 = AR1
+        self.AR2 = AR2
         self.s1 = s1
         self.S1 = s1 * S
         self.sweepc41 = sweepc41
@@ -56,7 +58,7 @@ class wing_design:
         # Wing 1
         self.taper1 = self.taper_opt()[0]
         self.taper2 = self.taper_opt()[1]
-        b1 = np.sqrt(2 * self.AR_b * self.S1)
+        b1 = np.sqrt( self.AR1 * self.S1)
         c_r1 = 2 * self.S1 / ((1 + self.taper1) * b1)
         c_t1 = self.taper1 * c_r1
         c_MAC1 = (2 / 3) * c_r1 * ((1 + self.taper1 + self.taper1 ** 2) / (1 + self.taper1))
@@ -68,7 +70,7 @@ class wing_design:
 
         # Wing 2
 
-        b2 = np.sqrt(2 * self.AR_b * self.S2)
+        b2 = np.sqrt( self.AR2 * self.S2)
         c_r2 = 2 * self.S2 / ((1 + self.taper2) * b2)
         c_t2 = self.taper2 * c_r2
         c_MAC2 = (2 / 3) * c_r2 * ((1 + self.taper2 + self.taper2 ** 2) / (1 + self.taper2))
@@ -91,39 +93,37 @@ class wing_design:
         tan_sweep_LE2 = 0.25 * (2 * c_r2 / b2) * (1 - self.taper2) + np.tan(self.sweepc42)
         sweep2 = np.arctan(tan_sweep_LE2 - x * (2 * c_r2 / b2) * (1 - self.taper2))
         return sweep1, sweep2
-
-    def liftslope(self):
+    def liftslope(self, deda):
         beta = np.sqrt(1 - self.M ** 2)
         SW = np.tan(self.sweep_atx(0.5))
         wg = self.wing_planform_double()
 
-        self.AR_i = 2 * self.AR_b +  winglet_dAR(2 * self.AR_b, self.h_wl1, wg[0][0])
+        self.AR_i = self.AR1 +  winglet_dAR(self.AR2, self.h_wl1, wg[0][0])
         slope1 = self.Clalpha * (self.AR_i / (2 + np.sqrt(4 + ((self.AR_i * beta / 0.95) ** 2) * ((1 + SW ** 2) / (beta ** 2)))))
-        self.AR_2 = 2 * self.AR_b + winglet_dAR(2 * self.AR_b, self.h_wl2, wg[0][0])
+        self.AR_2 = self.AR2 + winglet_dAR(self.AR2, self.h_wl2, wg[0][0])
         slope2_b = self.Clalpha * (self.AR_2 / (2 + np.sqrt(4 + ((self.AR_2 * beta / 0.95) ** 2) * ((1 + SW ** 2) / (beta ** 2)))))
-        deda = deps_da(self.sweepc41, wg[0][0], self.lh, self.h_ht, self.AR_i, slope1)
         slope2 = slope2_b * (1 - deda)
-
+        #print("de_da",deda)
         wfi = 1 + 0.025*(self.w/wg[0][0]) - 0.25*(self.w/wg[0][0])  # wing fuselage interaction factor: effect of fuselage diameter on aerodynamic characteristics for straightwing at low and high aspect ratio
 
         slope_tot = wfi*(slope1 * self.s1 + slope2 * self.s2)
         return slope_tot, slope1*wfi, slope2*wfi, deda, slope1, slope2
 
-    def CLmax_s(self):
-        ls = self.liftslope()
+    def CLmax_s(self, de_da):
+        ls = self.liftslope(de_da)
         CLa = ls[0]
         deda = ls[3]
         CLmax1 = self.clmax *0.9
 
-        alpha_s2 = round(((self.a_saf-self.a_0L)*(1-deda[1]) +self.a_0L)*4)/4
+        alpha_s2 = round(((self.a_saf-self.a_0L)*(1-deda) +self.a_0L)*4)/4
         CLmax2 = 0.9* airfoil_datapoint("CL", "Stall",alpha_s2)
         CLmax = self.s1*CLmax1 +self.s2*CLmax2
         self.a_s = (180/np.pi)* CLmax/CLa + self.a_0L
         return CLmax, CLmax1, CLmax2, self.a_s
 
-    def post_stall_lift_drag(self, tc, CDs_W, CDs_f, Afus):
+    def post_stall_lift_drag(self, tc, CDs_W, CDs_f, Afus, de_da):
         #Wing
-        stall = self.CLmax_s()
+        stall = self.CLmax_s(de_da)
         CLs = stall[0]
         a_s = self.a_s[1]* np.pi/180
         A1 = 0.5*(1.1 + 0.018* self.AR_i)
@@ -141,10 +141,10 @@ class wing_design:
         CD_ps_f = CDmax_f * np.sin(alpha_ps) + B2_f * np.cos(alpha_ps)
         return alpha_ps, CL_ps, CD_ps, CD_ps_f
 
-    def CLa(self, tc, CDs_W, CDs_f, Afus, alpha_lst):
+    def CLa(self, tc, CDs_W, CDs_f, Afus, alpha_lst, de_da):
 
-        poststall = self.post_stall_lift_drag(tc, CDs_W, CDs_f, Afus)
-        CLa = self.liftslope()
+        poststall = self.post_stall_lift_drag(tc, CDs_W, CDs_f, Afus, de_da)
+        CLa = self.liftslope(de_da)
         alpha = np.arange(-5,self.a_s[1],0.25)
         CL = (np.pi/180)*CLa[0][0]*(alpha - self.a_0L)
         alpha = np.append(alpha,poststall[0]*180/np.pi)
@@ -153,12 +153,12 @@ class wing_design:
         curve = interp1d(alpha,CL, kind = 'quadratic')
         return curve(alpha_lst)
 
-    def CDa_poststall(self, tc, CDs_W, CDs_f, Afus, alpha_lst, type, CD):
+    def CDa_poststall(self, tc, CDs_W, CDs_f, Afus, alpha_lst, type, CD, de_da):
 
-        drag_post = self.post_stall_lift_drag(tc, CDs_W, CDs_f, Afus)
+        drag_post = self.post_stall_lift_drag(tc, CDs_W, CDs_f, Afus, de_da)
         if type=="wing":
             alpha_pre= np.arange(-3,self.a_s[1], 0.1)
-            CL_lst = self.CLa(tc, CDs_W, CDs_f, Afus, alpha_pre)
+            CL_lst = self.CLa(tc, CDs_W, CDs_f, Afus, alpha_pre, de_da)
             CD_pre_lst = CD(CL_lst)- CDs_f
             alpha = np.append(alpha_pre, drag_post[0]*180/np.pi)
             drag_w = np.append(CD_pre_lst,drag_post[2])
@@ -171,5 +171,54 @@ class wing_design:
 
             fdrag = interp1d(alpha, drag_f)
             return fdrag(alpha_lst)
+    def C_T(self,ne1,ne2, T, V_inf, rho):
+        self.T = T
+        self.V_inf = V_inf
+        self.rho = rho
+        return (ne1+ne2)*self.T/(self.rho*((self.V_inf)**2)*self.S)
+
+    def CL_T(self,T, V_inf, rho,  alpha_wp, ne1,ne2):
+        self.alphawp = alpha_wp
+        return np.sin(self.alphawp*(np.pi/180))*self.C_T(T, V_inf, rho, ne1,ne2)
+    def deltaV(self, T, V_inf, rho, D, ne1 , ne2):
+        self.D = D
+        return V_inf * ( np.sqrt(1+ (self.C_T(T, V_inf, rho, ne1, ne2)*self.S)/((ne1+ne2)*(np.pi/4)*self.D**2))-1)
+    def Deff(self, T, V_inf, rho, D , ne1 , ne2):
+        return D*np.sqrt((V_inf+self.deltaV(T, V_inf, rho, D, ne1 , ne2)*0.5)/(V_inf+self.deltaV(T, V_inf, rho, D , ne1, ne2)))
+    def a_ss(self, T, V_inf, rho, D ,alpha_wp, ne1, ne2):
+
+        return (180/np.pi)*np.arctan2(V_inf*np.sin(alpha_wp*np.pi/180),(V_inf*np.cos(alpha_wp*np.pi/180)+ self.deltaV(T, V_inf, rho, D , ne1, ne2)*0.5)) - self.a_0L
+    def Aseff(self, n_e1, n_e2, T, V_inf, rho, D):
+        self.n_e1 = n_e1
+        self.n_e2 = n_e2
+        self.b1 = np.sqrt(self.AR1*self.S1)
+        self.b2 = np.sqrt(self.AR2*self.S2)
+        AS1 = (self.n_e1*self.Deff(T, V_inf, rho, D, n_e1, n_e2)**2)/self.b1
+        AS2 = (self.n_e2*self.Deff(T, V_inf, rho, D, n_e1, n_e2)**2)/self.b2
+        ASeff1 = AS1+ (self.AR1 - AS1)*(V_inf/(self.deltaV( T, V_inf, rho, D , n_e1, n_e2) + V_inf))**(self.AR1-AS1)
+        ASeff2 = AS2 + (self.AR2 - AS2) * (V_inf / (self.deltaV( T, V_inf, rho, D, n_e1, n_e2) + V_inf)) ** (self.AR2 - AS2)
+        return ASeff1, ASeff2
+    def CL_W_S(self,  T, V_inf, rho, D , n_e1, n_e2, tc, CDs_W, CDs_f, Afus, alpha_wp, de_da):
+        self.b1 = np.sqrt(self.AR1 * self.S1)
+        self.b2 = np.sqrt(self.AR2 * self.S2)
+        pt1 = 2*self.CLa(tc, CDs_W, CDs_f, Afus, alpha_wp, de_da)/(np.pi*self.AR1)
+        pt2 = 2*self.CLa(tc, CDs_W, CDs_f, Afus, alpha_wp, de_da)/(np.pi*self.AR2)
+        pt3 = 2*self.CLa(tc, CDs_W, CDs_f, Afus, self.a_ss(T, V_inf, rho, D , alpha_wp, n_e1, n_e2), de_da)/(np.pi*self.AR1)  #self.a_ss(T, V_inf, rho, D , alpha_wp)
+        pt4 = 2*self.CLa(tc, CDs_W, CDs_f, Afus, self.a_ss(T, V_inf, rho, D , alpha_wp, n_e1, n_e2), de_da)/(np.pi*self.AR2)
+        self.CLW1 = (2/self.S1)*((np.pi/4)*self.b1**2 - n_e1*(np.pi/4)*self.Deff(T, V_inf, rho, D, n_e1, n_e2))*pt1
+        self.CLW2 = (2 / self.S2) * ((np.pi / 4) * self.b1 ** 2 - n_e2 * (np.pi / 4) * self.Deff(T, V_inf, rho, D, n_e1, n_e2))*pt2
+        self.CLS1 = n_e1*(np.pi*(self.Deff(T, V_inf, rho, D, n_e1, n_e2)**2 )/(2*self.S1))*((self.V_inf +self.deltaV( T, V_inf, rho, D, n_e1, n_e2))**2/self.V_inf**2)* pt3
+        self.CLS2 = n_e2 * (np.pi * (self.Deff(T, V_inf, rho, D, n_e1, n_e2)**2) / (2 * self.S1)) * ((self.V_inf + self.deltaV( T, V_inf, rho, D, n_e1, n_e2)) ** 2 / self.V_inf ** 2)*pt4
+        CLWS1 = self.CLW1 + self.CLS1
+        CLWS2 = self.CLW2 + self.CLS2
+        return CLWS1 , CLWS2
+
+    def CLa_wprop(self,  T, V_inf, rho, D , ne1,ne2, tc, CDs_W, CDs_f, Afus, alpha_wp, de_da):
+        alpha = np.arange(-5, self.a_s[1]+3, 0.25)
+        CLaw = self.s1 *self.CL_W_S(  T, V_inf, rho, D ,ne1,ne2, tc, CDs_W, CDs_f, Afus, alpha, de_da)[0] + self.s2*self.CL_W_S(  T, V_inf, rho, D , ne1,ne2,tc, CDs_W, CDs_f, Afus, alpha, de_da)[1] + self.CL_T(T, V_inf, rho,  alpha, ne1,ne2)
+        curve = interp1d(alpha, CLaw, kind='quadratic')
+        CLmaxwp = curve(self.a_s[1])
+        return curve(alpha_wp), CLmaxwp
+
 
 

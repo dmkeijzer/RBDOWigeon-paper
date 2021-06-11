@@ -11,7 +11,7 @@ from Preliminary_Lift.Airfoil_analysis import airfoil_stats
 import os
 import json
 import matplotlib.pyplot as plt
-from LLTtest2 import LLT1wing , LLT2wings
+from LLTtest2 import LLT1wing , LLT2wings, downwash, downwash_upwash
 from scipy.special import ellipk, ellipe
 from scipy.interpolate import interp1d
 root_path = os.path.join(os.getcwd(), os.pardir)
@@ -21,7 +21,7 @@ data = json.load(datafile)
 datafile.close()
 FP = data["Flight performance"]
 STR = data["Structures"]
-AR = 4.5
+AR = 3.75
 
 
 W = STR["MTOW"] #[N]
@@ -37,7 +37,7 @@ a = atm_flight.soundspeed()
 M = Mach(Vcruise,a)
 
 #Wing planform
-S_ref = 16.6 #W/Wing_loading #[m**2] PLACEHOLDER
+S_ref = 17.095 #W/Wing_loading #[m**2] PLACEHOLDER
 print("S", S_ref)
 b = np.sqrt(AR*S_ref) # Due to reqs
 
@@ -63,16 +63,27 @@ d_eq = np.sqrt(h_max*w_max)
 #Winglets
 h_wl1 =0
 h_wl2 = 0
-Wing_params = wing_design(AR,s1,sweepc41,s2,sweepc42,M,S_ref, l_h,h_d,w_max,h_wl1,h_wl2)
+Wing_params = wing_design(2*AR, 2*AR, s1,sweepc41,s2,sweepc42,M,S_ref, l_h,h_d,w_max,h_wl1,h_wl2)
 b = Wing_params.wing_planform_double()[0][0]
 C_r = Wing_params.wing_planform_double()[0][1]
 C_t = Wing_params.wing_planform_double()[0][2]
 print(b,C_r,C_t)
 MAC = Wing_params.wing_planform_double()[0][3]
 SweepLE = Wing_params.sweep_atx(0)[0]
-Slope1 = Wing_params.liftslope()[1]
-print("Deps_Da", Wing_params.liftslope()[3])
-CLmax = Wing_params.CLmax_s()
+deda = downwash(Wing_params.wing_planform_double()[0][0] , Wing_params.AR1,
+                Wing_params.wing_planform_double()[0][1], Wing_params.wing_planform_double()[0][2], Wing_params.sweepc41, 5, Wing_params.h_ht,
+                Wing_params.lh, Wing_params.wing_planform_double()[1][0] ,
+                Wing_params.wing_planform_double()[0][1], Wing_params.wing_planform_double()[0][2], Wing_params.sweepc41,
+                70)  # deps_da(self.sweepc41, wg[0][0], self.lh, self.h_ht, self.AR_i, slope1)
+
+deda2 = downwash_upwash(Wing_params.wing_planform_double()[0][0] , Wing_params.AR1,
+                Wing_params.wing_planform_double()[0][1], Wing_params.wing_planform_double()[0][2], Wing_params.sweepc41, 5, Wing_params.h_ht,
+                Wing_params.lh, Wing_params.wing_planform_double()[1][0] , Wing_params.AR2,
+                Wing_params.wing_planform_double()[0][1], Wing_params.wing_planform_double()[0][2], Wing_params.sweepc42,
+                70)
+Slope1 = Wing_params.liftslope(deda)[1]
+print("Deps_Da", Wing_params.liftslope(deda)[3], deda2)
+CLmax = Wing_params.CLmax_s(deda)
 
 #For Drag estimation
 k = 0.634 * 10**(-5) # Smooth paint from adsee 2 L2
@@ -104,7 +115,7 @@ print("S_f", Swet_f)
 print("CLdes", CL_design)
 
 #Stall
-stall = Wing_params.CLmax_s()
+stall = Wing_params.CLmax_s(deda)
 CLmax = stall[0]
 
 CDs = Drag.CD(CLmax)
@@ -112,15 +123,15 @@ CDs_f = Drag.CD0_f
 CDs_w = CDs - CDs_f
 #Post stall
 Afus = np.pi *d_eq**2/4
-post_stall = Wing_params.post_stall_lift_drag(tc, CDs, CDs_f, Afus)
+post_stall = Wing_params.post_stall_lift_drag(tc, CDs, CDs_f, Afus, deda)
 
 alpha_lst = np.arange(-3,89,0.1)
-Cl_alpha_curve = Wing_params.CLa(tc, CDs, CDs_f, Afus, alpha_lst)
+Cl_alpha_curve = Wing_params.CLa(tc, CDs, CDs_f, Afus, alpha_lst, deda)
 
-CD_a_w = Wing_params.CDa_poststall(tc, CDs_w, CDs_f, Afus, alpha_lst, "wing", Drag.CD)
-CD_a_f = Wing_params.CDa_poststall(tc, CDs_w, CDs_f, Afus, alpha_lst, "fus", Drag.CD)
+CD_a_w = Wing_params.CDa_poststall(tc, CDs_w, CDs_f, Afus, alpha_lst, "wing", Drag.CD, deda)
+CD_a_f = Wing_params.CDa_poststall(tc, CDs_w, CDs_f, Afus, alpha_lst, "fus", Drag.CD, deda)
 
-plt.plot(alpha_lst, CD_a_w)
+plt.plot(alpha_lst, Cl_alpha_curve)
 plt.show()
 
 #x = optimize_wingtips(0,0.2,0.005, 1.5, 'tandem',S_ref,l1,l2,l3,d_eq,Vcruise,rho,MAC,AR,Mach(Vcruise,a),k,flamf,flamw,mu,tc,xcm,0,SweepLE,u,C_t,h_d,IF_f,IF_w, IF_v, CL_CDmin,Abase, S_v, s1, s2)
@@ -128,10 +139,25 @@ plt.show()
 #
 #print(x)
 
-x = LLT2wings(b,AR*2,C_r,C_t,0,5, h_d, l_h,b,AR*2,C_r,C_t,0,5, 70)
-print(b,C_t, C_r)
+#x = LLT2wings(b,AR*2,C_r,C_t,0,5, h_d, l_h,b,AR*2,C_r,C_t,0,5, 70)
+#print(b,C_t, C_r)
 #x = LLT1wing
-print(x)
+#print(x)
+D = 0.965 #m
+T = 146.5 #N
+ne1 = 6
+ne2 = 6
+
+alpha_wp = np.arange(-3,21,0.25)
+Cl_alpha_curve2 = Wing_params.CLa(tc, CDs, CDs_f, Afus, alpha_wp, deda)
+CLwp = Wing_params.CLa_wprop(T, Vcruise,rho,D,ne1,ne2,tc,CDs_w, CDs_f, Afus, alpha_wp, deda)
+print("DeltaV",Wing_params.deltaV(T, Vcruise,rho,D, ne1, ne2))
+plt.plot(alpha_wp, CLwp[0])
+plt.plot(alpha_wp, Cl_alpha_curve2)
+plt.show()
+
+print("CLmax wop, CLmaxwp", CLmax, CLwp[1])
+
 
 
 
