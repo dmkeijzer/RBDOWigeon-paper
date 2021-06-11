@@ -30,7 +30,7 @@ class VT_sizing:
         self.Sweepc2fwd = self.Sweep(Afwd,self.Sweepc4fwd,50,25)
         self.Sweepc2rear = self.Sweep(Arear, self.Sweepc4rear, 50, 25)
         self.V0 = V0       # Initial speed [m/s]
-        self.M0 = self.V0/(1.4*287*self.T) # Initial mach number [-]
+        self.M0 = self.V0/(np.sqrt(1.4*287*self.T)) # Initial mach number [-]
         self.Re = self.rho*self.V0*self.lfus/self.mu
         self.CLafwd, self.CLarear = CLafwd, CLarear # Wing lift curve slopes for both wings [1/rad]
         # self.Cmacfwd, self.Cmacrear = Cmacfwd,Cmacrear

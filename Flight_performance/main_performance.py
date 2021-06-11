@@ -1,17 +1,17 @@
-from Flight_performance_final import mission, evtol_performance
+from Flight_performance_final import mission, evtol_performance, Drag
 from Aero_tools import speeds
 
 
 # ========== Inputs ==========
 # TODO: Make consistent with the sizing done in midterm new
 mass = 2300
-cruising_alt = 200
+cruising_alt = 300
 cruise_speed = 62
 CL_max = 1.7
 wing_surface = 14
 EOM = 1500
 A_disk = 8
-P_max  = 1.5e6
+P_max  = 1.4e6
 
 # Energy estimation and plotting
 mission_profile = mission(mass, cruising_alt, cruise_speed, CL_max, wing_surface, A_disk = A_disk, P_max = P_max,
@@ -27,6 +27,15 @@ performance = evtol_performance(cruising_alt, cruise_speed, wing_surface, CL_max
                                 EOM = EOM, A_disk = A_disk, P_max = P_max, loiter_time = 30*60)
 
 # Performance things
-performance.climb_performance()
+performance.power_polar(cruising_alt)
+V_climb = performance.climb_performance()
 performance.vertical_climb()
 performance.payload_range()
+
+# Optimal speeds
+V = speeds(cruising_alt, mass, CL_max, wing_surface, Drag)
+
+print("===== Optimal speeds =====")
+print("Stall speed:", V.stall())
+print("Cruise speed:", V.cruise()[0])
+print("Climb speed:", V_climb)

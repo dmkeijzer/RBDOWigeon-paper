@@ -481,7 +481,7 @@ class evtol_performance:
         :return: P_a: available power
         """
 
-        P_a = T * V + 1.2 * T * (-V / 2 + np.sqrt(V ** 2 / 4 + T / (2 * rho * self.A_disk)))
+        P_a = T * V + 1.2 * T * ((-V / 2) + np.sqrt((V**2)/4 + (T / (2 * rho * self.A_disk))))
 
         # Interpolate between efficiencies
         eff = eff_hover + V*(eff_prop - eff_hover)/self.v_cruise
@@ -505,7 +505,7 @@ class evtol_performance:
     def climb_performance(self, testing = False):
 
         # Altitudes to consider climb performance at
-        altitudes   = np.array([300, 3000])
+        altitudes   = np.array([self.h_cruise, 3000])
 
         for h in altitudes:
 
@@ -521,23 +521,37 @@ class evtol_performance:
             # Lift coefficient
             CL  = 2*self.W/(rho*V*V*self.S)
 
-            # Drag coefficient !!! CHANGE !!!
-            CD  = Drag.CD(CL)
+            err = 1
+            while np.any(err > 0.1):
+                # Drag coefficient
+                CD  = Drag.CD(CL)
 
-            # Drag
-            D   = CD*0.5*rho*V*V*self.S
+                # Drag
+                D   = CD*0.5*rho*V*V*self.S
 
-            # Maximum available thrust
-            T   = self.max_thrust(rho, V)
+                # Maximum available thrust
+                T   = self.max_thrust(rho, V)
 
-            # Climb rate, setting a hard limit on climbs more than 90 degrees
-            RC = np.minimum((T - D)/self.W, 1)*V
+                gamma = np.arcsin(np.minimum((T - D)/self.W, 1))
+
+                # Climb rate, setting a hard limit on climbs more than 90 degrees
+                RC = np.minimum((T - D)/self.W, 1)*V
+
+                CLnew = 2*self.W*np.cos(gamma)/(rho*V*V*self.S)
+
+                err = abs(CL - CLnew)
+
+                CL = CLnew
 
             # Plot results
             plt.plot(V, RC, label = 'Altitude: ' + str(h))
 
+            if h == self.h_cruise:
+
+                idx = np.argmax(np.abs(RC))
+
             # If running a test, return the speed for which the rate of climb is closest to zero
-            if h == 300 and testing:
+            if h == self.h_cruise and testing:
 
                 idx = np.argmin(np.abs(RC))
 
@@ -550,6 +564,8 @@ class evtol_performance:
         plt.tight_layout()
         plt.savefig(self.path + 'Climb_performance_cruise' + '.pdf')
         plt.show()
+
+        return V[idx]
 
     def vertical_equilibrium(self, altitude, m, testing = False, test_thrust = 0):#rate_of_climb, altitude, m, testing = False, test_thrust = None):
 
@@ -654,7 +670,7 @@ class evtol_performance:
     def payload_range(self):
 
         # Range of payload masses
-        payload_mass = np.arange(0, 500, 100)
+        payload_mass = np.linspace(0, self.m - self.EOM, 5)
 
         # Total mass
         mass = payload_mass + self.EOM
@@ -666,7 +682,8 @@ class evtol_performance:
         for i, m in enumerate(mass):
 
             # Get the range
-            d_cr[i], t_cr[i] = self.range(cruising_altitude=self.h_cruise, cruise_speed = self.v_cruise,mass = m, loiter = True)
+            d_cr[i], t_cr[i] = self.range(cruising_altitude=self.h_cruise, cruise_speed = self.v_cruise, mass = m,
+                                          loiter = True)
 
         # Plot results
         plt.plot(d_cr/1000, payload_mass)
@@ -677,26 +694,28 @@ class evtol_performance:
         plt.savefig(self.path + 'Payload_range' + '.pdf')
         plt.show()
 
+    def power_polar(self, h):
 
-# Test data
-m = 3000
-h_cr = 300
-v_cr = 65
-CLmax = 1.7
-S = 14
-A_disk = 8
+        rho = ISA(h).density()
 
-# a = mission(mass = m, cruising_alt = h_cr, cruise_speed = v_cr, CL_max= CLmax, wing_surface = S, t_loiter = 30*60,
-#             A_disk = A_disk, plotting = False)
-#
-# E_total, t_total = a.total_energy()
-# print(E_total, t_total)
-#
-# b = evtol_performance(cruising_alt = 300, cruise_speed = 60, CL_max=1.5, A_disk=10, S = 14, battery_capacity=E_total*1.2,
-#                       mass = m, EOM = m - 475, loiter_time = 30*60, P_max = 3000000)
-#
-# b.climb_performance()
-# b.payload_range()
-# b.vertical_climb()
+        speed = speeds(h, self.m, self.CL_max, self.S, Drag)
+
+        V   = np.linspace(speed.stall(), 200, 200)
+
+        # Calculate the drag
+        CL  = 2*self.W/(rho*V*V*self.S)
+        CD  = Drag.CD(CL)
+
+        D   = CD*0.5*rho*V*V*self.S
+
+        # Brake power required
+        P_br = self.thrust_to_power(D, V, rho) + self.P_max
+
+        plt.plot(V, P_br)
+        plt.plot(V, D*V)
+        plt.plot(V, P_br - D*V)
+        plt.grid()
+        plt.show()
+
 
 

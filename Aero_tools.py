@@ -84,6 +84,11 @@ class speeds:
 
     def climb(self):
 
+        """"
+        Climb speed, note that this is only a first order estimate, and should not be used when the climb angle is steep
+        For steep climb angles, the required CL is less, and the maximum rate-of-climb will be at a different speed.
+        """
+
         CL3CD2 = (self.CL**3)/(self.CD**2)
 
         idx = np.argmax(CL3CD2)
