@@ -36,9 +36,9 @@ eff_prop = 0.83    # [-] Propeller efficiency during normal flight
 eff_hover = 0.88   # [-] Propeller efficiency during hover
 
 # Power
-sp_en_den = 500     # [Wh/kg] Specific energy density
-vol_en_den = 1000   # [Wh/l] Volumetric energy density
-bat_cost = 80       # [$/kg] Cost of batteries in US dollars per kilogram
+sp_en_den = 450     # [Wh/kg] Specific energy density
+vol_en_den = 900    # [Wh/l] Volumetric energy density
+bat_cost = 100       # [$/kWh] Cost of batteries in US dollars per kilogram
 DoD = 0.8           # [-] Depth of Discharge of the total battery
 P_den = 10000       # [W/kg] Power density of battery
 EOL_C = 0.8         # [-] Fraction of initial capacity that is available at end-of-life
