@@ -88,14 +88,14 @@ class Control_surface:
         b = max(self.bfwd,self.brear)
         c_r_fwd = self.cfwd * 3 / 2 * (1 + self.taper) / (1 + self.taper + self.taper ** 2)
         c_r_rear =  self.crear*3/2*(1+self.taper)/(1+self.taper+self.taper**2)
-        Clp_fwd =-(self.Clafwd+self.Cd0fwd)*c_r_fwd*self.bfwd/(24*self.Sfwd)
-        Clp_rear = -(self.Clarear + self.Cd0rear) * c_r_rear * self.brear/(24 * self.Srear)
+        Clp_fwd =-(self.Clafwd+self.Cd0fwd)*c_r_fwd*self.bfwd/(24*self.Sfwd)*(1+3*self.taper)
+        Clp_rear = -(self.Clarear + self.Cd0rear) * c_r_rear * self.brear/(24 * self.Srear)*(1+3*self.taper)
         Clp = Clp_fwd*self.Sfwd*self.bfwd/(self.S*b)+Clp_rear*self.Srear*self.brear/(self.S*b)
         return Clp
 
     def plotting(self,Sa_S,b1,b2,rear):
         if isinstance(Sa_S,(float,int)) and not isinstance(b2,(float,int)):
-            da_max = 30*np.pi/180*0.85
+            da_max = 30*np.pi/180
             dphi_dt = 60*np.pi/180/1.3
             minClda = -(dphi_dt)*self.Clp()*max(self.bfwd,self.brear)/(2*self.Vmc*da_max)
             minClda = np.ones(len(b2))*minClda
@@ -145,9 +145,10 @@ class Control_surface:
             plt.legend()
             plt.show()
         else:
-            da_max = 30 * np.pi / 180*0.75
+            da_max = 30 * np.pi / 180
             dphi_dt = 60 * np.pi / 180 /1.3
             minClda = -(dphi_dt) * self.Clp() * max(self.bfwd, self.brear) / (2 * self.Vmc * da_max)
+            # print("minClda = %.5f"%(minClda))
             X, Y = np.meshgrid(b2, Sa_S)
             Z =  self.Clda(Y,b1, X,rear)
             fig, ax = plt.subplots(1, 1)
