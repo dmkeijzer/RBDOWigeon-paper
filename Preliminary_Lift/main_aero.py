@@ -11,7 +11,7 @@ from Preliminary_Lift.Airfoil_analysis import airfoil_stats
 import os
 import json
 import matplotlib.pyplot as plt
-from LLTtest2 import LLT1wing , LLT2wings
+from Preliminary_Lift.LLTtest2 import LLT1wing , LLT2wings, downwash, downwash_upwash
 from scipy.special import ellipk, ellipe
 from scipy.interpolate import interp1d
 root_path = os.path.join(os.getcwd(), os.pardir)
@@ -21,7 +21,7 @@ data = json.load(datafile)
 datafile.close()
 FP = data["Flight performance"]
 STR = data["Structures"]
-AR = 4.5
+AR = 3.75
 
 
 W = STR["MTOW"] #[N]
@@ -37,7 +37,7 @@ a = atm_flight.soundspeed()
 M = Mach(Vcruise,a)
 
 #Wing planform
-S_ref = 16.6 #W/Wing_loading #[m**2] PLACEHOLDER
+S_ref = 17.095 #W/Wing_loading #[m**2] PLACEHOLDER
 print("S", S_ref)
 b = np.sqrt(AR*S_ref) # Due to reqs
 
@@ -76,8 +76,13 @@ deda = downwash(Wing_params.wing_planform_double()[0][0] , Wing_params.AR1,
                 Wing_params.wing_planform_double()[0][1], Wing_params.wing_planform_double()[0][2], Wing_params.sweepc41,
                 70)  # deps_da(self.sweepc41, wg[0][0], self.lh, self.h_ht, self.AR_i, slope1)
 
+deda2 = downwash_upwash(Wing_params.wing_planform_double()[0][0] , Wing_params.AR1,
+                Wing_params.wing_planform_double()[0][1], Wing_params.wing_planform_double()[0][2], Wing_params.sweepc41, 5, Wing_params.h_ht,
+                Wing_params.lh, Wing_params.wing_planform_double()[1][0] , Wing_params.AR2,
+                Wing_params.wing_planform_double()[0][1], Wing_params.wing_planform_double()[0][2], Wing_params.sweepc42,
+                70)
 Slope1 = Wing_params.liftslope(deda)[1]
-print("Deps_Da", Wing_params.liftslope(deda)[3])
+print("Deps_Da", Wing_params.liftslope(deda)[3], deda2)
 CLmax = Wing_params.CLmax_s(deda)
 
 #For Drag estimation
@@ -147,10 +152,11 @@ alpha_wp = np.arange(-3,21,0.25)
 Cl_alpha_curve2 = Wing_params.CLa(tc, CDs, CDs_f, Afus, alpha_wp, deda)
 CLwp = Wing_params.CLa_wprop(T, Vcruise,rho,D,ne1,ne2,tc,CDs_w, CDs_f, Afus, alpha_wp, deda)
 print("DeltaV",Wing_params.deltaV(T, Vcruise,rho,D, ne1, ne2))
-plt.plot(alpha_wp, CLwp)
+plt.plot(alpha_wp, CLwp[0])
 plt.plot(alpha_wp, Cl_alpha_curve2)
 plt.show()
 
+print("CLmax wop, CLmaxwp", CLmax, CLwp[1])
 
 
 

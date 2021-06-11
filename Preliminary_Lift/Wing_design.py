@@ -1,7 +1,6 @@
 import numpy as np
 from Preliminary_Lift.Airfoil_analysis import airfoil_stats, airfoil_datapoint
 from scipy.interpolate import interp1d
-from LLTtest2 import downwash
 def deps_da(Lambda_quarter_chord, b,lh, h_ht, A, CLaw):
     """
     Inputs:
@@ -218,8 +217,8 @@ class wing_design:
         alpha = np.arange(-5, self.a_s[1]+3, 0.25)
         CLaw = self.s1 *self.CL_W_S(  T, V_inf, rho, D ,ne1,ne2, tc, CDs_W, CDs_f, Afus, alpha, de_da)[0] + self.s2*self.CL_W_S(  T, V_inf, rho, D , ne1,ne2,tc, CDs_W, CDs_f, Afus, alpha, de_da)[1] + self.CL_T(T, V_inf, rho,  alpha, ne1,ne2)
         curve = interp1d(alpha, CLaw, kind='quadratic')
-
-        return curve(alpha_wp)
+        CLmaxwp = curve(self.a_s[1])
+        return curve(alpha_wp), CLmaxwp
 
 
 
