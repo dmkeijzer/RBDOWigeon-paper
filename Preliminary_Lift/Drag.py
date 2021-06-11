@@ -3,6 +3,7 @@ from math import *
 from Preliminary_Lift.Airfoil_analysis import Cd
 from Preliminary_Lift.Wing_design import winglet_dAR
 import matplotlib.pyplot as plt
+from scipy.interpolate import interp1d
 #
 # From BOX WING FUNDAMENTALS - A DESIGN PERSPECTIVE
 # Oswald efficiency factor depending on the wing type
@@ -37,7 +38,7 @@ def C_L(phase, CDmin, AR, e, C_LforCDmin):
 
 
 class componentdrag:
-    def __init__(self, type, S_ref, l1, l2, l3, d, V_cr, rho, MAC, AR, M_cr, k, frac_lam_f, frac_lam_w, mu, tc,xcm,sweepm, sweepLE, u, c_t,h, IF_f, IF_w,IF_v, C_L_minD, Abase, S_v,s1,s2, h_wl1,h_wl2):
+    def __init__(self, type, S_ref, l1, l2, l3, d, V_cr, rho, MAC, AR1, AR2, M_cr, k, frac_lam_f, frac_lam_w, mu, tc,xcm,sweepm, sweepLE, u, c_t,h, IF_f, IF_w,IF_v, C_L_minD, Abase, S_v,s1,s2, h_wl1,h_wl2):
         self.S_ref = S_ref
         self.l1 = l1
         self.l2 = l2
@@ -46,10 +47,10 @@ class componentdrag:
         self.V = V_cr
         self.rho = rho
         self.c = MAC
-        self.b = np.sqrt(AR*S_ref)
+        self.b = np.sqrt((0.5*(s1*AR1+s2*AR2))*S_ref)
         self.h_wl1 = h_wl1
         self.h_wl2 = h_wl2
-        self.AR = AR + s1*winglet_dAR(AR*2,self.h_wl1, np.sqrt(AR*S_ref))+ s2*winglet_dAR(AR*2,self.h_wl2, np.sqrt(AR*S_ref))
+        self.AR = 0.5*(s1*(AR1+winglet_dAR(AR1,self.h_wl1, np.sqrt(AR1*S_ref*s1)))+ s2*(AR2+winglet_dAR(AR2,self.h_wl2, np.sqrt(AR2*S_ref*s2))))
         self.e = e
         self.M = M_cr
         self.k = k
@@ -75,22 +76,27 @@ class componentdrag:
         self.h = h
 
     def e_OS(self):
-        return 0.95 #1.78 * (1 - 0.045 * self.AR ** 0.68) - 0.64
+        AR = [4,6,8,10]
+        e = [0.997, 0.993,0.990, 0.98]
+        curve = interp1d(AR, e)
+        if self.AR <4:
 
+            return 0.997
+        else:
+            return curve(self.AR)
     def e_factor(self):
         """
         h = height difference between wings
         b = span
         """
+        ratio = self.h / self.b
         if self.type == 'box':
-            ratio = self.h / self.b
             return self.e_OS() * (0.44 + ratio * 2.219) / (0.44 + ratio * 0.9594)
         if self.type == 'tandem':
-            ratio = self.h / self.b
             factor = 0.5 + (1 - 0.66 * ratio) / (2.1 + 7.4 * ratio)
             return self.e_OS() * factor ** (-1)
         if self.type == 'normal':
-            return self.e_OS()
+            return (1 + (1-0.66*ratio)/(1.05+3.7*ratio))**(-1)
     def Swet_f(self):
 
         return (np.pi * self.d/4)* (((1/(3*self.l1**2))*((4*self.l1**2 +((self.d**2)/4))**1.5 -((self.d**3)/8)) ) -self.d + 4*self.l2 + 2 * np.sqrt(self.l3**2 + (self.d**2)/4 ))
