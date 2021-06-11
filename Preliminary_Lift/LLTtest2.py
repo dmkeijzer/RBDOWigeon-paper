@@ -6,7 +6,7 @@ https://github.com/montagdude/weissinger
 import numpy as np
 from math import *
 from matplotlib import pyplot as plt
-from Wing_design import deps_da
+#from Preliminary_Lift.Wing_design import deps_da
 from Aero_tools import ISA
 from scipy.interpolate import interp1d
 from scipy.integrate import quad, trapz
