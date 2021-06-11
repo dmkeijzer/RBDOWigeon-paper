@@ -66,8 +66,9 @@ class wing_design:
         tan_sweep_LE1 = 0.25 * (2 * c_r1 / b1) * (1 - self.taper1) + np.tan(self.sweepc41)
 
         X_LEMAC1 = y_MAC1 * tan_sweep_LE1
-        wing1 = [b1, c_r1, c_t1, c_MAC1, y_MAC1, X_LEMAC1]
-
+        AReff1 = self.AR1 +winglet_dAR(self.AR1, self.h_wl1, b1)
+        beff1 = b1*np.sqrt(AReff1/self.AR1)
+        wing1 = [b1, c_r1, c_t1, c_MAC1, y_MAC1, X_LEMAC1, AReff1, beff1]
         # Wing 2
 
         b2 = np.sqrt( self.AR2 * self.S2)
@@ -78,7 +79,10 @@ class wing_design:
         tan_sweep_LE2 = 0.25 * (2 * c_r2 / b2) * (1 - self.taper2) + np.tan(self.sweepc42)
 
         X_LEMAC2 = y_MAC2 * tan_sweep_LE2
-        wing2 = [b2, c_r2, c_t2, c_MAC2, y_MAC2, X_LEMAC2]
+        AReff2 = self.AR2 + winglet_dAR(self.AR2, self.h_wl2, b2)
+        beff2 = b1 * np.sqrt(AReff2 / self.AR2)
+        wing2 = [b2, c_r2, c_t2, c_MAC2, y_MAC2, X_LEMAC2, AReff2, beff2]
+        #print(wing2)
 
         return wing1, wing2
 
