@@ -30,7 +30,7 @@ class Battery:
         m_en = self.energy/self.sp_en_den
         m_p = self.P_max/self.P_den
         bat_mass = max(m_en,m_p)
-        return bat_mass/self.DoD
+        return bat_mass/self.DoD*100
 
     def volume(self):
         """
