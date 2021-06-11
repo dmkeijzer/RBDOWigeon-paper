@@ -4,13 +4,14 @@ from matplotlib import pyplot as plt
 from matplotlib import colors as mc
 from Aero_tools import ISA
 from stab_and_ctrl.Aileron_Sizing import Control_surface
+from stab_and_ctrl.Vertical_tail_sizing import VT_sizing as vertical_tail
 
 class Stab_Derivatives:
     def __init__(self,W,h,lfus,hfus,wfus, d,dy,xcg,zcg,cfwd,crear,Afwd,Arear,Vstall,
                  V0,T0,CLfwd0,CLrear0,CD0,CL0,theta0,alpha0,
                  Clafwd,Clarear, Cd0fwd, Cd0rear, CLafwd,CLarear,Sfwd,Srear,Gamma_fwd,Gamma_rear,
                  efwd,erear,Lambda_c4_fwd,Lambda_c4_rear,taper,taper_v,
-                 bv,Sv,ARv,Pbr,C_D_0,eta_rear,eta_v):
+                 bv,Sv,ARv,sweepTE, Pbr,C_D_0,eta_rear,eta_v):
         self.W = W         # Weight [N]
         self.h = h     # Height [m]
         Aero = ISA(self.h) # Initialises Aero object
@@ -36,11 +37,10 @@ class Stab_Derivatives:
         self.bv = bv       # Vertical tail span [m]
         self.Sv = Sv       # Vertical tail area [m^2]
         self.xcg = xcg  # CG longitudinal position wrt Nose [m]
-        self.lv = self.lfus-self.xcg
         self.th0 = theta0  # Initial pitch angle [rad]
         self.alpha0 = alpha0 # Initial AoA [rad]
         self.V0 = V0       # Initial speed [m/s]
-        self.M0 = V0/(1.4*287*self.T) # Initial mach number [-]
+        self.M0 = V0/(np.sqrt(1.4*287*self.T)) # Initial mach number [-]
         self.CL0 = CL0     # Initial lift coefficient [-]
         self.CLfwd0 = CLfwd0 # Initial lift coefficient of fwd wing [-]
         self.CLrear0 = CLrear0 # Initial lift coefficient of rear wing [-]
@@ -51,6 +51,8 @@ class Stab_Derivatives:
         self.CLafwd, self.CLarear = CLafwd, CLarear # Wing lift curve slopes for both wings [1/rad]
         self.Clafwd, self.Clarear = Clafwd,Clarear # Airfoil lift curve slopes
         self.Cd0fwd,self.Cd0rear = Cd0fwd,Cd0rear # Airfoil base drag
+        self.Cl0fwd = CLfwd0/(np.cos(self.Sweep(self.Afwd,self.taper,0,25,0)))**2 # Airfoil lift at zero angle of attack
+        self.Cl0rear = CLrear0/(np.cos(self.Sweep(self.Arear, self.taper, 0, 25, 0)))**2 # Airfoil lift at zero angle of attack
         self.d = d
         self.dy = dy
         self.xacfwd = 0.25 * self.cfwd + self.d
@@ -63,6 +65,13 @@ class Stab_Derivatives:
         self.Vstall = Vstall # Stall speed [m/s]
         self.eta_rear = eta_rear
         self.eta_v = eta_v
+        self.sweepTE = sweepTE
+        VT = vertical_tail(self.W,self.h,self.xcg,self.lfus,self.hfus,self.wfus,self.V0,self.Vstall,
+                           self.CD0,self.CLfwd0,self.CLrear0,self.CLafwd,self.CLarear,self.Sfwd,self.Srear,
+                           self.Afwd,self.Arear,self.Sweepc4,self.Sweepc4_rear,self.cfwd,self.crear,
+                           self.bfwd,self.brear,self.taper,self.ARv,self.sweepTE)
+        self.xacv = VT.xacv(self.ARv, self.sweepTE)
+        self.lv = self.xacv-self.xcg
         ### It is assumed that aeroelastic effects are neglected ###
 
     def lh_arm(self):
@@ -125,11 +134,13 @@ class Stab_Derivatives:
         # print("Lambda_1/2c = ",Lambda_half)
         value = 2 * np.pi * A / (2 + np.sqrt(4 + ((A * beta / eta) ** 2) * (1 + (np.tan(Lambda_half) / beta) ** 2)))
         return value
+
     def u_derivatives(self):
         """
         Analytical estimates of stability derivatives wrt û = u/V0
         :return: C_X_u, C_Z_u, C_m_u
         """
+        # print("M_0 = ",self.M0)
         CZ_u = -self.M0**2/(1-self.M0**2)*self.CL0
         CD_M = 0 # Incompressible flow
         CLfwd_M =  self.M0/(1-self.M0**2)*self.CLfwd0
@@ -177,7 +188,7 @@ class Stab_Derivatives:
         """
         CX_adot = 0
         darear_dadot = self.deps_da(self.Sweepc4,self.hfus-self.dy,self.CLafwd)*self.lh_arm()/self.c
-        print("dalpha_dalpha_dot = %.5f"%(darear_dadot))
+        # print("dalpha_dalpha_dot = %.5f"%(darear_dadot))
         CLadot = self.Srear/self.S*self.CLarear*darear_dadot*self.eta_rear
         CZ_adot = -CLadot
         Cm_adot = (self.xacrear-self.xcg)/self.c*CZ_adot
@@ -194,11 +205,11 @@ class Stab_Derivatives:
         Cl_r_v = zv/self.b*CY_r
         Cl_r_fwd = self.CLfwd0/4
         Cl_r_rear = self.CLrear0/4
-        Cl_r = Cl_r_v + Cl_r_fwd*self.Sfwd/self.S + Cl_r_rear*self.Srear/self.S
-        Cn_r_v = -(self.lfus-self.xcg)/self.b*CY_r
+        Cl_r = Cl_r_v + Cl_r_fwd*self.Sfwd*self.bfwd/(self.S*self.b) + Cl_r_rear*self.Srear*self.brear/(self.S*self.b)
+        Cn_r_v = -(self.lv)/self.b*CY_r
         CDfwd0 = self.CD_0 + self.CLfwd0**2/(np.pi*self.Afwd*self.efwd)
         CDrear0 = self.CD_0 + self.CLrear0**2/(np.pi*self.Arear*self.erear)
-        Cn_r_wing = -1/4*(CDfwd0*self.Sfwd/self.S+ CDrear0*self.Srear/self.S)
+        Cn_r_wing = -1/4*(CDfwd0*self.Sfwd*self.bfwd/(self.S*self.b) + CDrear0*self.Srear*self.brear/(self.S*self.b))
         Cn_r = Cn_r_wing+Cn_r_v
         return CY_r,Cl_r,Cn_r
 
@@ -212,9 +223,18 @@ class Stab_Derivatives:
                                self.Afwd,self.Arear,self.cfwd,self.crear,self.bfwd,self.brear,self.taper)
         Cl_p = Ctrl.Clp()
         eta_v = self.eta_v
-        CY_p = -8/(3*np.pi)*eta_v*(self.bv*self.Sv/(self.S*self.b))*self.C_L_a(self.ARv,self.Sweep(self.ARv*4,0.4,0,50,100))
-        Cn_p_v = -(self.lfus-self.xcg)/(self.b)*CY_p
-        Cn_p_wings = -1/8*(self.CLfwd0*self.Sfwd/self.S + self.CLrear0*self.Srear/self.S)
+        CY_p = -8/(3*np.pi)*eta_v*(self.bv*self.Sv/(self.S*self.b))*self.C_L_a(self.ARv,self.Sweep(self.ARv*4,0.4,self.sweepTE,50,100))
+        Cn_p_v = -(self.lv)/(self.b)*CY_p
+        c_r_fwd = self.cfwd * 3 / 2 * (1 + self.taper) / (1 + self.taper + self.taper ** 2)
+        c_r_rear = self.crear * 3 / 2 * (1 + self.taper) / (1 + self.taper + self.taper ** 2)
+        Cnp_fwd = -(self.Cl0fwd) * c_r_fwd * self.bfwd / (24 * self.Sfwd) * (1 + 3 * self.taper)
+        Cnp_rear = -(self.Cl0rear) * c_r_rear * self.brear / (24 * self.Srear) * (1 + 3 * self.taper)
+        Cn_p_wings = -1/8*(self.CLfwd0*self.Sfwd*self.bfwd/(self.S*self.b) + self.CLrear0*self.Srear*self.brear//(self.S*self.b))
+        Cn_p_wings_analytical = Cnp_fwd*self.Sfwd*self.bfwd/(self.S*self.b) + Cnp_rear*self.Srear*self.brear/(self.S*self.b)
+        # print("Analytical estimation of C_l_p:",Cl_p)
+        # print("Approximation of C_l_p = ", -1/8*(self.CLarear*self.brear*self.Srear+self.CLafwd*self.bfwd*self.Sfwd)/(self.S*self.b))
+        # print("Approximation: ", Cn_p_wings)
+        # print("Analytical solution:",Cn_p_wings_analytical )
         Cn_p = Cn_p_v+Cn_p_wings
         return CY_p, Cl_p,Cn_p
 
@@ -225,7 +245,7 @@ class Stab_Derivatives:
         """
         dsigma_dbeta = 0
         CY_b = -self.C_L_a(self.ARv,self.Sweep(self.ARv*4,self.taper_v,0,50,100))*(1-dsigma_dbeta)*self.eta_v*self.Sv/(self.S)
-        Cn_b_v = -CY_b*(self.lfus-self.xcg)/self.b
+        Cn_b_v = -CY_b*(self.lv)/self.b
         a = self.lfus/2
         b = self.wfus/2
         V = 2*np.pi/4*b**2*(self.lfus/2-(self.lfus/2)**3/(3*a**2))
@@ -247,12 +267,13 @@ class Stab_Derivatives:
         #### Estimate of Cl_beta #####
         Pos_MAC_v = self.bv / 6 * ((1 + 2 * self.taper_v) / (1 + self.taper_v)) * 2
         Cl_b_v = (self.hfus+Pos_MAC_v-self.zcg)/self.b*CY_b
-        Cl_b_wf_fwd = -1.2*np.sqrt(self.Afwd)*(self.dy-self.hfus/2)/self.b**2*(self.lfus+self.wfus)
-        Cl_b_wf_rear = -1.2*np.sqrt(self.Arear)*(self.hfus/2)/self.b**2*(self.lfus+self.wfus)
+        Cl_b_wf_fwd = -1.2*np.sqrt(self.Afwd)*(self.dy-self.hfus/2)/self.bfwd**2*(self.lfus+self.wfus)
+        Cl_b_wf_rear = -1.2*np.sqrt(self.Arear)*(self.hfus/2)/self.brear**2*(self.lfus+self.wfus)
         # Cl_b = -0.110
         Cl_b_fwd = -self.CLafwd*self.Gamma_fwd/4*(2/3*(1+2*self.taper)/(1+self.taper))
         # print(self.CLafwd,self.Gamma_fwd,self.taper)
-        Cl_b = Cl_b_wf_rear*self.Srear/self.S + Cl_b_wf_fwd*self.Sfwd/self.S + Cl_b_v + Cl_b_fwd*self.Sfwd/self.S
+        Cl_b = (Cl_b_wf_rear*self.Srear*self.brear + Cl_b_wf_fwd*self.Sfwd*self.bfwd +
+                Cl_b_fwd*self.Sfwd*self.bfwd)/(self.S*self.b)+Cl_b_v
         # print(Cl_b_v, Cl_b_wf_fwd, Cl_b_wf_rear,Cl_b_fwd)
         # sin_Gamma = (Cl_b-Cl_b_v-Cl_b_wf_fwd*self.Sfwd/self.S-Cl_b_wf_rear*self.Srear/self.S)/(-2/(3*np.pi)*self.CLafwd)
         # Gamma_raymer = -(Cl_b-Cl_b_v-Cl_b_wf_fwd*self.Sfwd/self.S-Cl_b_wf_rear*self.Srear/self.S)*4/self.CLafwd*(3*(1+self.taper)/(2*(1+2*self.taper)))
@@ -336,6 +357,8 @@ class Stab_Derivatives:
         Kxx2 = Ixx/(self.W/9.80665*self.b**2)
         Kzz2 = Izz/(self.W/9.80665*self.b**2)
         Kxz = Ixz/(self.W/9.80665*self.b**2)
+        print("Ixx, Izz =", Ixx, Izz)
+        print("Kxx2, Kzz2, Kxz = %.5f, %.5f, %.5f"%(Kxx2,Kzz2,Kxz))
         C_L = self.CL0
         C_Y = [self.beta_derivatives()[0],0,self.p_derivatives()[0],self.r_derivatives()[0],\
               self.da_derivatives(Sa_S,b1,b2)[0],self.dr_derivatives(cr_cv,br_bv)[0]]
@@ -363,19 +386,19 @@ class Stab_Derivatives:
             0.5 * C_y_p * (C_l_b * C_n_r - C_n_b * C_l_r) + 0.5 * C_y_r * (C_l_p * C_n_b - C_n_p * C_l_b)
 
         R = B * C * D - A * D ** 2 - B ** 2 * E
-        # if E > 0 and R > 0:
-        #     print("We have Spiral stability with ", "E = ", E)
-        #     print("AND Dutch Roll stability with ", "R = ", R)
-        # if R > 0 and E < 0:
-        #     print("We have Dutch Roll stability with ", "R = ", R)
-        # if E > 0 and R < 0:
-        #     print("We have Spiral stability with ", "E = ", E)
-        # if E < 0:
-        #     print("We have Spiral instability with ", "E = ", E)
-        # if R < 0:
-        #     print("We have Dutch Roll instability.")
-        # print("Routh's Discriminant: %.4f "%(R))
-        clb = np.linspace(-0.5, 0.1, 50)
+        if E > 0 and R > 0:
+            print("We have Spiral stability with ", "E = ", E)
+            print("AND Dutch Roll stability with ", "R = ", R)
+        if R > 0 and E < 0:
+            print("We have Dutch Roll stability with ", "R = ", R)
+        if E > 0 and R < 0:
+            print("We have Spiral stability with ", "E = ", E)
+        if E < 0:
+            print("We have Spiral instability with ", "E = ", E)
+        if R < 0:
+            print("We have Dutch Roll instability.")
+        print("Routh's Discriminant: %.4f "%(R))
+        # clb = np.linspace(-0.5, 0.1, 50)
 
         def cnb_E(clb):
             return -C_n_r / C_l_r * (-clb)
@@ -410,10 +433,10 @@ class Stab_Derivatives:
         Z = R_ER(-X, Y)
         fig, ax = plt.subplots(1, 1)
         # ax.add_artist(ab)
-        levels = [-5000,-2500,-1500, -500, 0, 250, 500, 750, 1000, 1250,2000]
-        cp = ax.contourf(X, Y, Z, cmap='coolwarm',levels=levels)
+        # levels = [-5000,-2500,-1500, -500, 0, 250, 500, 750, 1000, 1250,2000]
+        cp = ax.contourf(X, Y, Z, cmap='coolwarm',levels=25)
         cbar = plt.colorbar(cp, orientation="horizontal")
-        RR = ax.contour(X, Y, Z, [0], colors=["k"])
+        RR = ax.contour(X, Y, Z, [0], colors=["r"])
         # print("Sv_stability = ",self.VT_stability(lv))
         plt.clabel(RR, fmt=r"Min. Dutch Roll:  %.3f" % (0))
         cbar.set_label(r"Routh's discriminant")

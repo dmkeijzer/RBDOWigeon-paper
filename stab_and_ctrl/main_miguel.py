@@ -1,14 +1,15 @@
 import numpy as np
-from stab_and_ctrl.Scissor_Plots import Wing_placement_sizing
+# from stab_and_ctrl.Scissor_Plots import Wing_placement_sizing
 from stab_and_ctrl.Vertical_tail_sizing import VT_sizing
 from stab_and_ctrl.Aileron_Sizing import Control_surface
 from stab_and_ctrl.Elevator_sizing import Elevator_sizing
 from stab_and_ctrl.Stability_derivatives import Stab_Derivatives
+from structures.Weight import *
 import constants as const
 from matplotlib import pyplot as plt
 
 # example values based on inputs_config_1.json
-W = 2939.949692*9.80665
+W = 2950*9.80665
 h = 1000
 lfus = 7.2
 hfus = 1.705
@@ -36,6 +37,7 @@ Cmacfwd = -0.0645
 Cmacrear = -0.0645
 Sfwd = 8.417113787320769
 Srear = 8.417113787320769
+S = Srear+Sfwd
 Afwd = 9*1
 Arear = 9
 Gamma = 0
@@ -43,6 +45,7 @@ Lambda_c4_fwd = 0.0*np.pi/180
 Lambda_c4_rear = 0.0*np.pi/180
 cfwd = 1.014129367767935
 crear = 1.014129367767935
+c = Srear/S*crear+Sfwd/S*cfwd
 bfwd = np.sqrt(Sfwd * Afwd)
 brear = np.sqrt(Srear * Arear)
 e = 1.1302
@@ -59,11 +62,11 @@ Zcg = 0.70
 
 d = 0
 dy = 0.2
-wps = Wing_placement_sizing(W,h, lfus, hfus, wfus, V0, CD0fwd, CLfwd,
-                 CLrear,CLdesfwd,CLdesrear, Clafwd,Clarear,Cmacfwd, Cmacrear, Sfwd, Srear,
-                 Afwd, Arear, Gamma, Lambda_c4_fwd, Lambda_c4_rear, cfwd,
-                 crear, bfwd, brear, efwd, erear, taper, n_rot_f, n_rot_r,
-                 rot_y_range_f, rot_y_range_r, K, ku,Zcg,d,dy,Pbr,1)
+# wps = Wing_placement_sizing(W,h, lfus, hfus, wfus, V0, CD0fwd, CLfwd,
+#                  CLrear,CLdesfwd,CLdesrear, Clafwd,Clarear,Cmacfwd, Cmacrear, Sfwd, Srear,
+#                  Afwd, Arear, Gamma, Lambda_c4_fwd, Lambda_c4_rear, cfwd,
+#                  crear, bfwd, brear, efwd, erear, taper, n_rot_f, n_rot_r,
+#                  rot_y_range_f, rot_y_range_r, K, ku,Zcg,d,dy,Pbr,1)
 
 
 aileron = Control_surface(V0,Vstall,CLfwd,CLrear,CLafwd,CLarear,Clafwd,Clarear,Cd0fwd,Cd0rear,
@@ -107,7 +110,7 @@ b2 =np.linspace(b1,100,150)
 Sa_S = np.linspace(0.05,0.20,150)
 # elevon.plotting(0.15,b1,b2)
 aileron.plotting(Sa_S,b1,b2,True)
-aileron.plotting(Sa_S=0.090,b1=b1,b2=97.5,rear=True)
+aileron.plotting(Sa_S=0.172,b1=b1,b2=99.0,rear=True)
 
 #### Plotting Elevator ####
 elevator = Elevator_sizing(W,h,xcg,lfus,hfus,wfus,V0,Vstall,CD0,theta0,CLfwd,CLrear,CLafwd,CLarear,
@@ -117,18 +120,50 @@ SeS = np.linspace(0.1,0.4,150)
 de_max = 17.5
 elevator.plotting(SeS,beb,de_max)
 
-wps.plotting(0, lfus, dx, elevator_effect, d)
+# wps.plotting(0, lfus, dx, elevator_effect, d)
 
 CL0 = 0.82
 A = Afwd/2
 CD0_a = CD0+CL0**2/(np.pi*A*e)
+
+
+n_ult = 3.2 * 1.5  # 3.2 is the max we found, 1.5 is the safety factor
+Pmax = 15.25  # this is defined as maximum perimeter in Roskam, so i took top down view of the fuselage perimeter
+lf = 7.2  # length of fuselage
+m_pax = 95  # average mass of a passenger according to Google
+n_prop = 16  # number of engines
+n_pax = 5  # number of passengers (pilot included)
+pos_fus = 3.6  # fuselage centre of mass away from the nose
+pos_lgear = 3.6  # landing gear position away from the nose
+pos_frontwing, pos_backwing = 0.2, 7  # positions of the wings away from the nose
+m_prop = [30] * 16  # list of mass of engines (so 30 kg per engine with nacelle and propeller)
+pos_prop = [0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 7.0, 7.0, 7.0, 7.0, 7.0, 7.0, 7.0,
+            7.0]  # 8 on front wing and 8 on back wing
+wing = Wing(W/9.80665, Sfwd, Srear, n_ult, Afwd, [pos_frontwing, pos_backwing])
+fuselage = Fuselage(W/9.80665, Pmax, lfus, n_pax, pos_fus)
+lgear = LandingGear(W/9.80665, pos_lgear)
+props = Propulsion(n_prop, m_prop, pos_prop)
+weight = Weight(m_pax, wing, fuselage, lgear, props, cargo_m=85, cargo_pos=6, battery_m=400, battery_pos=3.6,
+                p_pax=[1.5, 3, 3, 4.2, 4.2])
+
+Ixx, Iyy, Izz, Ixz = weight.MMI()
 if isinstance(ARv,float) and isinstance(sweepTE,float):
     stability_derivatives = Stab_Derivatives(W,h,lfus,hfus,wfus, d,dy,xcg,Zcg,cfwd,crear,Afwd,Arear,Vstall,
                      V0,Tt0,CLdesfwd,CLdesrear,CD0_a,CL0,1.5*np.pi/180,0,
-                     Clafwd,Clarear, Cd0fwd, Cd0rear, CLafwd,CLarear,Sfwd,Srear,5*np.pi/180/6,0,
+                     Clafwd,Clarear, Cd0fwd, Cd0rear, CLafwd,CLarear,Sfwd,Srear,-5*np.pi/180,0,
                      efwd,erear,Lambda_c4_fwd,Lambda_c4_rear,taper,0.4,
-                     bv,Sv,ARv,Pbr,CD0,eta_rear=0.85,eta_v=1)
+                     bv,Sv,ARv,sweepTE,Pbr,CD0,eta_rear=0.95,eta_v=0.95)
     print("q-derivatives:",stability_derivatives.q_derivatives())
     print("alpha-derivatives:",stability_derivatives.alpha_derivatives())
     print("u-derivatives:",stability_derivatives.u_derivatives())
     print("alpha_dot derivatives:",stability_derivatives.alpha_dot_derivatives())
+    print("p-derivatives:",stability_derivatives.p_derivatives())
+    print("r-derivatives:", stability_derivatives.r_derivatives())
+    print("beta-derivatives:", stability_derivatives.beta_derivatives())
+    print("-----Control Derivatives----------")
+    print("de-derivatives:", stability_derivatives.de_derivatives(Se_S=0.15,be_b=0.975))
+    print("da-derivatives:",stability_derivatives.da_derivatives(Sa_S=0.085,b1=60,b2=97.5))
+    print("dr-derivatives:", stability_derivatives.dr_derivatives(cr_cv=0.4,br_bv=0.85))
+    print("Kyy2 = %.5f"%(Iyy/(W/9.80665*c**2)))
+    print("Iyy = %.5f "%(Iyy))
+    stability_derivatives.asym_stability_req(Ixx,Izz,Ixz,0.085,60,97.5,0.4,0.85)
