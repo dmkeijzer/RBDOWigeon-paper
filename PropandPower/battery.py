@@ -3,7 +3,7 @@
 
 class Battery:
     """This class is to estimate the parameters of a battery"""
-    def __init__(self, sp_en_den, vol_en_den, tot_energy, cost, DoD, P_den, P_max):
+    def __init__(self, sp_en_den, vol_en_den, tot_energy, cost, DoD, P_den, P_max, safety, EOL_C):
         """
         :param sp_en_den:
         :param vol_en_den:
@@ -12,6 +12,8 @@ class Battery:
         :param DoD:
         :param P_den:
         :param P_max:
+        :param safety:
+        :param EOL_C:
         """
         self.sp_en_den = sp_en_den
         self.energy = tot_energy
@@ -20,6 +22,8 @@ class Battery:
         self.DoD = DoD
         self.P_den = P_den
         self.P_max = P_max
+        self.safety = safety
+        self.EOL_C = EOL_C
 
     def mass(self):
         """
@@ -30,7 +34,7 @@ class Battery:
         m_en = self.energy/self.sp_en_den
         m_p = self.P_max/self.P_den
         bat_mass = max(m_en,m_p)
-        return bat_mass/self.DoD*100
+        return bat_mass / (self.DoD * self.EOL_C) * self.safety
 
     def volume(self):
         """
