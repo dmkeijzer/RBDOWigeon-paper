@@ -37,7 +37,7 @@ eff_hover = 0.88   # [-] Propeller efficiency during hover
 
 # Power
 sp_en_den = 500     # [Wh/kg] Specific energy density
-vol_en_den = 1000   # [Wh/m883] Volumetric energy density
+vol_en_den = 1000   # [Wh/l] Volumetric energy density
 bat_cost = 80       # [$/kg] Cost of batteries in US dollars per kilogram
 DoD = 80            # [-] Depth of Discharge of the total battery, as percentage
 P_den = 10000       # [W/kg] Power density of battery

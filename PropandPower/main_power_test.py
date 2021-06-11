@@ -7,10 +7,11 @@ bat_cost = const.bat_cost
 DoD = const.DoD
 P_den = const.P_den
 
-energy = 1
+energy = 62405
 P_max = 1
 
 bat = bat.Battery(sp_en_den, vol_en_den, energy, bat_cost, DoD, P_den, P_max)
 
-print(bat.mass())
+print("mass", bat.mass())
+print("volume", bat.volume())
 

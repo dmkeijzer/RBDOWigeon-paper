@@ -30,7 +30,7 @@ class Battery:
         m_en = self.energy/self.sp_en_den
         m_p = self.P_max/self.P_den
         bat_mass = max(m_en,m_p)
-        return bat_mass
+        return bat_mass/self.DoD
 
     def volume(self):
         """
@@ -38,7 +38,7 @@ class Battery:
         :param vol_en_den: Volumetric energy density of the battery [Wh/l]
         :return: Volume of the battery [m^3]
         """
-        return self.energy/self.vol_en_den * 0.001
+        return self.mass() * self.sp_en_den /self.vol_en_den * 0.001
 
     def price(self):
         """
@@ -46,4 +46,4 @@ class Battery:
         :param cost: Cost per Wh of the battery [US$/Wh]
         :return: Approx cost of the battery [US$]
         """
-        return self.energy*self.cost
+        return self.mass()*self.cost
