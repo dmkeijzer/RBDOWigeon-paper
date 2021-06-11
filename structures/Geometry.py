@@ -167,10 +167,9 @@ class WingBox:
         pitch = self.tspitch if top_panel else self.bspitch
         sigma_crskin = 4 * (np.pi ** 2 * Esk/(12 * (1 - vsk**2)))*(self.tsk / (pitch))**2
         C = 6.98 if pitch/self.tsk > 75 else 4
-        we = self.tsk * np.sqrt(np.pi ** 2 * C * Esk/(ccstr*12*(1-vsk**2)))
+        we = 0 #self.tsk * np.sqrt(np.pi ** 2 * C * Esk/(ccstr*12*(1-vsk**2)))
         new_pitch = pitch - we
         new_sigma_crskin = 4 * (np.pi ** 2 * Esk/(12 * (1 - vsk**2)))*(self.tsk / (new_pitch))**2
-#         print(f"{pitch, new_pitch, sigma_crskin*1e-6, self.tsk/pitch, self.tsk, ccstr*1e-6= }")
         if new_pitch < 0:
             raise StructuralError("Invalid pitch length: " + str(new_pitch))
         return (new_sigma_crskin * new_pitch * self.tsk + ccstr * (ccarea + we * self.tsk))/ (new_pitch * self.tsk + (ccarea + we * self.tsk))
@@ -184,3 +183,4 @@ class WingStructure:
     chord = lambda self, z: self.rc * (self.taper - 1) * z / (self.span/2) + self.rc if (0 <= z <= self.span/2) else None
     __call__ = lambda self, z: WingBox(self.box.tsk, self.box.tsp, self.box.b*self.chord(z), self.box.h*self.chord(z), self.box.str)
     __repr__ = __str__ = lambda self: "WingStructure(" + ', '.join(f"{k}={self.__dict__[k]}" for k in self.__dict__) + ")"
+    area = lambda self: 0.5 * self.rc * (1 + self.taper) * self.span

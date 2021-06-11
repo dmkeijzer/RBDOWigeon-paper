@@ -32,6 +32,8 @@ class WingLoads:
         self.__dict__[key] = item
 
     __getitem__ = lambda self, key: self.__dict__[key]
+    
+    mass = lambda self, material: self.span * self.wing(0).Area() * material.rho * 2
 
     __repr__ = __str__ = lambda self: "Wingloads(" + ', '.join(f"{k}={self.__dict__[k]}" for k in self.__dict__) + ")"
 
