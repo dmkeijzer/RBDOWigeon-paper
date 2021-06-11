@@ -7,7 +7,6 @@ import Drag_midterm2_2 as drag_comp
 import Wing_design_midterm2 as wing_des
 import Airfoil_analysis_midterm2 as airfoil
 
-import prelim_ADT as ADT
 import engine_sizing_positioning_midterm2 as eng_siz
 import battery_midterm2 as bat
 import PropandPower.BEM as BEM
