@@ -61,8 +61,8 @@ w_max = 1.38
 h_max = 1.705
 d_eq = np.sqrt(h_max*w_max)
 #Winglets
-h_wl1 =0
-h_wl2 = 0
+h_wl1 =0.5
+h_wl2 = 0.5
 Wing_params = wing_design(2*AR, 2*AR, s1,sweepc41,s2,sweepc42,M,S_ref, l_h,h_d,w_max,h_wl1,h_wl2)
 b = Wing_params.wing_planform_double()[0][0]
 C_r = Wing_params.wing_planform_double()[0][1]
@@ -105,9 +105,9 @@ S_v = 0.6
 S_t = 0
 
 
-Drag = componentdrag('tandem',S_ref,l1,l2,l3,d_eq,Vcruise,rho,MAC,AR,Mach(Vcruise,a),k,flamf,flamw,mu,tc,xcm,0,SweepLE,u,0,h_d,IF_f,IF_w, IF_v, CL_CDmin,Abase, S_v, s1, s2, h_wl1, h_wl2)
+Drag = componentdrag('tandem',S_ref,l1,l2,l3,d_eq,Vcruise,rho,MAC,AR*2,AR*2,Mach(Vcruise,a),k,flamf,flamw,mu,tc,xcm,0,SweepLE,u,0,h_d,IF_f,IF_w, IF_v, CL_CDmin,Abase, S_v, s1, s2, h_wl1, h_wl2)
 
-
+print("e",Drag.e_factor())
 CL_design = Drag.CL_des()[0]
 Cd_des= Drag.Cd_w(CL_design)
 Swet_f = Drag.Swet_f()
@@ -139,15 +139,15 @@ plt.show()
 #
 #print(x)
 
-#x = LLT2wings(b,AR*2,C_r,C_t,0,5, h_d, l_h,b,AR*2,C_r,C_t,0,5, 70)
+x = LLT2wings(Wing_params.wing_planform_double()[0][7],Wing_params.wing_planform_double()[0][6],C_r,C_t,0,5, h_d, l_h,Wing_params.wing_planform_double()[1][7],Wing_params.wing_planform_double()[1][6],C_r,C_t,0,5, 70, 0, 1.5)
 #print(b,C_t, C_r)
 #x = LLT1wing
-#print(x)
+print(x)
 D = 0.965 #m
 T = 146.5 #N
 ne1 = 6
 ne2 = 6
-
+"""
 alpha_wp = np.arange(-3,21,0.25)
 Cl_alpha_curve2 = Wing_params.CLa(tc, CDs, CDs_f, Afus, alpha_wp, deda)
 CLwp = Wing_params.CLa_wprop(T, Vcruise,rho,D,ne1,ne2,tc,CDs_w, CDs_f, Afus, alpha_wp, deda)
@@ -157,7 +157,7 @@ plt.plot(alpha_wp, Cl_alpha_curve2)
 plt.show()
 
 print("CLmax wop, CLmaxwp", CLmax, CLwp[1])
-
+"""
 
 
 
