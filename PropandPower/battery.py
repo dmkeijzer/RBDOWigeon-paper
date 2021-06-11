@@ -3,11 +3,23 @@
 
 class Battery:
     """This class is to estimate the parameters of a battery"""
-    def __init__(self, sp_en_den, vol_en_den, tot_energy, cost):
+    def __init__(self, sp_en_den, vol_en_den, tot_energy, cost, DoD, P_den, P_max):
+        """
+        :param sp_en_den:
+        :param vol_en_den:
+        :param tot_energy:
+        :param cost:
+        :param DoD:
+        :param P_den:
+        :param P_max:
+        """
         self.sp_en_den = sp_en_den
         self.energy = tot_energy
         self.vol_en_den = vol_en_den
         self.cost = cost
+        self.DoD = DoD
+        self.P_den = P_den
+        self.P_max = P_max
 
     def mass(self):
         """
@@ -15,7 +27,10 @@ class Battery:
         :param sp_en_den: Specific energy density of the battery [Wh/kg]
         :return: Mass of the battery
         """
-        return self.energy / self.sp_en_den
+        m_en = self.energy/self.sp_en_den
+        m_p = self.P_max/self.P_den
+        bat_mass = max(m_en,m_p)
+        return bat_mass
 
     def volume(self):
         """
