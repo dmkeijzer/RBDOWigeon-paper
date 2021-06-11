@@ -18,8 +18,8 @@ class Power_Budget:
         self.landing_gear = 50  # [W]
         self.wing_rot_mech = 3000  # [W]
 
-    def P_continuous(self, m):
-        return self.avionics + self.airco + self.battery_cooling * m / 72 + self.autopilot + self.trim + self.passenger_power \
+    def P_continuous(self):
+        return self.avionics + self.airco + self.battery_cooling + self.autopilot + self.trim + self.passenger_power \
                + self.external_lights + self.deice
 
     def E_landing_gear(self, t_lg_rot):
