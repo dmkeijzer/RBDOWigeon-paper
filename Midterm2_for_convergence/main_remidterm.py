@@ -60,9 +60,9 @@ fus_upsweep = const.upsweep
 # Aero
 CLmax = 1.46916
 s1, s2 = const.s1, const.s2   # Ratio of front and back wing areas to total area
-S1, S2 = 5.25, 5.25           # surface areas of wing one and two
+S1, S2 = 8.25, 8.25           # surface areas of wing one and two
 S_tot = S1+S2                 # Total wing surface area
-AR_wing = 7                   # Aspect ratio of a wing, not aircraft
+AR_wing = 7.5                 # Aspect ratio of a wing, not aircraft
 AR_tot = AR_wing/2            # Aspect ratio of aircraft
 
 # Wingtips
@@ -83,7 +83,7 @@ ROC_hover = 2
 
 
 # Propulsion
-n_prop = 8                  # Number of engines [-]
+n_prop = 12                 # Number of engines [-]
 disk_load = 250             # [kg/m^2]
 clearance_fus_prop = 0.3    # Horizontal separation between the fuselage and the first propeller [m]
 clearance_prop_prop = 0.3   # Horizontal separation between propellers [m]
@@ -121,8 +121,8 @@ mass_per_prop = 480 / n_prop
 m_prop = [mass_per_prop] * n_prop       # list of mass of engines (so 30 kg per engine with nacelle and propeller)
 # pos_prop = [0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 7.0, 7.0, 7.0, 7.0, 7.0, 7.0, 7.0,
 #             7.0]  # 8 on front wing and 8 on back wing
-# pos_prop = [0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 7.0, 7.0, 7.0, 7.0, 7.0, 7.0]  # 6 on front wing and 6 on back wing
-pos_prop = [0.2, 0.2, 0.2, 0.2, 7.0, 7.0, 7.0, 7.0]  # 4 on front wing and 4 on back wing
+pos_prop = [0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 7.0, 7.0, 7.0, 7.0, 7.0, 7.0]  # 6 on front wing and 6 on back wing
+# pos_prop = [0.2, 0.2, 0.2, 0.2, 7.0, 7.0, 7.0, 7.0]  # 4 on front wing and 4 on back wing
 
 
 # ------------- Initial mass estimate -------------
@@ -152,7 +152,7 @@ print(" ")
 
 iterate = True
 count = 0
-while iterate or (count < 5):
+while iterate or (count < 10):
 
     # Get atmospheric values at cruise
     ISA = at.ISA(h_cr)
@@ -265,11 +265,11 @@ while iterate or (count < 5):
 
     # Energy sizing
     mission = energy_calc.mission(MTOM, h_cr, V_cr, CLmax, S_tot, n_prop*prop_area, Cl_alpha_curve, CD_a_w, CD_a_f,
-                                  alpha_lst, drag)
+                                  alpha_lst, drag, m_bat)
 
     # Get approximate overall efficiency
     eff_overall = 0.91 * 0.57 + 0.699 * 0.43
-    energy = 1.2 * mission.total_energy()[0] * 2.77778e-7 * 1000 / eff_overall  # From [J] to [Wh]
+    energy = 1.1 * mission.total_energy()[0] * 2.77778e-7 * 1000 / eff_overall  # From [J] to [Wh]
 
     # Battery sizing
     battery = bat.Battery(500, 1000, energy, 1)
@@ -289,7 +289,7 @@ while iterate or (count < 5):
     MTOM_new = Mass.mtom
     x_CG_MTOM = Mass.mtom_cg
 
-    if (MTOM_new-MTOM)/MTOM < 0.001:
+    if np.abs((MTOM_new-MTOM)/MTOM) < 0.001:
         iterate = False
         MTOM = MTOM_new
 
@@ -356,7 +356,7 @@ print(" ")
 
 # Propeller blade design
 B = 5
-M_tip = 0.4
+M_tip = 0.3
 omega = M_tip*a/prop_radius
 rpm = omega/0.10472
 print("Propeller rpm:", rpm)
@@ -367,7 +367,7 @@ print("Propeller rpm:", rpm)
 # V_tip = omega*prop_radius
 
 print("Propeller blade")
-blade = BEM.BEM(B, prop_radius, rpm, xi_0, rho, dyn_vis, V_cr, 20, a, 100000, D_cr/n_prop)
+blade = BEM.BEM(B, prop_radius, rpm, xi_0, rho, dyn_vis, V_cr, 20, a, 100000, T=3*D_cr/n_prop)
 # blade = BEM.BEM(B, prop_radius, rpm, xi_0, rho, dyn_vis, V_cr, 20, a, 100000, MTOM*g0)
 
 design = blade.optimise_blade(0)[1]

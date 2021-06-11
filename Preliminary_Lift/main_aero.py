@@ -1,4 +1,7 @@
 import sys
+
+import numpy as np
+
 sys.path.append("../")
 from Preliminary_Lift.Airfoil import *
 from Preliminary_Lift.Drag import *
@@ -8,7 +11,9 @@ from Preliminary_Lift.Airfoil_analysis import airfoil_stats
 import os
 import json
 import matplotlib.pyplot as plt
-from LLTtest2 import LLT1wing , LLT2wings, downwash
+from LLTtest2 import LLT1wing , LLT2wings
+from scipy.special import ellipk, ellipe
+from scipy.interpolate import interp1d
 root_path = os.path.join(os.getcwd(), os.pardir)
 
 datafile = open(os.path.join(root_path, "data/inputs_config_1.json"), "r")
@@ -103,7 +108,7 @@ Cd_des= Drag.Cd_w(CL_design)
 Swet_f = Drag.Swet_f()
 print("S_f", Swet_f)
 print("CLdes", CL_design)
-print("e", Drag.e_factor())
+
 #Stall
 stall = Wing_params.CLmax_s(deda)
 CLmax = stall[0]
@@ -150,6 +155,30 @@ plt.show()
 
 
 
+def plot_stagger_gap(b, CL, S):
+    gap = np.linspace(1,1.5,50)
+    stagger = np.linspace(1,7,50)
+
+    p = 1 / np.sqrt(1 +  gap ** 2)
+    F = ellipk(p)
+    E = ellipe(p)
+    R = b * np.pi / 4 * ( np.sqrt(1 + gap ** 2) - gap ) / F - E
+    k = interp1d( [0, 0.05, 0.1, 0.15, 0.2, 0.3, 0.4, 0.5], [1,1.06,1.1,1.13,1.16,1.21,1.24,1.27], fill_value='extrapolate')
+    munk =(1 / (k (gap /stagger) **2) - 0.5) * b / R
+
+    gap, stagger = np.meshgrid(gap,stagger)
+    dCL = - 2 * CL * S / (b ** 2) * munk * stagger/ b
+
+    fig = plt.figure(figsize=(6,5))
+    left, bottom, width, height = 0.1, 0.1, 0.8, 0.8
+    ax = fig.add_axes([left, bottom, width, height])
+    ax.set_title(' $ \Delta C_L$  for biplane wings')
+    ax.set_xlabel('Stagger [m]')
+    ax.set_ylabel('Gap [m]')
+    cp = plt.contourf(stagger,gap,dCL)
+    plt.colorbar(cp)
+    plt.show()
+plot_stagger_gap(b, 0.4, S_ref) # plot_stagger_gap(7, 0.4, 16)
 
 
 

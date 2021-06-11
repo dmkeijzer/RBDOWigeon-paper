@@ -31,7 +31,7 @@ class Fuselage:
 
 class LandingGear:
     def __init__(self, mtom, pos):
-        self.mass = 0.07*mtom
+        self.mass = 0.04*mtom
         self.pos = pos
         self.moment = self.mass * self.pos
 
@@ -96,11 +96,12 @@ class Weight:
         #     d[key] = {k: list(i) if isinstance(i, np.ndarray) else i for k, i in zip(["mass", "fracOEM", "fracEM"], d[key])}
         # return d
     def MMI(self):
+        # COORDINATE SYSTEM: x points towards nose, y points towards right wing, z points down
         # fuselage  - modeled as a hollow cylinder with wall thickness of 5 cm
-        irad = (self.fuselage.wf - 0.05)
-        fus_mmi_y = self.fmass * (self.fuselage.lf**2 + 3*self.fuselage.wf**2 + 3*irad**2)/12
+        irad = (self.fuselage.wf/2 - 0.05)
+        fus_mmi_y = self.fmass * (self.fuselage.lf**2 + 3*(self.fuselage.wf/2)**2 + 3*irad**2)/12
         fus_mmi_z = fus_mmi_y
-        fus_mmi_x = self.fmass * (self.fuselage.wf**2 + irad**2)/2
+        fus_mmi_x = self.fmass * ((self.fuselage.wf/2)**2 + irad**2)/2
 
         # wing - modeled as a prism with span, average thickness and width at mac
         t = self.wing.wmac * self.wing.toc
@@ -111,24 +112,29 @@ class Weight:
 
         # propulsion - modeled as a solid cylinder
         m_prop = self.pmass/self.prop.nprop
-        lprop, rprop = 0.4, 0.15
+        lprop, rprop = 0.4, 0.12
         prop_mmi_x, prop_mmi_y, prop_mmi_z = m_prop*(rprop**2)/2, m_prop*(lprop**2 + 3 * rprop**2)/12, m_prop*(lprop**2 + 3 * rprop**2)/12
 
         # battery - modeled as a prism
         lbat, tbat, wbat = 0.4*self.fuselage.lf, 0.2, 1
         bat_mmi_x, bat_mmi_y, bat_mmi_z = self.bmass*(wbat**2 + tbat**2)/12, self.bmass*(wbat**2 + lbat**2)/12, self.bmass*(tbat**2 + lbat**2)/12
 
-        # actual mass moment of inertias
+        span = np.sqrt(self.wing.A*self.wing.S1)
         oem_mmi_x = fus_mmi_x + 2 * (
                     wing_mmi_x + self.wmass/2 * (1.705 /2)**2) + \
-                    4*np.sum(m_prop * (np.sqrt((np.linspace(0.2, 10/2, 4))**2 + 1.705/2 ** 2))**2) + self.prop.nprop * prop_mmi_x + bat_mmi_x + self.bmass * (1.705/2) ** 2
-        oem_mmi_y = fus_mmi_y + 2* (wing_mmi_y + self.wmass/2*(self.wing.pos1)**2) +\
-                    np.sum(4*m_prop*(np.sqrt((np.linspace(0.2, 10/2, 4))**2 + self.wing.pos1 ** 2))**2) + self.prop.nprop*prop_mmi_y + bat_mmi_y
-        oem_mmi_z = fus_mmi_z + (wing_mmi_z + self.wmass/2 * (np.sqrt((1.705/2)**2 + self.wing.pos1**2))**2)*2 + bat_mmi_z * (1.705/2)**2 + ((np.sqrt((1.705/2)**2 + self.wing.pos1**2))**2 + prop_mmi_z)*self.prop.nprop
-        return oem_mmi_x, oem_mmi_y, oem_mmi_z
+                    self.prop.nprop/4 * np.sum(m_prop * (np.sqrt((1.705/2)**2 +  (np.linspace(0.9, span/2, int(self.prop.nprop/4))) ** 2 ))** 2) + \
+                                         self.prop.nprop * prop_mmi_x + bat_mmi_x + self.bmass * (1.705/2) ** 2
+        oem_mmi_y = fus_mmi_y + 2* (wing_mmi_y + self.wmass/2*(self.wing.pos2/2)**2) +\
+                    self.prop.nprop/4 * np.sum(m_prop * (np.sqrt((self.wing.pos2/2)**2 +  (np.linspace(0.9, span/2, int(self.prop.nprop/4))) ** 2))**2) +\
+                                                         self.prop.nprop * prop_mmi_y + bat_mmi_y
+        oem_mmi_z = fus_mmi_z + (wing_mmi_z + self.wmass/2 * (
+            np.sqrt((1.705 / 2) ** 2 + (self.wing.pos2/2) ** 2)) ** 2) * 2 + bat_mmi_z + self.bmass * (1.705 / 2) ** 2 + (
+                                m_prop * ((np.sqrt((1.705 / 2) ** 2 + (self.wing.pos2/2) ** 2)) ** 2) + prop_mmi_z) * self.prop.nprop
+        oem_mmi_xy = (self.wmass/2 * (1.705 / 2) * self.wing.pos1/2) * 2 + self.prop.nprop * (m_prop * (1.705 / 2) * self.wing.pos1/2)
+        return oem_mmi_x, oem_mmi_z, oem_mmi_y, oem_mmi_xy
 
 if __name__ == '__main__':
-    mtom = 1972 # maximum take-off mass from statistical data - Class I estimation
+    mtom = 3000 # maximum take-off mass from statistical data - Class I estimation
     S1, S2 = 5.5, 5.5 # surface areas of wing one and two
     A = 14 # aspect ratio of a wing, not aircraft
     n_ult = 3.2*1.5 # 3.2 is the max we found, 1.5 is the safety factor

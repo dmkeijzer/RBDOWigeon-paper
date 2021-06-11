@@ -54,4 +54,17 @@ class testPerformance(unittest.TestCase):
 
         self.assertAlmostEqual(V_fall, V_mod, delta = 2)
 
+    def test_max_thrust(self):
+        # Check the numerical inverse of the T vs P relationship
+
+        perf = evtol_performance(cruising_alt = 300, cruise_speed = 60, CL_max=1.5, A_disk=10, S = 14,
+                                     battery_capacity=4e6*1.2, mass = 3000, EOM = 3000 - 475, loiter_time = 30*60,
+                                     P_max = 3000000)
+
+        T_max = perf.max_thrust(1.225, 50)
+
+        P_m   = perf.thrust_to_power(T_max, 50, 1.225)
+
+        self.assertAlmostEqual(P_m, 0)
+
 

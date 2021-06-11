@@ -222,3 +222,4 @@ class wing_design:
         return curve(alpha_wp)
 
 
+

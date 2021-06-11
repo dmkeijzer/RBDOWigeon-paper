@@ -7,6 +7,7 @@ from constants import g, eff_hover, eff_prop
 import PropandPower.power_budget as pb
 
 
+
 # TODO: Remove this import in the integrated program, make sure aerodynamics is called first and the variables have the
 # same names
 # from Midterm2_for_convergence.main_aero_midterm2 import Cl_alpha_curve, CD_a_w, CD_a_f, alpha_lst, Drag
@@ -29,7 +30,7 @@ class mission:
     """
 
     def __init__(self, mass, cruising_alt, cruise_speed, CL_max, wing_surface, A_disk, Cl_alpha_curve, CD_a_w, CD_a_f,
-                 alpha_lst, Drag, t_loiter=30 * 60, rotational_rate=5, roc=5, rod=5, mission_dist=300e3, plotting=False):
+                 alpha_lst, Drag, m_bat, t_loiter=30 * 60, rotational_rate=5, roc=5, rod=5, mission_dist=300e3, plotting=False):
 
         """
         :param mass:            [kg]    Aircraft mass
@@ -74,6 +75,9 @@ class mission:
         self.CD_a_f = CD_a_f
         self.alpha_lst = alpha_lst
         self.Drag = Drag
+
+        # Power_Budget implementation
+        self.PB = pb.Power_Budget(m_bat)
 
     def aero_coefficients(self, angle_of_attack):
         """
@@ -224,7 +228,7 @@ class mission:
 
             # Thrust can be calculated in two ways, result should be very close
             T = (self.m * ay_tgt + self.m * g - L * np.cos(gamma) + D * np.sin(gamma)) / np.sin(th)
-            #T = (self.m*ax_tgt + D*np.cos(gamma) + L*np.sin(gamma))/np.cos(th)
+            # T = (self.m*ax_tgt + D*np.cos(gamma) + L*np.sin(gamma))/np.cos(th)
 
             T = np.maximum(np.minimum(np.maximum(T, T_min), T_max), 0)
 
@@ -272,8 +276,8 @@ class mission:
         # Get the available power
         P_a, P_r = self.thrust_to_power(T_arr, V_arr*np.cos(th_arr - np.tan(vy_arr/vx_arr)), rho_arr)
 
-        # TODO: IMPLEMENT
-        P_tot   = P_r #+ self.P_systems + self.P_peak
+        # Implement power budget
+        P_tot   = P_r + self.PB.P_continuous()  # + self.P_peak
 
         # Add to total energy
 
@@ -372,13 +376,13 @@ class mission:
         t_cruise = d_cruise / self.v_cruise
 
         # Get the brake power used in cruise
-        P_cruise = self.power_cruise_config(self.h_cruise, self.v_cruise, self.m)  # + self.P_systems
+        P_cruise = self.power_cruise_config(self.h_cruise, self.v_cruise, self.m) + self.PB.P_continuous()
 
         V = speeds(altitude=self.h_cruise, m=self.m, CLmax=self.CL_max, S=self.S, componentdrag_object=self.Drag)
 
         # Loiter power
         V_loit = V.climb()
-        P_loiter = self.power_cruise_config(altitude=self.h_cruise, speed=V_loit, mass=self.m)  # + self.P_systems
+        P_loiter = self.power_cruise_config(altitude=self.h_cruise, speed=V_loit, mass=self.m) + self.PB.P_continuous()
 
         # Cruise energy
         E_cruise = P_cruise * t_cruise
@@ -638,3 +642,4 @@ class mission:
 # b.climb_performance()
 # b.payload_range()
 # b.vertical_climb()
+
