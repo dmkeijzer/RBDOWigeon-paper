@@ -1,5 +1,5 @@
 """
-File created for incorporating other systems that require power
+Contains constants for the power budget.
 """
 
 class Power_Budget:
