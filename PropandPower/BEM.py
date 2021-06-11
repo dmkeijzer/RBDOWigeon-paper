@@ -803,7 +803,7 @@ class OffDesignAnalysisBEM:
 
 
 class Optiblade:
-    def __init__(self, B, R, rpm_cr, xi_0, rho_cr, dyn_vis_cr, V_cr, N_stations, a_cr, RN_spacing, max_rpm_h, rho_h,
+    def __init__(self, B, R, rpm_cr, xi_0, rho_cr, dyn_vis_cr, V_cr, N_stations, a_cr, RN_spacing, max_M_tip, rho_h,
                  dyn_vis_h, V_h, a_h, T_cr=None, P_cr=None, T_h=None, P_h=None):
         """
         This file is for the blade shape optimisation. It optimises the blade for cruise, and checks if the blade can
@@ -858,7 +858,7 @@ class Optiblade:
         self.V_h = V_h
         self.a_h = a_h
         self.T_h = T_h
-
+        self.max_M_tip = max_M_tip
 
     def blade_design(self, design_thrust_factor):
         # Design the propeller for given conditions
@@ -881,13 +881,13 @@ class Optiblade:
         print("Thrust coefficient:", design[6])
         print("Power coefficient:", design[7])
         print("Exit speed:", V_e)
+
         return zeta, design, V_e, coefs
 
-
-    def off_design_check(self):
+    def off_design_check(self, design_thrust_factor):
         # Get the blade design
         # Out: zeta_new, [cs, betas, alpha, stations_r, E, eff, self.Tc, Pc], Ves, [Cl, Cd]
-        design_blade = self.blade_design()
+        design_blade = self.blade_design(design_thrust_factor)
         M_tip = 0.5
         omega = M_tip*a/R
 
@@ -899,6 +899,12 @@ class Optiblade:
         blade_hover = OffDesignAnalysisBEM(self.V_h, self.B, self.R, design_blade[1][0], design_blade[1][1],
                                            design_blade[1][3], design_blade[3][0], design_blade[3][1], rpm,
                                            design_blade[0], self.rho_h, self.dyn_vis_h, self.a_h)
+
+    def optimised_blade(self):
+        for thrust_factor in (1, np.floor(self.T_h/self.T_cr)):
+            a = thrust_factor
+
+        return 1
 
 
 # Old BEM class, just in case
