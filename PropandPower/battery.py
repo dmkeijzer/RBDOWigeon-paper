@@ -1,4 +1,4 @@
-# import numpy as np
+import numpy as plt
 
 
 class Battery:
@@ -28,7 +28,8 @@ class Battery:
     def mass(self):
         m_en = self.energy/self.sp_en_den
         m_p = self.P_max/self.P_den
-        bat_mass = max(m_en,m_p)
+
+        bat_mass = plt.maximum(m_en,m_p)
         return bat_mass / (self.DoD * self.EOL_C) * self.safety
 
     def volume(self):
