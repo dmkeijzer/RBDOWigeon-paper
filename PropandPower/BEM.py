@@ -869,18 +869,18 @@ class Optiblade:
         zeta_init = 0
         zeta, design, V_e, coefs = propeller.optimise_blade(zeta_init)
 
-        print("Displacement velocity ratio (zeta):", zeta)
-        print("Advance ratio:", propeller.J())
-        # [cs, betas, alpha, E, eff, Tc, self.Pc]
-        print("Chord per station:", design[0])
-        print("Pitch per station in [deg]:", np.rad2deg(design[1]))
-        print("AoA per station in [deg]:", np.rad2deg(design[2]))
-        print("Radial coordinates [m]:", design[3])
-        print("D/L ratio per station:", design[4])
-        print("Propeller efficiency:", design[5])
-        print("Thrust coefficient:", design[6])
-        print("Power coefficient:", design[7])
-        print("Exit speed:", V_e)
+        # print("Displacement velocity ratio (zeta):", zeta)
+        # print("Advance ratio:", propeller.J())
+        # # [cs, betas, alpha, E, eff, Tc, self.Pc]
+        # print("Chord per station:", design[0])
+        # print("Pitch per station in [deg]:", np.rad2deg(design[1]))
+        # print("AoA per station in [deg]:", np.rad2deg(design[2]))
+        # print("Radial coordinates [m]:", design[3])
+        # print("D/L ratio per station:", design[4])
+        # print("Propeller efficiency:", design[5])
+        # print("Thrust coefficient:", design[6])
+        # print("Power coefficient:", design[7])
+        # print("Exit speed:", V_e)
 
         return zeta, design, V_e, coefs
 
@@ -892,18 +892,30 @@ class Optiblade:
         omega = M_tip*a/R
 
         rpm = omega/0.10472
-        # V: float, B: int, R: float, chords: np.array, betas: np.array, r_stations: np.array,
-        # Cls: np.array, Cds: np.array, rpm: float, zeta: float, rho: float, dyn_vis: float, a: float,
-        # RN_spacing = 100000
 
+        # T, Q, eff
         blade_hover = OffDesignAnalysisBEM(self.V_h, self.B, self.R, design_blade[1][0], design_blade[1][1],
                                            design_blade[1][3], design_blade[3][0], design_blade[3][1], rpm,
-                                           design_blade[0], self.rho_h, self.dyn_vis_h, self.a_h)
+                                           design_blade[0], self.rho_h, self.dyn_vis_h, self.a_h).analyse_propeller()
+
+        # T, Q, eff
+        return [1], [blade_hover[0], blade_hover[1], blade_hover[2]]
 
     def optimised_blade(self):
-        for thrust_factor in (1, np.floor(self.T_h/self.T_cr)):
-            a = thrust_factor
 
+        # Multiply design (cruise) drag times factor
+        thrust_factors = np.arange(1, np.floor(self.T_h / self.T_cr))
+
+        # Design it for as close to cruise thrust as possible
+        index = 0
+        max_thrust = 0
+        while max_thrust < self.T_h:
+            thrust_factor = thrust_factors[index]
+            blade = self.off_design_check(thrust_factor)
+
+            max_thrust = blade[1][1]
+            index += 1
+        # T, Q, eff
         return 1
 
 
