@@ -71,14 +71,14 @@ class Control_surface:
         b_2rear = b2 * self.brear / 2 / 100
         c_r_fwd = self.cfwd*3/2*(1+self.taper)/(1+self.taper+self.taper**2)
         c_r_rear = self.crear * 3 / 2 * (1 + self.taper) / (1 + self.taper + self.taper ** 2)
-        Cldafwd = self.CLafwd*self.tau_a(Sa_S)*c_r_fwd/(self.Sfwd*self.bfwd)*\
+        Cldafwd = -self.CLafwd*self.tau_a(Sa_S)*c_r_fwd/(self.Sfwd*self.bfwd)*\
                (0.5*(b_2fwd**2-b_1fwd**2) + 2*(self.taper-1)/(3*self.bfwd)*(b_2fwd**3-b_1fwd**3))
         Cldafwd *= self.Sfwd*self.bfwd/(self.S*b)
         if rear==False:
             cc =0
         else:
             cc=1
-        Cldarear = self.CLarear*self.tau_a(Sa_S)*c_r_rear/(self.Srear*self.brear)*\
+        Cldarear = -self.CLarear*self.tau_a(Sa_S)*c_r_rear/(self.Srear*self.brear)*\
                (0.5*(b_2rear**2-b_1rear**2) + 2*(self.taper-1)/(3*self.brear)*(b_2rear**3-b_1rear**3))
         Cldarear *= self.Srear * self.brear / (self.S * b)*cc
         Clda = Cldafwd+Cldarear
@@ -95,7 +95,7 @@ class Control_surface:
 
     def plotting(self,Sa_S,b1,b2,rear):
         if isinstance(Sa_S,(float,int)) and not isinstance(b2,(float,int)):
-            da_max = 30*np.pi/180
+            da_max = -30*np.pi/180
             dphi_dt = 60*np.pi/180/1.3
             minClda = -(dphi_dt)*self.Clp()*max(self.bfwd,self.brear)/(2*self.Vmc*da_max)
             minClda = np.ones(len(b2))*minClda
@@ -131,7 +131,7 @@ class Control_surface:
             ba = (b2-b1)/100*self.bfwd/2*2
             ca = Sa_S*self.Sfwd/ba
             # print("c_a = ",ca)
-            ca_r = ca * 3 / 2 * (1 + self.taper_a) / (1 + self.taper_a + self.taper_a ** 2)
+            ca_r = ca * 2/(1+self.taper_a)
             # print("ca_root = ",ca_r)
             ca_t = ca_r*self.taper_a
             xa_3 = xa_2
@@ -145,7 +145,7 @@ class Control_surface:
             plt.legend()
             plt.show()
         else:
-            da_max = 30 * np.pi / 180
+            da_max = -30 * np.pi / 180
             dphi_dt = 60 * np.pi / 180 /1.3
             minClda = -(dphi_dt) * self.Clp() * max(self.bfwd, self.brear) / (2 * self.Vmc * da_max)
             # print("minClda = %.5f"%(minClda))
@@ -159,7 +159,7 @@ class Control_surface:
             plt.clabel(minimum,fmt="Min. : %.3f"%(minClda))
             cbar = plt.colorbar(cp, orientation="horizontal")
             cbar.set_label(r"$C_{l_{\delta_a}} [1/rad]$")
-            plt.ylabel(r"$S_a/S_{fwd}$ [-]", fontsize=12)
+            plt.ylabel(r"$S_a/S_{i}$ [-]", fontsize=12)
             plt.xlabel(r"$b_2$ [$\% b_{i}/2$]", fontsize=12)
             # plt.vlines(b1,min(Sa_S),max(Sa_S),"r",label=r"Smallest limit set by $b_1$")
             plt.show()
