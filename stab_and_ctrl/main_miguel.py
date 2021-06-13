@@ -155,6 +155,7 @@ weight = Weight(m_pax, wing, fuselage, lgear, props, cargo_m=85, cargo_pos=6, ba
                 p_pax=[1.5, 3, 3, 4.2, 4.2])
 
 Ixx, Iyy, Izz, Ixz = weight.MMI()
+Ka = 1.429
 
 if isinstance(ARv,float) and isinstance(sweepTE,float):
     stability_derivatives = Stab_Derivatives(W,h,lfus,hfus,wfus, d,dy,xcg,Zcg,cfwd,crear,Afwd,Arear,Vstall,
@@ -180,7 +181,12 @@ if isinstance(ARv,float) and isinstance(sweepTE,float):
         stability_derivatives.return_stab_derivatives(Se_S = 0.15,be_b = 0.99,
                                                       Sa_S=0.145,b1=b1,b2=99.0,cr_cv=0.4,br_bv=0.85)
     aircraft = Aircraft(W, h, S, c, b, V0, theta0, alpha0, q0, b0, phi0, p0, r0, Iyy, Ixx, Izz, Ixz, C_X, C_Z,C_m, CL0,
-                        C_Y, C_l, C_n)
+                        C_Y, C_l, C_n,Ka)
+    # sys = aircraft.compute_sym_sys(V0,Iyy/(W/9.80665*b**2), C_X,C_Z,C_m)
+    # aircraft.plot_open_loop(sys,1,0)
     aircraft.plot_results(V0)
+    # closed = aircraft.sym_sys_tuned
+    # aircraft.plot_results(V0,closed)
+    # aircraft.plot_results(V0)
 
 

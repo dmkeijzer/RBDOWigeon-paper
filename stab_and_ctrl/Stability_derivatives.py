@@ -203,7 +203,7 @@ class Stab_Derivatives:
         Analytical estimates of stability derivatives wrt yaw rate r (rb/(2V)).
         :return: C_Y_r, C_l_r, C_n_r
         """
-        CY_r = 2*self.C_L_a(self.ARv,self.Sweep(self.ARv*4,0.4,0,50,100))*(self.lfus-self.xcg)*\
+        CY_r = 2*self.C_L_a(self.ARv,self.Sweep(self.ARv*2,0.4,self.sweepTE,50,100))*(self.lv)*\
                     self.Sv/(self.S*self.b)*self.eta_v
         Pos_MAC_v = self.bv/6*((1+2*self.taper_v)/(1+self.taper_v))*2
         zv = self.hfus+Pos_MAC_v-self.zcg
@@ -228,7 +228,7 @@ class Stab_Derivatives:
                                self.Afwd,self.Arear,self.cfwd,self.crear,self.bfwd,self.brear,self.taper)
         Cl_p = Ctrl.Clp()
         eta_v = self.eta_v
-        CY_p = -8/(3*np.pi)*eta_v*(self.bv*self.Sv/(self.S*self.b))*self.C_L_a(self.ARv,self.Sweep(self.ARv*4,0.4,self.sweepTE,50,100))
+        CY_p = -8/(3*np.pi)*eta_v*(self.bv*self.Sv/(self.S*self.b))*self.C_L_a(self.ARv,self.Sweep(self.ARv*2,0.4,self.sweepTE,50,100))
         Cn_p_v = -(self.lv)/(self.b)*CY_p
         c_r_fwd = self.cfwd * 3 / 2 * (1 + self.taper) / (1 + self.taper + self.taper ** 2)
         c_r_rear = self.crear * 3 / 2 * (1 + self.taper) / (1 + self.taper + self.taper ** 2)
@@ -249,7 +249,7 @@ class Stab_Derivatives:
         :return: C_Y_beta, C_l_beta, C_n_beta
         """
         dsigma_dbeta = 0
-        CY_b = -self.C_L_a(self.ARv,self.Sweep(self.ARv*4,self.taper_v,0,50,100))*(1-dsigma_dbeta)*self.eta_v*self.Sv/(self.S)
+        CY_b = -self.C_L_a(self.ARv,self.Sweep(self.ARv*2,self.taper_v,self.sweepTE,50,100))*(1-dsigma_dbeta)*self.eta_v*self.Sv/(self.S)
         Cn_b_v = -CY_b*(self.lv)/self.b
         a = self.lfus/2
         b = self.wfus/2
@@ -340,7 +340,7 @@ class Stab_Derivatives:
         :param br_bv:  Span ratio of rudder to vertical tail
         :return: C_Y_dr, C_l_dr, C_n_dr
         """
-        CY_dr = self.C_L_a(self.ARv,self.Sweep(self.ARv*4,self.taper_v,0,50,100))*\
+        CY_dr = self.C_L_a(self.ARv,self.Sweep(self.ARv*2,self.taper_v,self.sweepTE,50,100))*\
                 self.Sv/self.bv*self.eta_v*self.tau_r(cr_cv)*br_bv
         Cn_dr = -CY_dr*self.lv/self.b
         Pos_MAC_v = self.bv / 6 * ((1 + 2 * self.taper_v) / (1 + self.taper_v)) * 2
