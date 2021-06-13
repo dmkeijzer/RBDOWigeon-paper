@@ -27,9 +27,14 @@ def winglet_dAR(AR, h_wl, b): # Gundmundsson 10.5 Wingtip design
 
     return 1.9*(h_wl/b)*AR
 
+def winglet_factor(h_wl, b, k_wl):  #https://www.fzt.haw-hamburg.de/pers/Scholz/Aero/AERO_PUB_Winglets_IntrinsicEfficiency_CEAS2017.pdf
+
+    return (1+(2/k_wl)*(h_wl/b))**2
+
+
 class wing_design:
 
-    def __init__(self, AR1, AR2, s1, sweepc41, s2, sweepc42, M, S, lh, h_ht, w, h_wl1,h_wl2):
+    def __init__(self, AR1, AR2, s1, sweepc41, s2, sweepc42, M, S, lh, h_ht, w, h_wl1,h_wl2, k_wl):
         self.AR1 = AR1
         self.AR2 = AR2
         self.s1 = s1
@@ -51,6 +56,7 @@ class wing_design:
         self.w = w
         self.h_wl1 = h_wl1
         self.h_wl2 = h_wl2
+        self.k_wl = k_wl
     def taper_opt(self):
         return 0.45 * np.exp(-0.036 * self.sweepc41), 0.45 * np.exp(-0.036 * self.sweepc42)  # Eq. 7.4 Conceptual Design of a Medium Range Box Wing Aircraft
 
@@ -66,7 +72,7 @@ class wing_design:
         tan_sweep_LE1 = 0.25 * (2 * c_r1 / b1) * (1 - self.taper1) + np.tan(self.sweepc41)
 
         X_LEMAC1 = y_MAC1 * tan_sweep_LE1
-        AReff1 = self.AR1 +winglet_dAR(self.AR1, self.h_wl1, b1)
+        AReff1 = self.AR1 * winglet_factor(self.h_wl1, b1, self.k_wl) #+winglet_dAR(self.AR1, self.h_wl1, b1)
         beff1 = b1*np.sqrt(AReff1/self.AR1)
         wing1 = [b1, c_r1, c_t1, c_MAC1, y_MAC1, X_LEMAC1, AReff1, beff1]
         # Wing 2
@@ -79,7 +85,7 @@ class wing_design:
         tan_sweep_LE2 = 0.25 * (2 * c_r2 / b2) * (1 - self.taper2) + np.tan(self.sweepc42)
 
         X_LEMAC2 = y_MAC2 * tan_sweep_LE2
-        AReff2 = self.AR2 + winglet_dAR(self.AR2, self.h_wl2, b2)
+        AReff2 = self.AR2 * winglet_factor(self.h_wl2, b2, self.k_wl) #+ winglet_dAR(self.AR2, self.h_wl2, b2)
         beff2 = b1 * np.sqrt(AReff2 / self.AR2)
         wing2 = [b2, c_r2, c_t2, c_MAC2, y_MAC2, X_LEMAC2, AReff2, beff2]
         #print(wing2)
