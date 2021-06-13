@@ -163,6 +163,7 @@ V = 0
 
 RN = Omega * design[0] * rho / dyn_visc
 
+# TODO: J has to be the same as in cruise for max efficiency (Larrabee)
 # zeta_new, [cs, betas, alpha, stations_r, E, eff, self.Tc, Pc], Ves, [Cl, Cd]  #-np.deg2rad(30)
 blade_hover = BEM.OffDesignAnalysisBEM(V_cruise, B, R, design[0], design[1]-np.deg2rad(6.5), design[3], coefs[0],
                                        coefs[1], rpm, rho, dyn_visc, a, RN)
