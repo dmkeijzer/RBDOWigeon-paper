@@ -36,7 +36,7 @@ T_cr_per_eng = 200
 
 ActDisk = ADT.ActDisk_verif(V_cr, T_cr_per_eng*n_prop, rho, A_tot)
 
-print("Cruise exit speed during cruise (ADT):", ActDisk.v_e_cr())
+print("Cruise exit speed (ADT):", ActDisk.v_e_cr())
 
 blade = BEM.BEM(B, R, rpm, xi_0, rho, dyn_visc, V_cr, 100, a, 100000, T=T_cr_per_eng)
 
