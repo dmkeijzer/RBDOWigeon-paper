@@ -877,34 +877,45 @@ class OffDesignAnalysisBEM:
             # Increase count of iterations
             count += 1
 
+        # Force coefficients
+        Cx = self.Cx(Cls, Cds, phi)
+        Cy = self.Cy(Cls, Cds, phi)
+
         # Thrust and torque per unit radius
-        T_prim = 0.5 * self.rho * Ws**2 * self.B * self.chords * self.Cy(Cls, Cds, phi)
-        Q_prim_r = 0.5 * self.rho * Ws**2 * self.B * self.chords * self.Cx(Cls, Cds, phi)
+        T_prim = 0.5 * self.rho * Ws**2 * self.B * self.chords * Cy
+        Q_prim_r = 0.5 * self.rho * Ws**2 * self.B * self.chords * Cx
 
         # Do simple integration to get total thrust and Q per unit r
         T = spint.trapz(T_prim, self.r_stations)
         Q = spint.trapz(Q_prim_r * self.r_stations, self.r_stations)
 
         # Thrust coefficient
-        C_T = self.C_T(T)
-        C_T_2 = spint.trapz(self.C_T_prim(self.r_stations, self.chords, Cls, Cds,
-                                          self.F(self.r_stations, phi[-1]*self.r_stations[-1]/self.R),
-                                          self.K_prim(Cls, Cds, phi), phi), self.r_stations)
-        print(C_T, C_T_2)
+        # C_T = self.C_T(T)
+        # C_T_2 = spint.trapz(self.C_T_prim(self.r_stations, self.chords, Cls, Cds,
+        #                                   self.F(self.r_stations, phi[-1]*self.r_stations[-1]/self.R),
+        #                                   self.K_prim(Cls, Cds, phi), phi), self.r_stations)
+
+        C_T_prim = T_prim/(self.rho * self.n**2 * self.D**4)
+        C_T = spint.trapz(C_T_prim, self.r_stations)
+
+        print("C_T", C_T)
 
         # Power coefficient
-        C_P_prim = self.C_P_prim(self.r_stations, self.chords, Cls, Cds, self.F(self.r_stations,
-                                                                                phi[-1]*self.r_stations[-1]/self.R),
-                                 self.K_prim(Cls, Cds, phi), phi)
+        # C_P_prim = self.C_P_prim(self.r_stations, self.chords, Cls, Cds, self.F(self.r_stations,
+        #                                                                         phi[-1]*self.r_stations[-1]/self.R),
+        #                          self.K_prim(Cls, Cds, phi), phi)
+        # C_P = spint.trapz(C_P_prim, self.r_stations)
+        # Cp= Ct * pi * xi * Cx/Cy
+        C_P_prim = C_T_prim * np.pi * self.r_stations/self.R * Cx/Cy
         C_P = spint.trapz(C_P_prim, self.r_stations)
-        print(C_P)
-
+        print("C_P", C_P)
+        print("P", C_P * self.rho * self.n**3 * self.D**5)
         # Efficiency
-        eff = self.eff(C_T_2, C_P)
-
+        # eff = self.eff(C_T_2, C_P)
+        eff = self.eff(C_T, C_P)
         # print("Alphas", np.rad2deg(alphas))
         # print("Cl, Cd", Cls, Cds)
-        print("T:", C_T_2*self.rho*self.n**2*self.D**4)
+        print("T:", C_T*self.rho*self.n**2*self.D**4)
         return T, Q, eff
 
 

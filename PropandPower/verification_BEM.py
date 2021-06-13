@@ -1,8 +1,47 @@
 import numpy as np
 import BEM as BEM
-import PropandPower.Midterm_files.ActuatorDisk as adt
+import PropandPower.prelim_ADT as ADT
+import constants as const
+import Aero_tools as at
+
+g0 = const.g
+rho0 = const.rho_0
+
+ISA = at.ISA(1000)
+
+rho = ISA.density()
+dyn_visc = ISA.viscosity_dyn()
+a = ISA.soundspeed()
+
 
 """
 Check the exit speed of BEM with ADT, they should be similar
 """
 
+MTOM = 3000
+
+n_prop = 12
+B = 20
+rpm = 2500
+R = 0.55
+xi_0 = 0.1
+
+A_prop = np.pi * R**2 - (np.pi * (R*xi_0)**2)
+A_tot = A_prop * n_prop
+
+DiskLoad = MTOM / A_tot
+
+V_cr = 94
+T_cr_per_eng = 200
+
+ActDisk = ADT.ActDisk_verif(V_cr, T_cr_per_eng*n_prop, rho, A_tot)
+
+print("Cruise exit speed during cruise (ADT):", ActDisk.v_e_cr())
+
+blade = BEM.BEM(B, R, rpm, xi_0, rho, dyn_visc, V_cr, 100, a, 100000, T=T_cr_per_eng)
+
+blade_design = blade.optimise_blade(0)
+
+print("Cruise exit speed (BEM)", blade_design[0]*V_cr + V_cr)
+
+print("Ratio:", ActDisk.v_e_cr()/(blade_design[0]*V_cr + V_cr))

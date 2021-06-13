@@ -116,7 +116,8 @@ print("")
 print("Propulsive efficiency:", 2/(1 + np.average(V_e)/V_cruise))
 print("")
 print("Cls, Cds", coefs)
-
+print("")
+print("T_cr", T_cr_per_eng)
 
 # plt.subplot(211)
 # plt.plot(design[3], coefs[0])
