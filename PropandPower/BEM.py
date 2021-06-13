@@ -862,7 +862,7 @@ class OffDesignAnalysisBEM:
             # print("phi", phi)
             # print("phi new", phi_new)
             # print("")
-            if np.max(conv) > 0.01:
+            if np.max(conv) > 0.1:
                 # print("### conv", conv, np.average(conv))
                 pass
             else:
@@ -920,6 +920,8 @@ class OffDesignAnalysisBEM:
         print("Alphas", np.rad2deg(alphas))
         print("Cl, Cd", Cls, Cds)
         # print("T:", C_T*self.rho*self.n**2*self.D**4)
+        print(a_facs)
+        print(a_prims)
         return T, Q, eff
 
 

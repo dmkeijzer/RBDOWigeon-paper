@@ -156,10 +156,10 @@ print("----------- Analyse in hover -------------")
 # rpm = omega/0.10472
 # print("Propeller rpm at hover:", rpm)
 
-# rpm = 3000
-# V = 52.87
+rpm = 5000
+V = 0
 # zeta_new, [cs, betas, alpha, stations_r, E, eff, self.Tc, Pc], Ves, [Cl, Cd]  #-np.deg2rad(30)
-blade_hover = BEM.OffDesignAnalysisBEM(V_cruise, B, R, design[0], design[1], design[3], coefs[0], coefs[1], rpm, rho,
+blade_hover = BEM.OffDesignAnalysisBEM(V_cruise, B, R, design[0], design[1]-np.deg2rad(5), design[3], coefs[0], coefs[1], rpm, rho,
                                        dyn_visc, a)
 
 blade_hover_analysis = blade_hover.analyse_propeller()
