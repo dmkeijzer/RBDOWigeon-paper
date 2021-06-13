@@ -389,10 +389,10 @@ class BEM:
 
         # TODO: revise approach
         # Smooth the Cl distribution and recalculate the lift coefficient: Polinomial regression for smooth distribution
-        # coef_cl = np.polynomial.polynomial.polyfit(stations_r, Cl, 1)
-        # cl_fun = np.polynomial.polynomial.Polynomial(coef_cl)
-        #
-        # Cl = cl_fun(stations_r)
+        coef_cl = np.polynomial.polynomial.polyfit(stations_r, Cl, 1)
+        cl_fun = np.polynomial.polynomial.Polynomial(coef_cl)
+
+        Cl = cl_fun(stations_r)
 
         # Calculate product of local speed with chord
         Wc = self.Wc(F, phis, zeta, Cl)
@@ -507,7 +507,7 @@ class BEM:
 # Analyse the propeller in off-design conditions
 class OffDesignAnalysisBEM:
     def __init__(self, V: float, B: int, R: float, chords: np.array, betas: np.array, r_stations: np.array,
-                 Cls: np.array, Cds: np.array, rpm: float, rho: float, dyn_vis: float, a: float,
+                 Cls: np.array, Cds: np.array, rpm: float, rho: float, dyn_vis: float, a: float, RN: np.array,
                  RN_spacing=100000):
         """
         TODO: Add
@@ -534,6 +534,7 @@ class OffDesignAnalysisBEM:
         self.rho = rho
         self.dyn_vis = dyn_vis
         self.a = a
+        self.RN_init = RN
 
         self.RN_spacing = RN_spacing
 
@@ -603,11 +604,15 @@ class OffDesignAnalysisBEM:
 
         # From Viterna and Janetzke
         sign = np.sign(sigma * K / (self.F(r, phi_t) - sigma*K))
+        # print(sign)
+        # if any(sign) < 0:
+        #     print("a sign negative")
+
         magnitude = np.minimum(np.abs(sigma * K / (self.F(r, phi_t) - sigma*K)), 0.7)
 
         # TODO: check sign of a
         # print("a:", omega * K / (self.F(r, zeta) - omega*K))
-        return magnitude*sign
+        return magnitude  # *sign
 
     def a_prim_fac(self, Cl, Cd, phi, c, r, phi_t):
         sigma = self.solidity_local(c, r)  # Local solidity
@@ -619,9 +624,13 @@ class OffDesignAnalysisBEM:
         # return np.minimum(omega * K_prim / (self.F(r, zeta) + omega * K_prim), 0.7)
 
         sign = sigma * K_prim / (self.F(r, phi_t) + sigma * K_prim)
+
+        # if any(sign) < 0:
+        #     print("a' sign negative")
+
         magnitude = np.minimum(np.abs(sigma * K_prim / (self.F(r, phi_t) + sigma * K_prim)), 0.7)
 
-        return magnitude*sign
+        return magnitude  # *sign
 
     def phi(self, a, a_prim, r):
         return np.arctan(self.V * (1 + a) / (self.Omega * r * (1 - a_prim)))
@@ -720,13 +729,116 @@ class OffDesignAnalysisBEM:
 
     def analyse_propeller(self):
         # Initial estimate for phi and zeta
-        # phi = np.arctan(self.lamb/self.Xi(self.r_stations))
         phi = np.arctan(self.lamb / self.Xi(self.r_stations))
-        # zeta = self.zeta
+
+        alphas = self.betas - phi
 
         # Get initial estimate of CL and Cd per station
-        Cls = self.Cls
-        Cds = self.Cds
+        Cls = np.ones(len(self.r_stations))
+        Cds = np.ones(len(self.r_stations))
+
+        """
+        Start
+        """
+        Reyn = self.RN_init  # TODO: implement
+
+        for station in range(len(Reyn)):
+
+            RN = self.RN_spacing * round(Reyn[station] / self.RN_spacing)
+
+            # Maximum and minimum RN in database
+            if RN < 100000:
+                RN = 100000
+            if RN > 5000000:
+                RN = 5000000
+
+            # Look for corresponding airfoil data file for that RN
+            filename1 = "4412_Re%d_up.txt" % RN
+            filename2 = "4412_Re%d_dwn.txt" % RN
+
+            file_up = open('../PropandPower/Airfoil_Data/' + filename1, "r")
+            file_down = open('../PropandPower/Airfoil_Data/' + filename2, "r")
+
+            # Read lines
+            lines_up = file_up.readlines()
+            lines_down = file_up.readlines()
+
+            # Close files
+            file_up.close()
+            file_down.close()
+
+            # List and Boolean to save relevant lines
+            format_lines = []
+            save_lines = False
+
+            for line in lines_up:
+                # Separate variables inside file
+                a = line.split()
+
+                # If the save_lines boolean is True (when the code gets to numerical values), save to list
+                if save_lines:
+                    # Create a line with floats (instead of strings) to append to main list
+                    new_line = []
+                    for value in a:
+                        new_line.append(float(value))
+                    format_lines.append(new_line)
+
+                # Protect against empty lines
+                if len(a) > 0:
+                    # There is a line with ---- before the numbers, so once we get to this line, start saving
+                    if a[0].count('-') >= 1:
+                        save_lines = True
+
+            # Restart boolean for down file
+            save_lines = False
+
+            # Do the same process for down file and append to the same array as up
+            for line in lines_down:
+                a = line.split()
+
+                if save_lines:
+                    new_line = []
+                    for value in a:
+                        new_line.append(float(value))
+                    format_lines.append(new_line)
+
+                if len(a) > 0:
+                    if a[0].count('-') >= 1:
+                        save_lines = True
+
+            # Convert to numpy array with airfoil data
+            airfoil_data = np.array(format_lines)
+
+            # ------------ Format of each line --------------
+            # alpha, CL, CD, Re(CL), CM, S_xtr, P_xtr, CDp
+
+            # Order airfoil data by angle of attack, this can be eliminated to save time if needed
+            airfoil_data = airfoil_data[airfoil_data[:, 0].argsort()]
+
+            # Save airfoil data array to have a copy to modify
+            airfoil_data_check = airfoil_data
+
+            # Subtract current AoA from list of AoAs
+            # Note that the AoA in the files is in degrees
+            airfoil_data_check[:, 0] -= np.rad2deg(alphas[station])
+
+            # Check what line has min AoA difference, and retrieve index of that column
+            index = np.argmin(np.abs(airfoil_data_check[:, 0]))
+
+            # Obtain the Cl and Cd from the line where Cl difference is min
+            # Correct the Cl/Cd obtained for Mach number
+            Cl_ret = airfoil_data[index, 1] / self.PG(self.M(self.Omega*self.r_stations[station]))  # Retrieved Cl
+            Cd_ret = airfoil_data[index, 2] / self.PG(self.M(self.Omega*self.r_stations[station]))  # Retrieved Cd
+
+            # print("Cl/Cd", airfoil_data[index, 1], airfoil_data[index, 2])  # Retrieved Cd)
+            # print("Ws", Ws[station], "Mach", self.M(Ws[station]), "PG", self.PG(self.M(Ws[station])))
+            # Update the Cl and Cd at each station
+            Cls[station] = Cl_ret
+            Cds[station] = Cd_ret
+
+        """
+        End
+        """
 
         # Calculate initial estimates for the interference factors
         a_facs = self.a_fac(Cls, Cds, phi, self.chords, self.r_stations, phi[-1]*self.r_stations[-1]/self.R)
@@ -862,7 +974,7 @@ class OffDesignAnalysisBEM:
             # print("phi", phi)
             # print("phi new", phi_new)
             # print("")
-            if np.max(conv) > 0.1:
+            if np.max(conv) > 0.05:
                 # print("### conv", conv, np.average(conv))
                 pass
             else:
