@@ -13,12 +13,13 @@ author: Michal Cuadrat-Grzybowski
 
 
 class Aircraft:
-    def __init__(self,W,h,S,c,b,V,theta0,alpha0,q0,b0,phi0,p0,r0,Iyy,Ixx,Izz,Ixz,C_X,C_Z,C_m,C_L,C_Y,C_l,C_n):
+    def __init__(self,W,h,S,c,b,V,theta0,alpha0,q0,b0,phi0,p0,r0,Iyy,Ixx,Izz,Ixz,C_X,C_Z,C_m,C_L,C_Y,C_l,C_n,Ka):
         self.W = W     # Weight [N]
         self.h = h     # Height [m]
         self.S = S     # Total wing area [m^2]
         self.c = c     # Total mean aerodynamic chord [m]
         self.b = b     # Maximum wing span [m]
+        self.Ka = Ka
         #### Initial conditons ####
         self.th0 = theta0 * np.pi / 180
         self.alpha0 = alpha0*np.pi/180
@@ -34,8 +35,10 @@ class Aircraft:
         self.Kxz = Ixz/(self.W/9.80665*self.b**2)
         self.sym_sys = self.compute_sym_sys(V,self.Kyy2, C_X,C_Z,C_m)
         self.asym_sys = self.compute_asym_sys(V,self.Kxx2,self.Kzz2,self.Kxz, C_L,C_Y,C_l,C_n)
+        self.sym_sys_tuned = self.alpha_tf(self.Ka)
         self.eig_s = self.get_eigenvalues(self.sym_sys,V,"sym")
         self.eig_a = self.get_eigenvalues(self.asym_sys,V,"asym")
+        self.eig_s_tuned = self.get_eigenvalues(self.sym_sys_tuned,V,"sym")
         self.prop_s = self.get_period_prop(self.sym_sys,V,"sym")
         self.prop_a = self.get_period_prop_a(self.asym_sys, V, "asym")
 
@@ -43,16 +46,22 @@ class Aircraft:
         T = np.linspace(0, 250, 2500)
 
         #### Compute Symmetric System Eigenvalues ####
-        print("-----------Symmetric Case-----------")
+        print("-----------Symmetric Case (Non-tuned)-----------")
         lc = '\u03BB_c = '
         print("Eigenvalues for Symmetric Motion", lc,self.eig_s)
         print("Properties of motion:", self.prop_s[0],self.prop_s[1])
+
+        #### Compute Symmetric System Eigenvalues ####
+        print("-----------Symmetric Case (Tuned)-----------")
+        lc = '\u03BB_c = '
+        print("Eigenvalues for Symmetric Motion", lc, self.eig_s_tuned)
+        # print("Properties of motion:", self.prop_s[0], self.prop_s[1])
 
         ############### Compute Phugoid & Plotting ##############
         T_p = np.linspace(0, 200, 1000)
         delta_e = self.pulse(T_p, 1,16)*radians(0.2)
         u_motion, alpha_motion, theta_motion, pitch_motion = \
-            self.phugoid(T_p, delta_e, V)
+            self.phugoid(T_p, delta_e, V,sys=self.sym_sys)
 
         fig,axs = plt.subplots(2,2, figsize=(7,4), constrained_layout=True)
         axs[0,0].plot(T_p,u_motion)
@@ -80,7 +89,7 @@ class Aircraft:
         T_sp = np.linspace(0, 10, 100)
         delta_e = self.pulse(T_sp,1,1.1)*radians(0.2)
         u_motion, alpha_motion, theta_motion, pitch_motion = \
-            self.short_period(T_sp, delta_e, V)
+            self.short_period(T_sp, delta_e, V,sys=self.sym_sys)
 
         fig,axs = plt.subplots(2,2, figsize=(7,4), constrained_layout=True)
         axs[0,0].plot(T_sp,u_motion)
@@ -105,7 +114,7 @@ class Aircraft:
         plt.show()
 
         ######## Asymmetric System ##########
-        print("-------Asymmetric Case---------")
+        print("-------Asymmetric Case (Non-tuned) ---------")
         lb = '\u03BB_b = '
         print(r"Eigenvalues for Asymmetric Motion ", lb, self.eig_a)
         print("Properties of motion:", self.prop_a)
@@ -293,6 +302,24 @@ class Aircraft:
                          [0]])
         return matlab.ss(A_s,B_s,C_s,D_s)
 
+    def alpha_tf(self, Ka):
+        Hset = matlab.tf(self.sym_sys)
+        # Hol = matlab.tf(Hset.num[i][o],Hset.den[i][o])
+        # matlab.sisotool(Hol)
+        # plt.show()
+        Ka = np.array([[0,Ka,0,0]])
+        SysCL = self.sym_sys.feedback(Ka)
+        return SysCL
+
+    def plot_open_loop(self,sys,i,o):
+        Hset = matlab.tf(sys)
+        Hol = matlab.tf(Hset.num[i][o], Hset.den[i][o])
+        matlab.sisotool(Hol)
+        plt.show()
+        return
+
+
+
     def sym_stability_req(self,Kyy2,C_X,C_Z,C_m):
         """
         Inputs:
@@ -422,7 +449,7 @@ class Aircraft:
     def dimensionalise_sym(self, x, V):
         return np.array([x[0]*V, x[1], x[2], x[3] * V / self.c])
 
-    def phugoid(self, T, delta_e, V):
+    def phugoid(self, T, delta_e, V,sys):
         alpha_init = self.alpha0
         theta_init = self.th0
         q_init = self.q0
@@ -431,10 +458,10 @@ class Aircraft:
         #theta = matlab.impulse(self.sym_sys, T,output=2)* delta_e
         #q = matlab.impulse(self.sym_sys, T,output=3)* delta_e
         init = np.array([0, alpha_init, theta_init, q_init * self.c / V])
-        y, T, x = matlab.lsim(self.sym_sys, U=delta_e, T=T, X0=init)
+        y, T, x = matlab.lsim(sys, U=delta_e, T=T, X0=init)
         return self.dimensionalise_sym(y.transpose(), V)
 
-    def short_period(self, T, delta_e, V):
+    def short_period(self, T, delta_e, V,sys):
         alpha_init = self.alpha0
         theta_init = self.th0
         q_init = self.q0
@@ -443,7 +470,7 @@ class Aircraft:
         #theta = matlab.step(self.sym_sys, T, output=2) * delta_e
         #q = matlab.step(self.sym_sys, T, output=3) * delta_e
         init = np.array([0, alpha_init, theta_init, q_init * self.c / V])
-        y, T, x = matlab.lsim(self.sym_sys,U=delta_e,T=T, X0=init)
+        y, T, x = matlab.lsim(sys,U=delta_e,T=T, X0=init)
         return self.dimensionalise_sym(y.transpose(), V)
 
     def dimensionalise_asym(self, x, V):
