@@ -1,3 +1,4 @@
+import matplotlib.pyplot as plt
 import numpy as np
 import BEM as BEM
 import PropandPower.prelim_ADT as ADT
@@ -45,3 +46,41 @@ blade_design = blade.optimise_blade(0)
 print("Cruise exit speed (BEM)", blade_design[0]*V_cr + V_cr)
 
 print("Ratio:", ActDisk.v_e_cr()/(blade_design[0]*V_cr + V_cr))
+print("")
+
+
+print("#######################################")
+print("")
+
+
+"""
+Plot efficiency against J
+
+J = V/(nD)
+"""
+
+# Fix n and D, change only V
+D = 2*R
+n = rpm / 60
+
+Js = []
+effs = []
+for V in range(45, 90):
+    blade = BEM.BEM(B, R, rpm, xi_0, rho, dyn_visc, V, 100, a, 100000, T=T_cr_per_eng)
+    blade_design = blade.optimise_blade(0)
+
+    # Check the advance ratio
+    J = V/(n*D)
+    Js.append(J)
+
+    # Compute the efficiency
+    eff = blade_design[1][5]
+    effs.append(eff)
+
+# Plot efficiency against advance ratio
+plt.plot(Js, effs)
+plt.xlabel("Advance ratio, J = V/(nD)")
+plt.ylabel(r'$\eta$')
+
+plt.show()
+
