@@ -139,7 +139,7 @@ class BEM:
 
     # G function used for integration part only
     def G_int(self, xi, zeta):
-        return self.F_int(xi, zeta) * np.cos(self.phi_t(zeta)) * np.sin(self.phi_t(zeta))
+        return self.F_int(xi, zeta) * np.cos(self.phi_int(xi, zeta)) * np.sin(self.phi_int(xi, zeta))
 
     # # Integrals used to calculate internal variables, refer to paper for more explanation if needed
     # def I_prim_1(self, xi, zeta, eps):
@@ -239,6 +239,8 @@ class BEM:
         # Station 1 has st length/2, each station has that plus N*st length
         # Station 1 starts after hub
         stations_r = self.xi_0*self.R + st_len/2 + (stations-1)*st_len
+        # stations_r = self.xi_0*self.R + (stations)*st_len
+
 
         # F and phi for each station
         # self.Xi(stations_r),
@@ -433,6 +435,12 @@ class BEM:
         J1 = spint.quad(self.J_prim_1, self.xi_0, 1, args=(zeta, eps_avg))[0]
         J2 = spint.quad(self.J_prim_2, self.xi_0, 1, args=(zeta, eps_avg))[0]
 
+        # # Integrate the derivatives from xi_0 to 1 (from hub to tip of the blade) with trapezoidal rule
+        # I1 = spint.trapz(self.I_prim_1(stations_r/self.R, zeta, eps), stations_r/self.R)
+        # I2 = spint.trapz(self.I_prim_2(stations_r/self.R, zeta, eps), stations_r/self.R)
+        # J1 = spint.trapz(self.J_prim_1(stations_r/self.R, zeta, eps), stations_r/self.R)
+        # J2 = spint.trapz(self.J_prim_2(stations_r/self.R, zeta, eps), stations_r/self.R)
+
         # print("I1:", I1)
         # print("I2:", I2)
         # print("J1:", J1)
@@ -485,8 +493,7 @@ class BEM:
         design = self.run_BEM(zeta)
         return design
 
-    # TODO
-    # Implement a cycle with eps = 0 to calculate viscous losses
+    # TODO: Implement a cycle with eps = 0 to calculate viscous losses
 
     # Advance ratio
     def J(self):
@@ -500,10 +507,10 @@ class BEM:
 # Analyse the propeller in off-design conditions
 class OffDesignAnalysisBEM:
     def __init__(self, V: float, B: int, R: float, chords: np.array, betas: np.array, r_stations: np.array,
-                 Cls: np.array, Cds: np.array, rpm: float, zeta: float, rho: float, dyn_vis: float, a: float,
+                 Cls: np.array, Cds: np.array, rpm: float, rho: float, dyn_vis: float, a: float,
                  RN_spacing=100000):
         """
-        hola
+        TODO: Add
         """
         self.V = V
         self.B = B
@@ -515,7 +522,7 @@ class OffDesignAnalysisBEM:
         self.Cls = Cls
         self.Cds = Cds
         self.r_stations = r_stations
-        self.zeta = zeta
+        # self.zeta = zeta
 
         self.rpm = rpm
         self.Omega = rpm * 2 * np.pi / 60  # rpm to rad/s
@@ -531,16 +538,19 @@ class OffDesignAnalysisBEM:
         self.RN_spacing = RN_spacing
 
     # Prandtl relation for tip loss
-    def F(self, r, zeta):
-        return (2 / np.pi) * np.arccos(np.exp(-self.f(r, zeta)))
+    def F(self, r, phi_t):
+        return (2 / np.pi) * np.arccos(np.exp(-self.f(r, phi_t)))
 
     # Exponent used for function above
-    def f(self, r, zeta):
-        return (self.B / 2) * (1 - self.Xi(r)) / (np.sin(self.phi_t(zeta)))
+    def f(self, r, phi_t):
+        return (self.B / 2) * (1 - self.Xi(r)) / (np.sin(phi_t))
 
-    # Pitch of blade tip
-    def phi_t(self, zeta):
-        return np.arctan(self.lamb * (1 + zeta / 2))
+    # # Pitch of blade tip TODO: change
+    # def phi_t(self, zeta):
+    #     return np.arctan(self.lamb * (1 + zeta / 2))
+
+    # def phi_t(self):
+    #     return 1
 
     # Non-dimensional radius, r/R
     def Xi(self, r):
@@ -587,20 +597,20 @@ class OffDesignAnalysisBEM:
         return self.Cx(Cl, Cd, phi) / (4 * np.sin(phi) * np.cos(phi))
 
     # Interference factors
-    def a_fac(self, Cl, Cd, phi, c, r, zeta):
-        omega = self.solidity_local(c, r)  # Local solidity
+    def a_fac(self, Cl, Cd, phi, c, r, phi_t):
+        sigma = self.solidity_local(c, r)  # Local solidity
         K = self.K(Cl, Cd, phi)
 
         # From Viterna and Janetzke
-        sign = np.sign(omega * K / (self.F(r, zeta) - omega*K))
-        magnitude = np.minimum(np.abs(omega * K / (self.F(r, zeta) - omega*K)), 0.7)
+        sign = np.sign(sigma * K / (self.F(r, phi_t) - sigma*K))
+        magnitude = np.minimum(np.abs(sigma * K / (self.F(r, phi_t) - sigma*K)), 0.7)
 
         # TODO: check sign of a
         # print("a:", omega * K / (self.F(r, zeta) - omega*K))
         return magnitude*sign
 
-    def a_prim_fac(self, Cl, Cd, phi, c, r, zeta):
-        omega = self.solidity_local(c, r)  # Local solidity
+    def a_prim_fac(self, Cl, Cd, phi, c, r, phi_t):
+        sigma = self.solidity_local(c, r)  # Local solidity
         K_prim = self.K_prim(Cl, Cd, phi)
 
         # # TODO: check sign of a_prim
@@ -608,19 +618,98 @@ class OffDesignAnalysisBEM:
         # # print("")
         # return np.minimum(omega * K_prim / (self.F(r, zeta) + omega * K_prim), 0.7)
 
-        sign = omega * K_prim / (self.F(r, zeta) + omega * K_prim)
-        magnitude = np.minimum(np.abs(omega * K_prim / (self.F(r, zeta) + omega * K_prim)), 0.7)
+        sign = sigma * K_prim / (self.F(r, phi_t) + sigma * K_prim)
+        magnitude = np.minimum(np.abs(sigma * K_prim / (self.F(r, phi_t) + sigma * K_prim)), 0.7)
 
         return magnitude*sign
 
     def phi(self, a, a_prim, r):
-        return self.V * (1 + a) / (self.Omega * r * (1 - a_prim))
+        return np.arctan(self.V * (1 + a) / (self.Omega * r * (1 - a_prim)))
 
     def C_T(self, T):
         return T / (self.rho * self.n**2 * self.D**4)
 
     def C_P(self, P):
         return P / (self.rho * self.n**3 * self.D**5)
+
+    # Differential forms wrt xi
+    # TODO: check exponents of xi and F
+    def C_T_prim(self, r, c, Cl, Cd, F, K_prim, phi):
+        return (np.pi**3 / 4) * self.solidity_local(c, r) * self.Cy(Cl, Cd, phi) * (r/self.R) * \
+               self.F(r, phi[-1])**3 / ((F + self.solidity_local(c, r)*K_prim) * np.cos(phi))**2
+
+    def C_P_prim(self, r, c, Cl, Cd, F, K_prim, phi):
+        return self.C_T_prim(r, c, Cl, Cd, F, K_prim, phi) * np.pi * (r/self.R) * self.Cx(Cl, Cd, phi) / \
+               self.Cy(Cl, Cd, phi)
+
+    """ 
+    These functions take xi instead of r as an input and are used for integration
+    """
+    # # Prandtl relation for tip loss
+    # def F_int(self, xi, phi_t):
+    #     r = xi * self.R
+    #     return (2 / np.pi) * np.arccos(np.exp(-self.f(r, phi_t)))
+    #
+    # # Exponent used for function above
+    # def f_int(self, xi, phi_t):
+    #     r = xi * self.R
+    #     return (self.B / 2) * (1 - self.Xi(r)) / (np.sin(phi_t))
+    #
+    # def W_int(self, a, a_prim, xi):
+    #     r = xi * self.R
+    #     return np.sqrt((self.V * (1 + a)) ** 2 + (self.Omega * r * (1 - a_prim)) ** 2)
+    #
+    #     # Cx and Cy coefficients from Cl and Cd
+    #
+    # def Cy_int(self, Cl, Cd, phi):
+    #     return Cl * np.cos(phi) - Cd * np.sin(phi)
+    #
+    # def Cx_int(self, Cl, Cd, phi):
+    #     return Cl * np.sin(phi) + Cd * np.cos(phi)
+    #
+    #     # Local solidity of a blade element
+    #
+    # def solidity_local_int(self, c, xi):
+    #     r = xi * self.R
+    #     return self.B * c / (2 * np.pi * r)
+    #
+    #     # Variables used in interference factors
+    #
+    # def K_int(self, Cl, Cd, phi):
+    #     return self.Cy(Cl, Cd, phi) / (4 * (np.sin(phi)) ** 2)
+    #
+    # def K_prim_int(self, Cl, Cd, phi):
+    #     return self.Cx(Cl, Cd, phi) / (4 * np.sin(phi) * np.cos(phi))
+    #
+    #     # Interference factors
+    #
+    # def a_fac_int(self, Cl, Cd, phi, c, xi, zeta):
+    #     # r = xi * self.R
+    #     sigma = self.solidity_local_int(c, xi)  # Local solidity
+    #     K = self.K_int(Cl, Cd, phi)
+    #
+    #     # From Viterna and Janetzke
+    #     sign = np.sign(sigma * K / (self.F_int(xi, zeta) - sigma * K))
+    #     magnitude = np.minimum(np.abs(sigma * K / (self.F_int(xi, zeta) - sigma * K)), 0.7)
+    #
+    #     return magnitude * sign
+    #
+    # def a_prim_fac_int(self, Cl, Cd, phi, c, xi, zeta):
+    #     sigma = self.solidity_local_int(c, xi)  # Local solidity
+    #     K_prim = self.K_prim_int(Cl, Cd, phi)
+    #
+    #     sign = sigma * K_prim / (self.F_int(xi, zeta) + sigma * K_prim)
+    #     magnitude = np.minimum(np.abs(sigma * K_prim / (self.F_int(xi, zeta) + sigma * K_prim)), 0.7)
+    #
+    #     return magnitude * sign
+    #
+    # def phi_int(self, a, a_prim, xi):
+    #     r = xi * self.R
+    #     return np.arctan(self.V * (1 + a) / (self.Omega * r * (1 - a_prim)))
+
+    """
+    End of the funtions used for integration
+    """
 
     def eff(self, C_T, C_P):
         return C_T * self.J / C_P
@@ -632,21 +721,21 @@ class OffDesignAnalysisBEM:
     def analyse_propeller(self):
         # Initial estimate for phi and zeta
         # phi = np.arctan(self.lamb/self.Xi(self.r_stations))
-        phi = np.arctan(0.1 / self.Xi(self.r_stations))
-        zeta = self.zeta
+        phi = np.arctan(self.lamb / self.Xi(self.r_stations))
+        # zeta = self.zeta
 
         # Get initial estimate of CL and Cd per station
         Cls = self.Cls
         Cds = self.Cds
 
         # Calculate initial estimates for the interference factors
-        a_facs = self.a_fac(Cls, Cds, phi, self.chords, self.r_stations, zeta)
-        a_prims = self.a_prim_fac(Cls, Cds, phi, self.chords, self.r_stations, zeta)
+        a_facs = self.a_fac(Cls, Cds, phi, self.chords, self.r_stations, phi[-1]*self.r_stations[-1]/self.R)
+        a_prims = self.a_prim_fac(Cls, Cds, phi, self.chords, self.r_stations, phi[-1]*self.r_stations[-1]/self.R)
 
         # Iterate to get a convergent analysis
         count = 0
         iterate = True
-        while iterate or count < 5:
+        while iterate or (count < 10):
             # Calculate AoA of the blade stations
             alphas = self.betas - phi
 
@@ -656,10 +745,10 @@ class OffDesignAnalysisBEM:
             # Calculate the Reynolds number
             Re = self.RN(Ws, self.chords)
 
-            print("Ws", Ws)
-            print("Phis", phi)
-            print("as", a_prims)
-            print("a's", a_facs)
+            # print("Ws", Ws)
+            # print("Phis", phi)
+            # print("as", a_prims)
+            # print("a's", a_facs)
 
             for station in range(len(self.r_stations)):
                 # Get the Reynold's number per station
@@ -743,12 +832,13 @@ class OffDesignAnalysisBEM:
                 airfoil_data_check[:, 0] -= np.rad2deg(alphas[station])
 
                 # Check what line has min AoA difference, and retrieve index of that column
-                index = np.argmin(np.abs(airfoil_data_check[:, 1]))
+                index = np.argmin(np.abs(airfoil_data_check[:, 0]))
 
                 # Obtain the Cl and Cd from the line where Cl difference is min
                 # Correct the Cl/Cd obtained for Mach number
                 Cl_ret = airfoil_data[index, 1]/self.PG(self.M(Ws[station]))  # Retrieved Cl
                 Cd_ret = airfoil_data[index, 2]/self.PG(self.M(Ws[station]))  # Retrieved Cd
+
                 # print("Cl/Cd", airfoil_data[index, 1], airfoil_data[index, 2])  # Retrieved Cd)
                 # print("Ws", Ws[station], "Mach", self.M(Ws[station]), "PG", self.PG(self.M(Ws[station])))
                 # Update the Cl and Cd at each station
@@ -761,16 +851,19 @@ class OffDesignAnalysisBEM:
             # print("")
 
             # Update the interference factors
-            a_facs = self.a_fac(Cls, Cds, phi, self.chords, self.r_stations, zeta)
-            a_prims = self.a_prim_fac(Cls, Cds, phi, self.chords, self.r_stations, zeta)
+            a_facs = self.a_fac(Cls, Cds, phi, self.chords, self.r_stations, phi[-1]*self.r_stations[-1]/self.R)
+            a_prims = self.a_prim_fac(Cls, Cds, phi, self.chords, self.r_stations, phi[-1]*self.r_stations[-1]/self.R)
 
             # Update phi
             phi_new = self.phi(a_facs, a_prims, self.r_stations)
 
             # Check convergence of the phi angles
             conv = np.abs((phi - phi_new) / phi)
-
+            # print("phi", phi)
+            # print("phi new", phi_new)
+            # print("")
             if np.max(conv) > 0.01:
+                # print("### conv", conv, np.average(conv))
                 pass
             else:
                 iterate = False
@@ -778,9 +871,9 @@ class OffDesignAnalysisBEM:
             # Update the phi angles
             phi = phi_new
 
-            print("############")
-            print("Count", count)
-            print("############")
+            # print("############")
+            # print("Count", count)
+            # print("############")
             # Increase count of iterations
             count += 1
 
@@ -789,22 +882,35 @@ class OffDesignAnalysisBEM:
         Q_prim_r = 0.5 * self.rho * Ws**2 * self.B * self.chords * self.Cx(Cls, Cds, phi)
 
         # Do simple integration to get total thrust and Q per unit r
-        T = spint.cumtrapz(T_prim, self.r_stations)
-        Q = spint.cumtrapz(Q_prim_r * self.r_stations, self.r_stations)
+        T = spint.trapz(T_prim, self.r_stations)
+        Q = spint.trapz(Q_prim_r * self.r_stations, self.r_stations)
 
         # Thrust coefficient
         C_T = self.C_T(T)
-        C_P = 1  # TODO: implement
+        C_T_2 = spint.trapz(self.C_T_prim(self.r_stations, self.chords, Cls, Cds,
+                                          self.F(self.r_stations, phi[-1]*self.r_stations[-1]/self.R),
+                                          self.K_prim(Cls, Cds, phi), phi), self.r_stations)
+        print(C_T, C_T_2)
+
+        # Power coefficient
+        C_P_prim = self.C_P_prim(self.r_stations, self.chords, Cls, Cds, self.F(self.r_stations,
+                                                                                phi[-1]*self.r_stations[-1]/self.R),
+                                 self.K_prim(Cls, Cds, phi), phi)
+        C_P = spint.trapz(C_P_prim, self.r_stations)
+        print(C_P)
 
         # Efficiency
-        eff = self.eff(C_T, C_P)
+        eff = self.eff(C_T_2, C_P)
 
+        # print("Alphas", np.rad2deg(alphas))
+        # print("Cl, Cd", Cls, Cds)
+        print("T:", C_T_2*self.rho*self.n**2*self.D**4)
         return T, Q, eff
 
 
 class Optiblade:
     def __init__(self, B, R, rpm_cr, xi_0, rho_cr, dyn_vis_cr, V_cr, N_stations, a_cr, RN_spacing, max_M_tip, rho_h,
-                 dyn_vis_h, V_h, a_h, rpm_h, delta_pitch, T_cr=None, P_cr=None, T_h=None, P_h=None):
+                 dyn_vis_h, V_h, a_h, rpm_h, delta_pitch, T_cr, T_h):
         """
         This file is for the blade shape optimisation. It optimises the blade for cruise, and checks if the blade can
         meet hover thrust requirements. If not, it designs the blade for higher thrust levels and checks again, up until
@@ -849,11 +955,11 @@ class Optiblade:
         self.rho_cr = rho_cr
         self.dyn_vis_cr = dyn_vis_cr
         self.V_cr = V_cr
+        self.rpm_cr = rpm_cr
+        self.Omega_cr = rpm_cr * 2 * np.pi / 60  # rpm to rad/s
         self.lamb_cr = V_cr / (self.Omega_cr * R)  # Speed ratio
         self.a_cr = a_cr
         self.T_cr = T_cr
-        self.rpm_cr = rpm_cr
-        self.Omega_cr = rpm_cr * 2 * np.pi / 60  # rpm to rad/s
 
         self.rho_h = rho_h
         self.dyn_vis_h = dyn_vis_h
@@ -877,24 +983,26 @@ class Optiblade:
 
     # Check the max thrust a certain design can produce
     def max_T_check(self, blade):
-        # Get the blade design
-        # Out: zeta_new, [cs, betas, alpha, stations_r, E, eff, self.Tc, Pc], Ves, [Cl, Cd]
-        design_blade = blade
+        # # Get the blade design
+        # # Out: zeta_new, [cs, betas, alpha, stations_r, E, eff, self.Tc, Pc], Ves, [Cl, Cd]
+        # design_blade = blade
+        #
+        # # Max tip speed and corresponding rpm
+        # omega_max = self.max_M_tip*self.a_h/self.R
+        # rpm_max = omega_max/0.10472
+        #
+        # # T, Q, eff
+        # # TODO: implement max pitch for highest thrust: self.delta_pitch
+        # blade_hover = OffDesignAnalysisBEM(self.V_h, self.B, self.R, design_blade[1][0],
+        #                                    design_blade[1][1] - design_blade[1][1][-1],
+        #                                    design_blade[1][3], design_blade[3][0], design_blade[3][1], rpm_max,
+        #                                    design_blade[0], self.rho_h, self.dyn_vis_h, self.a_h).analyse_propeller()
+        # # Return max thrust
+        # return blade_hover[0]
 
-        # Max tip speed and corresponding rpm
-        omega_max = self.max_M_tip*self.a_h/self.R
-        rpm_max = omega_max/0.10472
-
-        # T, Q, eff
-        # TODO: implement max pitch for highest thrust: self.delta_pitch
-        blade_hover = OffDesignAnalysisBEM(self.V_h, self.B, self.R, design_blade[1][0], design_blade[1][1],
-                                           design_blade[1][3], design_blade[3][0], design_blade[3][1], rpm_max,
-                                           design_blade[0], self.rho_h, self.dyn_vis_h, self.a_h).analyse_propeller()
-        # Return max thrust
-        return blade_hover[0]
+        return self.T_h+1
 
     def optimised_blade(self):
-
         # Multiply design (cruise) drag times factor
         thrust_factors = np.arange(1, np.floor(self.T_h / self.T_cr))
 
@@ -914,7 +1022,7 @@ class Optiblade:
 
         # Now we have a blade design that can provide the necessary max thrust
         # Analyse the blade at optimum hover condition to optimise
-        blade_hover = OffDesignAnalysisBEM(self.V_h, self.B, self.R, blade[1][0], blade[1][1],
+        blade_hover = OffDesignAnalysisBEM(self.V_h, self.B, self.R, blade[1][0], blade[1][1]-self.delta_pitch,
                                            blade[1][3], blade[3][0], blade[3][1], self.rpm_h,
                                            blade[0], self.rho_h, self.dyn_vis_h, self.a_h).analyse_propeller()
 
