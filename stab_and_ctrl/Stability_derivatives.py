@@ -6,6 +6,11 @@ from Aero_tools import ISA
 from stab_and_ctrl.Aileron_Sizing import Control_surface
 from stab_and_ctrl.Vertical_tail_sizing import VT_sizing as vertical_tail
 
+"""
+Analytical model to obtain stability derivatives for a tandem wing configuration. 
+author: Michal Cuadrat-Grzybowski
+"""
+
 class Stab_Derivatives:
     def __init__(self,W,h,lfus,hfus,wfus, d,dy,xcg,zcg,cfwd,crear,Afwd,Arear,Vstall,
                  V0,T0,CLfwd0,CLrear0,CD0,CL0,theta0,alpha0,
@@ -271,9 +276,10 @@ class Stab_Derivatives:
         Cl_b_wf_rear = -1.2*np.sqrt(self.Arear)*(self.hfus/2)/self.brear**2*(self.lfus+self.wfus)
         # Cl_b = -0.110
         Cl_b_fwd = -self.CLafwd*self.Gamma_fwd/4*(2/3*(1+2*self.taper)/(1+self.taper))
+        Cl_b_rear = -self.CLarear * self.Gamma_rear / 4 * (2 / 3 * (1 + 2 * self.taper) / (1 + self.taper))
         # print(self.CLafwd,self.Gamma_fwd,self.taper)
         Cl_b = (Cl_b_wf_rear*self.Srear*self.brear + Cl_b_wf_fwd*self.Sfwd*self.bfwd +
-                Cl_b_fwd*self.Sfwd*self.bfwd)/(self.S*self.b)+Cl_b_v
+                Cl_b_fwd*self.Sfwd*self.bfwd+Cl_b_rear*self.Srear*self.brear)/(self.S*self.b)+Cl_b_v
         # print(Cl_b_v, Cl_b_wf_fwd, Cl_b_wf_rear,Cl_b_fwd)
         # sin_Gamma = (Cl_b-Cl_b_v-Cl_b_wf_fwd*self.Sfwd/self.S-Cl_b_wf_rear*self.Srear/self.S)/(-2/(3*np.pi)*self.CLafwd)
         # Gamma_raymer = -(Cl_b-Cl_b_v-Cl_b_wf_fwd*self.Sfwd/self.S-Cl_b_wf_rear*self.Srear/self.S)*4/self.CLafwd*(3*(1+self.taper)/(2*(1+2*self.taper)))
@@ -357,8 +363,8 @@ class Stab_Derivatives:
         Kxx2 = Ixx/(self.W/9.80665*self.b**2)
         Kzz2 = Izz/(self.W/9.80665*self.b**2)
         Kxz = Ixz/(self.W/9.80665*self.b**2)
-        print("Ixx, Izz =", Ixx, Izz)
-        print("Kxx2, Kzz2, Kxz = %.5f, %.5f, %.5f"%(Kxx2,Kzz2,Kxz))
+        # print("Ixx, Izz =", Ixx, Izz)
+        # print("Kxx2, Kzz2, Kxz = %.5f, %.5f, %.5f"%(Kxx2,Kzz2,Kxz))
         C_L = self.CL0
         C_Y = [self.beta_derivatives()[0],0,self.p_derivatives()[0],self.r_derivatives()[0],\
               self.da_derivatives(Sa_S,b1,b2)[0],self.dr_derivatives(cr_cv,br_bv)[0]]
@@ -386,18 +392,18 @@ class Stab_Derivatives:
             0.5 * C_y_p * (C_l_b * C_n_r - C_n_b * C_l_r) + 0.5 * C_y_r * (C_l_p * C_n_b - C_n_p * C_l_b)
 
         R = B * C * D - A * D ** 2 - B ** 2 * E
-        if E > 0 and R > 0:
-            print("We have Spiral stability with ", "E = ", E)
-            print("AND Dutch Roll stability with ", "R = ", R)
-        if R > 0 and E < 0:
-            print("We have Dutch Roll stability with ", "R = ", R)
-        if E > 0 and R < 0:
-            print("We have Spiral stability with ", "E = ", E)
-        if E < 0:
-            print("We have Spiral instability with ", "E = ", E)
-        if R < 0:
-            print("We have Dutch Roll instability.")
-        print("Routh's Discriminant: %.4f "%(R))
+        # if E > 0 and R > 0:
+        #     print("We have Spiral stability with ", "E = ", E)
+        #     print("AND Dutch Roll stability with ", "R = ", R)
+        # if R > 0 and E < 0:
+        #     print("We have Dutch Roll stability with ", "R = ", R)
+        # if E > 0 and R < 0:
+        #     print("We have Spiral stability with ", "E = ", E)
+        # if E < 0:
+        #     print("We have Spiral instability with ", "E = ", E)
+        # if R < 0:
+        #     print("We have Dutch Roll instability.")
+        # print("Routh's Discriminant: %.4f "%(R))
         # clb = np.linspace(-0.5, 0.1, 50)
 
         def cnb_E(clb):
@@ -438,7 +444,7 @@ class Stab_Derivatives:
         cbar = plt.colorbar(cp, orientation="horizontal")
         RR = ax.contour(X, Y, Z, [0], colors=["r"])
         # print("Sv_stability = ",self.VT_stability(lv))
-        plt.clabel(RR, fmt=r"Min. Dutch Roll:  %.3f" % (0))
+        plt.clabel(RR, fmt=r"Dutch Roll")
         cbar.set_label(r"Routh's discriminant")
         plt.plot(clb2, cnb_E(-clb2), color="k", label="Limit for Spiral stability when E = 0")
         plt.xlabel(r"-$C_{l_{\beta}}$ [rad$^{-1}$]", fontsize=12)
@@ -447,6 +453,39 @@ class Stab_Derivatives:
         plt.legend()
         plt.show()
         return
+    def initial_coeff(self):
+        C_X0 = self.W/(0.5*self.rho*self.V0**2*self.S)*np.sin(self.th0+self.alpha0)
+        C_Z0 = -self.W/(0.5*self.rho*self.V0**2*self.S)*np.cos(self.th0+self.alpha0)
+        C_m0 =0
+        return C_X0,C_Z0
+    def return_stab_derivatives(self,Se_S,be_b,Sa_S,b1,b2,cr_cv,br_bv):
+        a = self.alpha_derivatives()
+        a_dot = self.alpha_dot_derivatives()
+        u = self.u_derivatives()
+        initial = self.initial_coeff()
+        q = self.q_derivatives()
+        de = self.de_derivatives(Se_S,be_b)
+        b = self.beta_derivatives()
+        p = self.p_derivatives()
+        r = self.r_derivatives()
+        da = self.da_derivatives(Sa_S,b1,b2)
+        dr = self.dr_derivatives(cr_cv,br_bv)
+        C_x_a, C_x_a_dot, C_x_u, C_x_0, C_x_q, C_x_d = a[0],a_dot[0],u[0], initial[0],q[0],de[0]
+        C_z_a, C_z_a_dot, C_z_u, C_z_0, C_z_q, C_z_d = a[1],a_dot[1],u[1], initial[1],q[1],de[1]
+        C_m_a, C_m_a_dot, C_m_u, C_m_q, C_m_d = a[2],a_dot[2],u[2],q[2],de[2]
+        C_X = [C_x_a, C_x_a_dot, C_x_u, C_x_0, C_x_q, C_x_d]
+        C_Z = [C_z_a, C_z_a_dot, C_z_u, C_z_0, C_z_q, C_z_d]
+        C_m = [C_m_a, C_m_a_dot, C_m_u, C_m_q, C_m_d]
+        C_y_b, C_y_b_dot, C_y_p, C_y_r, C_y_da, C_y_dr = b[0], 0, p[0],r[0],da[0],dr[0]
+        C_l_b, C_l_p, C_l_r, C_l_da, C_l_dr = b[1],p[1],r[1],da[1],dr[1]
+        C_n_b, C_n_b_dot, C_n_p, C_n_r, C_n_da, C_n_dr = b[2],0,p[2],r[2],da[2],dr[2]
+        C_Y = [C_y_b, C_y_b_dot, C_y_p, C_y_r, C_y_da, C_y_dr]
+        C_l = [C_l_b, C_l_p, C_l_r, C_l_da, C_l_dr]
+        C_n = [C_n_b, C_n_b_dot, C_n_p, C_n_r, C_n_da, C_n_dr]
+        return C_X, C_Z,C_m, C_Y, C_l, C_n
+
+
+
 
 
 

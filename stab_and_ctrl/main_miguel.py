@@ -5,6 +5,7 @@ from stab_and_ctrl.Aileron_Sizing import Control_surface
 from stab_and_ctrl.Elevator_sizing import Elevator_sizing
 from stab_and_ctrl.Stability_derivatives import Stab_Derivatives
 from structures.Weight import *
+from stab_and_ctrl.Model_cruise import Aircraft
 import constants as const
 from matplotlib import pyplot as plt
 
@@ -21,6 +22,12 @@ Pbr = 110024/1.2 * 0.9 /12
 # M0 = V0 / np.sqrt(const.gamma * const.R * 288.15)
 CD0 = 0.03254
 theta0 = 0
+alpha0 = 0
+q0 = 0
+b0 = 0
+phi0 = 0
+p0 = 0
+r0 = 0
 CLfwd = 1.44333
 CLrear = 1.44333
 CLdesfwd = 0.7382799
@@ -48,6 +55,7 @@ crear = 1.014129367767935
 c = Srear/S*crear+Sfwd/S*cfwd
 bfwd = np.sqrt(Sfwd * Afwd)
 brear = np.sqrt(Srear * Arear)
+b = max(bfwd,brear)
 e = 1.1302
 efwd = 0.958
 erear = 0.958
@@ -105,12 +113,12 @@ else:
     vt_sizing.plotting(nE,Tt0,yE,br_bv=0.85,cr_cv=0.4,ARv=ARv,sweepTE=sweepTE)
 
 #### Plotting Aileron ####
-b1 = 60
+b1 = 55
 b2 =np.linspace(b1,100,150)
 Sa_S = np.linspace(0.05,0.20,150)
 # elevon.plotting(0.15,b1,b2)
 aileron.plotting(Sa_S,b1,b2,True)
-aileron.plotting(Sa_S=0.172,b1=b1,b2=99.0,rear=True)
+aileron.plotting(Sa_S=0.145,b1=b1,b2=99.0,rear=True)
 
 #### Plotting Elevator ####
 elevator = Elevator_sizing(W,h,xcg,lfus,hfus,wfus,V0,Vstall,CD0,theta0,CLfwd,CLrear,CLafwd,CLarear,
@@ -147,12 +155,13 @@ weight = Weight(m_pax, wing, fuselage, lgear, props, cargo_m=85, cargo_pos=6, ba
                 p_pax=[1.5, 3, 3, 4.2, 4.2])
 
 Ixx, Iyy, Izz, Ixz = weight.MMI()
+
 if isinstance(ARv,float) and isinstance(sweepTE,float):
     stability_derivatives = Stab_Derivatives(W,h,lfus,hfus,wfus, d,dy,xcg,Zcg,cfwd,crear,Afwd,Arear,Vstall,
-                     V0,Tt0,CLdesfwd,CLdesrear,CD0_a,CL0,1.5*np.pi/180,0,
-                     Clafwd,Clarear, Cd0fwd, Cd0rear, CLafwd,CLarear,Sfwd,Srear,-5*np.pi/180,0,
+                     V0,Tt0,CLdesfwd,CLdesrear,CD0_a,CL0,theta0,alpha0,
+                     Clafwd,Clarear, Cd0fwd, Cd0rear, CLafwd,CLarear,Sfwd,Srear,0,-4*np.pi/180,
                      efwd,erear,Lambda_c4_fwd,Lambda_c4_rear,taper,0.4,
-                     bv,Sv,ARv,sweepTE,Pbr,CD0,eta_rear=0.95,eta_v=0.95)
+                     bv,Sv,ARv,sweepTE,Pbr,CD0,eta_rear=0.85,eta_v=0.9)
     print("q-derivatives:",stability_derivatives.q_derivatives())
     print("alpha-derivatives:",stability_derivatives.alpha_derivatives())
     print("u-derivatives:",stability_derivatives.u_derivatives())
@@ -161,9 +170,17 @@ if isinstance(ARv,float) and isinstance(sweepTE,float):
     print("r-derivatives:", stability_derivatives.r_derivatives())
     print("beta-derivatives:", stability_derivatives.beta_derivatives())
     print("-----Control Derivatives----------")
-    print("de-derivatives:", stability_derivatives.de_derivatives(Se_S=0.15,be_b=0.975))
-    print("da-derivatives:",stability_derivatives.da_derivatives(Sa_S=0.085,b1=60,b2=97.5))
+    print("de-derivatives:", stability_derivatives.de_derivatives(Se_S=0.15,be_b=0.99))
+    print("da-derivatives:",stability_derivatives.da_derivatives(Sa_S=0.145,b1=55,b2=99.0))
     print("dr-derivatives:", stability_derivatives.dr_derivatives(cr_cv=0.4,br_bv=0.85))
     print("Kyy2 = %.5f"%(Iyy/(W/9.80665*c**2)))
     print("Iyy = %.5f "%(Iyy))
     stability_derivatives.asym_stability_req(Ixx,Izz,Ixz,0.085,60,97.5,0.4,0.85)
+    C_X, C_Z, C_m, C_Y, C_l,C_n = \
+        stability_derivatives.return_stab_derivatives(Se_S = 0.15,be_b = 0.99,
+                                                      Sa_S=0.145,b1=b1,b2=99.0,cr_cv=0.4,br_bv=0.85)
+    aircraft = Aircraft(W, h, S, c, b, V0, theta0, alpha0, q0, b0, phi0, p0, r0, Iyy, Ixx, Izz, Ixz, C_X, C_Z,C_m, CL0,
+                        C_Y, C_l, C_n)
+    aircraft.plot_results(V0)
+
+
