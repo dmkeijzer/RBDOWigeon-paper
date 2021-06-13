@@ -69,7 +69,7 @@ MTOM = 3000
 
 # M_t_max = 0.6
 # rpm = M_t_max*a*60 / (np.pi * 2*R)
-rpm = 2500
+rpm = 2000
 # rpm = 1500
 
 V_cruise = 90
@@ -77,7 +77,7 @@ V_h = 52.87
 N_stations = 30
 RN_spacing = 100000
 
-T_cr_per_eng = 27.55 * 5 * 4
+T_cr_per_eng = 27.55 * 5 * 6
 T_h_per_eng = MTOM*9.80665 / 12
 
 propeller = BEM.BEM(B, R, rpm, xi_0, rho, dyn_visc, V_cruise, N_stations, a, RN_spacing, T=T_cr_per_eng)
@@ -156,7 +156,7 @@ print("----------- Analyse in hover -------------")
 # rpm = omega/0.10472
 # print("Propeller rpm at hover:", rpm)
 
-rpm = 5000
+rpm = 3000
 Omega = rpm * 2 * np.pi / 60
 
 V = 0
@@ -164,7 +164,7 @@ V = 0
 RN = Omega * design[0] * rho / dyn_visc
 
 # zeta_new, [cs, betas, alpha, stations_r, E, eff, self.Tc, Pc], Ves, [Cl, Cd]  #-np.deg2rad(30)
-blade_hover = BEM.OffDesignAnalysisBEM(V_cruise, B, R, design[0], design[1]-np.deg2rad(14), design[3], coefs[0],
+blade_hover = BEM.OffDesignAnalysisBEM(V_cruise, B, R, design[0], design[1]-np.deg2rad(6.5), design[3], coefs[0],
                                        coefs[1], rpm, rho, dyn_visc, a, RN)
 
 blade_hover_analysis = blade_hover.analyse_propeller()

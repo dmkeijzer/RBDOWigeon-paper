@@ -1030,10 +1030,12 @@ class OffDesignAnalysisBEM:
         # eff = self.eff(C_T_2, C_P)
         eff = self.eff(C_T, C_P)
         print("Alphas", np.rad2deg(alphas))
+        print("")
         print("Cl, Cd", Cls, Cds)
+        print("")
         # print("T:", C_T*self.rho*self.n**2*self.D**4)
-        print(a_facs)
-        print(a_prims)
+        # print(a_facs)
+        # print(a_prims)
         return T, Q, eff
 
 
