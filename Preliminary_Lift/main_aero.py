@@ -25,11 +25,11 @@ AR = 3.75
 
 
 W = STR["MTOW"] #[N]
-Vcruise = 60#FP["V_cruise"] #[m/s]
+Vcruise = 70#FP["V_cruise"] #[m/s]
 Wing_loading = FP["WS"]
 
 #Cruise conditions
-h = 400 # cruise height[m]
+h = 1000 # cruise height[m]
 atm_flight  = ISA(h)
 rho = atm_flight.density() # cte.rho
 mu = atm_flight.viscosity_dyn()
@@ -63,12 +63,13 @@ d_eq = np.sqrt(h_max*w_max)
 #Winglets
 h_wl1 =0.5
 h_wl2 = 0.5
-Wing_params = wing_design(2*AR, 2*AR, s1,sweepc41,s2,sweepc42,M,S_ref, l_h,h_d,w_max,h_wl1,h_wl2)
+Wing_params = wing_design(2*AR, 2*AR, s1,sweepc41,s2,sweepc42,M,S_ref, l_h,h_d,w_max,h_wl1,h_wl2, 2.4)
 b = Wing_params.wing_planform_double()[0][0]
 C_r = Wing_params.wing_planform_double()[0][1]
 C_t = Wing_params.wing_planform_double()[0][2]
-print(b,C_r,C_t)
+
 MAC = Wing_params.wing_planform_double()[0][3]
+print(b,C_r,C_t, MAC)
 SweepLE = Wing_params.sweep_atx(0)[0]
 deda = downwash(Wing_params.wing_planform_double()[0][0] , Wing_params.AR1,
                 Wing_params.wing_planform_double()[0][1], Wing_params.wing_planform_double()[0][2], Wing_params.sweepc41, 5, Wing_params.h_ht,
@@ -76,13 +77,13 @@ deda = downwash(Wing_params.wing_planform_double()[0][0] , Wing_params.AR1,
                 Wing_params.wing_planform_double()[0][1], Wing_params.wing_planform_double()[0][2], Wing_params.sweepc41,
                 70)  # deps_da(self.sweepc41, wg[0][0], self.lh, self.h_ht, self.AR_i, slope1)
 
-deda2 = downwash_upwash(Wing_params.wing_planform_double()[0][0] , Wing_params.AR1,
-                Wing_params.wing_planform_double()[0][1], Wing_params.wing_planform_double()[0][2], Wing_params.sweepc41, 5, Wing_params.h_ht,
-                Wing_params.lh, Wing_params.wing_planform_double()[1][0] , Wing_params.AR2,
-                Wing_params.wing_planform_double()[0][1], Wing_params.wing_planform_double()[0][2], Wing_params.sweepc42,
-                70)
+#deda2 = downwash_upwash(Wing_params.wing_planform_double()[0][0] , Wing_params.AR1,
+  #              Wing_params.wing_planform_double()[0][1], Wing_params.wing_planform_double()[0][2], Wing_params.sweepc41, 5, Wing_params.h_ht,
+  #              Wing_params.lh, Wing_params.wing_planform_double()[1][0] , Wing_params.AR2,
+  #              Wing_params.wing_planform_double()[0][1], Wing_params.wing_planform_double()[0][2], Wing_params.sweepc42,
+  #              70)
 Slope1 = Wing_params.liftslope(deda)[1]
-print("Deps_Da", Wing_params.liftslope(deda)[3], deda2)
+print("Deps_Da", Wing_params.liftslope(deda)[3])
 CLmax = Wing_params.CLmax_s(deda)
 
 #For Drag estimation
@@ -105,15 +106,16 @@ S_v = 0.6
 S_t = 0
 
 
-Drag = componentdrag('tandem',S_ref,l1,l2,l3,d_eq,Vcruise,rho,MAC,AR*2,AR*2,Mach(Vcruise,a),k,flamf,flamw,mu,tc,xcm,0,SweepLE,u,0,h_d,IF_f,IF_w, IF_v, CL_CDmin,Abase, S_v, s1, s2, h_wl1, h_wl2)
+Drag = componentdrag('tandem',S_ref,l1,l2,l3,d_eq,Vcruise,rho,MAC,AR*2,AR*2,Mach(Vcruise,a),k,flamf,flamw,mu,tc,xcm,0,SweepLE,u,0,h_d,IF_f,IF_w, IF_v, CL_CDmin,Abase, S_v, s1, s2, h_wl1, h_wl2, 2.4)
 
 print("e",Drag.e_factor())
-CL_design = Drag.CL_des()[0]
-Cd_des= Drag.Cd_w(CL_design)
+CL_design = Drag.CL_des()
+Cd_des= Drag.Cd_w(CL_design[0])
 Swet_f = Drag.Swet_f()
 print("S_f", Swet_f)
-print("CLdes", CL_design)
-
+print("CLdes", CL_design[1])
+Rey = Re(rho, 40,MAC, mu)
+print("Re", Rey)
 #Stall
 stall = Wing_params.CLmax_s(deda)
 CLmax = stall[0]

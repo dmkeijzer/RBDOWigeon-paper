@@ -1,7 +1,7 @@
 import numpy as np
 from math import *
 from Preliminary_Lift.Airfoil_analysis import Cd
-from Preliminary_Lift.Wing_design import winglet_dAR
+from Preliminary_Lift.Wing_design import winglet_dAR, winglet_factor
 import matplotlib.pyplot as plt
 from scipy.interpolate import interp1d
 #
@@ -38,7 +38,7 @@ def C_L(phase, CDmin, AR, e, C_LforCDmin):
 
 
 class componentdrag:
-    def __init__(self, type, S_ref, l1, l2, l3, d, V_cr, rho, MAC, AR1, AR2, M_cr, k, frac_lam_f, frac_lam_w, mu, tc,xcm,sweepm, sweepLE, u, c_t,h, IF_f, IF_w,IF_v, C_L_minD, Abase, S_v,s1,s2, h_wl1,h_wl2):
+    def __init__(self, type, S_ref, l1, l2, l3, d, V_cr, rho, MAC, AR1, AR2, M_cr, k, frac_lam_f, frac_lam_w, mu, tc,xcm,sweepm, sweepLE, u, c_t,h, IF_f, IF_w,IF_v, C_L_minD, Abase, S_v,s1,s2, h_wl1,h_wl2 , k_wl):
         self.S_ref = S_ref
         self.l1 = l1
         self.l2 = l2
@@ -50,7 +50,8 @@ class componentdrag:
         self.b = np.sqrt((0.5*(s1*AR1+s2*AR2))*S_ref)
         self.h_wl1 = h_wl1
         self.h_wl2 = h_wl2
-        self.AR = 0.5*(s1*(AR1+winglet_dAR(AR1,self.h_wl1, np.sqrt(AR1*S_ref*s1)))+ s2*(AR2+winglet_dAR(AR2,self.h_wl2, np.sqrt(AR2*S_ref*s2))))
+        self.AR = 0.5*(s1*(AR1*winglet_factor(h_wl1, np.sqrt(AR1*S_ref*s1), k_wl))+ s2*(AR2*winglet_factor(self.h_wl2, np.sqrt(AR2*S_ref*s2), k_wl)))
+        #0.5*(s1*(AR1+winglet_dAR(AR1,self.h_wl1, np.sqrt(AR1*S_ref*s1)))+ s2*(AR2+winglet_dAR(AR2,self.h_wl2, np.sqrt(AR2*S_ref*s2))))
         self.e = e
         self.M = M_cr
         self.k = k
@@ -74,6 +75,7 @@ class componentdrag:
         self.SweepLE = sweepLE
         self.C_L_minD = C_L_minD / (np.cos(self.SweepLE) ** 2)
         self.h = h
+        self.k_wl = k_wl
 
     def e_OS(self):
         AR = [4,6,8,10]
