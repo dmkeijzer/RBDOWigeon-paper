@@ -31,7 +31,7 @@ A_tot = A_prop * n_prop
 
 DiskLoad = MTOM / A_tot
 
-V_cr = 94
+V_cr = 74
 T_cr_per_eng = 200
 
 ActDisk = ADT.ActDisk_verif(V_cr, T_cr_per_eng*n_prop, rho, A_tot)

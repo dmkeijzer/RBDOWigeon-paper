@@ -74,7 +74,7 @@ rpm = 3000
 
 V_cruise = 52.87
 V_h = 52.87
-N_stations = 20
+N_stations = 25
 RN_spacing = 100000
 
 T_cr_per_eng = 27.55*5 * 2
