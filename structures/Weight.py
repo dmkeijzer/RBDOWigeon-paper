@@ -1,6 +1,7 @@
 """ New weight estimation file """
 import numpy as np
 
+
 class Wing:
     # Roskam method (not accurate because does not take into account density of material but good enough for comparison
     def __init__(self, mtom, S1, S2, n_ult, A, pos = [], wmac = 0.8, toc = 0.17):
@@ -8,8 +9,8 @@ class Wing:
         self.n_ult, self.A = n_ult, A
         self.mtow_lbs = 2.20462 * mtom
         self.pos1, self.pos2 = pos
-        self.wweight1 = 0.04674*(self.mtow_lbs**0.397)*(self.S1_ft**0.36)*(self.n_ult**0.397)*(self.A**1.712)
-        self.wweight2 = 0.04674*(self.mtow_lbs**0.397)*(self.S2_ft**0.36)*(self.n_ult**0.397)*(self.A**1.712)
+        self.wweight1 = 0.04674*((self.mtow_lbs/2)**0.397)*(self.S1_ft**0.36)*(self.n_ult**0.397)*(self.A**1.712)
+        self.wweight2 = 0.04674*((self.mtow_lbs/2)**0.397)*(self.S2_ft**0.36)*(self.n_ult**0.397)*(self.A**1.712)
         self.mass = [self.wweight1, self.wweight2]
         self.moment = np.array(self.mass)*np.array(pos)
         self.wmac, self.toc = wmac, toc
