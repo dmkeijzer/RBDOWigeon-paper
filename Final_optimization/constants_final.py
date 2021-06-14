@@ -37,6 +37,7 @@ xcm = 0.3                   # NACA0012 for winglets and Vtail [-]
 k_wl = 2.4                  # Constant for winglets (could be changed to 2 if we need extra eff)
 
 # Propulsion
+xi_0 = 0.1         # Dimensionless radius of the hub (r_hub/R)
 c_fp = 0.3         # [m] Horizontal clearance between the widest part of the fuselage and the radius of the inboard prop
 c_pp = 0.3         # [m] Horizontal clearance between the propellers (closest point, tip to tip)
 eff_prop = 0.83    # [-] Propeller efficiency during normal flight
