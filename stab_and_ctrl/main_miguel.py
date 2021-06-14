@@ -148,16 +148,16 @@ pos_frontwing, pos_backwing = 0.2, 7  # positions of the wings away from the nos
 m_prop = [30] * 16  # list of mass of engines (so 30 kg per engine with nacelle and propeller)
 pos_prop = [0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 7.0, 7.0, 7.0, 7.0, 7.0, 7.0, 7.0,
             7.0]  # 8 on front wing and 8 on back wing
-wing = Wing(W/9.80665, Sfwd, Srear, n_ult, Afwd, [pos_frontwing, pos_backwing])
+wing = Wing(W/9.80665, Sfwd, Srear, n_ult, Afwd, Arear,[pos_frontwing, pos_backwing])
 fuselage = Fuselage(W/9.80665, Pmax, lfus, n_pax, pos_fus)
 lgear = LandingGear(W/9.80665, pos_lgear)
 props = Propulsion(n_prop, m_prop, pos_prop)
 weight = Weight(m_pax, wing, fuselage, lgear, props, cargo_m=85, cargo_pos=6, battery_m=400, battery_pos=3.6,
                 p_pax=[1.5, 3, 3, 4.2, 4.2])
 
-Ixx, Iyy, Izz, Ixz = weight.MMI()
-print(Ixx, Izz, Ixz)
-Ka = 1.429
+# Ixx, Iyy, Izz, Ixz = weight.MMI()
+# print(Ixx, Izz, Ixz)
+# Ka = 1.429
 
 if isinstance(ARv,float) and isinstance(sweepTE,float):
     stability_derivatives = Stab_Derivatives(W,h,lfus,hfus,wfus, d,dy,xcg,Zcg,cfwd,crear,Afwd,Arear,Vstall,
