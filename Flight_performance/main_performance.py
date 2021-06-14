@@ -17,10 +17,11 @@ P_max  = 1.4e6
 mission_profile = mission(mass, cruising_alt, cruise_speed, CL_max, wing_surface, A_disk = A_disk, P_max = P_max,
                           plotting = True)
 
-E_tot, t_tot = mission_profile.total_energy()
+E_tot, t_tot, max_power = mission_profile.total_energy()
 
 print('Total energy', E_tot/1e6, 'MJ')
 print("Total time", t_tot/3600, 'hr')
+print("Max power", max_power/1e3, 'kW')
 
 # Other performance estimates
 performance = evtol_performance(cruising_alt, cruise_speed, wing_surface, CL_max, mass, battery_capacity = E_tot,
