@@ -354,7 +354,9 @@ class mission:
         energy = np.sum(P_tot * dt)
         time = t
 
-        return distance, energy, time
+        max_power = np.max(P_tot)
+
+        return distance, energy, time, max_power
 
     def power_cruise_config(self, altitude, speed, mass):
 
@@ -375,11 +377,11 @@ class mission:
     def total_energy(self):
 
         # Get the energy and distance needed to reach cruise
-        d_climb, E_climb, t_climb = self.numerical_simulation(vx_start=0.001, y_start=0, th_start=np.pi / 2,
+        d_climb, E_climb, t_climb, P_m_to = self.numerical_simulation(vx_start=0.001, y_start=0, th_start=np.pi / 2,
                                                               y_tgt=self.h_cruise, vx_tgt=self.v_cruise)
 
         # Get the energy and distance needed to descend
-        d_desc, E_desc, t_desc = self.numerical_simulation(vx_start=self.v_cruise, y_start=self.h_cruise,
+        d_desc, E_desc, t_desc, P_m_la = self.numerical_simulation(vx_start=self.v_cruise, y_start=self.h_cruise,
                                                            th_start=np.radians(5), y_tgt=0, vx_tgt=0)
 
         # Distance spent in cruise
@@ -424,7 +426,7 @@ class mission:
             plt.tight_layout()
             plt.show()
 
-        return E_tot, t_tot
+        return E_tot, t_tot, max(P_m_to, P_m_la)
 
 
 class evtol_performance:
@@ -633,10 +635,10 @@ class evtol_performance:
                          wing_surface = self.S, A_disk = self.A_disk, P_max = self.P_max, plotting = False)
 
         # Get the distances and energy needed for take-off and landing
-        d_la, E_la, t_la = energy.numerical_simulation(vx_start=cruise_speed, y_start=cruising_altitude,
+        d_la, E_la, t_la,_ = energy.numerical_simulation(vx_start=cruise_speed, y_start=cruising_altitude,
                                                        th_start=np.radians(5), y_tgt=0, vx_tgt=0)
 
-        d_to, E_to, t_to = energy.numerical_simulation(vx_start=0.001, y_start=0, th_start=np.pi / 2,
+        d_to, E_to, t_to,_ = energy.numerical_simulation(vx_start=0.001, y_start=0, th_start=np.pi / 2,
                                                        y_tgt=cruising_altitude, vx_tgt=cruise_speed)
 
         # Power needed for cruise
