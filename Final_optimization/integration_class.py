@@ -3,8 +3,8 @@ import Aero_tools as at
 import constants_final as const
 
 # Aero
-import Preliminary_Lift.Drag as drag
-import Preliminary_Lift.Wing_design as wingop
+import Preliminary_Lift.Drag as drag_comp
+import Preliminary_Lift.Wing_design as wingdes
 import Preliminary_Lift.Airfoil_analysis as airfoil
 
 # Performance
@@ -112,7 +112,7 @@ pos_prop = [0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 7.0, 7.0, 7.0, 7.0, 7.0, 7.0]  # 6 on 
 # ------------- Initial mass estimate -------------
 def mass(MTOM, S1, S2, n_ult, AR_wing1, AR_wing2, pos_frontwing, pos_backwing, Pmax, l_fus, n_pax, pos_fus,
          pos_lgear, n_prop, m_prop, pos_prop, m_pax):
-    wing = wei.Wing(MTOM, S1, S2, n_ult, AR_wing, [pos_frontwing, pos_backwing])
+    wing = wei.Wing(MTOM, S1, S2, n_ult, AR_wing1, AR_wing2, [pos_frontwing, pos_backwing])
     fuselage = wei.Fuselage(MTOM, Pmax, l_fus, n_pax, pos_fus)
     lgear = wei.LandingGear(MTOM, pos_lgear)
     props = wei.Propulsion(n_prop, m_prop, pos_prop)
@@ -174,25 +174,36 @@ class RunDSE:
 
 
         """
-        # TODO atmospheric values probably as fixed inputs if cruise height is fixed
-        # # Get atmospheric values at cruise
-        # ISA = at.ISA(h_cr)
-        # rho = ISA.density()  # Density
-        # a = ISA.soundspeed()  # Speed of sound
-        # dyn_vis = ISA.viscosity_dyn()  # Dynamic viscosity
+        # Initial estimates/
+        MTOM = internal_inputs[0]
+        m_bat = internal_inputs[1]
+        V_cr = internal_inputs[2]
+        h_cr = internal_inputs[3]
+        C_L_cr = internal_inputs[4]
+
+        # Optimisation inputs
+        AR_wing1 = optim_inputs[0]
+        AR_wing2 = optim_inputs[1]
+        l3_fus = optim_inputs[2]
+
+        # ----------- Get atmospheric values at cruise --------------
+        ISA = at.ISA(h_cr)
+        rho = ISA.density()             # Density
+        a = ISA.soundspeed()            # Speed of sound
+        dyn_vis = ISA.viscosity_dyn()   # Dynamic viscosity
 
         M = V_cr / a  # Cruise Mach number
 
         # Aero
-        wing_design = wing_des.wing_design(AR_tot, s1, 0, s2, 0, M, S_tot, l_fus - 1, h_fus - 0.3, w_fus, h_wt_1,
-                                           h_wt_2)
+        wing_design = wingdes.wing_design(AR_tot, s1, 0, s2, 0, M, S_tot, l_fus - 1, h_fus - 0.3, w_fus, h_wt_1,
+                                          h_wt_2)
 
         # [b2, c_r2, c_t2, c_MAC2, y_MAC2, X_LEMAC2]
         wing_plan_1, wing_plan_2 = wing_design.wing_planform_double()
 
         taper = wing_plan_1[2] / wing_plan_1[1]
 
-        # CL_max
+        # CL_max TODO: de_da
         CLmax = wing_design.CLmax_s()[0]
 
         # # Lift slope
@@ -289,8 +300,8 @@ class RunDSE:
         CD_a_f = wing_design.CDa_poststall(const.tc, CDs, CDs_f, Afus, alpha_lst, "fus", drag.CD)
 
         # Energy sizing
-        mission = energy_calc.mission(MTOM, h_cr, V_cr, CLmax, S_tot, n_prop * prop_area, Cl_alpha_curve, CD_a_w,
-                                      CD_a_f, alpha_lst, drag, m_bat)
+        mission = FP.mission(MTOM, h_cr, V_cr, CLmax, S_tot, n_prop * prop_area, Cl_alpha_curve, CD_a_w,
+                             CD_a_f, alpha_lst, drag, m_bat)
 
         # Get approximate overall efficiency
         eff_overall = 0.91 * 0.57 + 0.699 * 0.43
@@ -298,13 +309,36 @@ class RunDSE:
         # TODO: check safety factor (1.02 *)
 
         # Battery sizing
-        battery = batt.Battery(500, 1000, energy, 1)
+        sp_en_den = const.sp_en_den
+        vol_en_den = const.vol_en_den
+        batt_cost = const.bat_cost
+        DoD = const.DoD
+        P_den = const.P_den
+        safety_factor = 1  # TODO: discuss
+        EOL_C = const.EOL_C
+
+        # sp_en_den, vol_en_den, tot_energy, cost, DoD, P_den, P_max, safety, EOL_C
+        battery = batt.Battery(sp_en_den, vol_en_den, energy, batt_cost, DoD, P_den, P_max_bat, safety_factor, EOL_C)
 
         m_bat = battery.mass()
 
+        # The mass of one engine is the specific mass of the engines (kg/W) x Total power of the ENGINES / number of eng
+        m_prop = const.sp_mass_en * P_eng_tot / n_prop
+
         # -------------------- Update weight ------------------------
         # TODO mass calculation from function
+        # wing = wei.Wing(MTOM, S1, S2, n_ult, AR_wing, [pos_frontwing, pos_backwing])
+        # fuselage = wei.Fuselage(MTOM, Pmax, l_fus, n_pax, pos_fus)
+        # lgear = wei.LandingGear(MTOM, pos_lgear)
+        # props = wei.Propulsion(n_prop, m_prop, pos_prop)
+        # Mass = wei.Weight(m_pax, wing, fuselage, lgear, props, cargo_m=cargo_m, cargo_pos=6, battery_m=m_bat,
+        #                   battery_pos=3.6, p_pax=[1.5, 3, 3, 4.2, 4.2])
+        #
+        # # Initial estimate for the mass
+        # MTOM = Mass.mtom
 
+        MTOM = mass(MTOM, S1, S2, n_ult, AR_wing1, AR_wing2, pos_frontwing, pos_backwing, Pmax, l_fus, n_pax, pos_fus,
+         pos_lgear, n_prop, m_prop, pos_prop, m_pax)
 
 
         return optim_outputs, internal_inputs

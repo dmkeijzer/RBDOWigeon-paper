@@ -1,15 +1,17 @@
 """ New weight estimation file """
 import numpy as np
 
+
 class Wing:
     # Roskam method (not accurate because does not take into account density of material but good enough for comparison
-    def __init__(self, mtom, S1, S2, n_ult, A, pos = [], wmac = 0.8, toc = 0.17):
+    def __init__(self, mtom, S1, S2, n_ult, A_1, A_2, pos = [], wmac = 0.8, toc = 0.17):
         self.S1_ft, self.S2_ft, self.S1, self.S2 = S1 * 3.28084 ** 2, S2 * 3.28084 ** 2, S1, S2
-        self.n_ult, self.A = n_ult, A
+        self.n_ult = n_ult
+        self.A_1, self.A_2 = A_1, A_2
         self.mtow_lbs = 2.20462 * mtom
         self.pos1, self.pos2 = pos
-        self.wweight1 = 0.04674*(self.mtow_lbs**0.397)*(self.S1_ft**0.36)*(self.n_ult**0.397)*(self.A**1.712)
-        self.wweight2 = 0.04674*(self.mtow_lbs**0.397)*(self.S2_ft**0.36)*(self.n_ult**0.397)*(self.A**1.712)
+        self.wweight1 = 0.04674*((self.mtow_lbs/2)**0.397)*(self.S1_ft**0.36)*(self.n_ult**0.397)*(self.A_1**1.712)
+        self.wweight2 = 0.04674*((self.mtow_lbs/2)**0.397)*(self.S2_ft**0.36)*(self.n_ult**0.397)*(self.A_2**1.712)
         self.mass = [self.wweight1, self.wweight2]
         self.moment = np.array(self.mass)*np.array(pos)
         self.wmac, self.toc = wmac, toc

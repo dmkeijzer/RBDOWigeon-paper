@@ -68,7 +68,6 @@ class testPerformance(unittest.TestCase):
 
         self.assertAlmostEqual(RC_hover, 0)
 
-
     def test_max_thrust(self):
 
         # Check the numerical inverse of the T vs P relationship

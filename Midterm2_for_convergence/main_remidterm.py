@@ -16,8 +16,8 @@ import performance_analysis_midterm2 as perf
 import Flight_performance_final_midterm2 as energy_calc
 
 import Vertical_tail_sizing_midterm2 as vert_tail
-import Weight_midterm2 as weight
-
+# import Weight_midterm2 as weight
+import structures.Weight as weight
 
 """
 Here we will run the midterm code (and part of the new code when available) to have converged values

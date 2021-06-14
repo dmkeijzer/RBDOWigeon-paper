@@ -1,4 +1,5 @@
 import openmdao.api as om
+import numpy as np
 
 
 class design_optimization(om.ExplicitComponent):
@@ -10,7 +11,7 @@ class design_optimization(om.ExplicitComponent):
         self.add_input('Wing_surface', units = 'm^2')
         self.add_input('Aspect_ratio_front', units = None)
         self.add_input('Aspect_ratio_rear', units = None)
-        self.add_input('Relative_wing_size', units = None) # Not really sure in what format this will be
+        self.add_input('Relative_wing_size', units = None)  # Not really sure in what format this will be
         self.add_input('Wing_position_1', units = 'm')
         self.add_input('Wing_position_2', units = 'm')
 
@@ -70,4 +71,3 @@ prob.model.add_objective('cruise.D/L')
 
 prob.setup()
 prob.run_driver()
-
