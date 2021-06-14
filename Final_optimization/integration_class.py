@@ -298,7 +298,16 @@ class RunDSE:
         # TODO: check safety factor (1.02 *)
 
         # Battery sizing
-        battery = batt.Battery(500, 1000, energy, 1)
+        sp_en_den = const.sp_en_den
+        vol_en_den = const.vol_en_den
+        batt_cost = const.bat_cost
+        DoD = const.DoD
+        P_den = const.P_den
+        safety_factor = 1  # TODO: discuss
+        EOL_C = const.EOL_C
+
+        # sp_en_den, vol_en_den, tot_energy, cost, DoD, P_den, P_max, safety, EOL_C
+        battery = batt.Battery(sp_en_den, vol_en_den, energy, batt_cost, DoD, P_den, P_max, safety_factor, EOL_C)
 
         m_bat = battery.mass()
 
