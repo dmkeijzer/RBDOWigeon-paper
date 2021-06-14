@@ -6,6 +6,12 @@ gamma = 1.4                 # [-]
 R = 287                     # [J/kg/K]
 rho_0 = 1.225               # [kg/m^3]
 
+# General
+n_pax = 5                               # Number of passengers
+m_pax = 88                              # Max per pax
+m_cargo_per_pax = 7                     # [kg] Cargo mass per pax
+m_cargo_tot = m_cargo_per_pax*n_pax     # [kg] Total cargo mass
+
 # Fuselage
 w_fuselage = 1.38           # [m]
 h_fuselage = 1.7            # [m]
@@ -34,6 +40,7 @@ c_fp = 0.3         # [m] Horizontal clearance between the widest part of the fus
 c_pp = 0.3         # [m] Horizontal clearance between the propellers (closest point, tip to tip)
 eff_prop = 0.83    # [-] Propeller efficiency during normal flight
 eff_hover = 0.88   # [-] Propeller efficiency during hover
+sp_mass_en = 1     # [kg/W] TODO: placeholder
 
 # Power
 sp_en_den = 450     # [Wh/kg] Specific energy density
