@@ -125,7 +125,7 @@ pos_prop = [0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 7.0, 7.0, 7.0, 7.0, 7.0, 7.0]  # 6 on 
 
 
 # ------------- Initial mass estimate -------------
-wing = weight.Wing(MTOM, S1, S2, n_ult, AR_wing, [pos_frontwing, pos_backwing])
+wing = weight.Wing(MTOM, S1, S2, n_ult, AR_wing, AR_wing, [pos_frontwing, pos_backwing])
 fuselage = weight.Fuselage(MTOM, Pmax, l_fus, n_pax, pos_fus)
 lgear = weight.LandingGear(MTOM, pos_lgear)
 props = weight.Propulsion(n_prop, m_prop, pos_prop)
@@ -137,7 +137,7 @@ MTOM = Mass.mtom
 
 # TODO: revise approach of reiterating
 # Reiterate once because wing uses value for MTOM
-wing = weight.Wing(MTOM, S1, S2, n_ult, AR_wing, [pos_frontwing, pos_backwing])
+wing = weight.Wing(MTOM, S1, S2, n_ult, AR_wing, AR_wing, [pos_frontwing, pos_backwing])
 fuselage = weight.Fuselage(MTOM, Pmax, l_fus, n_pax, pos_fus)
 lgear = weight.LandingGear(MTOM, pos_lgear)
 props = weight.Propulsion(n_prop, m_prop, pos_prop)
@@ -277,7 +277,7 @@ while iterate or (count < 10):
 
     # -------------------- Update weight ------------------------
     # TODO update battery weight
-    wing = weight.Wing(MTOM, S1, S2, n_ult, AR_wing, [pos_frontwing, pos_backwing])
+    wing = weight.Wing(MTOM, S1, S2, n_ult, AR_wing, AR_wing, [pos_frontwing, pos_backwing])
     fuselage = weight.Fuselage(MTOM, Pmax, l_fus, n_pax, pos_fus)
     lgear = weight.LandingGear(MTOM, pos_lgear)
     props = weight.Propulsion(n_prop, m_prop, pos_prop)
@@ -297,6 +297,7 @@ while iterate or (count < 10):
     print("New MTOM:", MTOM)
     print(" ")
     count += 1
+
 
 # Stability
 vertical_tail = vert_tail.VT_sizing(MTOM*g0, h_cr, x_CG_MTOM, l_fus, h_fus, w_fus, V_cr, V_stall, CD0,
@@ -333,7 +334,7 @@ print("")
 # print("Params for Miguel")
 # print("CG", x_CG_MTOM)
 # print("V_cr", V_cr)
-# print("V_stall", V_stall)
+print("V_stall", V_stall)
 # print("CLmax", CLmax)
 # print("CLalpha", CL_alpha_1, CL_alpha_2)
 # print("S1, S2", S1, S2)
