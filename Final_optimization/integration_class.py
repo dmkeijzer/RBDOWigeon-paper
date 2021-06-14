@@ -242,6 +242,7 @@ class RunDSE:
 
         # CL_max TODO: get de_da from stability
         alpha_wp = 1    # If we only want CLmax (and not slope) this does not matter
+
         CLmax = wing_design.CLa_wprop(T_per_eng_durings_stall, V_stall, rho, 2*prop_radius, n_prop_1, n_prop_2,
                                       const.tc, CDs_w, CDs_f, Afus, alpha_wp, de_da)
 
