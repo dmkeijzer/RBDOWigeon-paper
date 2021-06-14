@@ -323,22 +323,23 @@ class RunDSE:
         CD_a_f = wing_design.CDa_poststall(const.tc, CDs, CDs_f, Afus, alpha_lst, "fus", drag.CD, de_da)
 
         # Energy sizing
+        # E_tot, t_tot, max(P_m_to, P_m_la), max(T_m_to, T_m_la)
         mission = FP.mission(MTOM, h_cr, V_cr, CLmax, S_tot, n_prop * prop_area, Cl_alpha_curve, CD_a_w,
                              CD_a_f, alpha_lst, drag, m_bat)
 
         # Get approximate overall efficiency
-        eff_overall = 0.91 * 0.57 + 0.699 * 0.43
+        eff_overall = 0.91 * 0.57 + 0.699 * 0.43 # TODO adapt
         energy = mission.total_energy()[0] * 2.77778e-7 * 1000 / eff_overall  # From [J] to [Wh]
         # TODO: check safety factor (1.02 *)
 
         # Engine sizing
-        # TODO: get P_max from mission and T_max
-        P_max_eng_tot = from mission             # Maximum power [W] of the engines (total)
-        P_max_eng_ind = P_max_eng_tot/n_prop     # Maximum power [W] of the engines (per engine)
-        P_max_bat = P_max_eng/const.eff_eng_bat  # Maximum power [W] to be delivered by the battery
 
-        T_max_tot = from mission                 # Maximum thrust to be delivered by the engines (total)
-        T_max_ind = T_max_tot/n_prop             # Maximum thrust to be delivered by the engines (per engine)
+        # Maximum power [W] and thrust [N] of the engines (total)
+        time, P_max_eng_tot, T_max_tot = mission.total_energy()[1:4]
+        P_max_eng_ind = P_max_eng_tot/n_prop                    # Maximum power [W] of the engines (per engine)
+        P_max_bat = P_max_eng_tot/const.eff_eng_bat             # Maximum power [W] to be delivered by the battery
+
+        T_max_ind = T_max_tot/n_prop                # Maximum thrust to be delivered by the engines (per engine)
 
         # Battery sizing
         sp_en_den = const.sp_en_den
@@ -371,8 +372,7 @@ class RunDSE:
         # TODO update array with the final updated values
         internal_inputs = [MTOM, m_bat, V_cr, h_cr, C_L_cr, CLmax, prop_radius, de_da, Sv]
 
-        # TODO create array with outputs for cost function
-        time = from mission
+        # Outputs for optimisation cost function
         optim_outputs = [MTOM, energy, time]
 
         return optim_outputs, internal_inputs
