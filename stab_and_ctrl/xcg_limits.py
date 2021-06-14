@@ -365,6 +365,7 @@ def optimise_wings(Cmacf, Cmacr, CLmaxf, CLmaxr, CLdesf, CLdesr, CD0f, CD0r,
     x0 = np.array([init_Af, init_Ar, init_xf, init_xr,
                    init_zf, init_zr, init_Sr_Sf])
 
+    # TODO: minimise the instability instead
     # cost function to choose between solutions
     def cost(x):
         return (bf_br(S, x[6], x[0], x[1])[0]
