@@ -56,6 +56,7 @@ c = Srear/S*crear+Sfwd/S*cfwd
 bfwd = np.sqrt(Sfwd * Afwd)
 brear = np.sqrt(Srear * Arear)
 b = max(bfwd,brear)
+print(b)
 e = 1.1302
 efwd = 0.958
 erear = 0.958
@@ -155,6 +156,7 @@ weight = Weight(m_pax, wing, fuselage, lgear, props, cargo_m=85, cargo_pos=6, ba
                 p_pax=[1.5, 3, 3, 4.2, 4.2])
 
 Ixx, Iyy, Izz, Ixz = weight.MMI()
+print(Ixx, Izz, Ixz)
 Ka = 1.429
 
 if isinstance(ARv,float) and isinstance(sweepTE,float):

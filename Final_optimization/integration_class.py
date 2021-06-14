@@ -390,6 +390,67 @@ class RunDSE:
 
         # ----------------- Stability and control -------------------
         # TODO: add numbers
+        # W = 2950 * 9.80665
+        # h = 1000
+        # lfus = 7.2
+        # hfus = 1.705
+        # wfus = 1.38
+        # xcg = 3.0
+        # V0 = 64.72389428906716
+        # Vstall = 40
+        # Pbr = 110024 / 1.2 * 0.9 / 12
+        # # M0 = V0 / np.sqrt(const.gamma * const.R * 288.15)
+        # CD0 = 0.03254
+        # CLfwd = 1.44333 # Maximum lift coefficient of forward wing
+        # CLrear = 1.44333 # Maximum lift coefficient of rear wing
+        # CLdesfwd = 0.7382799 # Design lift coefficient of forward wing for cruise
+        # CLdesrear = 0.7382799 # Design lift coefficient of rear wing for cruise
+        # CLafwd = 5.1685 # Lift slope of forward wing
+        # Clafwd = 6.1879 # Airfoil lift slope (fwd wing)
+        # Clarear = Clafwd # Airfoil lift slope (rear wing)
+        # Cd0fwd = 0.00347  # Airfoil drag coefficient [-]
+        # Cd0rear = Cd0fwd
+        # CD0fwd = 0.00822  # Wing drag coefficient [-]
+        # CD0rear = CD0fwd
+        # Cmacfwd = -0.0645 # Pitching moment coefficient at ac [-] (fwd wing)
+        # Cmacrear = -0.0645 # Pitching moment coefficient at ac [-] (rear wing)
+        # Sfwd = 8.417113787320769 # Forward wing surface area [m^2]
+        # Srear = 8.417113787320769 # Rear wing surface area [m^2]
+        # taperfwd = 0.45
+        # taperrear = 0.45
+        # S = Srear + Sfwd
+        # Afwd = 9 * 1
+        # Arear = 9
+        # Gamma = 0
+        # Lambda_c4_fwd = 0.0 * np.pi / 180 # Sweep at c/4 [rad]
+        # Lambda_c4_rear = 0.0 * np.pi / 180
+        # cfwd = 1.014129367767935
+        # crear = 1.014129367767935
+        # c = Srear / S * crear + Sfwd / S * cfwd
+        # bfwd = np.sqrt(Sfwd * Afwd)
+        # brear = np.sqrt(Srear * Arear)
+        # b = max(bfwd, brear)
+        # print(b)
+        # e = 1.1302
+        # efwd = 0.958 # Span efficiency factor of fwd wing
+        # erear = 0.958 # Span efficiency factor of rear wing
+        # taper = 0.45
+        # n_rot_f = 6
+        # n_rot_r = 6
+        # rot_y_range_f = [0.5 * bfwd * 0.1, 0.5 * bfwd * 0.9]
+        # rot_y_range_r = [0.5 * brear * 0.1, 0.5 * brear * 0.9]
+        # K = 4959.86
+        # ku = 0.1
+        # Zcg = 0.70 # TALK ABOUT STRUCTURES FOR BETTER ESTIMATE
+        # elev_fac = 1.4
+        # Vr_Vf_2 = 0.90 # TO BE CHANGED -> AERODYNAMICS
+        # # crmaxf, crmaxr MAXIMUM root chord lengths of both wings [m]
+        # # bmaxf, bmaxr MAXIMUM span lengths of both wings [m]
+        # # Arangef, Aranger max and min values of Aspect ratio [-]
+        # # xcg_range most front based on loading diagram
+        # # max_thrust: total maximum that can be achieved in hover
+        # #  x_wf = x_wf, x_wr = x_wr: x-location of rotors approx aerodynamic centers
+        # # cg_pax, cg_pil, cg_wf, cg_wr: cg locations of passengers, pilot, front wing and rear wing
 
         # Hover controllability
         HoverControlCalcTandem(MTOM, n_rot_f = n_prop_1, n_rot_r = n_prop_2, x_wf = x_wf, x_wr = x_wr,
@@ -400,9 +461,9 @@ class RunDSE:
         # x_cg limit
 
         # Optimize the wing size and aspect ratios for stability and control, ignoring the stability constraint for now
-        [Af, Ar, xf, xr, zf, zr, Sr_Sf]  = optimise_wings(Cmacf, Cmacr, CLmaxf, CLmaxr, CLdesf, CLdesr, CD0f, CD0r,
-                                                          taperf, taperr, lambda_c4f, lambda_c4r, ef, er, Claf, Clar,
-                                                          zcg, Vr_Vf_2, elev_fac, rho, Pbr, S, W, xrangef,
+        [Af, Ar, xf, xr, zf, zr, Sr_Sf]  = optimise_wings(Cmacfwd, Cmacrear, CLfwd, CLrear, CLdesfwd, CLdesrear, CD0fwd, CD0rear,
+                                                          taperfwd, taperrear, Lambda_c4_fwd, Lambda_c4_rear, efwd, erear, Clafwd, Clarear,
+                                                          Zcg, Vr_Vf_2, elev_fac, rho, Pbr, S, W, xrangef,
                                                           xranger, zrangef, zranger, crmaxf, crmaxr, bmaxf, bmaxr,
                                                           Arangef, Aranger, xcg_range, impose_stability=False)
 
