@@ -354,9 +354,10 @@ class mission:
         energy = np.sum(P_tot * dt)
         time = t
 
-        max_power = np.max(P_tot)
+        max_power  = np.max(P_tot)
+        max_thrust = np.max(T_arr)
 
-        return distance, energy, time, max_power
+        return distance, energy, time, max_power, max_thrust
 
     def power_cruise_config(self, altitude, speed, mass):
 
@@ -370,19 +371,23 @@ class mission:
         CD_cruise = self.Drag.CD(CL_cruise)
         eff_cruise = eff_hover + speed*(eff_prop - eff_hover)/self.v_cruise
 
-        P = CD_cruise * self.m * g * self.v_cruise / (CL_cruise * eff_cruise)
+        D_cruise = CD_cruise*0.5*rho*speed*speed*self.S
+
+        P = self.thrust_to_power(D_cruise, speed, rho)[1]
 
         return P
 
     def total_energy(self):
 
         # Get the energy and distance needed to reach cruise
-        d_climb, E_climb, t_climb, P_m_to = self.numerical_simulation(vx_start=0.001, y_start=0, th_start=np.pi / 2,
-                                                              y_tgt=self.h_cruise, vx_tgt=self.v_cruise)
+        d_climb, E_climb, t_climb, P_m_to, T_m_to = self.numerical_simulation(vx_start=0.001, y_start=0,
+                                                                              th_start=np.pi / 2, y_tgt=self.h_cruise,
+                                                                              vx_tgt=self.v_cruise)
 
         # Get the energy and distance needed to descend
-        d_desc, E_desc, t_desc, P_m_la = self.numerical_simulation(vx_start=self.v_cruise, y_start=self.h_cruise,
-                                                           th_start=np.radians(5), y_tgt=0, vx_tgt=0)
+        d_desc, E_desc, t_desc, P_m_la, T_m_la = self.numerical_simulation(vx_start=self.v_cruise,
+                                                                           y_start=self.h_cruise,
+                                                                           th_start = np.radians(5), y_tgt=0, vx_tgt=0)
 
         # Distance spent in cruise
         d_cruise = self.mission_dist# - d_desc - d_climb
@@ -426,7 +431,7 @@ class mission:
             plt.tight_layout()
             plt.show()
 
-        return E_tot, t_tot, max(P_m_to, P_m_la)
+        return E_tot, t_tot, max(P_m_to, P_m_la), max(T_m_to, T_m_la)
 
 
 class evtol_performance:
@@ -635,10 +640,10 @@ class evtol_performance:
                          wing_surface = self.S, A_disk = self.A_disk, P_max = self.P_max, plotting = False)
 
         # Get the distances and energy needed for take-off and landing
-        d_la, E_la, t_la,_ = energy.numerical_simulation(vx_start=cruise_speed, y_start=cruising_altitude,
+        d_la, E_la, t_la,_,_ = energy.numerical_simulation(vx_start=cruise_speed, y_start=cruising_altitude,
                                                        th_start=np.radians(5), y_tgt=0, vx_tgt=0)
 
-        d_to, E_to, t_to,_ = energy.numerical_simulation(vx_start=0.001, y_start=0, th_start=np.pi / 2,
+        d_to, E_to, t_to,_,_ = energy.numerical_simulation(vx_start=0.001, y_start=0, th_start=np.pi / 2,
                                                        y_tgt=cruising_altitude, vx_tgt=cruise_speed)
 
         # Power needed for cruise
