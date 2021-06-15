@@ -717,7 +717,7 @@ class OffDesignAnalysisBEM:
     #     return np.arctan(self.V * (1 + a) / (self.Omega * r * (1 - a_prim)))
 
     """
-    End of the funtions used for integration
+    End of the functions used for integration
     """
 
     def eff(self, C_T, C_P):
@@ -1010,7 +1010,7 @@ class OffDesignAnalysisBEM:
         C_T_prim = T_prim/(self.rho * self.n**2 * self.D**4)
         C_T = spint.trapz(C_T_prim, self.r_stations)
 
-        print("C_T", C_T)
+        # print("C_T", C_T)
 
         # Power coefficient
         # C_P_prim = self.C_P_prim(self.r_stations, self.chords, Cls, Cds, self.F(self.r_stations,
@@ -1023,16 +1023,16 @@ class OffDesignAnalysisBEM:
         C_P_prim = C_T_prim * np.pi * self.r_stations/self.R * Cx/Cy
         C_P = spint.trapz(C_P_prim, self.r_stations)
 
-        print("C_P", C_P)
-        print("P", C_P * self.rho * self.n**3 * self.D**5)
+        # print("C_P", C_P)
+        # print("P", C_P * self.rho * self.n**3 * self.D**5)
 
         # Efficiency
         # eff = self.eff(C_T_2, C_P)
         eff = self.eff(C_T, C_P)
-        print("Alphas", np.rad2deg(alphas))
-        print("")
-        print("Cl, Cd", Cls, Cds)
-        print("")
+        # print("Alphas", np.rad2deg(alphas))
+        # print("")
+        # print("Cl, Cd", Cls, Cds)
+        # print("")
         # print("T:", C_T*self.rho*self.n**2*self.D**4)
         # print(a_facs)
         # print(a_prims)

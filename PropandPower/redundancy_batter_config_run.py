@@ -2,18 +2,18 @@ import numpy as np
 import redundancy_battery_config as con
 
 # Characteristics from the plane
-V_motor = 500 # V
-E_tot = 311121.1005976536 # kWh
-per_mot = 0.99
+V_motor = 500  # V
+E_tot = 311121.1005976536  # kWh
+per_mot = 0.97
 
 # Cell characteristics
-V_cell = 3.4 # V
-C_cell = 250 # Ah
-E_cell = V_cell * C_cell # Wh
+V_cell = 3.4  # V
+C_cell = 250  # Ah
+E_cell = V_cell * C_cell  # Wh
 
 # inputs
-n_mot = 12 # Number of motors in aircraft
-n_bat_mot = 2 # Number of batteries per motor
+n_mot = 12  # Number of motors in aircraft
+n_bat_mot = 2  # Number of batteries per motor
 
 red = con.redundancy_power(V_motor, E_tot, V_cell, C_cell, n_mot, n_bat_mot, per_mot)
 
@@ -33,7 +33,7 @@ N_par = red.N_par()
 print("Number of modules in parallel when using", N_ser, "cells in series:", N_par)
 
 N_par_new = red.N_par_new()
-print("Number of modules for ", n_mot*n_bat_mot, "batteries:", N_par_new)
+print("Number of modules for ", n_mot * n_bat_mot, "batteries:", N_par_new)
 
 N_cells_mot_new = red.N_cells_mot_new()
 print("New number of cells required for the motors", N_cells_mot_new)
@@ -42,5 +42,5 @@ increase_mot = red.increase_mot()
 abs_increase = red.increase()[0]
 per_increase = red.increase()[1]
 
-print("This is", abs_increase , "cells more than needed for energy")
+print("This is", abs_increase, "cells more than needed for energy")
 print("This is a ", per_increase, "% increase in cells")

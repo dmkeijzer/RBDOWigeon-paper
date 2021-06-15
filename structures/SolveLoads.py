@@ -2,7 +2,7 @@ from Geometry import Stringer, WingBox, WingStructure
 from Equilibrium import PointLoad, Moment, RunningLoad, EquilibriumEquation, DistributedMoment
 from sklearn.preprocessing import PolynomialFeatures
 from sklearn.linear_model import LinearRegression
-from MathFunctions.Mechanics import StepFunction
+from MathFunctions import StepFunction
 import rainflow
 import numpy as np
 import pandas as pd

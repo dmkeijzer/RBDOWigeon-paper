@@ -1,6 +1,6 @@
 import numpy as np
-from MathFunctions.Trigonometry import pi
-from MathFunctions.Mechanics import StepFunction
+from numpy import pi
+from MathFunctions import StepFunction
 import pandas as pd
 
 class StructuralError(Exception):
@@ -21,8 +21,8 @@ class ZStringer(Stringer):
         super().__init__((tflange + bflange1 + bflange2 + 2*vflange)*tstr, point)
         self.bflange, self.tflange, self.vflange, self.t = bflange, tflange, vflange, tstr
 
+        self.a = (self.bflange + self.tflange + self.vflange) * self.t
     ccarea = lambda self: self.a
-    
     __repr__ = __str__ = lambda self: "Z-Stringer(" + ', '.join(f"{k}={self.__dict__[k]}" for k in self.__dict__) + ")"
     
     def cripplingStress(self, E, v, sigma_y):
@@ -36,17 +36,18 @@ class ZStringer(Stringer):
                 sdict[key] = sigma_y
         return (sdict['ccstress1'] * self.t * self.bflange 
                 + sdict['ccstress2'] * self.t * self.tflange
-                + sdict['ccstress3'] * self.t * self.vflange) / self.ccarea()
+                + sdict['ccstress3'] * self.t * self.vflange) / self.a
     
 class HatStringer(Stringer):
     def __init__(self, point = (0, 0), bflange1 = 0.05, bflange2 =0.05, tflange = 0.05, vflange = 0.05, tstr = 0.001):
         super().__init__((tflange + bflange1 + bflange2 + 2*vflange)*tstr, point)
         self.bflange1, self.bflange2, self.tflange, self.vflange, self.t = bflange1, bflange2, tflange, vflange, tstr
-    
+        self.a = (self.bflange1 + self.bflange2 + self.tflange + 2*self.vflange) * self.t
+        
+    ccarea = lambda self: self.a
     __repr__ = __str__ = lambda self: "HAT-Stringer(" + ', '.join(f"{k}={self.__dict__[k]}" for k in self.__dict__) + ")"
     
-    ccarea = lambda self: self.a
-
+    
     def cripplingStress(self, E, v, sigma_y):
         alpha, n = 0.8, 0.6
         sdict = {}
@@ -59,15 +60,16 @@ class HatStringer(Stringer):
                 sdict[key] = sigma_y
         return (sdict['ccstress1'] * self.t * self.bflange1
                 + sdict['ccstress5'] * self.t * self.bflange2
-                + 2 * sdict['ccstress24'] * self.t * self.vflange + sdict['ccstress3'] * self.t * self.tflange) / self.ccarea()
+                + 2 * sdict['ccstress24'] * self.t * self.vflange + sdict['ccstress3'] * self.t * self.tflange) / self.a
 
 class JStringer(Stringer):
     def __init__(self, point = (0, 0), bflange1 = 0.05, bflange2 =0.05, tflange = 0.05, vflange = 0.05, tstr = 0.001):
         super().__init__((tflange + bflange1 + bflange2 + 2*vflange)*tstr, point)
         self.bflange1, self.bflange2, self.tflange, self.vflange, self.t = bflange1, bflange2, tflange, vflange, tstr
         
+        self.a = (self.bflange1 + self.bflange2 + self.tflange + self.vflange) * self.t
+        
     ccarea = lambda self: self.a
-    
     __repr__ = __str__ = lambda self: "J-Stringer(" + ', '.join(f"{k}={self.__dict__[k]}" for k in self.__dict__) + ")"
     
     def cripplingStress(self, E, v, sigma_y):
@@ -82,7 +84,7 @@ class JStringer(Stringer):
                 self.sdict[key] = sigma_y
         return (self.sdict['ccstress1'] * self.t * self.bflange1
                 + self.sdict['ccstress2'] * self.t * self.bflange2
-                + self.sdict['ccstress3'] * self.t * self.vflange + self.sdict['ccstress4'] * self.t * self.tflange) / self.ccarea()
+                + self.sdict['ccstress3'] * self.t * self.vflange + self.sdict['ccstress4'] * self.t * self.tflange) / self.a
     
 class WingBox:
     def __init__(self, thicknessOfSkin, thicknessOfSpar, base, height, stringers = []):

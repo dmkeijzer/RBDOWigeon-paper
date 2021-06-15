@@ -1,6 +1,6 @@
 import pandas as pd
 from scipy.integrate import quad
-from MathFunctions.Trigonometry import cos, pi
+from numpy import cos, sin, pi
 
 class Material:
     def __init__(self, E, density, o_yield, o_ult, Paris=(None, None), name=None, poisson=0.33, SNm = 4, SNC = 3.15e14, **others):
