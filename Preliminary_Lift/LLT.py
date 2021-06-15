@@ -177,9 +177,9 @@ def weissinger_l(wing, al, m, AR):
     phiO1 = pi
 
     # Construct the A matrix, which is the analog to the 2D lift slope
-    print("Calculating aerodynamics ...")
+    # print("Calculating aerodynamics ...")
     for j in range(m):
-        print("Point " + str(j+1) + " of " + str(m))
+        # print("Point " + str(j+1) + " of " + str(m))
         rhs[j,0] = al + twist[j]
 
         for i in range(m):
@@ -324,19 +324,19 @@ if __name__ == "__main__":
 
     de_da = deps_da(0, span, 6, 1.25, wing.aspect_ratio, 5.27)
     alpha2 = alpha * (1 - de_da)
-    print("downwash", de_da)
+    # print("downwash", de_da)
     wing2 = Wing(span, root, tip, sweep,washout)
     y2, cl2, ccl2, al_i2, CL2, CDi2, e = weissinger_l(wing2, alpha2, 2*npoints-1, AR)
 
-    print(cl,len(cl))
-    print(cl2,len(cl2))
+    # print(cl,len(cl))
+    # print(cl2,len(cl2))
 
-    print("{:<6}".format("Area: ") + str(wing.area))
-    print("{:<6}".format("AR: ") + str(wing.aspect_ratio))
-    print("{:<6}".format("MAC: ") + str(wing.cbar))
-    print("{:<6}".format("CL: ") + str(CL))
-    print("{:<6}".format("CDi: ") + str(CDi))
-    print("{:<6}".format("e: ") + str(e))
+    # print("{:<6}".format("Area: ") + str(wing.area))
+    # print("{:<6}".format("AR: ") + str(wing.aspect_ratio))
+    # print("{:<6}".format("MAC: ") + str(wing.cbar))
+    # print("{:<6}".format("CL: ") + str(CL))
+    # print("{:<6}".format("CDi: ") + str(CDi))
+    # print("{:<6}".format("e: ") + str(e))
 
     create_plot(wing, y, cl, ccl, CL, CDi)
     create_plot(wing2, y2, cl2, ccl2, CL2, CDi2)

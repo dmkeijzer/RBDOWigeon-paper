@@ -11,8 +11,6 @@ import Preliminary_Lift.Airfoil_analysis as airfoil
 import Flight_performance.Flight_performance_final as FP
 
 # Propulsion
-import PropandPower.BEM as BEM
-import PropandPower.power_budget as PB
 import PropandPower.engine_sizing_positioning as eng_siz
 import PropandPower.battery as batt
 
@@ -25,7 +23,6 @@ from stab_and_ctrl.xcg_limits import xcg_limits, optimise_wings, Cma, deps_da_ol
 
 # Structures
 import structures.Weight as wei
-import structures.StructuralAnalysis as SAD
 
 # --------------------- Fixed parameters and constants ------------------------
 # Constants from constants.py
@@ -249,7 +246,7 @@ class RunDSE:
 
         taper = wing_plan_1[2] / wing_plan_1[1]
 
-        CDs = drag.CD(CLmax)  # 1.7 init estimate
+        CDs = drag.CD(CLmax)
         CDs_f = drag.CD0_f
         CDs_w = CDs - CDs_f
 
@@ -263,7 +260,7 @@ class RunDSE:
             T_per_eng_durings_stall = D_stall/n_prop
 
             CLmaxnew = wing_design.CLa_wprop(T_per_eng_durings_stall, V_stall, rho, 2*prop_radius, n_prop_1, n_prop_2,
-                                             const.tc, CDs_w, CDs_f, Afus, alpha_wp, de_da)[1]  # TODO check index)
+                                             const.tc, CDs_w, CDs_f, Afus, alpha_wp, de_da)[1]
 
             error = np.abs(CLmaxnew-CLmax)/CLmax
             CLmax = CLmaxnew
@@ -309,20 +306,20 @@ class RunDSE:
         C_L_cr = 2 * L_cr / (rho * V_cr ** 2 * S_tot)
 
         # Aero to pass to mission
-        alpha_lst = np.arange(0, 89, 0.1)
-        Cl_alpha_curve = wing_design.CLa(const.tc, CDs, CDs_f, Afus, alpha_lst, de_da)
+        alpha_lst = np.arange(-3, 89, 0.1)
+        Cl_alpha_curve = wing_design.CLa(const.tc, CDs, CDs_f, Afus, alpha_lst, de_da)[0]
         CD_a_w = wing_design.CDa_poststall(const.tc, CDs, CDs_f, Afus, alpha_lst, "wing", drag.CD, de_da)
         CD_a_f = wing_design.CDa_poststall(const.tc, CDs, CDs_f, Afus, alpha_lst, "fus", drag.CD, de_da)
 
         # Energy sizing
-        mission = FP.mission(MTOM, h_cr, V_cr, CLmax, S_tot, n_prop * prop_area, P_max = max_power,
-                             Cl_alpha_curve = Cl_alpha_curve, CD_a_w = CD_a_w, CD_a_f = CD_a_f, alpha_lst = alpha_lst,
-                             Drag = drag_comp, t_loiter = 30*60, rotational_rate=5, mission_dist = const.mission_range)
+        mission = FP.mission(MTOM, h_cr, V_cr, CLmax, S_tot, n_prop * prop_area, P_max=max_power,
+                             Cl_alpha_curve=Cl_alpha_curve, CD_a_w=CD_a_w, CD_a_f=CD_a_f, alpha_lst=alpha_lst,
+                             Drag=drag, t_loiter=30*60, rotational_rate=5, mission_dist=const.mission_range)
 
         # Get approximate overall efficiency
         energy, t_tot, max_power, max_thrust, t_hor = mission.total_energy()
 
-        # Overall efficiency from bettery to engine
+        # Overall efficiency from battery to engine
         eff_overall = const.eff_bat_eng_cr * (t_hor/t_tot) + const.eff_bat_eng_h * ((1-t_hor)/t_tot)
         energy = energy * 2.77778e-7 * 1000 / eff_overall  # From [J] to [Wh]
         # TODO: check safety factor (1.02 *)
@@ -469,7 +466,7 @@ class RunDSE:
         Cmacfwd = airfoil.Cm_ac(const.sweepc41, AR_wing1)
         Cmacrear = airfoil.Cm_ac(const.sweepc42, AR_wing2)
         CLfwd, CLrear = wing_design.CLa_wprop(T_per_eng_durings_stall, V_stall, rho, 2*prop_radius, n_prop_1, n_prop_2,
-                                          const.tc, CDs_w, CDs_f, Afus, alpha_wp, de_da)[5:7]
+                                              const.tc, CDs_w, CDs_f, Afus, alpha_wp, de_da)[4:6]
         CLdesfwd = drag.CL_des()
         CLdesrear = drag.CL_des()
         CD0fwd = drag.Cd_w(0)
@@ -530,17 +527,15 @@ class RunDSE:
 
         # Landing gear placement
         h_bottom = 0
-        gears = LandingGearCalc(1.5*w_fus, x_ng_min = 0.3, y_max_rotor = wing_plan_1[0],
-                                gamma = float(np.radians(5)), z_rotor_line_root = pos_front_wing[1] + h_bottom,
+        gears = LandingGearCalc(1.5*w_fus, x_ng_min = 0.3, y_max_rotor=wing_plan_1[0],
+                                gamma = float(np.radians(5)), z_rotor_line_root=pos_front_wing[1] + h_bottom,
                                 rotor_rad = prop_radius,
-                                fus_back_bottom = const.fus_back_bottom, fus_back_top = const.fus_back_top)
+                                fus_back_bottom = const.fus_back_bottom, fus_back_top=const.fus_back_top)
 
-        x_ng, x_mlg, track_width, z_mlg = gears.optimum_placement([x_front, x_aft], x_cg_margin = 0,
-                                                                  z_cg_max = z_top, theta = const.pitch_lim,
-                                                                  phi = const.lat_lim, psi = const.turn_over,
-                                                                  min_ng_load_frac = const.min_ng_load)
-        # TODO: just return track width and height
-
+        x_ng, x_mlg, track_width, z_mlg = gears.optimum_placement([x_front, x_aft], x_cg_margin=0,
+                                                                  z_cg_max=z_top, theta=const.pitch_lim,
+                                                                  phi=const.lat_lim, psi=const.turn_over,
+                                                                  min_ng_load_frac=const.min_ng_load)
 
         CM_a = Cma(Clafwd, Clarear, const.sweepc41, const.sweepc42, taper, taper, CL_cr_1, CL_cr_2, AR_wing1, AR_wing2,
                    const.e_f, const.e_r, xf, xr, zf, zr, Zcg, const.Vr_Vf_2, Sr_Sf, x_CG_MTOM)
@@ -549,13 +544,13 @@ class RunDSE:
         vertical_tail = vert_tail.VT_sizing(MTOM * g0, h_cr, x_CG_MTOM, l_fus, h_fus, w_fus, V_cr, V_stall, CD0,
                                             CL_cr_1, CL_cr_2, Clafwd, Clarear, S1, S2, AR_wing1, AR_wing2,
                                             const.sweepc41, const.sweepc42, wing_plan_1[3], wing_plan_2[3],
-                                            b1, b2, taper, ARv=1.25, sweepTE=0)  # TODO sweep TE wing
+                                            b1, b2, taper, ARv=const.ARv, sweepTE=const.sweep_vtail)
 
+        # nE, Tt0, yE, br_bv, cr_cv, ARv, sweepTE
+        v_tail = vertical_tail.final_VT_rudder(n_prop, D_cr, max(b1/2, b2/2), const.br_bv, const.cr_cv, const.ARv,
+                                               const.sweep_vtail)
 
-        # # nE,Tt0,yE,br_bv, cr_cv,ARv,sweepTE
-        # v_tail = vertical_tail.final_VT_rudder(n_prop, D_cr, wing_plan_1[0] / 2, l_fus - x_CG_MTOM, 0.9, 0.35)
-        #
-        # Sv = v_tail[0]
+        Sv = v_tail[0]
 
         # Variables that are updated (the 0 is a placeholder, not used)
         internal_inputs = [MTOM, 0, V_cr, h_cr, C_L_cr, CLmax, prop_radius, de_da, Sv, V_stall, max_power, AR_wing1,

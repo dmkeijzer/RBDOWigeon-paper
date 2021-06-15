@@ -85,6 +85,10 @@ crmaxf = 2.1
 crmaxr = 3
 A_range_f = [5, 15]
 A_range_r = [5, 15]
+ARv = 1.5                       # AR of vertical tail
+sweep_vtail = np.deg2rad(25)    # Put in degrees and convert to rad
+br_bv = 0.85                    # Span of rudder wrt span tail
+cr_cv = 0.4                     # Ratio of the chords
 
 # Structures
 n_ult = 3.2 * 1.5           # 3.2 is the max we found, 1.5 is the safety factor
