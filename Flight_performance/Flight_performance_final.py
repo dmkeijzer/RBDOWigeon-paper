@@ -7,7 +7,7 @@ from constants import g, eff_hover, eff_prop
 import scipy.optimize as optimize
 # TODO: Remove this import in the integrated program, make sure aerodynamics is called first and the variables have the
 # same names
-from Preliminary_Lift.main_aero import Cl_alpha_curve, CD_a_w, CD_a_f, alpha_lst, Drag
+#from Preliminary_Lift.main_aero import Cl_alpha_curve, CD_a_w, CD_a_f, alpha_lst, Drag
 
 
 class mission:
@@ -27,6 +27,7 @@ class mission:
     """
 
     def __init__(self, mass, cruising_alt, cruise_speed, CL_max, wing_surface, A_disk, P_max,
+                 Cl_alpha_curve, CD_a_w, CD_a_f, alpha_lst, Drag,
                  t_loiter=30 * 60, rotational_rate=5, roc=5, rod=4, mission_dist=300e3, plotting=False):
 
         """
@@ -445,7 +446,8 @@ class evtol_performance:
         - Vertical flight CD
         - Efficiencies
     """
-    def __init__(self, cruising_alt, cruise_speed, S, CL_max, mass, battery_capacity, EOM, loiter_time, A_disk, P_max):
+    def __init__(self, cruising_alt, cruise_speed, S, CL_max, mass, battery_capacity, EOM, loiter_time, A_disk, P_max,
+                 CD_a_w, CD_a_f, alpha_lst, Drag):
         """
         :param cruising_alt:        [m]
         :param cruise_speed:        [m/s]

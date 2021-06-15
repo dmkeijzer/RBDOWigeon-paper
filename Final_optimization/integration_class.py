@@ -87,7 +87,37 @@ def mass(MTOM, S1, S2, n_ult, AR_wing1, AR_wing2, pos_frontwing, pos_backwing, P
     Mass = wei.Weight(m_pax, wing, fuselage, lgear, props, cargo_m=cargo_m, cargo_pos=6, battery_m=m_bat,
                       battery_pos=3.6, p_pax=[1.5, 3, 3, 4.2, 4.2])
 
-    return Mass.mtom, m_wf, m_wr, m_fus, m_prop, cg_fus, cg_gear, cg_props
+    return Mass.mtom, m_wf, m_wr, m_fus, m_prop, cg_fus, cg_gear, cg_props, Mass.mtom_cg
+
+
+def xmac_to_xle(sweep_25, A, taper, b, dihedral):
+
+    # y position of the mac
+    y_mac = b*(1 + 2*taper)/(6*(1 + taper))
+
+    # Get the sweep angle of the leading edge
+    sweep_le = np.arctan(np.tan(np.radians(sweep_25)) + (1-taper)/((1+taper)*A))
+
+    # Calculate xlemac wrt to the root
+    x_mac   = np.tan(sweep_le)*y_mac
+
+    # Calculate height of the mac wrt the root
+    z_mac   = np.tan(dihedral)*y_mac
+
+    return x_mac, z_mac
+
+def find_mac(S, b, taper):
+    """
+    Calculate mean aerodynamic chord of a wing
+    :param S: Wing surface area
+    :param b: Wingspan
+    :param taper: Wing taper
+    :return: Mean aerodynamic chord
+    """
+    cavg = S / b
+    cr = 2 / (1 + taper) * cavg
+    mac = 2/3 * cr * (1 + taper + taper ** 2) / (1 + taper)
+    return mac
 
 
 class RunDSE:
@@ -284,10 +314,10 @@ class RunDSE:
         CD_a_w = wing_design.CDa_poststall(const.tc, CDs, CDs_f, Afus, alpha_lst, "wing", drag.CD, de_da)
         CD_a_f = wing_design.CDa_poststall(const.tc, CDs, CDs_f, Afus, alpha_lst, "fus", drag.CD, de_da)
 
-        # Energy sizing TODO: change inputs
-        # TODO: Cl_alpha_curve, CD_a_w, CD_a_f, alpha_lst, Drag
-        mission = FP.mission(MTOM, h_cr, V_cr, CLmax, S_tot, n_prop * prop_area, P_max = max_power, t_loiter = 30*60,
-                             rotational_rate=5, mission_dist = mission_range)
+        # Energy sizing
+        mission = FP.mission(MTOM, h_cr, V_cr, CLmax, S_tot, n_prop * prop_area, P_max = max_power,
+                             Cl_alpha_curve = Cl_alpha_curve, CD_a_w = CD_a_w, CD_a_f = CD_a_f, alpha_lst = alpha_lst,
+                             Drag = drag_comp, t_loiter = 30*60, rotational_rate=5, mission_dist = const.mission_range)
 
         # Get approximate overall efficiency
         energy, t_tot, max_power, max_thrust, t_hor = mission.total_energy()
