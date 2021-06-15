@@ -37,8 +37,8 @@ a = atm_flight.soundspeed()
 M = Mach(Vcruise,a)
 
 #Wing planform
-S_ref = 17.095 #W/Wing_loading #[m**2] PLACEHOLDER
-print("S", S_ref)
+S_ref = 17 #W/Wing_loading #[m**2] PLACEHOLDER
+
 b = np.sqrt(AR*S_ref) # Due to reqs
 
 # For double wing
@@ -50,7 +50,7 @@ sweepc42=0
 
 #Other paramters
 b_d = b  # fixed due to span limitations
-h_d = 1.4  #  Vertical gap between wings. Based on fuselage size
+h_d = 1.2  #  Vertical gap between wings. Based on fuselage size
 l_h = 6 # Horizontal gap between wings. Based on fuselgae size
 i1 = -0.5
 
@@ -66,12 +66,12 @@ h_wl1 =0.5
 h_wl2 = 0.5
 k_wl = 2.4
 Wing_params = wing_design(2*AR, 2*AR, s1,sweepc41,s2,sweepc42,M,S_ref, l_h,h_d,w_max,h_wl1,h_wl2, k_wl, i1)
-b = Wing_params.wing_planform_double()[0][0]
-C_r = Wing_params.wing_planform_double()[0][1]
-C_t = Wing_params.wing_planform_double()[0][2]
+b = Wing_params.wing_planform_double()[1][0]
+C_r = Wing_params.wing_planform_double()[1][1]
+C_t = Wing_params.wing_planform_double()[1][2]
 
-MAC = Wing_params.wing_planform_double()[0][3]
-print(b,C_r,C_t, MAC)
+MAC = Wing_params.wing_planform_double()[1][3]
+
 SweepLE = Wing_params.sweep_atx(0)[0]
 deda = downwash(Wing_params.wing_planform_double()[0][0] , Wing_params.AR1,
                 Wing_params.wing_planform_double()[0][1], Wing_params.wing_planform_double()[0][2], Wing_params.sweepc41, 5, Wing_params.h_ht,
@@ -79,13 +79,9 @@ deda = downwash(Wing_params.wing_planform_double()[0][0] , Wing_params.AR1,
                 Wing_params.wing_planform_double()[0][1], Wing_params.wing_planform_double()[0][2], Wing_params.sweepc41,
                 70)  # deps_da(self.sweepc41, wg[0][0], self.lh, self.h_ht, self.AR_i, slope1)
 
-#deda2 = downwash_upwash(Wing_params.wing_planform_double()[0][0] , Wing_params.AR1,
-  #              Wing_params.wing_planform_double()[0][1], Wing_params.wing_planform_double()[0][2], Wing_params.sweepc41, 5, Wing_params.h_ht,
-  #              Wing_params.lh, Wing_params.wing_planform_double()[1][0] , Wing_params.AR2,
-  #              Wing_params.wing_planform_double()[0][1], Wing_params.wing_planform_double()[0][2], Wing_params.sweepc42,
-  #              70)
+
 Slope1 = Wing_params.liftslope(deda)[1]
-print("Deps_Da", Wing_params.liftslope(deda)[3])
+
 CLmax = Wing_params.CLmax_s(deda)
 
 #For Drag estimation
@@ -110,18 +106,17 @@ S_t = 0
 
 Drag = componentdrag('tandem',S_ref,l1,l2,l3,d_eq,Vcruise,rho,MAC,AR*2,AR*2,Mach(Vcruise,a),k,flamf,flamw,mu,tc,xcm,0,SweepLE,u,0,h_d,IF_f,IF_w, IF_v, CL_CDmin,Abase, S_v, s1, s2, h_wl1, h_wl2, k_wl)
 
-print("e",Drag.e_factor())
+
 CL_design = Drag.CL_des()
 Cd_des= Drag.Cd_w(CL_design[0])
 Swet_f = Drag.Swet_f()
-print("S_f", Swet_f)
-print("CLdes", CL_design[1])
+
 Rey = Re(rho, Vcruise,MAC, mu)
-print("Re", Rey)
+
 #Stall
 stall = Wing_params.CLmax_s(deda)
 CLmax = stall[0]
-print(CLmax)
+
 CDs = Drag.CD(CLmax)
 CDs_f = Drag.CD0_f
 CDs_w = CDs - CDs_f
@@ -155,12 +150,10 @@ ne2 = 6
 alpha_wp = np.arange(-5,18,0.25)
 Cl_alpha_curve2 = Wing_params.CLa(tc, CDs, CDs_f, Afus, alpha_wp, deda)
 CLwp = Wing_params.CLa_wprop(T, Vcruise,rho,D,ne1,ne2,tc,CDs_w, CDs_f, Afus, alpha_wp, deda)
-print("DeltaV",Wing_params.deltaV(T, Vcruise,rho,D, ne1, ne2))
+
 plt.plot(alpha_wp, CLwp[0])
 plt.plot(alpha_wp, Cl_alpha_curve2[2])
 plt.show()
-
-print("CLmax wop, CLmaxwp", stall[1:3], CLwp[4:])
 
 
 
