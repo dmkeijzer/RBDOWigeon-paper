@@ -178,7 +178,7 @@ def weissinger_l(wing, al, m, AR, a_w, iw):
     phiO1 = pi
     #print("y",y)
     # Construct the A matrix, which is the analog to the 2D lift slope
-    print("Calculating aerodynamics wing")
+    # print("Calculating aerodynamics wing")
     a_ws = a_w[1:-1]
 
     for j in range(m):
@@ -407,7 +407,7 @@ def downwash_upwash(span1, AR1,root1, tip1, sweep1, alpha1, z_h, x_h,span2,  AR2
     a_w = downwash_fore(np.append(0, ccl[1:] / cl[1:]), y, y2, cl, x_h, z_h, V_cr)
     de_da = np.average(a_w) * (180 / (np.pi * alpha1))
     y3, cl3, ccl3, al_i3, CL3, CDi3, e3 = weissinger_l(wing2, alpha1, 2 * npoints - 1, AR2, a_w, 0)
-    print(a_w)
+    # print(a_w)
     a_w2 = downwash_fore(np.append(0, ccl3[1:] / cl3[1:]), y3, y, cl3, -1*x_h, -1*z_h, V_cr)
     de_da2 = np.average(a_w2) * (180 / (np.pi * alpha1))
     return de_da, de_da2
@@ -434,5 +434,5 @@ def sectional_lift(ccl, q_inf):
 x = downwash_upwash(8.573,14,0.844,0.380,0,5, 0.0 ,2,11.22497,8,1.93534,0.870,0,55)
 
 y = downwash(8.573,14,0.844,0.380,0,5, 0.0 ,2,11.22497,1.93534,0.870,0,55)
-print(x)
-print(y)
+# print(x)
+# print(y)

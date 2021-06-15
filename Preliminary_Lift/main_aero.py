@@ -25,7 +25,7 @@ AR = 3.75
 
 
 W = STR["MTOW"] #[N]
-Vcruise = 40#FP["V_cruise"] #[m/s]
+Vcruise = 70#FP["V_cruise"] #[m/s]
 Wing_loading = FP["WS"]
 
 #Cruise conditions
@@ -35,7 +35,7 @@ rho = atm_flight.density() # cte.rho
 mu = atm_flight.viscosity_dyn()
 a = atm_flight.soundspeed()
 M = Mach(Vcruise,a)
-
+print("Mach",M)
 #Wing planform
 S_ref = 17 #W/Wing_loading #[m**2] PLACEHOLDER
 
@@ -56,8 +56,8 @@ i1 = -0.5
 
 #Fuselage dimensions
 l1 = 2.5
-l2 = 2
-l3 = 2.7
+l2 = 5.16011
+l3 = 3.75
 w_max = 1.38
 h_max = 1.705
 d_eq = np.sqrt(h_max*w_max)

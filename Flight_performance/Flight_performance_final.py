@@ -7,7 +7,7 @@ from constants import g, eff_hover, eff_prop
 import scipy.optimize as optimize
 # TODO: Remove this import in the integrated program, make sure aerodynamics is called first and the variables have the
 # same names
-from Preliminary_Lift.main_aero import Cl_alpha_curve, CD_a_w, CD_a_f, alpha_lst, Drag
+#from Preliminary_Lift.main_aero import Cl_alpha_curve, CD_a_w, CD_a_f, alpha_lst, Drag
 
 
 class mission:
@@ -27,6 +27,7 @@ class mission:
     """
 
     def __init__(self, mass, cruising_alt, cruise_speed, CL_max, wing_surface, A_disk, P_max,
+                 Cl_alpha_curve, CD_a_w, CD_a_f, alpha_lst, Drag,
                  t_loiter=30 * 60, rotational_rate=5, roc=5, rod=4, mission_dist=300e3, plotting=False):
 
         """
@@ -431,7 +432,7 @@ class mission:
             plt.tight_layout()
             plt.show()
 
-        return E_tot, t_tot, max(P_m_to, P_m_la), max(T_m_to, T_m_la)
+        return E_tot, t_tot, max(P_m_to, P_m_la), max(T_m_to, T_m_la), t_cruise + self.t_loiter
 
 
 class evtol_performance:
@@ -445,7 +446,8 @@ class evtol_performance:
         - Vertical flight CD
         - Efficiencies
     """
-    def __init__(self, cruising_alt, cruise_speed, S, CL_max, mass, battery_capacity, EOM, loiter_time, A_disk, P_max):
+    def __init__(self, cruising_alt, cruise_speed, S, CL_max, mass, battery_capacity, EOM, loiter_time, A_disk, P_max,
+                 CL_alpha_curve, CD_a_w, CD_a_f, alpha_lst, Drag):
         """
         :param cruising_alt:        [m]
         :param cruise_speed:        [m/s]
@@ -469,6 +471,12 @@ class evtol_performance:
         self.t_loiter = loiter_time
         self.A_disk = A_disk
         self.P_max  = P_max
+
+        self.CL_alpha_curve = CL_alpha_curve
+        self.alpha_lst = alpha_lst
+        self.CD_a_w = CD_a_w
+        self.CD_a_f = CD_a_f
+        self.Drag = Drag
 
         CD_f_alpha = interpolate.interp1d(alpha_lst, CD_a_f)
         CD_w_alpha = interpolate.interp1d(alpha_lst, CD_a_w)
@@ -531,7 +539,7 @@ class evtol_performance:
             err = 1
             while np.any(err > 0.1):
                 # Drag coefficient
-                CD  = Drag.CD(CL)
+                CD  = self.Drag.CD(CL)
 
                 # Drag
                 D   = CD*0.5*rho*V*V*self.S
@@ -637,7 +645,9 @@ class evtol_performance:
 
         # Call mission class
         energy = mission(mass=mass, cruising_alt=cruising_altitude, cruise_speed=cruise_speed, CL_max = self.CL_max,
-                         wing_surface = self.S, A_disk = self.A_disk, P_max = self.P_max, plotting = False)
+                         wing_surface = self.S, A_disk = self.A_disk, P_max = self.P_max,
+                         Cl_alpha_curve = self.CL_alpha_curve, CD_a_w = self.CD_a_w, CD_a_f = self.CD_a_f,
+                         alpha_lst = self.alpha_lst, Drag = self.Drag,plotting = False)
 
         # Get the distances and energy needed for take-off and landing
         d_la, E_la, t_la,_,_ = energy.numerical_simulation(vx_start=cruise_speed, y_start=cruising_altitude,
@@ -649,7 +659,7 @@ class evtol_performance:
         # Power needed for cruise
         P_cr = energy.power_cruise_config(altitude = cruising_altitude, speed = cruise_speed, mass = mass)
 
-        V = speeds(altitude = cruising_altitude, m = mass, CLmax = self.CL_max, S = self.S, componentdrag_object=Drag)
+        V = speeds(altitude = cruising_altitude, m = mass, CLmax = self.CL_max, S = self.S, componentdrag_object=self.Drag)
 
         # Power needed for loiter
         P_lt = energy.power_cruise_config(altitude = cruising_altitude, speed = V.climb(), mass = mass)
@@ -705,13 +715,13 @@ class evtol_performance:
 
         rho = ISA(h).density()
 
-        speed = speeds(h, self.m, self.CL_max, self.S, Drag)
+        speed = speeds(h, self.m, self.CL_max, self.S, self.Drag)
 
         V   = np.linspace(speed.stall(), 200, 200)
 
         # Calculate the drag
         CL  = 2*self.W/(rho*V*V*self.S)
-        CD  = Drag.CD(CL)
+        CD  = self.Drag.CD(CL)
 
         D   = CD*0.5*rho*V*V*self.S
 
