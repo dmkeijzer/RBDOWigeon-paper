@@ -144,6 +144,7 @@ class componentdrag:
         self.CD0_f = (1/self.S_ref) * (self.Cf_f() *self.FF_f()*self.IF_f* self.Swet_f())
         self.CD0_v = (1 / self.S_ref) * (self.Cf_w() * self.FF_w() * self.IF_v * self.Swet_v())
         CD0 = (self.CD0_v + self.CD0_f)*1.05
+        # print("CD0_fus", self.CD0_f*1.05)
         return CD0
 
     def CD_upsweep(self):

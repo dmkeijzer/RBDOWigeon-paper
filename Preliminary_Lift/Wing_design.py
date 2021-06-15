@@ -240,8 +240,12 @@ class wing_design:
         slope2wp = linregress((np.pi/180)*alpha[0:int(0.5*len(alpha))], CLaw2[0:int(0.5*len(alpha))])[0]*(1/(1-de_da))
 
         curve = interp1d(alpha, CLaw, kind='quadratic')
+        curve1 = interp1d(alpha, CLaw1)
+        curve2 = interp1d(alpha, CLaw2)
         CLmaxwp = curve(self.a_s[1])
-        return curve(alpha_wp), CLmaxwp, slope1wp, slope2wp
+        CLmaxwp1 = curve1(self.a_s[1])
+        CLmaxwp2 = curve2(self.a_s[1])
+        return curve(alpha_wp), CLmaxwp, slope1wp, slope2wp, CLmaxwp1, CLmaxwp2
 
 
 

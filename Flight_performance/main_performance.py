@@ -1,6 +1,8 @@
 from Flight_performance_final import mission, evtol_performance, Drag
 from Aero_tools import speeds
 
+# TODO: Change later
+from Preliminary_Lift.main_aero import Cl_alpha_curve, CD_a_w, CD_a_f, alpha_lst, Drag
 
 # ========== Inputs ==========
 # TODO: Make consistent with the sizing done in midterm new
