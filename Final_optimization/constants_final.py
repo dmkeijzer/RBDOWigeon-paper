@@ -18,7 +18,7 @@ cargo_pos = 6       # [m] Cargo position
 w_fuselage = 1.38           # [m]
 h_fuselage = 1.7            # [m]
 l_nosecone = 2.5            # [m]
-l_cylinder = 2              # [m]
+l_cylinder = 2              # [m] TODO: maybe increase
 # l_tailcone = 2.7            # [m]
 upsweep = 8.43*np.pi/180    # [Degrees]
 
