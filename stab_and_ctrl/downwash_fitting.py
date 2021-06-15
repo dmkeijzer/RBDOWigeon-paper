@@ -48,6 +48,20 @@ def de_da_compute(taperf, taperr, lambda_c4f, lambda_c4r, alpha, V,
                 for l, Sr_Sf in enumerate(Sr_Sfrange):
                     for m, Af in enumerate(Afrange):
                         for n, Ar in enumerate(Arrange):
+                            print(bf[i, j, k, l, m, n],
+                                    Af,
+                                    crf[i, j, k, l, m, n],
+                                    crf[i, j, k, l, m, n] * taperf,
+                                    lambda_c4f,
+                                    alpha,
+                                    dz,
+                                    dx,
+                                    br[i, j, k, l, m, n],
+                                    Ar,
+                                    crr[i, j, k, l, m, n],
+                                    crr[i, j, k, l, m, n] * taperr,
+                                    lambda_c4r,
+                                    V)
                             de_da[i, j, k, l, m, n], \
                             de_da_up[i, j, k, l, m, n] = \
                                 downwash_upwash(
@@ -291,25 +305,25 @@ def compare_ll_emp_downwash():
 
 
 if __name__ == "__main__":
-    taperf = 0.45
-    taperr = 0.45
-    lambda_c4f = 0
-    lambda_c4r = 0
-    alpha = np.deg2rad(5)  # value doesn't matter
-    V = 55  # value doesn't matter
+    # taperf = 0.45
+    # taperr = 0.45
+    # lambda_c4f = 0
+    # lambda_c4r = 0
+    # alpha = np.deg2rad(5)  # value doesn't matter
+    # V = 55  # value doesn't matter
+    #
+    # dxrange = np.linspace(2, 9, 2)
+    # dzrange = np.linspace(0.5, 2.5, 2)
+    # Srange = np.linspace(7, 35, 3)
+    # Sr_Sfrange = np.linspace(0.3, 3, 4)
+    # Afrange = np.linspace(2, 14, 3)
+    # Arrange = np.linspace(2, 14, 3)
+    #
+    # de_da_compute(taperf, taperr, lambda_c4f, lambda_c4r, alpha, V, dxrange,
+    #               dzrange, Srange, Sr_Sfrange, Afrange, Arrange,
+    #               "downwash_interp_1506_1431")
 
-    dxrange = np.linspace(2, 9, 2)
-    dzrange = np.linspace(0, 3, 2)
-    Srange = np.linspace(7, 35, 3)
-    Sr_Sfrange = np.linspace(0.3, 3, 4)
-    Afrange = np.linspace(2, 14, 3)
-    Arrange = np.linspace(2, 14, 3)
-
-    de_da_compute(taperf, taperr, lambda_c4f, lambda_c4r, alpha, V, dxrange,
-                  dzrange, Srange, Sr_Sfrange, Afrange, Arrange,
-                  "downwash_interp_1506_0858")
-
-    # compare_ll_interp("downwash_interp_1106_1606")
+    compare_ll_interp("downwash_interp_1506_1431")
 
 
 

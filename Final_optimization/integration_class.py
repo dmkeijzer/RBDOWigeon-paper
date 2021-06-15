@@ -19,7 +19,7 @@ import stab_and_ctrl.Vertical_tail_sizing as vert_tail
 from stab_and_ctrl.hover_controllabilty import HoverControlCalcTandem
 from stab_and_ctrl.landing_gear_placement import LandingGearCalc
 from stab_and_ctrl.loading_diagram import CgCalculator
-from stab_and_ctrl.xcg_limits import xcg_limits, optimise_wings, Cma, deps_da_old
+from stab_and_ctrl.xcg_limits import xcg_limits, optimise_wings, Cma, deps_da_empirical
 
 # Structures
 import structures.Weight as wei
@@ -514,7 +514,7 @@ class RunDSE:
         #                                                              xcg_range=[x_front, x_aft],    # xcg_range=[x_front, x_aft]
         #                                                              impose_stability=False)
 
-        [AR_wing1, AR_wing2, xf, xr, zf, zr, Sr_Sf] = optimise_wings(Cmacfwd, Cmacrear, CLfwd, CLrear, CLdesfwd,
+        [AR_wing1, AR_wing2, xf, xr, zf, zr, Sr_Sf] = optimise_wings(CLfwd, CLrear, CLdesfwd,
                                                                      CLdesrear, CD0fwd, CD0rear, taper, taper,
                                                                      const.sweepc41, const.sweepc42, const.e_f,
                                                                      const.e_r, Clafwd, Clarear, Zcg, const.Vr_Vf_2,
@@ -543,7 +543,7 @@ class RunDSE:
         z_le_r = zr - xmac_to_xle(const.sweepc42, AR_wing2, taper, b2, const.dihedral2)[1]
 
         # lambda_c4f, bf, lh, h_ht, A, CLaf, rho, Pbr, Sf, CLf, W
-        de_da = deps_da_old(const.sweepc41, b1, xr-xf, zr-zf, AR_wing1, CLafwd, rho, P_cr/n_prop, S1, CL_cr_1, MTOM*g0)
+        de_da = deps_da_empirical(const.sweepc41, b1, xr - xf, zr - zf, AR_wing1, CLafwd, rho, P_cr / n_prop, S1, CL_cr_1, MTOM * g0)
 
         """
         :param h_ht: Distance between wings normal to their chord planes 
