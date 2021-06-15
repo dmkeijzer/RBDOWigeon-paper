@@ -344,7 +344,7 @@ class RunDSE:
 
         # Get approximate overall efficiency
         mission.total_energy()
-        eff_overall = 0.91 * 0.57 + 0.699 * 0.43 # TODO adapt
+        eff_overall = 0.91 * 0.57 + 0.699 * 0.43  # TODO adapt
         energy = mission.total_energy()[0] * 2.77778e-7 * 1000 / eff_overall  # From [J] to [Wh]
         # TODO: check safety factor (1.02 *)
 
@@ -463,10 +463,11 @@ class RunDSE:
 
         # Optimize the wing size and aspect ratios for stability and control, ignoring the stability constraint for now
         [Af, Ar, xf, xr, zf, zr, Sr_Sf]  = optimise_wings(Cmacfwd, Cmacrear, CLfwd, CLrear, CLdesfwd, CLdesrear, CD0fwd, CD0rear,
-                                                          taperfwd, taperrear, Lambda_c4_fwd, Lambda_c4_rear, efwd, erear, Clafwd, Clarear,
-                                                          Zcg, Vr_Vf_2, elev_fac, rho, Pbr, S, W, xrangef,
-                                                          xranger, zrangef, zranger, crmaxf, crmaxr, bmaxf, bmaxr,
-                                                          Arangef, Aranger, xcg_range, impose_stability=False)
+                                                          taper, taper, 0, 0, 0.65, 0.65, Clafwd, Clarear,
+                                                          Zcg, Vr_Vf_2, 1.4, rho, Pbr_per_eng_cru, S_tot, MTOM*g0, xrangef,
+                                                          xranger, zrangef, zranger, crmaxf, crmaxr, 11, 11,
+                                                          [5, 15], [5, 15], xcg_range = [x_front, 1.3*x_aft], # TODO: revise stability margin
+                                                          impose_stability=False)
 
         # Loading diagram
         cg_calc = CgCalculator(m_wf, m_wr, m_fus, m_bat, const.m_cargo_tot, const.m_pax, const.m_pax,
