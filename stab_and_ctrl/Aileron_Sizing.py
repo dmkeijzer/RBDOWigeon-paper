@@ -5,7 +5,7 @@ from matplotlib import colors as mc
 class Control_surface:
     def __init__(self,V0,Vstall,CLfwd,CLrear,
                  CLafwd,CLarear, Clafwd,Clarear,Cd0fwd,Cd0rear,
-                 Sfwd,Srear,Afwd,Arear,cfwd,crear,bfwd,brear,taper):
+                 Sfwd,Srear,Afwd,Arear,cfwd,crear,bfwd,brear,taper,eta_rear):
         # self.lfus = lfus # Length of the fuselage
         # self.hsus = hfus # Height of the fuselage [m]
         # self.wfus = wfus # Maximum width of the fuselage [m]
@@ -34,6 +34,7 @@ class Control_surface:
         # self.xcg = xcg
         self.c = self.Sfwd/self.S*self.cfwd+self.Srear/self.S*self.crear
         self.taper_a = 0.65
+        self.eta_rear = eta_rear
 
     def Sweep(self,AR,Sweepm,n,m):
         """
@@ -79,7 +80,7 @@ class Control_surface:
         else:
             cc=1
         Cldarear = -self.CLarear*self.tau_a(Sa_S)*c_r_rear/(self.Srear*self.brear)*\
-               (0.5*(b_2rear**2-b_1rear**2) + 2*(self.taper-1)/(3*self.brear)*(b_2rear**3-b_1rear**3))
+               (0.5*(b_2rear**2-b_1rear**2) + 2*(self.taper-1)/(3*self.brear)*(b_2rear**3-b_1rear**3))*self.eta_rear
         Cldarear *= self.Srear * self.brear / (self.S * b)*cc
         Clda = Cldafwd+Cldarear
         return Clda
@@ -89,7 +90,7 @@ class Control_surface:
         c_r_fwd = self.cfwd * 3 / 2 * (1 + self.taper) / (1 + self.taper + self.taper ** 2)
         c_r_rear =  self.crear*3/2*(1+self.taper)/(1+self.taper+self.taper**2)
         Clp_fwd =-(self.Clafwd+self.Cd0fwd)*c_r_fwd*self.bfwd/(24*self.Sfwd)*(1+3*self.taper)
-        Clp_rear = -(self.Clarear + self.Cd0rear) * c_r_rear * self.brear/(24 * self.Srear)*(1+3*self.taper)
+        Clp_rear = -(self.Clarear + self.Cd0rear) * c_r_rear * self.brear/(24 * self.Srear)*(1+3*self.taper)*self.eta_rear
         Clp = Clp_fwd*self.Sfwd*self.bfwd/(self.S*b)+Clp_rear*self.Srear*self.brear/(self.S*b)
         return Clp
 
