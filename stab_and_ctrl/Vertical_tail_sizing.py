@@ -198,6 +198,8 @@ class VT_sizing:
         C_v = 2/3*C_vr*(1+self.taper_v+self.taper_v**2)/(1+self.taper_v)
         C_vt = self.taper_v*C_vr
         Sweep_v_c2 = self.Sweep(ARv,sweepTE,50,100) # Design variable TE sweep 0.
+        # Sweep_v_c4 = self.Sweep(ARv,sweepTE,25,100)
+        # print("c/4 sweep: ",Sweep_v_c4*180/np.pi)
         c_r = cr_cv*C_v
         c_r_root = 3/2*c_r*(1+self.taper_v)/(1+self.taper_v+self.taper_v**2)
         c_r_tip = self.taper_v*c_r_root
