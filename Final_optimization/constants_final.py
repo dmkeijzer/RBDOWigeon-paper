@@ -14,7 +14,6 @@ m_pax = 88                              # Max per pax
 m_cargo_per_pax = 7                     # [kg] Cargo mass per pax
 m_cargo_tot = m_cargo_per_pax*n_pax     # [kg] Total cargo mass
 
-cargo_pos = 6       # [m] Cargo position
 
 # Fuselage
 w_fuselage = 1.38           # [m]
@@ -22,7 +21,9 @@ h_fuselage = 1.7            # [m]
 l_nosecone = 2.5            # [m]
 l_cylinder = 2.5            # [m]
 l_tailcone = 2.7            # [m]
+l_fus = l_nosecone + l_cylinder + l_tailcone
 upsweep = 8.43*np.pi/180    # [Degrees]
+
 
 # Aerodynamics
 # s1 = 0.5                    # Fraction of total wing area for the 1st wing [-]
@@ -89,6 +90,11 @@ ARv = 1.5                       # AR of vertical tail
 sweep_vtail = np.deg2rad(25)    # Put in degrees and convert to rad
 br_bv = 0.85                    # Span of rudder wrt span tail
 cr_cv = 0.4                     # Ratio of the chords
+
+# CGs
+cg_bat = [3.25, 0, 0.4*h_fuselage]
+cargo_pos = [6.5, 0, 0.3*l_fus]       # [m] Cargo position
+
 
 # Structures
 n_ult = 3.2 * 1.5           # 3.2 is the max we found, 1.5 is the safety factor

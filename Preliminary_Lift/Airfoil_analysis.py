@@ -14,7 +14,7 @@ def airfoil_stats():
     Cl_Cdmin = np.average(df1["CL"][df1["CD"] == Cdmin])
     Cm = np.average(df1["Cm"][df1["CL"] == Cl_Cdmin])
 
-    Clalpha =   (np.average(df1["CL"][df1["alpha"] == 6]) -np.average(df1["CL"][df1["alpha"] == 0]))/6
+    Clalpha = (np.average(df1["CL"][df1["alpha"] == 6]) -np.average(df1["CL"][df1["alpha"] == 0]))/6
     Clalpha1 = (np.average(df1["CL"][df1["alpha"] == 5]) - np.average(df1["CL"][df1["alpha"] == -1])) / 6
 
     clcdmax = np.max(df1["cl/cd"])
@@ -23,7 +23,7 @@ def airfoil_stats():
     a_0L = -np.average(df1["CL"][df1["alpha"] ==0])/Clalpha1
 
     return Clmax, Cdmin, Cl_Cdmin, Cm, Clalpha, clcdmax, Cl_maxld, a_clmax, a_0L
-print(airfoil_stats()[4])
+# print(airfoil_stats()[4])
 def airfoil_datapoint(type, Re, alpha):
 
     if Re == "Stall":
@@ -49,12 +49,12 @@ def Cm_ac(sweep, ARw):
     CN_lst = np.array(df1["CL"][(df1["alpha"] <5) & (df1["alpha"] >-3)])*np.cos(alpha*np.pi/180)+ np.array(df1["CD"][(df1["alpha"] <5) & (df1["alpha"] >-3)])*np.sin(alpha*np.pi/180)
     Cm_curve = linregress(alpha,Cm_lst)
     CN_curve = linregress(alpha, CN_lst)
-    plt.plot(alpha,Cm_lst)
-    plt.show()
+    # plt.plot(alpha,Cm_lst)
+    # plt.show()
     ac = 0.25 + Cm_curve[0]/CN_curve[0]
     Cm_ac = np.average(Cm_lst+(ac-0.25)*CN_lst)
     Cm_ac_w = Cm_ac*(ARw*np.cos(sweep))/(ARw+2*np.cos(sweep))
-    return Cm_ac_w, Cm_ac, ac, Cm_curve[2],CN_curve[2]
+    return Cm_ac_w, Cm_ac, ac, Cm_curve[2], CN_curve[2]
 
 
 #plt.plot(np.arange(0,1.7,0.05), Cd(np.arange(0,1.7,0.05)))

@@ -231,7 +231,9 @@ class wing_design:
         CLWS2 = self.CLW2 + self.CLS2
         return CLWS1 , CLWS2
 
-    def CLa_wprop(self, T, V_inf, rho, D , ne1,ne2, tc, CDs_W, CDs_f, Afus, alpha_wp, de_da):
+    def CLa_wprop(self, T, V_inf, rho, D, ne1,ne2, tc, CDs_W, CDs_f, Afus, alpha_wp, de_da):
+        self.CLmax_s(de_da)
+
         alpha = np.arange(-5, self.a_s[1]+1, 0.25)
         CLaw1 = self.CL_W_S(  T, V_inf, rho, D ,ne1,ne2, tc, CDs_W, CDs_f, Afus, alpha, de_da)[0] #+ self.CL_T(T, V_inf, rho,  alpha, ne1,ne2)
         CLaw2 = self.CL_W_S(  T, V_inf, rho, D , ne1,ne2,tc, CDs_W, CDs_f, Afus, alpha, de_da)[1] #+ self.CL_T(T, V_inf, rho,  alpha, ne1,ne2)

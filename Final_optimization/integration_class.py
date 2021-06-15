@@ -1,28 +1,39 @@
 import numpy as np
+print("1")
 import Aero_tools as at
+print("2")
 import constants_final as const
-
+print("3")
 # Aero
 import Preliminary_Lift.Drag as drag_comp
+print("4")
 import Preliminary_Lift.Wing_design as wingdes
+print("5")
 import Preliminary_Lift.Airfoil_analysis as airfoil
-
+print("6")
 # Performance
 import Flight_performance.Flight_performance_final as FP
-
+print("7")
 # Propulsion
 import PropandPower.engine_sizing_positioning as eng_siz
+print("8")
 import PropandPower.battery as batt
+print("9")
 
 # Stability and Control
 import stab_and_ctrl.Vertical_tail_sizing as vert_tail
+print("10")
 from stab_and_ctrl.hover_controllabilty import HoverControlCalcTandem
+print("11")
 from stab_and_ctrl.landing_gear_placement import LandingGearCalc
+print("12")
 from stab_and_ctrl.loading_diagram import CgCalculator
+print("13")
 from stab_and_ctrl.xcg_limits import xcg_limits, optimise_wings, Cma, deps_da_old
-
+print("14")
 # Structures
 import structures.Weight as wei
+print("15")
 
 # --------------------- Fixed parameters and constants ------------------------
 # Constants from constants.py
@@ -64,9 +75,7 @@ n_ult = const.n_ult
 # ------------------ Constants for weight estimation ----------------
 # TODO: revise Pmax
 Pmax_weight = 15.25  # this is defined as maximum perimeter in Roskam, so i took top down view of the fuselage perimeter
-
-
-
+print("16")
 # ------------- Initial mass estimate -------------
 def mass(MTOM, S1, S2, n_ult, AR_wing1, AR_wing2, pos_frontwing, pos_backwing, Pmax, l_fus, n_pax, pos_fus,
          pos_lgear, n_prop, m_prop, pos_prop, m_pax, cargo_m, m_bat):
@@ -254,11 +263,11 @@ class RunDSE:
 
         # Drag at stall
         error = 1
-        while error < 0.05:
+        while error > 0.05:
             D_stall = drag.CD(CLmax) * 0.5 * rho * V_stall**2 * S_tot
-            T_per_eng_durings_stall = D_stall/n_prop
+            T_per_eng_during_stall = D_stall/n_prop
 
-            CLmaxnew = wing_design.CLa_wprop(T_per_eng_durings_stall, V_stall, rho, 2*prop_radius, n_prop_1, n_prop_2,
+            CLmaxnew = wing_design.CLa_wprop(T_per_eng_during_stall, V_stall, rho, 2*prop_radius, n_prop_1, n_prop_2,
                                              const.tc, CDs_w, CDs_f, Afus, alpha_wp, de_da)[1]
 
             error = np.abs(CLmaxnew-CLmax)/CLmax
@@ -362,7 +371,7 @@ class RunDSE:
         pos_prop = np.hstack((np.array(pos_prop_front), np.array(pos_prop_back)))
 
         pos_lgear = (1.75+6)/2  # TODO revise if needed
-        MTOM, m_wf, m_wr, m_fus, m_prop, cg_fus, cg_gear, cg_props, x_CG_MTOM = mass(MTOM, S1, S2, n_ult, AR_wing1,
+        MTOM, m_wf, m_wr, m_fus, m_prop, cg_fus0, cg_gear, cg_props, x_CG_MTOM = mass(MTOM, S1, S2, n_ult, AR_wing1,
                                                                                      AR_wing2, pos_front_wing,
                                                                                      pos_back_wing, Pmax_weight, l_fus,
                                                                                      const.n_pax, pos_fus, pos_lgear,
@@ -442,10 +451,12 @@ class RunDSE:
                                K=max_thrust/n_prop, ku=0.1)
 
         # Loading
-        cg_pax = [5, h_fus*0.4]   # Approximated with new layout
-        cg_pil = [1.75, h_fus/2]  # Pilot is higher than pax
+        cg_pax = [[3.75, 0.5, h_fus*0.4], [3.75, -0.5, h_fus*0.4], [6, 0.5, h_fus*0.4], [6, -0.5, h_fus*0.4]]
+        # Approximated with new layout
+        cg_pil = [1.75, 0, h_fus/2]  # Pilot is higher than pax
+        cg_fus = [l_fus*0.5, 0, h_fus*0.5]
         cg_calc = CgCalculator(m_wf, m_wr, m_fus, m_bat, const.m_cargo_tot, const.m_pax, const.m_pax,
-                               cg_fus, cg_bat=const.l_nosecone, cg_cargo=const.cargo_pos, cg_pax=cg_pax, cg_pil=cg_pil)
+                               cg_fus=cg_fus, cg_bat=const.cg_bat, cg_cargo=const.cargo_pos, cg_pax=cg_pax, cg_pil=cg_pil)
 
         # Get the cg range, based on wing placement, the loading order can be changed if needed
         cg_wf = [xf + 0.25*MAC1, zf]
@@ -462,12 +473,12 @@ class RunDSE:
         # Vr_Vf = 1
 
         # Wing characteristics
-        Cmacfwd = airfoil.Cm_ac(const.sweepc41, AR_wing1)
-        Cmacrear = airfoil.Cm_ac(const.sweepc42, AR_wing2)
-        CLfwd, CLrear = wing_design.CLa_wprop(T_per_eng_durings_stall, V_stall, rho, 2*prop_radius, n_prop_1, n_prop_2,
+        Cmacfwd = airfoil.Cm_ac(const.sweepc41, AR_wing1)[0]
+        Cmacrear = airfoil.Cm_ac(const.sweepc42, AR_wing2)[0]
+        CLfwd, CLrear = wing_design.CLa_wprop(T_per_eng_during_stall, V_stall, rho, 2*prop_radius, n_prop_1, n_prop_2,
                                               const.tc, CDs_w, CDs_f, Afus, alpha_wp, de_da)[4:6]
-        CLdesfwd = drag.CL_des()
-        CLdesrear = drag.CL_des()
+        CLdesfwd = drag.CL_des()[0]
+        CLdesrear = drag.CL_des()[0]
         CD0fwd = drag.Cd_w(0)
         CD0rear = CD0fwd
         Clafwd = wing_design.liftslope(0)[1]
@@ -489,7 +500,11 @@ class RunDSE:
 
         zrangef = [0 + y_mac_1 * const.dihedral1, 0.25*h_fus + y_mac_1 * const.dihedral1]
         zranger = [0.7*h_fus + y_mac_2 * const.dihedral2, h_fus + y_mac_2 * const.dihedral2]
-
+        print(xrangef)
+        print(xranger)
+        print(zrangef)
+        print(zranger)
+        print(const.crmaxf, const.crmaxr, const.b_max, const.b_max, const.A_range_f, const.A_range_r)
         Zcg = 0.4 * const.h_fuselage  # Estimate
 
         [AR_wing1, AR_wing2, xf, xr, zf, zr, Sr_Sf] = optimise_wings(Cmacfwd, Cmacrear, CLfwd, CLrear, CLdesfwd, CLdesrear, CD0fwd,
@@ -574,6 +589,8 @@ class RunDSE:
         internal_inputs = self.initial_est
 
         for i in range(N_iters):
+            print("Iteration #", i)
+            print("")
             optim_outputs, internal_inputs, other_outputs = self.run(optim_inputs, internal_inputs)
 
         return optim_outputs, internal_inputs, other_outputs
