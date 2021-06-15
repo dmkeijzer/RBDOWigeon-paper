@@ -257,6 +257,7 @@ class RunDSE:
 
         # CL_max TODO: get de_da from stability
         alpha_wp = 1    # If we only want CLmax (and not slope) this does not matter
+
         CLmax = wing_design.CLa_wprop(T_per_eng_durings_stall, V_stall, rho, 2*prop_radius, n_prop_1, n_prop_2,
                                       const.tc, CDs_w, CDs_f, Afus, alpha_wp, de_da)
 
@@ -343,7 +344,7 @@ class RunDSE:
 
         # Get approximate overall efficiency
         mission.total_energy()
-        eff_overall = 0.91 * 0.57 + 0.699 * 0.43 # TODO adapt
+        eff_overall = 0.91 * 0.57 + 0.699 * 0.43  # TODO adapt
         energy = mission.total_energy()[0] * 2.77778e-7 * 1000 / eff_overall  # From [J] to [Wh]
         # TODO: check safety factor (1.02 *)
 
@@ -458,21 +459,31 @@ class RunDSE:
                                rot_y_range_r=[w_fus/2 + const.c_fp + prop_radius, wing_plan_2[0]],
                                K = max_thrust/n_prop, ku = 0.1)
 
-        # x_cg limit
-
-        # Optimize the wing size and aspect ratios for stability and control, ignoring the stability constraint for now
-        [Af, Ar, xf, xr, zf, zr, Sr_Sf]  = optimise_wings(Cmacfwd, Cmacrear, CLfwd, CLrear, CLdesfwd, CLdesrear, CD0fwd, CD0rear,
-                                                          taperfwd, taperrear, Lambda_c4_fwd, Lambda_c4_rear, efwd, erear, Clafwd, Clarear,
-                                                          Zcg, Vr_Vf_2, elev_fac, rho, Pbr, S, W, xrangef,
-                                                          xranger, zrangef, zranger, crmaxf, crmaxr, bmaxf, bmaxr,
-                                                          Arangef, Aranger, xcg_range, impose_stability=False)
-
         # Loading diagram
         cg_calc = CgCalculator(m_wf, m_wr, m_fus, m_bat, const.m_cargo_tot, const.m_pax, const.m_pax,
                                cg_fus, cg_bat = const.l_nosecone, cg_cargo = const.cargo_pos, cg_pax, cg_pil)
 
         # Get the cg range, based on wing placement, the loading order can be changed if needed
         [x_front, x_aft], _, [_, z_top] = cg_calc.calc_cg_range(cg_wf, cg_wr)
+
+        # x_cg limit
+
+        # For cmac: use airfoil analysis Cm_ac
+        # For CLmax: Wing_design CLa_wprop (for entire aircraft)
+        # CLdes: use CL_des of entire aircraft
+        # CD0
+        # CLa fwd and rear, second and third output ASK STABILITY IF THEY INCLUDE DOWNWASH THEMSELVES
+        # Vr_Vf = 1
+
+        # Optimize the wing size and aspect ratios for stability and control, ignoring the stability constraint for now
+        [Af, Ar, xf, xr, zf, zr, Sr_Sf]  = optimise_wings(Cmacfwd, Cmacrear, CLfwd, CLrear, CLdesfwd, CLdesrear, CD0fwd, CD0rear,
+                                                          taper, taper, 0, 0, 0.65, 0.65, Clafwd, Clarear,
+                                                          Zcg, Vr_Vf_2, 1.4, rho, Pbr_per_eng_cru, S_tot, MTOM*g0, xrangef,
+                                                          xranger, zrangef, zranger, crmaxf, crmaxr, 11, 11,
+                                                          [5, 15], [5, 15], xcg_range = [x_front, 1.3*x_aft], # TODO: revise stability margin
+                                                          impose_stability=False)
+
+
 
         # Landing gear placement
         # TODO: Check if origin of coordinate system starts at ground or bottom of the aircraft
