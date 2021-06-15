@@ -231,8 +231,7 @@ def weissinger_l(wing, al, m, AR, a_w, iw):
     for i in range(nrhs):
         cl[i] = ccl[i]/c[i]
         al_e = cl[i]/(2*np.pi)  #(5.8136)
-        al_i[i] = al + twist[i] - al_e
-
+        al_i[i] = al + iw*np.pi/180 - al_e
     al_i = al_i #+ a_w[:22]
     CL = 0.
     CDi = 0.
@@ -385,7 +384,7 @@ def LLT2wings(span1, AR1,root1, tip1, sweep1, alpha1, z_h, x_h,span2, AR2, root2
     y2 = gety(wing2, 2 * npoints - 1)
     a_w = downwash_fore(np.append(0, ccl[1:] / cl[1:]), y, y2, cl, x_h, z_h, V_cr)
     de_da = np.average(a_w) * (180 / (np.pi * alpha1))
-    y3, cl3, ccl3, al_i3, CL3, CDi3, e3 = weissinger_l(wing2, alpha2, 2 * npoints - 1, AR2, a_w, alpha*de_da)
+    y3, cl3, ccl3, al_i3, CL3, CDi3, e3 = weissinger_l(wing2, alpha2, 2 * npoints - 1, AR2, a_w, i2)
     return CL, CL3, CDi, CDi3, e, e3, de_da
 
 def downwash(span1, AR1,root1, tip1, sweep1, alpha1, z_h, x_h,span2, root2,tip2,sweep2,V_cr):

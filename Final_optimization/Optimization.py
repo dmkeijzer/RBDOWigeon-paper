@@ -1,6 +1,6 @@
 import openmdao.api as om
 import numpy as np
-
+from stab_and_ctrl.xcg_limits import xf, xr, zf, zr, xcg_range, Arange, bmax, crmaxf, crmaxr
 
 class design_optimization(om.ExplicitComponent):
 
@@ -21,12 +21,33 @@ class design_optimization(om.ExplicitComponent):
         self.add_output('mass', units = 'kg')
         self.add_output('Cost_func')
 
+        # Outputs used as constraints, these come from stability
+        self.add_output('xf', units = 'm')
+        self.add_output('xr', units = 'm')
+        self.add_output('zf', units = 'm')
+        self.add_output('zr', units = 'm')
+        self.add_output('crmaxf', units = 'm')
+        self.add_output('crmaxr', units = 'm')
+        self.add_output('bmax', units = 'm')
+        self.add_output('x_cg_range', units = 'm')
+        self.add_output('A_range', units = None)
+
     def setup_partials(self):
 
         # Partial derivatives are done using finite difference
         self.declare_partials('*', '*', 'fd')
 
     def compute(self, inputs, outputs):
+
+        outputs['xf'] = None
+        outputs['xr'] = None
+        outputs['zf'] = None
+        outputs['zr'] = None
+        outputs['crmaxf'] = None
+        outputs['crmaxr'] = None
+        outputs['bmax'] = None
+        outputs['x_cg_range'] = None
+        outputs['A_range'] = None
 
         raise NotImplementedError
 
@@ -52,7 +73,18 @@ prob.model.set_input_defaults('Wing_position_2', 8)
 # Define constraints TODO: Probably better to define them in a central file, like constants
 prob.model.add_constraint('Integrated_design.time', upper = 3, units = 'hr')
 prob.model.add_constraint('Integrated_design.mass', upper = 3175, units = 'kg')
-# TODO: Add aspect ratio constraints from stability and control
+
+# Stability constraints
+# TODO: if these bounds are changed in the integrated program, change the references
+prob.model.add_constraint('Integrated_design.xf', lower = xf[0], upper = xf[1], units = 'kg')
+prob.model.add_constraint('Integrated_design.xr', lower = xr[0], upper = xr[1], units = 'kg')
+prob.model.add_constraint('Integrated_design.zf', lower = zf[0], upper = zf[1], units = 'kg')
+prob.model.add_constraint('Integrated_design.zr', lower = zr[0], upper = zr[1], units = 'kg')
+prob.model.add_constraint('Integrated_design.crmaxf', upper = crmaxf, units = 'kg')
+prob.model.add_constraint('Integrated_design.crmaxr', upper = crmaxr, units = 'kg')
+prob.model.add_constraint('Integrated_design.bmax', upper = bmax, units = 'kg')
+prob.model.add_constraint('Integrated_design.x_cg_range', lower = xcg_range[0], upper = xcg_range[1], units = 'kg')
+#prob.model.add_constraint('Integrated_design.A_range', lower = xf[0], upper = xf[1], units = 'kg')
 
 # Select an appropriate optimizer TODO: Change if better algorithms are found
 prob.driver = om.ScipyOptimizeDriver()
