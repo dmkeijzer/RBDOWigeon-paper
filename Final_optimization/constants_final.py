@@ -37,6 +37,9 @@ Abase = 0                   # Base area of the fuselage [m2]
 tc = 0.12                   # NACA0012 for winglets and Vtail [-]
 xcm = 0.3                   # NACA0012 for winglets and Vtail [-]
 k_wl = 2.4                  # Constant for winglets (could be changed to 2 if we need extra eff)
+Vr_Vf_2 = 1                 # Speed ratio between wing 1 and 2
+e_f = 0.65                  # Oswald efficiency for front wing
+e_r = 0.65                  # Oswald efficiency for rear wing
 
 # Propulsion
 xi_0 = 0.1         # Dimensionless radius of the hub (r_hub/R)

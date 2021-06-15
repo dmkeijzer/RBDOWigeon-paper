@@ -475,13 +475,26 @@ class RunDSE:
         # CLa fwd and rear, second and third output ASK STABILITY IF THEY INCLUDE DOWNWASH THEMSELVES
         # Vr_Vf = 1
 
+        # Wing characteristics
+        Cmacfwd = airfoil.Cm_ac(const.sweepc41, AR_wing1)
+        Cmacrear = airfoil.Cm_ac(const.sweepc42, AR_wing2)
+        CLfwd = CLmax   # TODO: Change to CL_max per wing
+        CLrear = CLmax
+        CLdesfwd = drag.CL_des()
+        CLdesrear = drag.CL_des()
+        CD0fwd = drag.Cd_w(0)
+        CD0rear = CD0fwd
+        Clafwd = wing_design.liftslope(0)[1]
+        Clarear = wing_design.liftslope(0)[2]
+
         # Optimize the wing size and aspect ratios for stability and control, ignoring the stability constraint for now
-        [Af, Ar, xf, xr, zf, zr, Sr_Sf]  = optimise_wings(Cmacfwd, Cmacrear, CLfwd, CLrear, CLdesfwd, CLdesrear, CD0fwd, CD0rear,
-                                                          taper, taper, 0, 0, 0.65, 0.65, Clafwd, Clarear,
-                                                          Zcg, Vr_Vf_2, 1.4, rho, Pbr_per_eng_cru, S_tot, MTOM*g0, xrangef,
-                                                          xranger, zrangef, zranger, crmaxf, crmaxr, 11, 11,
-                                                          [5, 15], [5, 15], xcg_range = [x_front, 1.3*x_aft], # TODO: revise stability margin
-                                                          impose_stability=False)
+        [Af, Ar, xf, xr, zf, zr, Sr_Sf]  = optimise_wings(Cmacfwd, Cmacrear, CLfwd, CLrear, CLdesfwd, CLdesrear, CD0fwd,
+                                                          CD0rear, taper, taper, const.sweepc41, const.sweepc42,
+                                                          const.e_f, const.e_r, Clafwd, Clarear, Zcg, const.Vr_Vf_2,
+                                                          const.elev_fac, rho, P_cr/n_prop, S_tot, MTOM*g0, xrangef,
+                                                          xranger, zrangef, zranger, const.crmaxf, const.crmaxr,
+                                                          const.b_max, const.b_max, const.A_range_f, const.A_range_r,
+                                                          xcg_range = [x_front, 1.3*x_aft], impose_stability=False) # TODO: revise stability margin
 
 
 
