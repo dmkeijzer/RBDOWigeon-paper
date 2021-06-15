@@ -470,11 +470,10 @@ class RunDSE:
         CLdesrear = drag.CL_des()[0]
         CD0fwd = drag.Cd_w(0)
         CD0rear = CD0fwd
-        CLafwd = wing_design.liftslope(0)[1]
-        CLarear = wing_design.liftslope(0)[2]
-        Clafwd = airfoil.airfoil_stats()[4]
-        Clarear = airfoil.airfoil_stats()[4]
-        print(Clafwd)
+        CLafwd = wing_design.liftslope(0)[1][0]  # TODO: unit check
+        CLarear = wing_design.liftslope(0)[2][0]  # TODO: unit check
+        Clafwd = airfoil.airfoil_stats()[4] * 180/np.pi  # TODO: unit check
+        Clarear = airfoil.airfoil_stats()[4] * 180/np.pi  # TODO: unit check
 
         # Optimize the wing size and aspect ratios for stability and control, ignoring the stability constraint for now
         y_mac_1 = b1 * (1 + 2 * taper) / (6 * (1 + taper))
@@ -497,7 +496,7 @@ class RunDSE:
 
         print(Cmacfwd, Cmacrear, CLfwd, CLrear, CLdesfwd, CLdesrear, CD0fwd, CD0rear, taper, taper,
                                                                      const.sweepc41, const.sweepc42, const.e_f,
-                                                                     const.e_r, Clafwd, Clarear, Zcg, const.Vr_Vf_2,
+                                                                     const.e_r, CLafwd, CLarear, Zcg, const.Vr_Vf_2,
                                                                      const.elev_fac, rho, P_cr/n_prop, S_tot, MTOM*g0,
                                                                      xrangef,  xranger, zrangef, zranger, const.crmaxf,
                                                                      const.crmaxr, const.b_max, const.b_max,
@@ -511,7 +510,7 @@ class RunDSE:
                                                                      xrangef,  xranger, zrangef, zranger, const.crmaxf,
                                                                      const.crmaxr, const.b_max, const.b_max,
                                                                      const.A_range_f, const.A_range_r,
-                                                                     xcg_range=[x_front+0.01, x_aft-0.07],    # xcg_range=[x_front, x_aft]
+                                                                     xcg_range=[x_front, x_aft],    # xcg_range=[x_front, x_aft]
                                                                      impose_stability=False)
                                                                      # TODO: revise stability margin
 

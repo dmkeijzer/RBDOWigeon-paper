@@ -115,10 +115,11 @@ class wing_design:
         self.AR_2 = self.AR2 + winglet_dAR(self.AR2, self.h_wl2, wg[0][0])
         slope2_b = self.Clalpha * (self.AR_2 / (2 + np.sqrt(4 + ((self.AR_2 * beta / 0.95) ** 2) * ((1 + SW ** 2) / (beta ** 2)))))
         slope2 = slope2_b * (1 - deda)
-        #print("de_da",deda)
+        # print("de_da",deda)
         wfi = 1 + 0.025*(self.w/wg[0][0]) - 0.25*(self.w/wg[0][0])  # wing fuselage interaction factor: effect of fuselage diameter on aerodynamic characteristics for straightwing at low and high aspect ratio
 
         slope_tot = wfi*(slope1 * self.s1 + slope2 * self.s2)
+        # print("Check:", slope_tot, slope1*wfi, slope2_b*wfi, deda, slope2*wfi, slope1, slope2)
         return slope_tot, slope1*wfi, slope2_b*wfi, deda, slope2*wfi, slope1, slope2
 
     def CLmax_s(self, de_da):
