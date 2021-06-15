@@ -217,11 +217,12 @@ class Stab_Derivatives:
         Cl_r_v = zv/self.b*CY_r
         Cl_r_fwd = self.CLfwd0/4
         Cl_r_rear = self.CLrear0/4
-        Cl_r = Cl_r_v + Cl_r_fwd*self.Sfwd*self.bfwd/(self.S*self.b) + Cl_r_rear*self.Srear*self.brear/(self.S*self.b)
+        Cl_r = Cl_r_v + Cl_r_fwd*self.Sfwd*self.bfwd/(self.S*self.b) + \
+               Cl_r_rear*self.Srear*self.brear/(self.S*self.b)*self.eta_rear
         Cn_r_v = -(self.lv)/self.b*CY_r
         CDfwd0 = self.CD_0 + self.CLfwd0**2/(np.pi*self.Afwd*self.efwd)
         CDrear0 = self.CD_0 + self.CLrear0**2/(np.pi*self.Arear*self.erear)
-        Cn_r_wing = -1/4*(CDfwd0*self.Sfwd*self.bfwd/(self.S*self.b) + CDrear0*self.Srear*self.brear/(self.S*self.b))
+        Cn_r_wing = -1/4*(CDfwd0*self.Sfwd*self.bfwd/(self.S*self.b) + CDrear0*self.Srear*self.brear/(self.S*self.b)*self.eta_rear)
         Cn_r = Cn_r_wing+Cn_r_v
         return CY_r,Cl_r,Cn_r
 
@@ -232,7 +233,7 @@ class Stab_Derivatives:
         """
         Ctrl = Control_surface(self.V0,self.Vstall,self.CLfwd0,self.CLrear0,self.CLafwd,self.CLarear,
                                self.Clafwd,self.Clarear,self.Cd0fwd,self.Cd0rear,self.Sfwd,self.Srear,
-                               self.Afwd,self.Arear,self.cfwd,self.crear,self.bfwd,self.brear,self.taper)
+                               self.Afwd,self.Arear,self.cfwd,self.crear,self.bfwd,self.brear,self.taper,self.eta_rear)
         Cl_p = Ctrl.Clp()
         eta_v = self.eta_v
         CY_p = -8/(3*np.pi)*eta_v*(self.bv*self.Sv/(self.S*self.b))*self.C_L_a(self.ARv,self.Sweep(self.ARv*2,0.4,self.sweepTE,50,100))
@@ -240,7 +241,7 @@ class Stab_Derivatives:
         c_r_fwd = self.cfwd * 3 / 2 * (1 + self.taper) / (1 + self.taper + self.taper ** 2)
         c_r_rear = self.crear * 3 / 2 * (1 + self.taper) / (1 + self.taper + self.taper ** 2)
         Cnp_fwd = -(self.Cl0fwd) * c_r_fwd * self.bfwd / (24 * self.Sfwd) * (1 + 3 * self.taper)
-        Cnp_rear = -(self.Cl0rear) * c_r_rear * self.brear / (24 * self.Srear) * (1 + 3 * self.taper)
+        Cnp_rear = -(self.Cl0rear) * c_r_rear * self.brear / (24 * self.Srear) * (1 + 3 * self.taper)*self.eta_rear
         Cn_p_wings = -1/8*(self.CLfwd0*self.Sfwd*self.bfwd/(self.S*self.b) + self.CLrear0*self.Srear*self.brear//(self.S*self.b))
         Cn_p_wings_analytical = Cnp_fwd*self.Sfwd*self.bfwd/(self.S*self.b) + Cnp_rear*self.Srear*self.brear/(self.S*self.b)
         # print("Analytical estimation of C_l_p:",Cl_p)
@@ -273,17 +274,17 @@ class Stab_Derivatives:
                                    (np.tan(self.Sweepc4_rear)/(np.pi*self.Arear+4*np.cos(self.Sweepc4_rear)))*
                                    (np.cos(self.Sweepc4_rear)-self.Afwd/2-self.Arear**2/(8*np.cos(self.Sweepc4_rear))-
                                     6*(self.xacrear-self.xcg)*np.sin(self.Sweepc4_rear)/(self.Arear*self.c)))
-        Cn_b_wings = Cnb_w_fwd*self.Sfwd*self.bfwd/(self.S*bmax)+Cnb_w_rear*self.Srear*self.brear/(self.S*bmax)
+        Cn_b_wings = Cnb_w_fwd*self.Sfwd*self.bfwd/(self.S*bmax)+Cnb_w_rear*self.Srear*self.brear/(self.S*bmax)*self.eta_rear
         Cn_b = Cnb_fus+Cn_b_wings+Cn_b_v
 
         #### Estimate of Cl_beta #####
         Pos_MAC_v = self.bv / 6 * ((1 + 2 * self.taper_v) / (1 + self.taper_v)) * 2
         Cl_b_v = (self.hfus+Pos_MAC_v-self.zcg)/self.b*CY_b
         Cl_b_wf_fwd = -1.2*np.sqrt(self.Afwd)*(self.dy-self.hfus/2)/self.bfwd**2*(self.lfus+self.wfus)
-        Cl_b_wf_rear = -1.2*np.sqrt(self.Arear)*(self.hfus/2)/self.brear**2*(self.lfus+self.wfus)
+        Cl_b_wf_rear = -1.2*np.sqrt(self.Arear)*(self.hfus/2)/self.brear**2*(self.lfus+self.wfus)*self.eta_rear
         # Cl_b = -0.110
         Cl_b_fwd = -self.CLafwd*self.Gamma_fwd/4*(2/3*(1+2*self.taper)/(1+self.taper))
-        Cl_b_rear = -self.CLarear * self.Gamma_rear / 4 * (2 / 3 * (1 + 2 * self.taper) / (1 + self.taper))
+        Cl_b_rear = -self.CLarear * self.Gamma_rear / 4 * (2 / 3 * (1 + 2 * self.taper) / (1 + self.taper))*self.eta_rear
         # print(self.CLafwd,self.Gamma_fwd,self.taper)
         Cl_b = (Cl_b_wf_rear*self.Srear*self.brear + Cl_b_wf_fwd*self.Sfwd*self.bfwd +
                 Cl_b_fwd*self.Sfwd*self.bfwd+Cl_b_rear*self.Srear*self.brear)/(self.S*self.b)+Cl_b_v
@@ -327,7 +328,7 @@ class Stab_Derivatives:
         aileron = Control_surface(self.V0, self.Vstall,self.CLfwd0,self.CLrear0,self.CLafwd,self.CLarear,self.Clafwd,
                                   self.Clarear,self.Cd0fwd,self.Cd0rear,
                                   self.Sfwd,self.Srear,self.Afwd,self.Arear,self.cfwd,self.crear,self.bfwd,self.brear,
-                                  self.taper)
+                                  self.taper,self.eta_rear)
         Cl_da = aileron.Clda(Sa_S,b1,b2,rear=True)
         Cn_da = -0.2*self.CL0*Cl_da
         return CY_da, Cl_da, Cn_da
