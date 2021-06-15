@@ -16,8 +16,8 @@ import performance_analysis_midterm2 as perf
 import Flight_performance_final_midterm2 as energy_calc
 
 import Vertical_tail_sizing_midterm2 as vert_tail
-# import Weight_midterm2 as weight
-import structures.Weight as weight
+import Weight_midterm2 as weight
+# import structures.Weight as weight
 
 """
 Here we will run the midterm code (and part of the new code when available) to have converged values
@@ -125,7 +125,8 @@ pos_prop = [0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 7.0, 7.0, 7.0, 7.0, 7.0, 7.0]  # 6 on 
 
 
 # ------------- Initial mass estimate -------------
-wing = weight.Wing(MTOM, S1, S2, n_ult, AR_wing, AR_wing, [pos_frontwing, pos_backwing])
+wing = weight.Wing(MTOM, S1, S2, n_ult, AR_wing, [pos_frontwing, pos_backwing])
+# wing = weight.Wing(MTOM, S1, S2, n_ult, AR_wing, AR_wing, [pos_frontwing, pos_backwing])
 fuselage = weight.Fuselage(MTOM, Pmax, l_fus, n_pax, pos_fus)
 lgear = weight.LandingGear(MTOM, pos_lgear)
 props = weight.Propulsion(n_prop, m_prop, pos_prop)
@@ -137,7 +138,8 @@ MTOM = Mass.mtom
 
 # TODO: revise approach of reiterating
 # Reiterate once because wing uses value for MTOM
-wing = weight.Wing(MTOM, S1, S2, n_ult, AR_wing, AR_wing, [pos_frontwing, pos_backwing])
+wing = weight.Wing(MTOM, S1, S2, n_ult, AR_wing, [pos_frontwing, pos_backwing])
+# wing = weight.Wing(MTOM, S1, S2, n_ult, AR_wing, AR_wing, [pos_frontwing, pos_backwing])
 fuselage = weight.Fuselage(MTOM, Pmax, l_fus, n_pax, pos_fus)
 lgear = weight.LandingGear(MTOM, pos_lgear)
 props = weight.Propulsion(n_prop, m_prop, pos_prop)
@@ -277,7 +279,8 @@ while iterate or (count < 10):
 
     # -------------------- Update weight ------------------------
     # TODO update battery weight
-    wing = weight.Wing(MTOM, S1, S2, n_ult, AR_wing, AR_wing, [pos_frontwing, pos_backwing])
+    wing = weight.Wing(MTOM, S1, S2, n_ult, AR_wing, [pos_frontwing, pos_backwing])
+    # wing = weight.Wing(MTOM, S1, S2, n_ult, AR_wing, AR_wing, [pos_frontwing, pos_backwing])
     fuselage = weight.Fuselage(MTOM, Pmax, l_fus, n_pax, pos_fus)
     lgear = weight.LandingGear(MTOM, pos_lgear)
     props = weight.Propulsion(n_prop, m_prop, pos_prop)

@@ -18,6 +18,10 @@ import PropandPower.battery as batt
 
 # Stability and Control
 import stab_and_ctrl.Vertical_tail_sizing as vert_tail
+from stab_and_ctrl.hover_controllabilty import HoverControlCalcTandem
+from stab_and_ctrl.landing_gear_placement import LandingGearCalc
+from stab_and_ctrl.loading_diagram import CgCalculator
+from stab_and_ctrl.xcg_limits import xcg_limits, optimise_wings, Cma
 
 # Structures
 import structures.Weight as wei
@@ -65,6 +69,8 @@ h_wt_2 = 0.5  # Height of back wingtips
 # ROC = 10
 # ROC_hover = 2
 
+mission_range = 300e3       # [m] Mission range  TODO: Maybe add 50 km
+
 
 # Propulsion
 n_prop_1 = 6
@@ -75,6 +81,7 @@ n_prop = n_prop_1+n_prop_2  # Total number of engines [-]
 # clearance_prop_prop = 0.3   # Horizontal separation between propellers [m]
 # xi_0 = 0.1                  # r/R ratio of hub diameter to out diameters [-]
 # m_bat = 800                 # Initial estimate for battery mass [kg]
+max_power = 2e6             # [W] Maximum engine power TODO: Check
 
 # Structures
 n_ult = 3.2 * 1.5   # 3.2 is the max we found, 1.5 is the safety factor
@@ -107,12 +114,20 @@ Pmax_weight = 15.25  # this is defined as maximum perimeter in Roskam, so i took
 def mass(MTOM, S1, S2, n_ult, AR_wing1, AR_wing2, pos_frontwing, pos_backwing, Pmax, l_fus, n_pax, pos_fus,
          pos_lgear, n_prop, m_prop, pos_prop, m_pax, cargo_m):
     wing = wei.Wing(MTOM, S1, S2, n_ult, AR_wing1, AR_wing2, [pos_frontwing, pos_backwing])
+    m_wf = wing.wweight1
+    m_wr = wing.wweight2
     fuselage = wei.Fuselage(MTOM, Pmax, l_fus, n_pax, pos_fus)
+    m_fus = fuselage.mass
+    cg_fus = fuselage.pos
     lgear = wei.LandingGear(MTOM, pos_lgear)
+    cg_gear = lgear.pos
     props = wei.Propulsion(n_prop, m_prop, pos_prop)
+    cg_props = props.pos_prop
+    m_prop = props.mass
     Mass = wei.Weight(m_pax, wing, fuselage, lgear, props, cargo_m=cargo_m, cargo_pos=6, battery_m=m_bat,
                       battery_pos=3.6, p_pax=[1.5, 3, 3, 4.2, 4.2])
-    return Mass.mtom
+
+    return Mass.mtom, m_wf, m_wr, m_fus, m_prop, cg_fus, cg_gear, cg_props
 
 
 class RunDSE:
@@ -242,6 +257,7 @@ class RunDSE:
 
         # CL_max TODO: get de_da from stability
         alpha_wp = 1    # If we only want CLmax (and not slope) this does not matter
+
         CLmax = wing_design.CLa_wprop(T_per_eng_durings_stall, V_stall, rho, 2*prop_radius, n_prop_1, n_prop_2,
                                       const.tc, CDs_w, CDs_f, Afus, alpha_wp, de_da)
 
@@ -322,15 +338,18 @@ class RunDSE:
         CD_a_w = wing_design.CDa_poststall(const.tc, CDs, CDs_f, Afus, alpha_lst, "wing", drag.CD, de_da)
         CD_a_f = wing_design.CDa_poststall(const.tc, CDs, CDs_f, Afus, alpha_lst, "fus", drag.CD, de_da)
 
-        # Energy sizing
-        # E_tot, t_tot, max(P_m_to, P_m_la), max(T_m_to, T_m_la)
-        mission = FP.mission(MTOM, h_cr, V_cr, CLmax, S_tot, n_prop * prop_area, Cl_alpha_curve, CD_a_w,
-                             CD_a_f, alpha_lst, drag, m_bat)
+        # Energy sizing TODO: change inputs
+        mission = FP.mission(MTOM, h_cr, V_cr, CLmax, S_tot, n_prop * prop_area, P_max = max_power, t_loiter = 30*60,
+                             rotational_rate=5, mission_dist = mission_range)
 
         # Get approximate overall efficiency
-        eff_overall = 0.91 * 0.57 + 0.699 * 0.43 # TODO adapt
-        energy = mission.total_energy()[0] * 2.77778e-7 * 1000 / eff_overall  # From [J] to [Wh]
+        energy, t_tot, max_power, max_thrust = mission.total_energy()
+        eff_overall = 0.91 * 0.57 + 0.699 * 0.43  # TODO adapt
+        energy = energy * 2.77778e-7 * 1000 / eff_overall  # From [J] to [Wh]
         # TODO: check safety factor (1.02 *)
+
+        # Cruise power
+        P_cr = mission.power_cruise_config(h_cr, V_cr, MTOM)
 
         # Engine sizing
 
@@ -358,6 +377,7 @@ class RunDSE:
         # The mass of one engine is the specific mass of the engines (kg/W) x Total power of ONE ENGINE
         m_prop = const.sp_mass_en * P_max_eng_ind
 
+
         # -------------------- Update weight ------------------------
         pos_fus = l_fus/2  # TODO: revise approximation
         pos_prop_front = [pos_front_wing] * n_prop_1
@@ -366,14 +386,152 @@ class RunDSE:
         pos_prop = np.hstack((np.array(pos_prop_front), np.array(pos_prop_back)))
 
         # TODO get LG pos from stability
-        MTOM = mass(MTOM, S1, S2, n_ult, AR_wing1, AR_wing2, pos_front_wing, pos_back_wing, Pmax_weight, l_fus,
-                    const.n_pax, pos_fus, pos_lgear, n_prop, m_prop, pos_prop, const.m_pax, const.m_cargo_tot)
+        MTOM, m_wf, m_wr, m_fus, m_prop, cg_fus, cg_gear, cg_props = mass(MTOM, S1, S2, n_ult, AR_wing1, AR_wing2,
+                                                                          pos_front_wing, pos_back_wing, Pmax_weight,
+                                                                          l_fus, const.n_pax, pos_fus, pos_lgear,
+                                                                          n_prop, m_prop, pos_prop, const.m_pax,
+                                                                          const.m_cargo_tot)
+
+        # ----------------- Stability and control -------------------
+        # TODO: add numbers
+        # W = 2950 * 9.80665
+        # h = 1000
+        # lfus = 7.2
+        # hfus = 1.705
+        # wfus = 1.38
+        # xcg = 3.0
+        # V0 = 64.72389428906716
+        # Vstall = 40
+        # Pbr = 110024 / 1.2 * 0.9 / 12
+        # # M0 = V0 / np.sqrt(const.gamma * const.R * 288.15)
+        # CD0 = 0.03254
+        # CLfwd = 1.44333 # Maximum lift coefficient of forward wing
+        # CLrear = 1.44333 # Maximum lift coefficient of rear wing
+        # CLdesfwd = 0.7382799 # Design lift coefficient of forward wing for cruise
+        # CLdesrear = 0.7382799 # Design lift coefficient of rear wing for cruise
+        # CLafwd = 5.1685 # Lift slope of forward wing
+        # Clafwd = 6.1879 # Airfoil lift slope (fwd wing)
+        # Clarear = Clafwd # Airfoil lift slope (rear wing)
+        # Cd0fwd = 0.00347  # Airfoil drag coefficient [-]
+        # Cd0rear = Cd0fwd
+        # CD0fwd = 0.00822  # Wing drag coefficient [-]
+        # CD0rear = CD0fwd
+        # Cmacfwd = -0.0645 # Pitching moment coefficient at ac [-] (fwd wing)
+        # Cmacrear = -0.0645 # Pitching moment coefficient at ac [-] (rear wing)
+        # Sfwd = 8.417113787320769 # Forward wing surface area [m^2]
+        # Srear = 8.417113787320769 # Rear wing surface area [m^2]
+        # taperfwd = 0.45
+        # taperrear = 0.45
+        # S = Srear + Sfwd
+        # Afwd = 9 * 1
+        # Arear = 9
+        # Gamma = 0
+        # Lambda_c4_fwd = 0.0 * np.pi / 180 # Sweep at c/4 [rad]
+        # Lambda_c4_rear = 0.0 * np.pi / 180
+        # cfwd = 1.014129367767935
+        # crear = 1.014129367767935
+        # c = Srear / S * crear + Sfwd / S * cfwd
+        # bfwd = np.sqrt(Sfwd * Afwd)
+        # brear = np.sqrt(Srear * Arear)
+        # b = max(bfwd, brear)
+        # print(b)
+        # e = 1.1302
+        # efwd = 0.958 # Span efficiency factor of fwd wing
+        # erear = 0.958 # Span efficiency factor of rear wing
+        # taper = 0.45
+        # n_rot_f = 6
+        # n_rot_r = 6
+        # rot_y_range_f = [0.5 * bfwd * 0.1, 0.5 * bfwd * 0.9]
+        # rot_y_range_r = [0.5 * brear * 0.1, 0.5 * brear * 0.9]
+        # K = 4959.86
+        # ku = 0.1
+        # Zcg = 0.70 # TALK ABOUT STRUCTURES FOR BETTER ESTIMATE
+        # elev_fac = 1.4
+        # Vr_Vf_2 = 0.90 # TO BE CHANGED -> AERODYNAMICS
+        # # crmaxf, crmaxr MAXIMUM root chord lengths of both wings [m]
+        # # bmaxf, bmaxr MAXIMUM span lengths of both wings [m]
+        # # Arangef, Aranger max and min values of Aspect ratio [-]
+        # # xcg_range most front based on loading diagram
+        # # max_thrust: total maximum that can be achieved in hover
+        # #  x_wf = x_wf, x_wr = x_wr: x-location of rotors approx aerodynamic centers
+        # # cg_pax, cg_pil, cg_wf, cg_wr: cg locations of passengers, pilot, front wing and rear wing
+
+        # Hover controllability
+        HoverControlCalcTandem(MTOM, n_rot_f = n_prop_1, n_rot_r = n_prop_2, x_wf = x_wf, x_wr = x_wr,
+                               rot_y_range_f=[w_fus/2 + const.c_fp + prop_radius, wing_plan_1[0]],
+                               rot_y_range_r=[w_fus/2 + const.c_fp + prop_radius, wing_plan_2[0]],
+                               K = max_thrust/n_prop, ku = 0.1)
+
+        # Loading diagram
+        cg_calc = CgCalculator(m_wf, m_wr, m_fus, m_bat, const.m_cargo_tot, const.m_pax, const.m_pax,
+                               cg_fus, cg_bat = const.l_nosecone, cg_cargo = const.cargo_pos, cg_pax, cg_pil)
+
+        # Get the cg range, based on wing placement, the loading order can be changed if needed
+        [x_front, x_aft], _, [_, z_top] = cg_calc.calc_cg_range(cg_wf, cg_wr)
+
+        # x_cg limit
+
+        # For cmac: use airfoil analysis Cm_ac
+        # For CLmax: Wing_design CLa_wprop (for entire aircraft)
+        # CLdes: use CL_des of entire aircraft
+        # CD0
+        # CLa fwd and rear, second and third output ASK STABILITY IF THEY INCLUDE DOWNWASH THEMSELVES
+        # Vr_Vf = 1
+
+        # Wing characteristics
+        Cmacfwd = airfoil.Cm_ac(const.sweepc41, AR_wing1)
+        Cmacrear = airfoil.Cm_ac(const.sweepc42, AR_wing2)
+        CLfwd = CLmax   # TODO: Change to CL_max per wing
+        CLrear = CLmax
+        CLdesfwd = drag.CL_des()
+        CLdesrear = drag.CL_des()
+        CD0fwd = drag.Cd_w(0)
+        CD0rear = CD0fwd
+        Clafwd = wing_design.liftslope(0)[1]
+        Clarear = wing_design.liftslope(0)[2]
+
+        # Optimize the wing size and aspect ratios for stability and control, ignoring the stability constraint for now
+        [AR_wing1, AR_wing2, xf, xr, zf, zr, Sr_Sf]  = optimise_wings(Cmacfwd, Cmacrear, CLfwd, CLrear, CLdesfwd, CLdesrear, CD0fwd,
+                                                          CD0rear, taper, taper, const.sweepc41, const.sweepc42,
+                                                          const.e_f, const.e_r, Clafwd, Clarear, Zcg, const.Vr_Vf_2,
+                                                          const.elev_fac, rho, P_cr/n_prop, S_tot, MTOM*g0, xrangef,
+                                                          xranger, zrangef, zranger, const.crmaxf, const.crmaxr,
+                                                          const.b_max, const.b_max, const.A_range_f, const.A_range_r,
+                                                          xcg_range = [x_front, 1.3*x_aft], impose_stability=False) # TODO: revise stability margin
+
+
+
+        # Landing gear placement
+        # TODO: Check if origin of coordinate system starts at ground or bottom of the aircraft
+        h_bottom = 0
+        gears = LandingGearCalc(1.5*w_fus, x_ng_min = 0.3, y_max_rotor = wing_plan_1[0],
+                                gamma = float(np.radians(5)), z_rotor_line_root = pos_front_wing[1] + h_bottom,
+                                rotor_rad = prop_radius,
+                                fus_back_bottom = const.fus_back_bottom, fus_back_top = const.fus_back_top)
+
+        x_ng, x_mlg, track_width, z_mlg = gears.optimum_placement([x_front, x_aft], x_cg_margin = 0,
+                                                                  z_cg_max = z_top, theta = const.pitch_lim,
+                                                                  phi = const.lat_lim, psi = const.turn_over,
+                                                                  min_ng_load_frac = const.min_ng_load)
+
+        CM_a = Cma(Clafwd, Clarear, const.sweepc41, const.sweepc42, taper, taper, CL_cr_1, CL_cr_2, AR_wing1, AR_wing2,
+                   const.e_f, const.e_r, xf, xr, zf, zr, Zcg, const.Vr_Vf_2, Sr_Sf, xcg)
+
+        # TODO revise inputs
+        vertical_tail = vert_tail.VT_sizing(MTOM * g0, h_cr, x_CG_MTOM, l_fus, h_fus, w_fus, V_cr, V_stall, CD0,
+                                            CL_cr_1, CL_cr_2, 0, 0, S1, S2, AR_wing1, AR_wing2, 0, 0,
+                                            wing_plan_1[3], wing_plan_2[3], wing_plan_1[0], wing_plan_2[0], taper,
+                                            ARv=1.25)
+
+        v_tail = vertical_tail.final_VT_rudder(n_prop, D_cr, wing_plan_1[0] / 2, l_fus - x_CG_MTOM, 0.9, 0.35)
+
+        Sv = v_tail[0]
 
         # TODO update array with the final updated values
         internal_inputs = [MTOM, m_bat, V_cr, h_cr, C_L_cr, CLmax, prop_radius, de_da, Sv]
 
         # Outputs for optimisation cost function
-        optim_outputs = [MTOM, energy, time]
+        optim_outputs = [MTOM, energy, time, CM_a]
 
         return optim_outputs, internal_inputs
 
