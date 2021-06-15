@@ -39,23 +39,29 @@ import matplotlib.pyplot as plt
 #
 # print(DoD_list)
 
-def closestNumber(n, m):
-    # Find the quotient
-    q = int(n / m)
+# def closestNumber(n, m):
+#     # Find the quotient
+#     q = int(n / m)
+#
+#     # 1st possible closest number
+#     n1 = m * q
+#
+#     # 2nd possible closest number
+#     if ((n * m) > 0):
+#         n2 = (m * (q + 1))
+#     else:
+#         n2 = (m * (q - 1))
+#
+#     # if true, then n1 is the required closest number
+#     if n1 > n:
+#         return n1
+#     else:
+#         return n2
+#
+# print(closestNumber(13,4))
 
-    # 1st possible closest number
-    n1 = m * q
+from redundancy_battery_config import N_cells
 
-    # 2nd possible closest number
-    if ((n * m) > 0):
-        n2 = (m * (q + 1))
-    else:
-        n2 = (m * (q - 1))
+print(N_cells)
 
-    # if true, then n1 is the required closest number
-    if n1 > n:
-        return n1
-    else:
-        return n2
 
-print(closestNumber(13,4))
