@@ -54,8 +54,8 @@ def Cma(Claf, Clar, lambda_c4f, lambda_c4r, taperf, taperr, CLf, CLr, Af, Ar,
 
 
 # TODO: improve downwash estimation
-def deps_da(bf, br, crf, crr, ctf, ctr, lambda_c4f, lambda_c4r, Sf, Af,
-            CLf, alphaf, lh, h_ht, rho, Pbr, W, V):
+def deps_da_not_use(bf, br, crf, crr, ctf, ctr, lambda_c4f, lambda_c4r, Sf, Af,
+                    CLf, alphaf, lh, h_ht, rho, Pbr, W, V):
     """
     Estimate the downwash gradient of the front wing on the rear wing based
     on lifting-line theory (accounting for additional downwash due to
@@ -125,7 +125,7 @@ def deps_da_old(lambda_c4f, bf, lh, h_ht, A, CLaf, rho, Pbr, Sf, CLf, W):
         0
     )
 
-    return de_da+dsde_da
+    return de_da/2+dsde_da
 
 
 
