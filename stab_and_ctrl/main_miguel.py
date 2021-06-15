@@ -15,7 +15,7 @@ h = 1000
 lfus = 7.2
 hfus = 1.705
 wfus = 1.38
-xcg = 3.0
+xcg = 2.95
 V0 = 64.72389428906716
 Vstall = 40
 Pbr = 110024/1.2 * 0.9 /12
@@ -106,9 +106,12 @@ if isinstance(ARv,(float,int)) and isinstance(sweepTE,(float,int)):
     Svstab = vt_sizing.VT_stability(ARv,sweepTE)
     Svctrl = vt_sizing.VT_controllability(nE,Tt0,yE,br_bv=0.85, cr_cv=0.4,ARv=ARv,sweepTE=sweepTE)
     bv =  vt_sizing.final_VT_rudder(nE,Tt0,yE,br_bv=0.85,cr_cv=0.4,ARv=ARv,sweepTE=sweepTE)[3]
+    cvr = vt_sizing.final_VT_rudder(nE,Tt0,yE,br_bv=0.85,cr_cv=0.4,ARv=ARv,sweepTE=sweepTE)[1]
+    cvt = vt_sizing.final_VT_rudder(nE, Tt0, yE, br_bv=0.85, cr_cv=0.4, ARv=ARv, sweepTE=sweepTE)[2]
     print("Stability outside: Sv = ",Svstab)
     print("Controllability outside: Sv = ", Svctrl)
-    print("Final: Sv, bv=", Sv,bv)
+    print()
+    print("Final: Sv, bv, cv_root, cv_tip =", Sv,bv,cvr,cvt)
 else:
     vt_sizing.plotting(nE,Tt0,yE,br_bv=0.85,cr_cv=0.4,ARv=ARv,sweepTE=sweepTE)
 
@@ -177,7 +180,7 @@ if isinstance(ARv,float) and isinstance(sweepTE,float):
     print("dr-derivatives:", stability_derivatives.dr_derivatives(cr_cv=0.4,br_bv=0.85))
     print("Kyy2 = %.5f"%(Iyy/(W/9.80665*c**2)))
     print("Iyy = %.5f "%(Iyy))
-    stability_derivatives.asym_stability_req(Ixx,Izz,Ixz,0.085,60,97.5,0.4,0.85)
+    stability_derivatives.asym_stability_req(Ixx,Izz,Ixz,0.145,55,97.5,0.4,0.85)
     C_X, C_Z, C_m, C_Y, C_l,C_n = \
         stability_derivatives.return_stab_derivatives(Se_S = 0.15,be_b = 0.99,
                                                       Sa_S=0.145,b1=b1,b2=99.0,cr_cv=0.4,br_bv=0.85,

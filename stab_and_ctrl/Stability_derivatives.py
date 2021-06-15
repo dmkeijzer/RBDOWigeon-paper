@@ -82,7 +82,7 @@ class Stab_Derivatives:
     def lh_arm(self):
         return abs(self.xacfwd-self.d - self.xacrear)
 
-    def deps_da(self, Lambda_quarter_chord, h_ht,CLaw):
+    def deps_da(self, Lambda_quarter_chord, h_ht,CLaw,eta=0.5):
         """
         Inputs:
         :param Lambda_quarter_chord: Sweep Angle at c/4 [RAD]
@@ -110,7 +110,7 @@ class Stab_Derivatives:
         else:
             dsde_da = 0
         # print("Configuration %.0f de/da = %.4f "%(conf,de_da))
-        return de_da + dsde_da
+        return de_da*eta + dsde_da
     def Sweep(self,AR,taper,Sweepm,n,m):
         """
         Inputs
