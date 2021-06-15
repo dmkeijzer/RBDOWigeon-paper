@@ -3,6 +3,7 @@ from scipy import optimize
 from matplotlib import pyplot as plt
 
 from Preliminary_Lift.LLTtest2 import downwash
+from Preliminary_Lift.Airfoil_analysis import Cm_ac
 
 
 def xcg_stab(CLaf, CLar, CLf, CLr, Af, Ar, ef, er, xf, xr, zf, zr, zcg,
@@ -40,12 +41,15 @@ def xcg_stab(CLaf, CLar, CLf, CLr, Af, Ar, ef, er, xf, xr, zf, zr, zcg,
 
 
 def Cma(Claf, Clar, lambda_c4f, lambda_c4r, taperf, taperr, CLf, CLr, Af, Ar,
-        ef, er, xf, xr, zf, zr, zcg, Vr_Vf_2, Sr_Sf, xcg):
+        ef, er, xf, xr, zf, zr, zcg, Vr_Vf_2, Sr_Sf, xcg, S, rho, Pbr, W):
     lambda_c2f = lambda_c4_to_lambda_c2(Af, taperf, lambda_c4f)
     lambda_c2r = lambda_c4_to_lambda_c2(Ar, taperr, lambda_c4r)
     CLaf = CLa(Claf, Af, lambda_c2f)
     CLar = CLa(Clar, Ar, lambda_c2r)
-    de_da = 0  # TODO: include downwash calculation
+    bf,  _ = bf_br(S, Sr_Sf, Af, Ar)
+    Sf = S / (1 + Sr_Sf)
+    de_da = deps_da_empirical(lambda_c4f, bf, xr - xf, zr - zf, Af, CLaf,
+                              rho, Pbr, Sf, CLf, W)
     return (CLaf * (xcg - xf)
             - CLar * (xr - xcg) * (1 - de_da) * Vr_Vf_2 * Sr_Sf
             - 2 * CLf / (np.pi * Af * ef) * CLaf * (zcg - zf)
@@ -94,7 +98,7 @@ def deps_da_not_use(bf, br, crf, crr, ctf, ctr, lambda_c4f, lambda_c4r, Sf, Af,
     return de_da+dsde_da
 
 
-def deps_da_old(lambda_c4f, bf, lh, h_ht, A, CLaf, rho, Pbr, Sf, CLf, W):
+def deps_da_empirical(lambda_c4f, bf, lh, h_ht, A, CLaf, rho, Pbr, Sf, CLf, W):
     """
     Estimate the downwash gradient of the front wing on the rear wing
     (accounting for additional downwash due to propellers).
@@ -131,12 +135,12 @@ def deps_da_old(lambda_c4f, bf, lh, h_ht, A, CLaf, rho, Pbr, Sf, CLf, W):
 
 
 # TODO: implement effect of aspect ratio on Cmac
-def xcg_ctrl(Cmacf, Cmacr, CLf, CLr, CD0f, CD0r, Af, Ar, ef, er, macf, macr,
-             xf, xr, zf, zr, zcg, Vr_Vf_2, Sr_Sf):
+def xcg_ctrl(lambda_c4f, lambda_c4r, CLf, CLr, CD0f, CD0r, Af, Ar, ef,
+             er, macf, macr, xf, xr, zf, zr, zcg, Vr_Vf_2, Sr_Sf):
     """
     Calculate the minimum CG x-position for pitch controllability at stall.
-    :param Cmacf: Pitching moment coefficient around front aerodynamic centre
-    :param Cmacr: Pitching moment coefficient around rear aerodynamic centre
+    :param lambda_c4f: Quarter-chord sweep of the front wing
+    :param lambda_c4r: Quarter-chord sweep of the rear wing
     :param CLf: Lift coefficient of the front wing (maximum incl. elevator)
     :param CLr: Lift coefficient of the rear wing (maximum incl. elevator)
     :param CD0f: Zero-lift drag coefficient of front wing
@@ -156,6 +160,9 @@ def xcg_ctrl(Cmacf, Cmacr, CLf, CLr, CD0f, CD0r, Af, Ar, ef, er, macf, macr,
     :param Sr_Sf: Rear wing surface area / front wing surface area
     :return: Minimum CG x-position for pitch controllability at stall
     """
+    Cmacf = Cm_ac(lambda_c4f, Af)[0]
+    Cmacr = Cm_ac(lambda_c4r, Ar)[0]
+
     num = (-Cmacf
            - Cmacr * Vr_Vf_2 * Sr_Sf * macr / macf
            + CLf * xf / macf
@@ -245,7 +252,7 @@ def bf_br(S, Sr_Sf, Af, Ar):
     return np.sqrt(Sf * Af), np.sqrt(Sr * Ar)
 
 
-def xcg_limits(Cmacf, Cmacr, CLmaxf, CLmaxr, CLdesf, CLdesr, CD0f, CD0r,
+def xcg_limits(CLmaxf, CLmaxr, CLdesf, CLdesr, CD0f, CD0r,
                taperf, taperr, lambda_c4f, lambda_c4r, ef, er, Claf, Clar,
                zcg, Vr_Vf_2, elev_fac, rho, Pbr, S, W, Af, Ar, xf, xr, zf,
                zr, Sr_Sf):
@@ -253,8 +260,6 @@ def xcg_limits(Cmacf, Cmacr, CLmaxf, CLmaxr, CLdesf, CLdesr, CD0f, CD0r,
     Find the front and aft limits on the CG for controllability and stability.
     This combines the functions xcg_ctrl and xcg_stab for use in the
     optimisation.
-    :param Cmacf:
-    :param Cmacr:
     :param CLmaxf:
     :param CLmaxr:
     :param CLdesf:
@@ -295,30 +300,22 @@ def xcg_limits(Cmacf, Cmacr, CLmaxf, CLmaxr, CLdesf, CLdesr, CD0f, CD0r,
     lambda_c2r = lambda_c4_to_lambda_c2(Ar, taperr, lambda_c4r)
     CLaf = CLa(Claf, Af, lambda_c2f)
     CLar = CLa(Clar, Ar, lambda_c2r)
-    crf, crr = crf_crr(S, Sr_Sf, Af, Ar, taperf, taperr)
-    ctf = crf * taperf
-    ctr = crr * taperr
-    alphaf = np.deg2rad(6)
-    V = 50
-    de_da = deps_da_not_use(bf, br, crf, crr, ctf, ctr, lambda_c4f, lambda_c4r, Sf,
-                    Af, CLdesf, alphaf, xr - xf, zr - zf, rho, Pbr, W, V)
-    # de_da = deps_da_not_use(lambda_c4f, bf, xr - xf, zr - zf, Af, CLaf, rho, Pbr, Sf,
-    #                 CLdesf, W)
+    de_da = deps_da_empirical(lambda_c4f, bf, xr - xf, zr - zf, Af, CLaf, rho, Pbr, Sf, CLdesf, W)
     xstab = xcg_stab(CLaf, CLar, CLdesf, CLdesr, Af, Ar, ef, er, xf, xr, zf,
                      zr, zcg, Vr_Vf_2, Sr_Sf, de_da)
-    xctrl = xcg_ctrl(Cmacf, Cmacr, CLmaxf * elev_fac, CLmaxr, CD0f, CD0r, Af,
+    xctrl = xcg_ctrl(lambda_c4f, lambda_c4r, CLmaxf * elev_fac, CLmaxr, CD0f, CD0r, Af,
                      Ar, ef, er, macf, macr, xf, xr, zf, zr, zcg, Vr_Vf_2,
                      Sr_Sf)
     return np.array([xctrl, xstab])
 
 
-def optimise_wings(Cmacf, Cmacr, CLmaxf, CLmaxr, CLdesf, CLdesr, CD0f, CD0r,
+def optimise_wings(CLmaxf, CLmaxr, CLdesf, CLdesr, CD0f, CD0r,
                    taperf, taperr, lambda_c4f, lambda_c4r, ef, er, Claf, Clar,
                    zcg, Vr_Vf_2, elev_fac, rho, Pbr, S, W, xrangef,
                    xranger, zrangef, zranger, crmaxf, crmaxr, bmaxf, bmaxr,
                    Arangef, Aranger, xcg_range, impose_stability=True,
-                   init_Af=1, init_Ar=7, init_xf=0.5, init_xr=6.5, init_zf=0.5,
-                   init_zr=1.5, init_Sr_Sf=1, method='trust-constr'):
+                   init_Af=7, init_Ar=7, init_xf=0.5, init_xr=6.5, init_zf=0.5,
+                   init_zr=1.5, init_Sr_Sf=1):
     # FIXME: span efficiency factor is assumed to be constant
     """
     Optimise for maximum wingspan on the front wing while meeting stability
@@ -341,19 +338,17 @@ def optimise_wings(Cmacf, Cmacr, CLmaxf, CLmaxr, CLdesf, CLdesr, CD0f, CD0r,
     Optimisation goal:
         - Make wingspans of front and rear wing as similar as possible
 
-    :param Cmacf:
-    :param Cmacr:
+
     :param CLmaxf:
     :param CLmaxr:
     :param CLdesf:
     :param CLdesr:
     :param CD0f:
-    :param CD0e:
+    :param CD0r:
     :param taperf:
     :param taperr:
     :param lambda_c4f:
-    :param lambdac4:
-    :param r:
+    :param lambda_c4r:
     :param ef:
     :param er:
     :param Claf:
@@ -388,7 +383,7 @@ def optimise_wings(Cmacf, Cmacr, CLmaxf, CLmaxr, CLdesf, CLdesr, CD0f, CD0r,
 
     # wrapper function for the CG limits for the optimisation of x
     def find_cg_limits(x):
-        return xcg_limits(Cmacf, Cmacr, CLmaxf, CLmaxr, CLdesf, CLdesr, CD0f,
+        return xcg_limits(CLmaxf, CLmaxr, CLdesf, CLdesr, CD0f,
                           CD0r, taperf, taperr, lambda_c4f, lambda_c4r, ef,
                           er, Claf, Clar, zcg, Vr_Vf_2, elev_fac, rho, Pbr,
                           S, W, x[0], x[1], x[2], x[3], x[4], x[5], x[6])
@@ -467,7 +462,7 @@ def optimise_wings(Cmacf, Cmacr, CLmaxf, CLmaxr, CLdesf, CLdesr, CD0f, CD0r,
     return result.x
 
 
-def plot_Sf_Sr_Af_plane(Cmacf, Cmacr, CLmaxf, CLmaxr, CLdesf, CLdesr, CD0f,
+def plot_Sf_Sr_Af_plane(CLmaxf, CLmaxr, CLdesf, CLdesr, CD0f,
                         CD0r, taperf, taperr, lambda_c4f, lambda_c4r, ef, er,
                         Claf, Clar, zcg, Vr_Vf_2, elev_fac, rho, Pbr, S, W,
                         Ar, xf, xr, zf, zr, xcg_range, plot_Sr_Sf_range,
@@ -476,8 +471,6 @@ def plot_Sf_Sr_Af_plane(Cmacf, Cmacr, CLmaxf, CLmaxr, CLdesf, CLdesr, CD0f,
     Create a plot to visualise the effect of the relative wing sizes and
     front wing aspect ratio (the most powerful parameters) on the centre of
     gravity limits.
-    :param Cmacf:
-    :param Cmacr:
     :param CLmaxf:
     :param CLmaxr:
     :param CLdesf:
@@ -516,7 +509,7 @@ def plot_Sf_Sr_Af_plane(Cmacf, Cmacr, CLmaxf, CLmaxr, CLdesf, CLdesr, CD0f,
     Af_range = np.linspace(plot_Af_range[0], plot_Af_range[1], res)
     Sr_Sf_grid, Af_grid = np.meshgrid(Sr_Sf_range, Af_range)
 
-    xcg_ctrl_grid, xcg_stab_grid = xcg_limits(Cmacf, Cmacr, CLmaxf, CLmaxr,
+    xcg_ctrl_grid, xcg_stab_grid = xcg_limits(CLmaxf, CLmaxr,
                                               CLdesf, CLdesr, CD0f, CD0r,
                                               taperf, taperr, lambda_c4f,
                                               lambda_c4r, ef, er, Claf, Clar,
@@ -532,66 +525,67 @@ def plot_Sf_Sr_Af_plane(Cmacf, Cmacr, CLmaxf, CLmaxr, CLdesf, CLdesr, CD0f,
                    cmap="coolwarm")
     plt.colorbar()
     plt.contour(Sr_Sf_grid, Af_grid, xcg_ctrl_grid,
-                [xcg_range[0]], colors=["tab:blue"])
+                [xcg_range[0]], colors=["tab:blue"], label="controllability")
     plt.contour(Sr_Sf_grid, Af_grid, xcg_stab_grid,
-                [xcg_range[1]], colors=["tab:orange"])
+                [xcg_range[1]], colors=["tab:orange"], label="stability")
+    plt.legend()
 
     if Sr_Sf is not None:
         plt.scatter([Sr_Sf], [Af])
 
 
-# if __name__ == "__main__":
-#     Cmacf = -0.0645
-#     Cmacr = -0.0645
-#     CLmaxf = 1.44333
-#     CLmaxr = 1.44333
-#     CLdesf = 0.7382799
-#     CLdesr = 0.7382799
-#     CD0f = 0.00822
-#     CD0r = 0.00822
-#     taperf = 0.45
-#     taperr = 0.45
-#     lambda_c4f = 0
-#     lambda_c4r = 0
-#     ef = 0.958
-#     er = 0.958
-#     Claf = 6.1879
-#     Clar = 6.1879
-#     zcg = 0.7
-#     Vr_Vf_2 = 0.8
-#     elev_fac = 1.4
-#     rho = 1.225
-#     Pbr = 110024 / 1.2 * 0.9 / 12 * 3
-#     S = 8.417113787320769 * 2
-#     W = 2939.949692 * 9.80665
-#
-#     xf = [0.5, 2]
-#     xr = [6, 7]
-#     zf = [0.3, 1]
-#     zr = [1, 1.7]
-#     crmaxf = 1.5
-#     crmaxr = 2.5
-#     bmax = 14
-#     xcg_range = [2.85, 3.05]
-#     Arange = [0.1, 12]
-#     impose_stability = True
-#
-#     Af, Ar, xf, xr, zf, zr, Sr_Sf = optimise_wings(
-#         Cmacf, Cmacr, CLmaxf, CLmaxr, CLdesf, CLdesr, CD0f,
-#         CD0r, taperf, taperr, lambda_c4f, lambda_c4r, ef, er,
-#         Claf, Clar, zcg, Vr_Vf_2, elev_fac, rho, Pbr, S, W,
-#         xf, xr, zf, zr, crmaxf, crmaxf, bmax, bmax, Arange, Arange,
-#         xcg_range, impose_stability=impose_stability)
-#
-#     print(Af, Ar, xf, xr, zf, zr, Sr_Sf)
-#
-#     plot_Sr_Sf_range = [0.2, 5]
-#     plot_Af_range = [0.1, 15]
-#
-#     plot_Sf_Sr_Af_plane(Cmacf, Cmacr, CLmaxf, CLmaxr, CLdesf, CLdesr, CD0f,
-#                         CD0r, taperf, taperr, lambda_c4f, lambda_c4r, ef, er,
-#                         Claf, Clar, zcg, Vr_Vf_2, elev_fac, rho, Pbr, S, W,
-#                         Ar, xf, xr, zf, zr, xcg_range, plot_Sr_Sf_range,
-#                         plot_Af_range, Sr_Sf=Sr_Sf, Af=Af)
-#     plt.show()
-#
+if __name__ == "__main__":
+    Cmacf = -0.0645
+    Cmacr = -0.0645
+    CLmaxf = 1.44333
+    CLmaxr = 1.44333
+    CLdesf = 0.7382799
+    CLdesr = 0.7382799
+    CD0f = 0.00822
+    CD0r = 0.00822
+    taperf = 0.45
+    taperr = 0.45
+    lambda_c4f = 0
+    lambda_c4r = 0
+    ef = 0.958
+    er = 0.958
+    Claf = 6.1879
+    Clar = 6.1879
+    zcg = 0.7
+    Vr_Vf_2 = 0.8
+    elev_fac = 1.4
+    rho = 1.225
+    Pbr = 110024 / 1.2 * 0.9 / 12 * 3
+    S = 8.417113787320769 * 2
+    W = 2939.949692 * 9.80665
+
+    xf = [0.3, 1.5]
+    xr = [5.5, 7]
+    zf = [0.3, 0.8]
+    zr = [1, 1.7]
+    crmaxf = 1.5
+    crmaxr = 2.5
+    bmax = 14
+    xcg_range = [2.85, 3.05]
+    Arange = [2, 9]
+    impose_stability = True
+
+    Af, Ar, xf, xr, zf, zr, Sr_Sf = optimise_wings(
+        CLmaxf, CLmaxr, CLdesf, CLdesr, CD0f,
+        CD0r, taperf, taperr, lambda_c4f, lambda_c4r, ef, er,
+        Claf, Clar, zcg, Vr_Vf_2, elev_fac, rho, Pbr, S, W,
+        xf, xr, zf, zr, crmaxf, crmaxf, bmax, bmax, Arange, Arange,
+        xcg_range, impose_stability=impose_stability)
+
+    print(Af, Ar, xf, xr, zf, zr, Sr_Sf)
+
+    plot_Sr_Sf_range = [0.2, 5]
+    plot_Af_range = [0.1, 15]
+
+    plot_Sf_Sr_Af_plane(CLmaxf, CLmaxr, CLdesf, CLdesr, CD0f,
+                        CD0r, taperf, taperr, lambda_c4f, lambda_c4r, ef, er,
+                        Claf, Clar, zcg, Vr_Vf_2, elev_fac, rho, Pbr, S, W,
+                        Ar, xf, xr, zf, zr, xcg_range, plot_Sr_Sf_range,
+                        plot_Af_range, Sr_Sf=Sr_Sf, Af=Af)
+    plt.show()
+
