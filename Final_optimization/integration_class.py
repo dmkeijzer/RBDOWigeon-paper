@@ -459,7 +459,21 @@ class RunDSE:
                                rot_y_range_r=[w_fus/2 + const.c_fp + prop_radius, wing_plan_2[0]],
                                K = max_thrust/n_prop, ku = 0.1)
 
+        # Loading diagram
+        cg_calc = CgCalculator(m_wf, m_wr, m_fus, m_bat, const.m_cargo_tot, const.m_pax, const.m_pax,
+                               cg_fus, cg_bat = const.l_nosecone, cg_cargo = const.cargo_pos, cg_pax, cg_pil)
+
+        # Get the cg range, based on wing placement, the loading order can be changed if needed
+        [x_front, x_aft], _, [_, z_top] = cg_calc.calc_cg_range(cg_wf, cg_wr)
+
         # x_cg limit
+
+        # For cmac: use airfoil analysis Cm_ac
+        # For CLmax: Wing_design CLa_wprop (for entire aircraft)
+        # CLdes: use CL_des of entire aircraft
+        # CD0
+        # CLa fwd and rear, second and third output ASK STABILITY IF THEY INCLUDE DOWNWASH THEMSELVES
+        # Vr_Vf = 1
 
         # Optimize the wing size and aspect ratios for stability and control, ignoring the stability constraint for now
         [Af, Ar, xf, xr, zf, zr, Sr_Sf]  = optimise_wings(Cmacfwd, Cmacrear, CLfwd, CLrear, CLdesfwd, CLdesrear, CD0fwd, CD0rear,
@@ -469,12 +483,7 @@ class RunDSE:
                                                           [5, 15], [5, 15], xcg_range = [x_front, 1.3*x_aft], # TODO: revise stability margin
                                                           impose_stability=False)
 
-        # Loading diagram
-        cg_calc = CgCalculator(m_wf, m_wr, m_fus, m_bat, const.m_cargo_tot, const.m_pax, const.m_pax,
-                               cg_fus, cg_bat = const.l_nosecone, cg_cargo = const.cargo_pos, cg_pax, cg_pil)
 
-        # Get the cg range, based on wing placement, the loading order can be changed if needed
-        [x_front, x_aft], _, [_, z_top] = cg_calc.calc_cg_range(cg_wf, cg_wr)
 
         # Landing gear placement
         # TODO: Check if origin of coordinate system starts at ground or bottom of the aircraft
