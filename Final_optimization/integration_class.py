@@ -91,6 +91,7 @@ n_ult = 3.2 * 1.5   # 3.2 is the max we found, 1.5 is the safety factor
 # TODO: revise Pmax
 Pmax_weight = 15.25  # this is defined as maximum perimeter in Roskam, so i took top down view of the fuselage perimeter
 
+
 # # PAX
 # # From project guide: 95 kg per pax (including luggage)
 # n_pax = 5  # number of passengers (pilot included)
@@ -112,7 +113,7 @@ Pmax_weight = 15.25  # this is defined as maximum perimeter in Roskam, so i took
 
 # ------------- Initial mass estimate -------------
 def mass(MTOM, S1, S2, n_ult, AR_wing1, AR_wing2, pos_frontwing, pos_backwing, Pmax, l_fus, n_pax, pos_fus,
-         pos_lgear, n_prop, m_prop, pos_prop, m_pax, cargo_m):
+         pos_lgear, n_prop, m_prop, pos_prop, m_pax, cargo_m, m_bat):
     wing = wei.Wing(MTOM, S1, S2, n_ult, AR_wing1, AR_wing2, [pos_frontwing, pos_backwing])
     m_wf = wing.wweight1
     m_wr = wing.wweight2
@@ -185,7 +186,7 @@ class RunDSE:
         """
         # Initial estimates/
         MTOM = internal_inputs[0]
-        m_bat = internal_inputs[1]
+        m_bat = internal_inputs[1]  # TODO maybe not needed
         V_cr = internal_inputs[2]
         h_cr = internal_inputs[3]
         C_L_cr = internal_inputs[4]
@@ -194,6 +195,7 @@ class RunDSE:
         de_da = internal_inputs[7]
         Sv = internal_inputs[8]
         V_stall = internal_inputs[9]
+        max_power = internal_inputs[10]
 
 
         # Optimisation inputs
@@ -258,28 +260,26 @@ class RunDSE:
         # CL_max TODO: get de_da from stability
         alpha_wp = 1    # If we only want CLmax (and not slope) this does not matter
 
-        CLmax = wing_design.CLa_wprop(T_per_eng_durings_stall, V_stall, rho, 2*prop_radius, n_prop_1, n_prop_2,
-                                      const.tc, CDs_w, CDs_f, Afus, alpha_wp, de_da)
+        # Drag at stall
+        error=1
+        while error<0.05:
+            D_stall = drag.CD(CLmax) * 0.5 * rho* V_stall**2 * S_tot
+            T_per_eng_durings_stall = D_stall/n_prop
 
-        # # Lift slope
-        # CL_alpha_1 = wing_design.liftslope()
-        # CL_alpha_2 = wing_design.liftslope()
+            CLmaxnew = wing_design.CLa_wprop(T_per_eng_durings_stall, V_stall, rho, 2*prop_radius, n_prop_1, n_prop_2,
+                                          const.tc, CDs_w, CDs_f, Afus, alpha_wp, de_da)
 
+            error = np.abs(CLmaxnew-CLmax)/CLmax
+            CLmax = CLmaxnew
 
-        # TODO: get CL for cruise
         CD0 = drag.CD0()
         CD_cr = drag.CD(C_L=C_L_cr)
 
         # ----------------- Vertical drag -------------------
 
-        # CDs = drag.CD(CLmax)
-        # CDs_f = drag.CD0_f
-        # CDs_w = CDs - CDs_f
+        CD_a_w_v = wing_design.CDa_poststall(const.tc, CDs_w, CDs_f, Afus, 0, "wing", drag.CD, de_da)
+        CD_a_f_v = wing_design.CDa_poststall(const.tc, CDs_w, CDs_f, Afus, 90, "fus", drag.CD, de_da)
 
-        CD_a_w_v = wing_design.CDa_poststall(const.tc, CDs_w, CDs_f, Afus, 0, "wing", drag.CD)
-        CD_a_f_v = wing_design.CDa_poststall(const.tc, CDs_w, CDs_f, Afus, 90, "fus", drag.CD)
-
-        CD_vertical = CD_a_w_v + CD_a_f_v
 
         # Propulsion
         # Get drag at cruise
@@ -290,28 +290,8 @@ class RunDSE:
 
         prop_radius = prop_sizing.radius()
         prop_area = prop_sizing.area_prop()
-        disk_load = prop_sizing.disk_loading()
-
-        # act_disk = ADT.ActDisk(TW_ratio, MTOM, v_e, V_cr, D, D)
-        # With fuselage shape and span we can have size of the engines
-        # From that we can use BEM to design the blades (here number of blades is an input,
-        # so we can optimise it if necessary, or just assume one
 
         # ----------------------- Performance ------------------------
-        # Cl_alpha_curve, CD_a_w, CD_a_f, alpha_lst, Drag
-
-        # post_stall = Wing_params.post_stall_lift_drag(tc, CDs, CDs_f, Afus)
-
-        # init_sizing = perf.initial_sizing(h_cr, None, drag, V_stall, V_max, n_turn, ROC, V_cr, ROC_hover, MTOM * g0,
-        #                                   CD_vertical, const.eff_prop, const.eff_hover, disk_load)
-
-        # TODO: maybe use S as an inout and not size for stall
-        # # Get wing loading and from that the area
-        # WS = init_sizing.sizing()[0]
-        #
-        # S_tot = MTOM * g0 / WS
-
-        # S1, S2 = S_tot * s1, S_tot * s2
 
         V = at.speeds(h_cr, MTOM, CLmax, S_tot, drag)
 
@@ -325,12 +305,13 @@ class RunDSE:
 
         # Cruise CL of the wings
         L_cr = MTOM * g0
-        L_cr_1 = L_cr / 2
-        L_cr_2 = L_cr / 2
+        L_cr_1 = L_cr * s1
+        L_cr_2 = L_cr * s2
 
+        # Lift coefficients at cruise
         CL_cr_1 = 2 * L_cr_1 / (rho * V_cr ** 2 * S1)
         CL_cr_2 = 2 * L_cr_2 / (rho * V_cr ** 2 * S2)
-        C_L_cr = CL_cr_2
+        C_L_cr = 2 * L_cr / (rho * V_cr ** 2 * S_tot)
 
         # Aero to pass to mission
         alpha_lst = np.arange(0, 89, 0.1)
@@ -339,12 +320,15 @@ class RunDSE:
         CD_a_f = wing_design.CDa_poststall(const.tc, CDs, CDs_f, Afus, alpha_lst, "fus", drag.CD, de_da)
 
         # Energy sizing TODO: change inputs
+        # TODO: Cl_alpha_curve, CD_a_w, CD_a_f, alpha_lst, Drag
         mission = FP.mission(MTOM, h_cr, V_cr, CLmax, S_tot, n_prop * prop_area, P_max = max_power, t_loiter = 30*60,
                              rotational_rate=5, mission_dist = mission_range)
 
         # Get approximate overall efficiency
-        energy, t_tot, max_power, max_thrust = mission.total_energy()
-        eff_overall = 0.91 * 0.57 + 0.699 * 0.43  # TODO adapt
+        energy, t_tot, max_power, max_thrust, t_hor = mission.total_energy()
+
+        # Overall efficiency from bettery to engine
+        eff_overall = const.eff_bat_eng_cr * (t_hor/t_tot) + const.eff_bat_eng_h * ((1-t_hor)/t_tot) # TODO put in const
         energy = energy * 2.77778e-7 * 1000 / eff_overall  # From [J] to [Wh]
         # TODO: check safety factor (1.02 *)
 
@@ -356,7 +340,7 @@ class RunDSE:
         # Maximum power [W] and thrust [N] of the engines (total)
         time, P_max_eng_tot, T_max_tot = mission.total_energy()[1:4]
         P_max_eng_ind = P_max_eng_tot/n_prop                    # Maximum power [W] of the engines (per engine)
-        P_max_bat = P_max_eng_tot/const.eff_eng_bat             # Maximum power [W] to be delivered by the battery
+        P_max_bat = P_max_eng_tot/const.eff_bat_eng_h           # Maximum power [W] to be delivered by the battery
 
         T_max_ind = T_max_tot/n_prop                # Maximum thrust to be delivered by the engines (per engine)
 
@@ -379,18 +363,18 @@ class RunDSE:
 
 
         # -------------------- Update weight ------------------------
-        pos_fus = l_fus/2  # TODO: revise approximation
-        pos_prop_front = [pos_front_wing] * n_prop_1
-        pos_prop_back = [pos_back_wing] * n_prop_2
+        pos_fus = l_fus*0.4
+        pos_prop_front = [pos_front_wing[0] - 0.2] * n_prop_1   # TODO: revise approximation
+        pos_prop_back = [pos_back_wing[0] - 0.2] * n_prop_2
 
         pos_prop = np.hstack((np.array(pos_prop_front), np.array(pos_prop_back)))
 
-        # TODO get LG pos from stability
+        pos_lgear = l_fus*0.4  # TODO: measure
         MTOM, m_wf, m_wr, m_fus, m_prop, cg_fus, cg_gear, cg_props = mass(MTOM, S1, S2, n_ult, AR_wing1, AR_wing2,
                                                                           pos_front_wing, pos_back_wing, Pmax_weight,
                                                                           l_fus, const.n_pax, pos_fus, pos_lgear,
                                                                           n_prop, m_prop, pos_prop, const.m_pax,
-                                                                          const.m_cargo_tot)
+                                                                          const.m_cargo_tot, m_bat)
 
         # ----------------- Stability and control -------------------
         # TODO: add numbers
@@ -462,11 +446,17 @@ class RunDSE:
                                rot_y_range_r=[w_fus/2 + const.c_fp + prop_radius, wing_plan_2[0]],
                                K = max_thrust/n_prop, ku = 0.1)
 
-        # Loading diagram
+        # Loading
+        # TODO: measure
+        cg_pax = []
+        cg_pil = []
         cg_calc = CgCalculator(m_wf, m_wr, m_fus, m_bat, const.m_cargo_tot, const.m_pax, const.m_pax,
                                cg_fus, cg_bat = const.l_nosecone, cg_cargo = const.cargo_pos, cg_pax, cg_pil)
 
         # Get the cg range, based on wing placement, the loading order can be changed if needed
+        # TODO: cg of the wing
+        cg_wf = [x, z]
+        cg_wr = [x, z]
         [x_front, x_aft], _, [_, z_top] = cg_calc.calc_cg_range(cg_wf, cg_wr)
 
         # x_cg limit
@@ -491,6 +481,7 @@ class RunDSE:
         Clarear = wing_design.liftslope(0)[2]
 
         # Optimize the wing size and aspect ratios for stability and control, ignoring the stability constraint for now
+        # TODO change names for xf xr zf zr
         [AR_wing1, AR_wing2, xf, xr, zf, zr, Sr_Sf]  = optimise_wings(Cmacfwd, Cmacrear, CLfwd, CLrear, CLdesfwd, CLdesrear, CD0fwd,
                                                           CD0rear, taper, taper, const.sweepc41, const.sweepc42,
                                                           const.e_f, const.e_r, Clafwd, Clarear, Zcg, const.Vr_Vf_2,
@@ -502,7 +493,6 @@ class RunDSE:
 
 
         # Landing gear placement
-        # TODO: Check if origin of coordinate system starts at ground or bottom of the aircraft
         h_bottom = 0
         gears = LandingGearCalc(1.5*w_fus, x_ng_min = 0.3, y_max_rotor = wing_plan_1[0],
                                 gamma = float(np.radians(5)), z_rotor_line_root = pos_front_wing[1] + h_bottom,
@@ -513,7 +503,8 @@ class RunDSE:
                                                                   z_cg_max = z_top, theta = const.pitch_lim,
                                                                   phi = const.lat_lim, psi = const.turn_over,
                                                                   min_ng_load_frac = const.min_ng_load)
-
+        # TODO: just return track width and height
+        Zcg = 0.35*const.h_fuselage
         CM_a = Cma(Clafwd, Clarear, const.sweepc41, const.sweepc42, taper, taper, CL_cr_1, CL_cr_2, AR_wing1, AR_wing2,
                    const.e_f, const.e_r, xf, xr, zf, zr, Zcg, const.Vr_Vf_2, Sr_Sf, xcg)
 
