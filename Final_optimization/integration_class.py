@@ -1,39 +1,28 @@
 import numpy as np
-print("1")
 import Aero_tools as at
-print("2")
 import constants_final as const
-print("3")
+
 # Aero
 import Preliminary_Lift.Drag as drag_comp
-print("4")
 import Preliminary_Lift.Wing_design as wingdes
-print("5")
 import Preliminary_Lift.Airfoil_analysis as airfoil
-print("6")
+
 # Performance
 import Flight_performance.Flight_performance_final as FP
-print("7")
+
 # Propulsion
 import PropandPower.engine_sizing_positioning as eng_siz
-print("8")
 import PropandPower.battery as batt
-print("9")
 
 # Stability and Control
 import stab_and_ctrl.Vertical_tail_sizing as vert_tail
-print("10")
 from stab_and_ctrl.hover_controllabilty import HoverControlCalcTandem
-print("11")
 from stab_and_ctrl.landing_gear_placement import LandingGearCalc
-print("12")
 from stab_and_ctrl.loading_diagram import CgCalculator
-print("13")
 from stab_and_ctrl.xcg_limits import xcg_limits, optimise_wings, Cma, deps_da_old
-print("14")
+
 # Structures
 import structures.Weight as wei
-print("15")
 
 # --------------------- Fixed parameters and constants ------------------------
 # Constants from constants.py
@@ -75,7 +64,7 @@ n_ult = const.n_ult
 # ------------------ Constants for weight estimation ----------------
 # TODO: revise Pmax
 Pmax_weight = 15.25  # this is defined as maximum perimeter in Roskam, so i took top down view of the fuselage perimeter
-print("16")
+
 # ------------- Initial mass estimate -------------
 def mass(MTOM, S1, S2, n_ult, AR_wing1, AR_wing2, pos_frontwing, pos_backwing, Pmax, l_fus, n_pax, pos_fus,
          pos_lgear, n_prop, m_prop, pos_prop, m_pax, cargo_m, m_bat):
@@ -481,8 +470,11 @@ class RunDSE:
         CLdesrear = drag.CL_des()[0]
         CD0fwd = drag.Cd_w(0)
         CD0rear = CD0fwd
-        Clafwd = wing_design.liftslope(0)[1]
-        Clarear = wing_design.liftslope(0)[2]
+        CLafwd = wing_design.liftslope(0)[1]
+        CLarear = wing_design.liftslope(0)[2]
+        Clafwd = airfoil.airfoil_stats()[4]
+        Clarear = airfoil.airfoil_stats()[4]
+        print(Clafwd)
 
         # Optimize the wing size and aspect ratios for stability and control, ignoring the stability constraint for now
         y_mac_1 = b1 * (1 + 2 * taper) / (6 * (1 + taper))
@@ -500,21 +492,28 @@ class RunDSE:
 
         zrangef = [0 + y_mac_1 * const.dihedral1, 0.25*h_fus + y_mac_1 * const.dihedral1]
         zranger = [0.7*h_fus + y_mac_2 * const.dihedral2, h_fus + y_mac_2 * const.dihedral2]
-        print(xrangef)
-        print(xranger)
-        print(zrangef)
-        print(zranger)
-        print(const.crmaxf, const.crmaxr, const.b_max, const.b_max, const.A_range_f, const.A_range_r)
+
         Zcg = 0.4 * const.h_fuselage  # Estimate
 
-        [AR_wing1, AR_wing2, xf, xr, zf, zr, Sr_Sf] = optimise_wings(Cmacfwd, Cmacrear, CLfwd, CLrear, CLdesfwd, CLdesrear, CD0fwd,
-                                                                CD0rear, taper, taper, const.sweepc41, const.sweepc42,
-                                                                const.e_f, const.e_r, Clafwd, Clarear, Zcg, const.Vr_Vf_2,
-                                                                const.elev_fac, rho, P_cr/n_prop, S_tot, MTOM*g0, xrangef,
-                                                                xranger, zrangef, zranger, const.crmaxf, const.crmaxr,
-                                                                const.b_max, const.b_max, const.A_range_f, const.A_range_r,
-                                                                xcg_range = [x_front, 2*x_aft], impose_stability=False)
-                                                                # TODO: revise stability margin
+        print(Cmacfwd, Cmacrear, CLfwd, CLrear, CLdesfwd, CLdesrear, CD0fwd, CD0rear, taper, taper,
+                                                                     const.sweepc41, const.sweepc42, const.e_f,
+                                                                     const.e_r, Clafwd, Clarear, Zcg, const.Vr_Vf_2,
+                                                                     const.elev_fac, rho, P_cr/n_prop, S_tot, MTOM*g0,
+                                                                     xrangef,  xranger, zrangef, zranger, const.crmaxf,
+                                                                     const.crmaxr, const.b_max, const.b_max,
+                                                                     const.A_range_f, const.A_range_r, [x_front+0.01, x_aft-0.07])
+
+        [AR_wing1, AR_wing2, xf, xr, zf, zr, Sr_Sf] = optimise_wings(Cmacfwd, Cmacrear, CLfwd, CLrear, CLdesfwd,
+                                                                     CLdesrear, CD0fwd, CD0rear, taper, taper,
+                                                                     const.sweepc41, const.sweepc42, const.e_f,
+                                                                     const.e_r, Clafwd, Clarear, Zcg, const.Vr_Vf_2,
+                                                                     const.elev_fac, rho, P_cr/n_prop, S_tot, MTOM*g0,
+                                                                     xrangef,  xranger, zrangef, zranger, const.crmaxf,
+                                                                     const.crmaxr, const.b_max, const.b_max,
+                                                                     const.A_range_f, const.A_range_r,
+                                                                     xcg_range=[x_front+0.01, x_aft-0.07],    # xcg_range=[x_front, x_aft]
+                                                                     impose_stability=False)
+                                                                     # TODO: revise stability margin
 
         # Calculate new S1 with new ratio
         S1 = S_tot/(1 + Sr_Sf)
@@ -533,7 +532,7 @@ class RunDSE:
         z_le_r = zr - xmac_to_xle(const.sweepc42, AR_wing2, taper, b2, const.dihedral2)[1]
 
         # lambda_c4f, bf, lh, h_ht, A, CLaf, rho, Pbr, Sf, CLf, W
-        de_da = deps_da_old(const.sweepc41, b1, xr-xf, zr-zf, AR_wing1, Clafwd, rho, P_cr/n_prop, S1, CL_cr_1, MTOM*g0)
+        de_da = deps_da_old(const.sweepc41, b1, xr-xf, zr-zf, AR_wing1, CLafwd, rho, P_cr/n_prop, S1, CL_cr_1, MTOM*g0)
 
         """
         :param h_ht: Distance between wings normal to their chord planes 

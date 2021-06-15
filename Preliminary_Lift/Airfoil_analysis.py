@@ -14,7 +14,7 @@ def airfoil_stats():
     Cl_Cdmin = np.average(df1["CL"][df1["CD"] == Cdmin])
     Cm = np.average(df1["Cm"][df1["CL"] == Cl_Cdmin])
 
-    Clalpha = (np.average(df1["CL"][df1["alpha"] == 8]) -np.average(df1["CL"][df1["alpha"] == 0]))/8
+    Clalpha = (np.average(df1["CL"][df1["alpha"] == 6]) - np.average(df1["CL"][df1["alpha"] == 0]))/6
     Clalpha1 = (np.average(df1["CL"][df1["alpha"] == 5]) - np.average(df1["CL"][df1["alpha"] == -1])) / 6
 
     clcdmax = np.max(df1["cl/cd"])
