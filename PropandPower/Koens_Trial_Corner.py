@@ -53,6 +53,9 @@ def closestNumber(n, m):
         n2 = (m * (q - 1))
 
     # if true, then n1 is the required closest number
-
+    if n1 > n:
+        return n1
+    else:
+        return n2
 
 print(closestNumber(13,4))
