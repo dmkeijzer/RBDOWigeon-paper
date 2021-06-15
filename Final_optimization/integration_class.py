@@ -86,23 +86,6 @@ def mass(MTOM, S1, S2, n_ult, AR_wing1, AR_wing2, pos_frontwing, pos_backwing, P
 
     return Mass.mtom, m_wf, m_wr, m_fus, m_prop, cg_fus, cg_gear, cg_props, Mass.mtom_cg
 
-
-def xmac_to_xle(sweep_25, A, taper, b, dihedral):
-
-    # y position of the mac
-    y_mac = b*(1 + 2*taper)/(6*(1 + taper))
-
-    # Get the sweep angle of the leading edge
-    sweep_le = np.arctan(np.tan(np.radians(sweep_25)) + (1-taper)/((1+taper)*A))
-
-    # Calculate xlemac wrt to the root
-    x_mac   = np.tan(sweep_le)*y_mac
-
-    # Calculate height of the mac wrt the root
-    z_mac   = np.tan(dihedral)*y_mac
-
-    return x_mac, z_mac
-
 def find_mac(S, b, taper):
     """
     Calculate mean aerodynamic chord of a wing
@@ -115,6 +98,22 @@ def find_mac(S, b, taper):
     cr = 2 / (1 + taper) * cavg
     mac = 2/3 * cr * (1 + taper + taper ** 2) / (1 + taper)
     return mac
+
+def xmac_to_xle(sweep_25, A, taper, b, dihedral):
+
+    # y position of the mac
+    y_mac = b*(1 + 2*taper)/(6*(1 + taper))
+
+    # Get the sweep angle of the leading edge
+    sweep_le = np.arctan(np.tan(np.radians(sweep_25)) + (1-taper)/((1+taper)*A))
+
+    # Calculate xlemac wrt to the root
+    x_mac   = np.tan(sweep_le)*y_mac + 0.25*find_mac(b**2/A, b, taper)
+
+    # Calculate height of the mac wrt the root
+    z_mac   = np.tan(dihedral)*y_mac
+
+    return x_mac, z_mac
 
 
 class RunDSE:
