@@ -13,7 +13,6 @@ V_cell = 3.4 # V
 C_cell = 250 # Ah
 E_cell = V_cell * C_cell # Wh
 
-
 # inputs
 n_mot = 12 # Number of motors in aircraft
 n_bat_mot = 2 # Number of batteries per motor
@@ -42,7 +41,6 @@ def closestNumber(n, m):
     else:
         return n2
 
-
 N_cells = int(np.ceil(E_tot / E_cell * 1000))
 print("Number of cells for required energy/power:", N_cells)
 
@@ -58,7 +56,7 @@ print("Number of modules for ", n_mot*n_bat_mot, "batteries:", N_par_new)
 N_cells_new = N_ser*N_par_new
 print("Number of battery cells when multiplying parallel and series:", N_cells_new)
 print("This is", N_cells_new - N_cells, "cells more than needed for energy")
-print("This is a ", (N_cells_new-N_cells)/N_cells*100, "% increase")
+print("This is a ", np.round(((N_cells_new-N_cells)/N_cells*100),2), "% increase")
 
 
 
