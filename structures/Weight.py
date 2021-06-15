@@ -107,7 +107,7 @@ class Weight:
 
         # wing - modeled as a prism with span, average thickness and width at mac
         t = self.wing.wmac * self.wing.toc
-        span = np.sqrt(self.wing.A * self.wing.S1)
+        span = np.sqrt(self.wing.A_1 * self.wing.S1)
 
         wing_mmi_x, wing_mmi_y, wing_mmi_z = self.wing.mass[0]*(span**2 + t**2)/12, self.wing.mass[0]*(span**2 + self.wing.wmac**2)/12, \
                                              self.wing.mass[0] * (self.wing.wmac ** 2 + t ** 2) / 12
@@ -121,7 +121,7 @@ class Weight:
         lbat, tbat, wbat = 0.4*self.fuselage.lf, 0.2, 1
         bat_mmi_x, bat_mmi_y, bat_mmi_z = self.bmass*(wbat**2 + tbat**2)/12, self.bmass*(wbat**2 + lbat**2)/12, self.bmass*(tbat**2 + lbat**2)/12
 
-        span = np.sqrt(self.wing.A*self.wing.S1)
+        span = np.sqrt(self.wing.A_1*self.wing.S1)
         oem_mmi_x = fus_mmi_x + 2 * (
                     wing_mmi_x + self.wmass/2 * (1.705 /2)**2) + \
                     self.prop.nprop/4 * np.sum(m_prop * (np.sqrt((1.705/2)**2 +  (np.linspace(0.9, span/2, int(self.prop.nprop/4))) ** 2 ))** 2) + \

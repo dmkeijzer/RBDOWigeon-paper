@@ -38,10 +38,16 @@ class Material:
     def StressConcentration(beta, a, o):
         return beta * o * (pi * a) ** 0.5
     
-    def ParisFatigueN(self, dS, w, ai, af):
+    def ParisFatigueN(self, Smax, Smin, w, ai, af):
+        R, dS = abs(Smin / Smax), Smax - Smin
+        U = 0.5 + 0.4 * R
         def integrand(a):
             beta = self.beta(a/w)
-            return 1 / self.StressConcentration(beta, a, dS)**self.m
+            return 1 / (U * self.StressConcentration(beta, a, dS))**self.m
         N = (1/self.C) * quad(integrand, ai, af)[0]
         return N
+    
+    ParisFatigueda = lambda self, a, w, Smax, Smin, n: \
+        (0.5 + 0.4 * abs(Smin / Smax)) * n * self.C * (self.beta(a/w) * abs(Smax - Smin) * (pi * a) ** 0.5) ** self.m 
+    
     BasquinLaw = lambda self, S: self.SNC / (S ** self.SNm)
