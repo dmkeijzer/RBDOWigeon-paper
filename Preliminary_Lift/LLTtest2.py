@@ -431,8 +431,8 @@ def sectional_lift(ccl, q_inf):
 #Ldash = sectional_lift(ccl, 0.5 * rho * Vc ** 2 ) # Sectional Lift Fore Wing [N/m]
 #Ldash2 = sectional_lift(ccl2, 0.5 * rho * Vc ** 2 ) # Sectional Lift Hind Wing [N/m]
 
-x = downwash_upwash(8.573,14,0.844,0.380,0,5, 0.0 ,2,11.22497,8,1.93534,0.870,0,55)
-
-y = downwash(8.573,14,0.844,0.380,0,5, 0.0 ,2,11.22497,1.93534,0.870,0,55)
+# x = downwash_upwash(8.573,14,0.844,0.380,0,5, 0.0 ,2,11.22497,8,1.93534,0.870,0,55)
+#
+# y = downwash(8.573,14,0.844,0.380,0,5, 0.0 ,2,11.22497,1.93534,0.870,0,55)
 # print(x)
 # print(y)

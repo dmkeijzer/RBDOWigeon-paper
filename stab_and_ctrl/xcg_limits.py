@@ -84,6 +84,7 @@ def deps_da_not_use(bf, br, crf, crr, ctf, ctr, lambda_c4f, lambda_c4r, Sf, Af,
     mtv = h_ht * 2 / bf  # Approximation
     de_da = downwash(bf, Af, crf, ctf, lambda_c4f, alphaf, h_ht, lh, br, crr, ctr, lambda_c4r, V)
     phi = np.arcsin(mtv/r)
+    # print("Check", rho, Pbr, Sf, CLf, lh, W, phi)
     dsde_da = np.where(
         np.logical_and(np.rad2deg(phi) < 30, np.rad2deg(phi) > 0),
         6.5 * (rho * Pbr ** 2 * Sf ** 3 * CLf ** 3 / (lh ** 4 * W ** 3)) ** (1 / 4) * (np.sin(phi * 6)) ** 2.5,
@@ -299,9 +300,9 @@ def xcg_limits(Cmacf, Cmacr, CLmaxf, CLmaxr, CLdesf, CLdesr, CD0f, CD0r,
     ctr = crr * taperr
     alphaf = np.deg2rad(6)
     V = 50
-    de_da = deps_da(bf, br, crf, crr, ctf, ctr, lambda_c4f, lambda_c4r, Sf,
+    de_da = deps_da_not_use(bf, br, crf, crr, ctf, ctr, lambda_c4f, lambda_c4r, Sf,
                     Af, CLdesf, alphaf, xr - xf, zr - zf, rho, Pbr, W, V)
-    # de_da = deps_da(lambda_c4f, bf, xr - xf, zr - zf, Af, CLaf, rho, Pbr, Sf,
+    # de_da = deps_da_not_use(lambda_c4f, bf, xr - xf, zr - zf, Af, CLaf, rho, Pbr, Sf,
     #                 CLdesf, W)
     xstab = xcg_stab(CLaf, CLar, CLdesf, CLdesr, Af, Ar, ef, er, xf, xr, zf,
                      zr, zcg, Vr_Vf_2, Sr_Sf, de_da)
@@ -539,58 +540,58 @@ def plot_Sf_Sr_Af_plane(Cmacf, Cmacr, CLmaxf, CLmaxr, CLdesf, CLdesr, CD0f,
         plt.scatter([Sr_Sf], [Af])
 
 
-if __name__ == "__main__":
-    Cmacf = -0.0645
-    Cmacr = -0.0645
-    CLmaxf = 1.44333
-    CLmaxr = 1.44333
-    CLdesf = 0.7382799
-    CLdesr = 0.7382799
-    CD0f = 0.00822
-    CD0r = 0.00822
-    taperf = 0.45
-    taperr = 0.45
-    lambda_c4f = 0
-    lambda_c4r = 0
-    ef = 0.958
-    er = 0.958
-    Claf = 6.1879
-    Clar = 6.1879
-    zcg = 0.7
-    Vr_Vf_2 = 0.8
-    elev_fac = 1.4
-    rho = 1.225
-    Pbr = 110024 / 1.2 * 0.9 / 12 * 3
-    S = 8.417113787320769 * 2
-    W = 2939.949692 * 9.80665
-
-    xf = [0.5, 2]
-    xr = [6, 7]
-    zf = [0.3, 1]
-    zr = [1, 1.7]
-    crmaxf = 1.5
-    crmaxr = 2.5
-    bmax = 14
-    xcg_range = [2.85, 3.05]
-    Arange = [0.1, 12]
-    impose_stability = True
-
-    Af, Ar, xf, xr, zf, zr, Sr_Sf = optimise_wings(
-        Cmacf, Cmacr, CLmaxf, CLmaxr, CLdesf, CLdesr, CD0f,
-        CD0r, taperf, taperr, lambda_c4f, lambda_c4r, ef, er,
-        Claf, Clar, zcg, Vr_Vf_2, elev_fac, rho, Pbr, S, W,
-        xf, xr, zf, zr, crmaxf, crmaxf, bmax, bmax, Arange, Arange,
-        xcg_range, impose_stability=impose_stability)
-
-    print(Af, Ar, xf, xr, zf, zr, Sr_Sf)
-
-    plot_Sr_Sf_range = [0.2, 5]
-    plot_Af_range = [0.1, 15]
-
-    plot_Sf_Sr_Af_plane(Cmacf, Cmacr, CLmaxf, CLmaxr, CLdesf, CLdesr, CD0f,
-                        CD0r, taperf, taperr, lambda_c4f, lambda_c4r, ef, er,
-                        Claf, Clar, zcg, Vr_Vf_2, elev_fac, rho, Pbr, S, W,
-                        Ar, xf, xr, zf, zr, xcg_range, plot_Sr_Sf_range,
-                        plot_Af_range, Sr_Sf=Sr_Sf, Af=Af)
-    plt.show()
-
+# if __name__ == "__main__":
+#     Cmacf = -0.0645
+#     Cmacr = -0.0645
+#     CLmaxf = 1.44333
+#     CLmaxr = 1.44333
+#     CLdesf = 0.7382799
+#     CLdesr = 0.7382799
+#     CD0f = 0.00822
+#     CD0r = 0.00822
+#     taperf = 0.45
+#     taperr = 0.45
+#     lambda_c4f = 0
+#     lambda_c4r = 0
+#     ef = 0.958
+#     er = 0.958
+#     Claf = 6.1879
+#     Clar = 6.1879
+#     zcg = 0.7
+#     Vr_Vf_2 = 0.8
+#     elev_fac = 1.4
+#     rho = 1.225
+#     Pbr = 110024 / 1.2 * 0.9 / 12 * 3
+#     S = 8.417113787320769 * 2
+#     W = 2939.949692 * 9.80665
+#
+#     xf = [0.5, 2]
+#     xr = [6, 7]
+#     zf = [0.3, 1]
+#     zr = [1, 1.7]
+#     crmaxf = 1.5
+#     crmaxr = 2.5
+#     bmax = 14
+#     xcg_range = [2.85, 3.05]
+#     Arange = [0.1, 12]
+#     impose_stability = True
+#
+#     Af, Ar, xf, xr, zf, zr, Sr_Sf = optimise_wings(
+#         Cmacf, Cmacr, CLmaxf, CLmaxr, CLdesf, CLdesr, CD0f,
+#         CD0r, taperf, taperr, lambda_c4f, lambda_c4r, ef, er,
+#         Claf, Clar, zcg, Vr_Vf_2, elev_fac, rho, Pbr, S, W,
+#         xf, xr, zf, zr, crmaxf, crmaxf, bmax, bmax, Arange, Arange,
+#         xcg_range, impose_stability=impose_stability)
+#
+#     print(Af, Ar, xf, xr, zf, zr, Sr_Sf)
+#
+#     plot_Sr_Sf_range = [0.2, 5]
+#     plot_Af_range = [0.1, 15]
+#
+#     plot_Sf_Sr_Af_plane(Cmacf, Cmacr, CLmaxf, CLmaxr, CLdesf, CLdesr, CD0f,
+#                         CD0r, taperf, taperr, lambda_c4f, lambda_c4r, ef, er,
+#                         Claf, Clar, zcg, Vr_Vf_2, elev_fac, rho, Pbr, S, W,
+#                         Ar, xf, xr, zf, zr, xcg_range, plot_Sr_Sf_range,
+#                         plot_Af_range, Sr_Sf=Sr_Sf, Af=Af)
+#     plt.show()
+#
