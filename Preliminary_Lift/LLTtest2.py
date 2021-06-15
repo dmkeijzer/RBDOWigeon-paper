@@ -353,6 +353,7 @@ def downwash_fore(c,y, y2,Cl, x_h, z_h, V_inf):
         #integral = quad(f,thetas[0],thetas[-1], limit = 500)
         integral = trapz(Circwsin,thetas)
         w.append(integral*(1/(np.pi*4*r_avg)))
+
     for i in range(len(c)):
 
         vertang = np.arctan2(z_h,y- y2[i] )
@@ -374,7 +375,7 @@ def downwash_fore(c,y, y2,Cl, x_h, z_h, V_inf):
     return a_wfinal + a_w
 
 def LLT2wings(span1, AR1,root1, tip1, sweep1, alpha1, z_h, x_h,span2, AR2, root2,tip2,sweep2, alpha2, V_cr, i1,i2):
-    npoints = 21
+    npoints = 11
     washout = 0
     wing = Wing(span1, root1, tip1, sweep1,washout)
     y, cl, ccl, al_i, CL, CDi , e= weissinger_l(wing, alpha1, 2*npoints-1, AR1, np.zeros(43), i1)
@@ -388,7 +389,7 @@ def LLT2wings(span1, AR1,root1, tip1, sweep1, alpha1, z_h, x_h,span2, AR2, root2
     return CL, CL3, CDi, CDi3, e, e3, de_da
 
 def downwash(span1, AR1,root1, tip1, sweep1, alpha1, z_h, x_h,span2, root2,tip2,sweep2,V_cr):
-    npoints = 21
+    npoints = 11
     washout = 0
     wing = Wing(span1, root1, tip1, sweep1, washout)
     y, cl, ccl, al_i, CL, CDi, e = weissinger_l(wing, alpha1, 2 * npoints - 1, AR1, np.zeros(2*npoints+1),0)
@@ -398,7 +399,7 @@ def downwash(span1, AR1,root1, tip1, sweep1, alpha1, z_h, x_h,span2, root2,tip2,
     de_da = np.average(a_w) * (180 / (np.pi * alpha1))
     return de_da
 def downwash_upwash(span1, AR1,root1, tip1, sweep1, alpha1, z_h, x_h,span2,  AR2, root2,tip2,sweep2,V_cr):
-    npoints = 21
+    npoints = 11
     washout = 0
     wing = Wing(span1, root1, tip1, sweep1, washout)
     y, cl, ccl, al_i, CL, CDi, e = weissinger_l(wing, alpha1, 2 * npoints - 1, AR1, np.zeros(2*npoints+1),0)
@@ -407,7 +408,7 @@ def downwash_upwash(span1, AR1,root1, tip1, sweep1, alpha1, z_h, x_h,span2,  AR2
     a_w = downwash_fore(np.append(0, ccl[1:] / cl[1:]), y, y2, cl, x_h, z_h, V_cr)
     de_da = np.average(a_w) * (180 / (np.pi * alpha1))
     y3, cl3, ccl3, al_i3, CL3, CDi3, e3 = weissinger_l(wing2, alpha1, 2 * npoints - 1, AR2, a_w, 0)
-    print(a_w)
+
     a_w2 = downwash_fore(np.append(0, ccl3[1:] / cl3[1:]), y3, y, cl3, -1*x_h, -1*z_h, V_cr)
     de_da2 = np.average(a_w2) * (180 / (np.pi * alpha1))
     return de_da, de_da2
@@ -425,14 +426,9 @@ def LLT1wing(span1, AR1,root1, tip1, sweep1, alpha1):
 def sectional_lift(ccl, q_inf):
     return q_inf * ccl
 
-#ISA = ISA(400)
-#rho = ISA.density()
-#Vc = 55 # V_cruise
-#Ldash = sectional_lift(ccl, 0.5 * rho * Vc ** 2 ) # Sectional Lift Fore Wing [N/m]
-#Ldash2 = sectional_lift(ccl2, 0.5 * rho * Vc ** 2 ) # Sectional Lift Hind Wing [N/m]
 
-x = downwash_upwash(8.573,14,0.844,0.380,0,5, 0.0 ,2,11.22497,8,1.93534,0.870,0,55)
+#x = downwash_upwash(8.573,14,0.844,0.380,0,5, 0.0 ,2,11.22497,8,1.93534,0.870,0,55)
 
-y = downwash(8.573,14,0.844,0.380,0,5, 0.0 ,2,11.22497,1.93534,0.870,0,55)
-print(x)
-print(y)
+#y = downwash(8.573,14,0.844,0.380,0,5, 0.0 ,2,11.22497,1.93534,0.870,0,55)
+#print(x)
+#print(y)
