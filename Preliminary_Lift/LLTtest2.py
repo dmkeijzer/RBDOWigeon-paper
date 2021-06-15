@@ -374,7 +374,7 @@ def downwash_fore(c,y, y2,Cl, x_h, z_h, V_inf):
     return a_wfinal + a_w
 
 def LLT2wings(span1, AR1,root1, tip1, sweep1, alpha1, z_h, x_h,span2, AR2, root2,tip2,sweep2, alpha2, V_cr, i1,i2):
-    npoints = 21
+    npoints = 11
     washout = 0
     wing = Wing(span1, root1, tip1, sweep1,washout)
     y, cl, ccl, al_i, CL, CDi , e= weissinger_l(wing, alpha1, 2*npoints-1, AR1, np.zeros(43), i1)
@@ -388,7 +388,7 @@ def LLT2wings(span1, AR1,root1, tip1, sweep1, alpha1, z_h, x_h,span2, AR2, root2
     return CL, CL3, CDi, CDi3, e, e3, de_da
 
 def downwash(span1, AR1,root1, tip1, sweep1, alpha1, z_h, x_h,span2, root2,tip2,sweep2,V_cr):
-    npoints = 21
+    npoints = 11
     washout = 0
     wing = Wing(span1, root1, tip1, sweep1, washout)
     y, cl, ccl, al_i, CL, CDi, e = weissinger_l(wing, alpha1, 2 * npoints - 1, AR1, np.zeros(2*npoints+1),0)
@@ -398,7 +398,7 @@ def downwash(span1, AR1,root1, tip1, sweep1, alpha1, z_h, x_h,span2, root2,tip2,
     de_da = np.average(a_w) * (180 / (np.pi * alpha1))
     return de_da
 def downwash_upwash(span1, AR1,root1, tip1, sweep1, alpha1, z_h, x_h,span2,  AR2, root2,tip2,sweep2,V_cr):
-    npoints = 21
+    npoints = 11
     washout = 0
     wing = Wing(span1, root1, tip1, sweep1, washout)
     y, cl, ccl, al_i, CL, CDi, e = weissinger_l(wing, alpha1, 2 * npoints - 1, AR1, np.zeros(2*npoints+1),0)
@@ -413,7 +413,7 @@ def downwash_upwash(span1, AR1,root1, tip1, sweep1, alpha1, z_h, x_h,span2,  AR2
     return de_da, de_da2
 
 def LLT1wing(span1, AR1,root1, tip1, sweep1, alpha1):
-    npoints = 21
+    npoints = 11
     washout = 0
     wing = Wing(span1, root1, tip1, sweep1,washout)
     y, cl, ccl, al_i, CL, CDi , e= weissinger_l(wing, alpha1, 2*npoints-1, AR1, np.zeros(43))
