@@ -39,6 +39,20 @@ def xcg_stab(CLaf, CLar, CLf, CLr, Af, Ar, ef, er, xf, xr, zf, zr, zcg,
     return num / den
 
 
+def Cma(Claf, Clar, lambda_c4f, lambda_c4r, taperf, taperr, CLf, CLr, Af, Ar,
+        ef, er, xf, xr, zf, zr, zcg, Vr_Vf_2, Sr_Sf, xcg):
+    lambda_c2f = lambda_c4_to_lambda_c2(Af, taperf, lambda_c4f)
+    lambda_c2r = lambda_c4_to_lambda_c2(Ar, taperr, lambda_c4r)
+    CLaf = CLa(Claf, Af, lambda_c2f)
+    CLar = CLa(Clar, Ar, lambda_c2r)
+    de_da = 0  # TODO: include downwash calculation
+    return (CLaf * (xcg - xf)
+            - CLar * (xr - xcg) * (1 - de_da) * Vr_Vf_2 * Sr_Sf
+            - 2 * CLf / (np.pi * Af * ef) * CLaf * (zcg - zf)
+            + 2 * CLr / (np.pi * Ar * er) * CLar * (zr - zcg)
+            * (1 - de_da) * Vr_Vf_2 * Sr_Sf)
+
+
 # TODO: improve downwash estimation
 def deps_da(bf, br, crf, crr, ctf, ctr, lambda_c4f, lambda_c4r, Sf, Af,
             CLf, alphaf, lh, h_ht, rho, Pbr, W, V):
@@ -365,6 +379,7 @@ def optimise_wings(Cmacf, Cmacr, CLmaxf, CLmaxr, CLdesf, CLdesr, CD0f, CD0r,
     x0 = np.array([init_Af, init_Ar, init_xf, init_xr,
                    init_zf, init_zr, init_Sr_Sf])
 
+    # TODO: minimise the instability instead
     # cost function to choose between solutions
     def cost(x):
         return (bf_br(S, x[6], x[0], x[1])[0]

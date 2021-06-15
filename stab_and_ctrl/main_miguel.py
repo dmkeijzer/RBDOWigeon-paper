@@ -56,9 +56,10 @@ c = Srear/S*crear+Sfwd/S*cfwd
 bfwd = np.sqrt(Sfwd * Afwd)
 brear = np.sqrt(Srear * Arear)
 b = max(bfwd,brear)
+print(b)
 e = 1.1302
-efwd = 0.958
-erear = 0.958
+efwd = 0.65
+erear = 0.65
 taper = 0.45
 n_rot_f = 6
 n_rot_r = 6
@@ -78,7 +79,7 @@ dy = 0.2
 
 
 aileron = Control_surface(V0,Vstall,CLfwd,CLrear,CLafwd,CLarear,Clafwd,Clarear,Cd0fwd,Cd0rear,
-                         Sfwd,Srear,Afwd,Arear,cfwd,crear,bfwd,brear,taper)
+                         Sfwd,Srear,Afwd,Arear,cfwd,crear,bfwd,brear,taper,eta_rear=0.90)
 elevator_effect = 1.4
 dx = 0.1
 
@@ -147,7 +148,7 @@ pos_frontwing, pos_backwing = 0.2, 7  # positions of the wings away from the nos
 m_prop = [30] * 16  # list of mass of engines (so 30 kg per engine with nacelle and propeller)
 pos_prop = [0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 7.0, 7.0, 7.0, 7.0, 7.0, 7.0, 7.0,
             7.0]  # 8 on front wing and 8 on back wing
-wing = Wing(W/9.80665, Sfwd, Srear, n_ult, Afwd, [pos_frontwing, pos_backwing])
+wing = Wing(W/9.80665, Sfwd, Srear, n_ult, Afwd, Arear,[pos_frontwing, pos_backwing])
 fuselage = Fuselage(W/9.80665, Pmax, lfus, n_pax, pos_fus)
 lgear = LandingGear(W/9.80665, pos_lgear)
 props = Propulsion(n_prop, m_prop, pos_prop)
@@ -155,14 +156,15 @@ weight = Weight(m_pax, wing, fuselage, lgear, props, cargo_m=85, cargo_pos=6, ba
                 p_pax=[1.5, 3, 3, 4.2, 4.2])
 
 Ixx, Iyy, Izz, Ixz = weight.MMI()
+print(Ixx, Izz, Ixz)
 Ka = 1.429
 
 if isinstance(ARv,float) and isinstance(sweepTE,float):
     stability_derivatives = Stab_Derivatives(W,h,lfus,hfus,wfus, d,dy,xcg,Zcg,cfwd,crear,Afwd,Arear,Vstall,
                      V0,Tt0,CLdesfwd,CLdesrear,CD0_a,CL0,theta0,alpha0,
-                     Clafwd,Clarear, Cd0fwd, Cd0rear, CLafwd,CLarear,Sfwd,Srear,0,-4*np.pi/180,
+                     Clafwd,Clarear, Cd0fwd, Cd0rear, CLafwd,CLarear,Sfwd,Srear,0,-2*np.pi/180,
                      efwd,erear,Lambda_c4_fwd,Lambda_c4_rear,taper,0.4,
-                     bv,Sv,ARv,sweepTE,Pbr,CD0,eta_rear=0.85,eta_v=0.9)
+                     bv,Sv,ARv,sweepTE,Pbr,CD0,eta_rear=0.90,eta_v=0.9)
     print("q-derivatives:",stability_derivatives.q_derivatives())
     print("alpha-derivatives:",stability_derivatives.alpha_derivatives())
     print("u-derivatives:",stability_derivatives.u_derivatives())
