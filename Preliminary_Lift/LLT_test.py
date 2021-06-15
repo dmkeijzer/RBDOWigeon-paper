@@ -195,9 +195,9 @@ def weissinger_l(wing, al, al_fore, m):
         phiO1 = pi
 
         # Construct the A matrix, which is the analog to the 2D lift slope
-        print("Calculating aerodynamics ...")
+        # print("Calculating aerodynamics ...")
         for j in range(m):
-            print("Point " + str(j+1) + " of " + str(m))
+            # print("Point " + str(j+1) + " of " + str(m))
             rhs[j,0] = al + twist[j]
 
             for i in range(m):
@@ -263,8 +263,8 @@ def weissinger_l(wing, al, al_fore, m):
             area += dA
         CL /= area
         CDi /= area
-        print('test cl', cl, len(cl))
-        print('test al_i', al_i, len(al_i))
+        # print('test cl', cl, len(cl))
+        # print('test al_i', al_i, len(al_i))
 
     elif wing.tandem == 'hind':
         # Convert angles to radians
@@ -307,10 +307,10 @@ def weissinger_l(wing, al, al_fore, m):
         phiO1 = pi
 
         # Construct the A matrix, which is the analog to the 2D lift slope
-        print("Calculating aerodynamics ...")
+        # print("Calculating aerodynamics ...")
         for j in range(0.5*m+1):
-            print('m',m)
-            print("Point " + str(j+1) + " of " + str(m))
+            # print('m',m)
+            # print("Point " + str(j+1) + " of " + str(m))
             rhs[j,0] = al[j] + twist[j]
 
             for i in range(m):
@@ -414,11 +414,11 @@ if __name__ == "__main__":
     wing2 = Wing(span, root, tip, sweep, washout, 'hind')
     y2, cl2, ccl2, al_i2, CL2, CDi2, c2 = weissinger_l(wing2, alpha, downwash_fore(c, y, cl, 6, 1.25, 1), 2*npoints-1) # alpha, al_i
 
-    print("{:<6}".format("Area: ") + str(wing.area))
-    print("{:<6}".format("AR: ") + str(wing.aspect_ratio))
-    print("{:<6}".format("MAC: ") + str(wing.cbar))
-    print("{:<6}".format("CL: ") + str(CL))
-    print("{:<6}".format("CDi: ") + str(CDi))
+    # print("{:<6}".format("Area: ") + str(wing.area))
+    # print("{:<6}".format("AR: ") + str(wing.aspect_ratio))
+    # print("{:<6}".format("MAC: ") + str(wing.cbar))
+    # print("{:<6}".format("CL: ") + str(CL))
+    # print("{:<6}".format("CDi: ") + str(CDi))
 
     create_plot(wing, y, cl, ccl, al_i,CL, CDi)
     create_plot(wing2, y2, cl2, ccl2, al_i2, CL2, CDi2)
