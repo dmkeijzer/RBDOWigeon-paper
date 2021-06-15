@@ -466,7 +466,7 @@ class Stab_Derivatives:
         C_Z0 = -self.W/(0.5*self.rho*self.V0**2*self.S)*np.cos(self.th0+self.alpha0)
         C_m0 =0
         return C_X0,C_Z0
-    def return_stab_derivatives(self,Se_S,be_b,Sa_S,b1,b2,cr_cv,br_bv):
+    def return_stab_derivatives(self,Se_S,be_b,Sa_S,b1,b2,cr_cv,br_bv,Ixx, Iyy, Izz, Ixz,matlab=True):
         a = self.alpha_derivatives()
         a_dot = self.alpha_dot_derivatives()
         u = self.u_derivatives()
@@ -490,6 +490,56 @@ class Stab_Derivatives:
         C_Y = [C_y_b, C_y_b_dot, C_y_p, C_y_r, C_y_da, C_y_dr]
         C_l = [C_l_b, C_l_p, C_l_r, C_l_da, C_l_dr]
         C_n = [C_n_b, C_n_b_dot, C_n_p, C_n_r, C_n_da, C_n_dr]
+        if matlab == True:
+            print("aeroCoeff = struct;\n"
+                  "aeroCoeff.Cl0 = 0;\n"
+                  "aeroCoeff.Cl_beta = %.09f;\n"
+                  "aeroCoeff.Cl_da = %.10f;\n"
+                  "aeroCoeff.Cl_dr = %.10f;\n"
+                  "aeroCoeff.Cl_p = %.10f;\n"
+                  "aeroCoeff.Cl_r = %.10f;\n"
+                  "aeroCoeff.Cm0 = 0;\n"
+                  "aeroCoeff.Cm_alpha = %.10f;\n"
+                  "aeroCoeff.Cm_de = %.10f;\n"
+                  "aeroCoeff.Cm_q = %.10f;\n"
+                  "aeroCoeff.Cn0 = 0;\n"
+                  "aeroCoeff.Cn_beta = %.10f;\n"
+                  "aeroCoeff.Cn_da = %.10f;\n"
+                  "aeroCoeff.Cn_dr = %.10f;\n"
+                  "aeroCoeff.Cn_p = %.10f;\n"
+                  "aeroCoeff.Cn_r = %.10f;\n"
+                  "aeroCoeff.Cx0 = 0;\n"
+                  "aeroCoeff.Cx_alpha = %.10f;\n"
+                  "aeroCoeff.Cx_q = 0;\n"
+                  "aeroCoeff.Cx_de = 0;\n"
+                  "aeroCoeff.Cy0 = 0;\n"
+                  "aeroCoeff.Cy_beta = %.10f;\n"
+                  "aeroCoeff.Cy_da = 0;\n"
+                  "aeroCoeff.Cy_dr = %.10f;\n"
+                  "aeroCoeff.Cy_p = %.10f;\n"
+                  "aeroCoeff.Cy_r = %.10f;\n"
+                  "aeroCoeff.Cz0 = %.10f;\n"
+                  "aeroCoeff.Cz_alpha = %.10f;\n"
+                  "aeroCoeff.Cz_de = %.10f;\n"
+                  "aeroCoeff.Cz_q = %.10f;\n"
+                  "aeroCoeff.Cx_u = %.10f;\n"
+                  "aeroCoeff.Cz_u = %.10f;\n"
+                  "aeroCoeff.Cm_u = %.10f;\n"
+                  "aeroCoeff.Cx_adot = %.10f;\n"
+                  "aeroCoeff.Cz_adot = %.10f;\n"
+                  "aeroCoeff.Cm_adot =%.10f;\n"
+                  "Sref =%.10f;\n"
+                  "bref =%.10f;\n"
+                  "cref =%.10f;\n"
+                  "Ixx =%.10f;\n"
+                  "Iyy =%.10f;\n"
+                  "Izz =%.10f;\n"
+                  "Ixz =%.10f;\n"
+                  "vehicle.acMass = %.10f;\n"
+                  "aeroCoeff.V0 = %.10f;"%(C_l_b, C_l_da,C_l_dr,C_l_p,C_l_r,C_m_a,C_m_d, C_m_q,C_n_b, C_n_da,
+                                               C_n_dr,C_n_p,C_n_r,C_x_a,C_y_b,C_y_dr,C_y_p,C_y_r, C_z_0, C_z_a,C_z_d,
+                                               C_z_q,C_x_u,C_z_u,C_m_u,C_x_a_dot,C_z_a_dot,C_m_a_dot,self.S,self.b,
+                                           self.c,Ixx, Iyy, Izz, Ixz,self.W/9.80665,self.V0))
         return C_X, C_Z,C_m, C_Y, C_l, C_n
 
 

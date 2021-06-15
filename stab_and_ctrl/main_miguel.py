@@ -56,7 +56,6 @@ c = Srear/S*crear+Sfwd/S*cfwd
 bfwd = np.sqrt(Sfwd * Afwd)
 brear = np.sqrt(Srear * Arear)
 b = max(bfwd,brear)
-print(b)
 e = 1.1302
 efwd = 0.65
 erear = 0.65
@@ -181,7 +180,8 @@ if isinstance(ARv,float) and isinstance(sweepTE,float):
     stability_derivatives.asym_stability_req(Ixx,Izz,Ixz,0.085,60,97.5,0.4,0.85)
     C_X, C_Z, C_m, C_Y, C_l,C_n = \
         stability_derivatives.return_stab_derivatives(Se_S = 0.15,be_b = 0.99,
-                                                      Sa_S=0.145,b1=b1,b2=99.0,cr_cv=0.4,br_bv=0.85)
+                                                      Sa_S=0.145,b1=b1,b2=99.0,cr_cv=0.4,br_bv=0.85,
+                                                      Ixx=Ixx, Iyy=Iyy,Izz=Izz, Ixz=Ixz)
     aircraft = Aircraft(W, h, S, c, b, V0, theta0, alpha0, q0, b0, phi0, p0, r0, Iyy, Ixx, Izz, Ixz, C_X, C_Z,C_m, CL0,
                         C_Y, C_l, C_n,Ka)
     # sys = aircraft.compute_sym_sys(V0,Iyy/(W/9.80665*b**2), C_X,C_Z,C_m)
