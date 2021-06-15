@@ -146,14 +146,21 @@ class Stab_Derivatives:
         :return: C_X_u, C_Z_u, C_m_u
         """
         # print("M_0 = ",self.M0)
+        CT_u = -3*(self.CD0)-3*self.CL0*np.tan(self.th0+self.alpha0)
+        CD0fwd = self.CLfwd0**2/(np.pi*self.Afwd*self.efwd) + self.CD_0
+        CD0rear = self.CLfwd0**2/(np.pi*self.Afwd*self.efwd) + self.CD_0
+        CT_fwd_u = -3*(CD0fwd)-3*self.CLfwd0*np.tan(self.th0+self.alpha0)
+        CT_rear_u = -3 * (CD0rear) - 3 * self.CLrear0 * np.tan(self.th0 + self.alpha0)
         CZ_u = -self.M0**2/(1-self.M0**2)*self.CL0
         CD_M = 0 # Incompressible flow
         CLfwd_M =  self.M0/(1-self.M0**2)*self.CLfwd0
         CLrear_M  =self.M0/(1-self.M0**2)*self.CLrear0
-        CX_u = -3*self.CD0-3*self.CL0*np.tan(self.th0+self.alpha0)-self.M0*CD_M -CZ_u*self.alpha0
+        CX_u = CT_u-self.M0*CD_M -CZ_u*self.alpha0
         Cm_M = CLfwd_M*(self.xcg-self.xacfwd)*self.Sfwd/(self.S*self.c)-\
                CLrear_M*(self.xacrear-self.xcg)*self.Srear/(self.S*self.c)*self.eta_rear
-        Cm_u = self.M0*Cm_M
+        Cm_u = self.M0*Cm_M -\
+               CT_rear_u*(self.hfus-self.zcg)*self.Srear/(self.S*self.c)*self.eta_rear + \
+               CT_fwd_u*(self.zcg-self.dy)*self.Sfwd/(self.S*self.c)
         return CX_u,CZ_u,Cm_u
 
     def alpha_derivatives(self):

@@ -12,6 +12,8 @@ m_pax = 88                              # Max per pax
 m_cargo_per_pax = 7                     # [kg] Cargo mass per pax
 m_cargo_tot = m_cargo_per_pax*n_pax     # [kg] Total cargo mass
 
+cargo_pos = 6       # [m] Cargo position
+
 # Fuselage
 w_fuselage = 1.38           # [m]
 h_fuselage = 1.7            # [m]
@@ -44,7 +46,7 @@ eff_prop = 0.83    # [-] Propeller efficiency during normal flight
 eff_hover = 0.88   # [-] Propeller efficiency during hover
 # TODO: revise
 eff_eng_bat = 0.7  # [-] Efficiency from batteries to engines (including engine, battery, and electronics efficiencies)
-sp_mass_en = 1     # [kg/W] TODO: placeholder
+sp_mass_en = 1/3500     # [kg/W] TODO: placeholder
 
 # Power
 sp_en_den = 450     # [Wh/kg] Specific energy density
@@ -53,4 +55,12 @@ bat_cost = 100      # [$/kWh] Cost of batteries in US dollars per kilogram
 DoD = 0.8           # [-] Depth of Discharge of the total battery
 P_den = 10000       # [W/kg] Power density of battery
 EOL_C = 0.8         # [-] Fraction of initial capacity that is available at end-of-life
+
+# Stability
+fus_back_bottom = []
+fus_back_top = []
+turn_over = np.radians(55)      # Turn-over angle
+pitch_lim = np.radians(20)      # Pitch limit
+lat_lim = np.radians(20)        # lateral ground clearance angle
+min_ng_load = 0.1               # minimum fraction of the total weight to be carried by the nose gear
 
