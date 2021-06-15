@@ -462,7 +462,8 @@ class RunDSE:
         # Vr_Vf = 1
 
         # Wing characteristics
-        Cmacfwd = airfoil.Cm_ac(const.sweepc41, AR_wing1)[0]
+        Cmac_airfoil = airfoil.Cm_ac(const.sweepc41, AR_wing1)[1]
+        Cmacfwd = airfoil.Cm_ac(const.sweepc41, AR_wing1)[0]  # TODO: changes with AR
         Cmacrear = airfoil.Cm_ac(const.sweepc42, AR_wing2)[0]
         CLfwd, CLrear = wing_design.CLa_wprop(T_per_eng_during_stall, V_stall, rho, 2*prop_radius, n_prop_1, n_prop_2,
                                               const.tc, CDs_w, CDs_f, Afus, alpha_wp, de_da)[4:6]
@@ -501,6 +502,17 @@ class RunDSE:
                                                                      xrangef,  xranger, zrangef, zranger, const.crmaxf,
                                                                      const.crmaxr, const.b_max, const.b_max,
                                                                      const.A_range_f, const.A_range_r, [x_front+0.01, x_aft-0.07])
+
+        # [AR_wing1, AR_wing2, xf, xr, zf, zr, Sr_Sf] = optimise_wings(Cmac_airfoil, CLfwd, CLrear, CLdesfwd,
+        #                                                              CLdesrear, CD0fwd, CD0rear, taper, taper,
+        #                                                              const.sweepc41, const.sweepc42, const.e_f,
+        #                                                              const.e_r, Clafwd, Clarear, Zcg, const.Vr_Vf_2,
+        #                                                              const.elev_fac, rho, P_cr/n_prop, S_tot, MTOM*g0,
+        #                                                              xrangef,  xranger, zrangef, zranger, const.crmaxf,
+        #                                                              const.crmaxr, const.b_max, const.b_max,
+        #                                                              const.A_range_f, const.A_range_r,
+        #                                                              xcg_range=[x_front, x_aft],    # xcg_range=[x_front, x_aft]
+        #                                                              impose_stability=False)
 
         [AR_wing1, AR_wing2, xf, xr, zf, zr, Sr_Sf] = optimise_wings(Cmacfwd, Cmacrear, CLfwd, CLrear, CLdesfwd,
                                                                      CLdesrear, CD0fwd, CD0rear, taper, taper,
