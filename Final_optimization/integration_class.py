@@ -97,6 +97,7 @@ def find_mac(S, b, taper):
     mac = 2/3 * cr * (1 + taper + taper ** 2) / (1 + taper)
     return mac
 
+
 def xmac_to_xle(sweep_25, A, taper, b, dihedral):
 
     # y position of the mac
@@ -251,16 +252,27 @@ class RunDSE:
         alpha_wp = 1    # If we only want CLmax (and not slope) this does not matter
 
         # Drag at stall
-        error = 1
-        while error > 0.05:
-            D_stall = drag.CD(CLmax) * 0.5 * rho * V_stall**2 * S_tot
-            T_per_eng_during_stall = D_stall/n_prop
+        # error = 1
+        # while error > 0.05:  # FIXME this goes crazy on the second iteration
+        #     D_stall = drag.CD(CLmax) * 0.5 * rho * V_stall**2 * S_tot
+        #     T_per_eng_during_stall = D_stall/n_prop
+        #
+        #     CLmaxnew = wing_design.CLa_wprop(T_per_eng_during_stall, V_stall, rho, 2*prop_radius, n_prop_1, n_prop_2,
+        #                                      const.tc, CDs_w, CDs_f, Afus, alpha_wp, de_da)[1]
+        #     print("1", CLmaxnew, "2", T_per_eng_during_stall, V_stall, rho, 2*prop_radius, n_prop_1, n_prop_2,
+        #                                      const.tc, CDs_w, CDs_f, Afus, alpha_wp, de_da, "end\n")
+        #     error = np.abs(CLmaxnew-CLmax)/CLmax
+        #     CLmax = CLmaxnew
 
-            CLmaxnew = wing_design.CLa_wprop(T_per_eng_during_stall, V_stall, rho, 2*prop_radius, n_prop_1, n_prop_2,
-                                             const.tc, CDs_w, CDs_f, Afus, alpha_wp, de_da)[1]
+        # FIXME no iter
+        D_stall = drag.CD(CLmax) * 0.5 * rho * V_stall**2 * S_tot
+        T_per_eng_during_stall = D_stall/n_prop
 
-            error = np.abs(CLmaxnew-CLmax)/CLmax
-            CLmax = CLmaxnew
+        CLmax = wing_design.CLa_wprop(T_per_eng_during_stall, V_stall, rho, 2*prop_radius, n_prop_1, n_prop_2,
+                                         const.tc, CDs_w, CDs_f, Afus, alpha_wp, de_da)[1]
+
+        print("1", CLmax, "2", T_per_eng_during_stall, V_stall, rho, 2*prop_radius, n_prop_1, n_prop_2,
+              const.tc, CDs_w, CDs_f, Afus, alpha_wp, de_da, "end\n")
 
         CD0 = drag.CD0()
         CD_cr = drag.CD(C_L=C_L_cr)
@@ -286,6 +298,8 @@ class RunDSE:
 
         # Cruise speed
         V_cr, CL_cr_check = V.cruise()
+
+        print(V_cr, MTOM, CLmax, S_tot)
 
         # Update the stall speed
         V_stall = V.stall()
@@ -466,7 +480,7 @@ class RunDSE:
         Cmacfwd = airfoil.Cm_ac(const.sweepc41, AR_wing1)[0]  # TODO: changes with AR
         Cmacrear = airfoil.Cm_ac(const.sweepc42, AR_wing2)[0]
         CLfwd, CLrear = wing_design.CLa_wprop(T_per_eng_during_stall, V_stall, rho, 2*prop_radius, n_prop_1, n_prop_2,
-                                              const.tc, CDs_w, CDs_f, Afus, alpha_wp, de_da)[4:6]
+                                              const.tc, CDs_w, CDs_f, Afus, alpha_wp, de_da=0)[4:6]
         CLdesfwd = drag.CL_des()[0]
         CLdesrear = drag.CL_des()[0]
         CD0fwd = drag.Cd_w(0)
@@ -495,13 +509,14 @@ class RunDSE:
 
         Zcg = 0.4 * const.h_fuselage  # Estimate
 
-        print(Cmacfwd, Cmacrear, CLfwd, CLrear, CLdesfwd, CLdesrear, CD0fwd, CD0rear, taper, taper,
-                                                                     const.sweepc41, const.sweepc42, const.e_f,
-                                                                     const.e_r, CLafwd, CLarear, Zcg, const.Vr_Vf_2,
-                                                                     const.elev_fac, rho, P_cr/n_prop, S_tot, MTOM*g0,
-                                                                     xrangef,  xranger, zrangef, zranger, const.crmaxf,
-                                                                     const.crmaxr, const.b_max, const.b_max,
-                                                                     const.A_range_f, const.A_range_r, [x_front+0.01, x_aft-0.07])
+        # Check inputs
+        # print(Cmacfwd, Cmacrear, CLfwd, CLrear, CLdesfwd, CLdesrear, CD0fwd, CD0rear, taper, taper,
+        #                                                              const.sweepc41, const.sweepc42, const.e_f,
+        #                                                              const.e_r, Clafwd, Clarear, Zcg, const.Vr_Vf_2,
+        #                                                              const.elev_fac, rho, P_cr/n_prop, S_tot, MTOM*g0,
+        #                                                              xrangef,  xranger, zrangef, zranger, const.crmaxf,
+        #                                                              const.crmaxr, const.b_max, const.b_max,
+        #                                                              const.A_range_f, const.A_range_r, [x_front, x_aft])
 
         # [AR_wing1, AR_wing2, xf, xr, zf, zr, Sr_Sf] = optimise_wings(Cmac_airfoil, CLfwd, CLrear, CLdesfwd,
         #                                                              CLdesrear, CD0fwd, CD0rear, taper, taper,
@@ -522,8 +537,8 @@ class RunDSE:
                                                                      xrangef,  xranger, zrangef, zranger, const.crmaxf,
                                                                      const.crmaxr, const.b_max, const.b_max,
                                                                      const.A_range_f, const.A_range_r,
-                                                                     xcg_range=[x_front, x_aft],    # xcg_range=[x_front, x_aft]
-                                                                     impose_stability=False)
+                                                                     xcg_range=[x_front, x_aft-0.07],    # xcg_range=[x_front, x_aft]
+                                                                     impose_stability=True)
                                                                      # TODO: revise stability margin
 
         # Calculate new S1 with new ratio
@@ -551,10 +566,10 @@ class RunDSE:
 
         # Landing gear placement
         h_bottom = 0
-        gears = LandingGearCalc(1.5*w_fus, x_ng_min = 0.3, y_max_rotor=wing_plan_1[0],
-                                gamma = float(np.radians(5)), z_rotor_line_root=pos_front_wing[1] + h_bottom,
-                                rotor_rad = prop_radius,
-                                fus_back_bottom = const.fus_back_bottom, fus_back_top=const.fus_back_top)
+        gears = LandingGearCalc(1.5*w_fus, x_ng_min=0.3, y_max_rotor=wing_plan_1[0],
+                                gamma=float(np.radians(5)), z_rotor_line_root=pos_front_wing[1] + h_bottom,
+                                rotor_rad=prop_radius,
+                                fus_back_bottom=const.fus_back_bottom, fus_back_top=const.fus_back_top)
 
         x_ng, x_mlg, track_width, z_mlg = gears.optimum_placement([x_front, x_aft], x_cg_margin=0,
                                                                   z_cg_max=z_top, theta=const.pitch_lim,
@@ -562,7 +577,8 @@ class RunDSE:
                                                                   min_ng_load_frac=const.min_ng_load)
 
         CM_a = Cma(Clafwd, Clarear, const.sweepc41, const.sweepc42, taper, taper, CL_cr_1, CL_cr_2, AR_wing1, AR_wing2,
-                   const.e_f, const.e_r, xf, xr, zf, zr, Zcg, const.Vr_Vf_2, Sr_Sf, x_CG_MTOM)
+                   const.e_f, const.e_r, xf, xr, zf, zr, Zcg, const.Vr_Vf_2, Sr_Sf, x_CG_MTOM, S_tot, rho, P_cr/n_prop,
+                   MTOM*g0)
 
         # Load vertical tail
         vertical_tail = vert_tail.VT_sizing(MTOM * g0, h_cr, x_CG_MTOM, l_fus, h_fus, w_fus, V_cr, V_stall, CD0,
@@ -584,6 +600,8 @@ class RunDSE:
         # Outputs for optimisation cost function
         optim_outputs = [MTOM, energy, time, CM_a]
 
+        print("MTOM:", MTOM, ", energy:", energy, ", battery mass:", m_bat)
+
         # Other necessary outputs
         other_outputs = [track_width, z_mlg]
 
@@ -602,5 +620,21 @@ class RunDSE:
             print("Iteration #", i)
             print("")
             optim_outputs, internal_inputs, other_outputs = self.run(optim_inputs, internal_inputs)
+
+        """
+        Function to iterate until converged
+        """
+        # N_iter = 0
+        # convergence = 1
+        # m_old = 3000        # Initial mass
+        # while (convergence > 0.01) or (N_iter < 10):
+        #     optim_outputs, internal_inputs, other_outputs = self.run(optim_inputs, internal_inputs)
+        #
+        #     N_iter += 1
+        #
+        #     # Check convergence of mass
+        #     m_new = internal_inputs[0]
+        #     convergence = np.abs(m_new - m_old)/m_old
+        #     m_old = m_new
 
         return optim_outputs, internal_inputs, other_outputs

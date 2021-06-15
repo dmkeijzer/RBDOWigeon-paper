@@ -35,7 +35,7 @@ optimisation_class = int_class.RunDSE(initial_estimate)
 
 # Run the file for # iterations
 N_iter = 10
-optim_outputs, internal_inputs, other_outputs = optimisation_class.multirun(N_iter, [])
+optim_outputs, internal_inputs, other_outputs = optimisation_class.multirun(N_iter, optim_inputs=[])
 
 print(optim_outputs)
 print("")

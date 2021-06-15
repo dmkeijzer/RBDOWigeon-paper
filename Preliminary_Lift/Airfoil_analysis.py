@@ -39,7 +39,7 @@ def Cd(CL):
     Cl_vals = np.array(df["CL"][df["alpha"]<17])
     Cd_vals = np.array(df["CD"][df["alpha"]<17])
     #print(Cl_vals)
-    fcd = interp1d(Cl_vals,Cd_vals,kind = 'quadratic')
+    fcd = interp1d(Cl_vals, Cd_vals, kind='quadratic', fill_value="extrapolate")
     return fcd(CL)
 
 def Cm_ac(sweep, ARw):
