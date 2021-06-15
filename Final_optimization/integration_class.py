@@ -21,7 +21,7 @@ import stab_and_ctrl.Vertical_tail_sizing as vert_tail
 from stab_and_ctrl.hover_controllabilty import HoverControlCalcTandem
 from stab_and_ctrl.landing_gear_placement import LandingGearCalc
 from stab_and_ctrl.loading_diagram import CgCalculator
-from stab_and_ctrl.xcg_limits import xcg_limits, optimise_wings
+from stab_and_ctrl.xcg_limits import xcg_limits, optimise_wings, Cma
 
 # Structures
 import structures.Weight as wei
@@ -491,7 +491,7 @@ class RunDSE:
         Clarear = wing_design.liftslope(0)[2]
 
         # Optimize the wing size and aspect ratios for stability and control, ignoring the stability constraint for now
-        [Af, Ar, xf, xr, zf, zr, Sr_Sf]  = optimise_wings(Cmacfwd, Cmacrear, CLfwd, CLrear, CLdesfwd, CLdesrear, CD0fwd,
+        [AR_wing1, AR_wing2, xf, xr, zf, zr, Sr_Sf]  = optimise_wings(Cmacfwd, Cmacrear, CLfwd, CLrear, CLdesfwd, CLdesrear, CD0fwd,
                                                           CD0rear, taper, taper, const.sweepc41, const.sweepc42,
                                                           const.e_f, const.e_r, Clafwd, Clarear, Zcg, const.Vr_Vf_2,
                                                           const.elev_fac, rho, P_cr/n_prop, S_tot, MTOM*g0, xrangef,
@@ -514,12 +514,11 @@ class RunDSE:
                                                                   phi = const.lat_lim, psi = const.turn_over,
                                                                   min_ng_load_frac = const.min_ng_load)
 
-
         # TODO update array with the final updated values
         internal_inputs = [MTOM, m_bat, V_cr, h_cr, C_L_cr, CLmax, prop_radius, de_da, Sv]
 
         # Outputs for optimisation cost function
-        optim_outputs = [MTOM, energy, time]
+        optim_outputs = [MTOM, energy, time, CM_a]
 
         return optim_outputs, internal_inputs
 
