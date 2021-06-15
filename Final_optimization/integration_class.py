@@ -514,6 +514,19 @@ class RunDSE:
                                                                   phi = const.lat_lim, psi = const.turn_over,
                                                                   min_ng_load_frac = const.min_ng_load)
 
+        CM_a = Cma(Clafwd, Clarear, const.sweepc41, const.sweepc42, taper, taper, CL_cr_1, CL_cr_2, AR_wing1, AR_wing2,
+                   const.e_f, const.e_r, xf, xr, zf, zr, Zcg, const.Vr_Vf_2, Sr_Sf, xcg)
+
+        # TODO revise inputs
+        vertical_tail = vert_tail.VT_sizing(MTOM * g0, h_cr, x_CG_MTOM, l_fus, h_fus, w_fus, V_cr, V_stall, CD0,
+                                            CL_cr_1, CL_cr_2, 0, 0, S1, S2, AR_wing1, AR_wing2, 0, 0,
+                                            wing_plan_1[3], wing_plan_2[3], wing_plan_1[0], wing_plan_2[0], taper,
+                                            ARv=1.25)
+
+        v_tail = vertical_tail.final_VT_rudder(n_prop, D_cr, wing_plan_1[0] / 2, l_fus - x_CG_MTOM, 0.9, 0.35)
+
+        Sv = v_tail[0]
+
         # TODO update array with the final updated values
         internal_inputs = [MTOM, m_bat, V_cr, h_cr, C_L_cr, CLmax, prop_radius, de_da, Sv]
 
