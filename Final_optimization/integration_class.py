@@ -343,10 +343,13 @@ class RunDSE:
                              rotational_rate=5, mission_dist = mission_range)
 
         # Get approximate overall efficiency
-        mission.total_energy()
+        energy, t_tot, max_power, max_thrust = mission.total_energy()
         eff_overall = 0.91 * 0.57 + 0.699 * 0.43  # TODO adapt
-        energy = mission.total_energy()[0] * 2.77778e-7 * 1000 / eff_overall  # From [J] to [Wh]
+        energy = energy * 2.77778e-7 * 1000 / eff_overall  # From [J] to [Wh]
         # TODO: check safety factor (1.02 *)
+
+        # Cruise power
+        P_cr = mission.power_cruise_config(h_cr, V_cr, MTOM)
 
         # Engine sizing
 
@@ -502,7 +505,7 @@ class RunDSE:
         # TODO: Check if origin of coordinate system starts at ground or bottom of the aircraft
         h_bottom = 0
         gears = LandingGearCalc(1.5*w_fus, x_ng_min = 0.3, y_max_rotor = wing_plan_1[0],
-                                gamma = np.radians(5), z_rotor_line_root = pos_front_wing[1] + h_bottom,
+                                gamma = float(np.radians(5)), z_rotor_line_root = pos_front_wing[1] + h_bottom,
                                 rotor_rad = prop_radius,
                                 fus_back_bottom = const.fus_back_bottom, fus_back_top = const.fus_back_top)
 

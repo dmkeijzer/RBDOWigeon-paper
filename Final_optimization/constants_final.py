@@ -66,4 +66,11 @@ turn_over = np.radians(55)      # Turn-over angle
 pitch_lim = np.radians(20)      # Pitch limit
 lat_lim = np.radians(20)        # lateral ground clearance angle
 min_ng_load = 0.1               # minimum fraction of the total weight to be carried by the nose gear
+b_max       = 11
+elev_fac = 1.4
+crmaxf = 3
+crmaxr = 3
+A_range_f = [5, 15]
+A_range_r = [5, 15]
+
 
