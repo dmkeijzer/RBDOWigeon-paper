@@ -160,7 +160,7 @@ plt.plot(alpha_wp, CLwp[0])
 plt.plot(alpha_wp, Cl_alpha_curve2[2])
 plt.show()
 
-print("CLmax wop, CLmaxwp", CLmax, CLwp[1])
+print("CLmax wop, CLmaxwp", stall[1:3], CLwp[4:])
 
 
 
