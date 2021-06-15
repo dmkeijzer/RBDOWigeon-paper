@@ -1,0 +1,3 @@
+[submodule "structures/FunctionsCPP"]
+	path = structures/FunctionsCPP
+	url = https://github.com/chezzoba/FunctionsCPP.git

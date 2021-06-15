@@ -152,10 +152,21 @@ class Fatigue:
     def getCycles(self):
         df = pd.DataFrame(data=list(rainflow.extract_cycles(self.cyc)),
                               columns='dS, Sm, count, ti, tf'.split(', '))
+        df['Smax'] = df['Sm'] + df['dS'] / 2
+        df['Smin'] = df['Sm'] - df['dS'] / 2
         self.df = df[df['count'] != 0]
         return self.df
     
-    def MinersRule(self, paris=False, w=None, ar=(None, None)):
-        Ns = np.array([self.mat.ParisFatigueN(dS, w, *ar) if paris else self.mat.BasquinLaw(dS) for dS in self.df.dS])
+    def MinersRule(self):
+        Ns = np.array([self.mat.BasquinLaw(dS) for dS in self.df.dS])
         nCycles = self.df['count'] / Ns
         return 1 / nCycles.sum()
+    
+    def CrackGrowth(self, a0, w, Nflights):
+        length = a0
+        for j in range(Nflights):
+            for i in range(len(self.df)):
+                da = self.mat.ParisFatigueda(length, w,
+                                        self.df.iloc[i]['Smax'], self.df.iloc[i]['Smin'], self.df.iloc[i]['count'])
+                length += da
+        return length
