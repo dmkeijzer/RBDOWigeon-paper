@@ -260,6 +260,7 @@ class mission:
             rho_lst.append(rho)
 
             # Check if end conditions are satisfied
+
             if abs(vx - vx_tgt) < 0.8 and abs(y - y_tgt) < 0.5 and abs(vy) < 0.5 and t >= 5 or t > 600:
                 running = False
 

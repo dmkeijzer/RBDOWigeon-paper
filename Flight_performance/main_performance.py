@@ -19,7 +19,7 @@ P_max  = 1.4e6
 mission_profile = mission(mass, cruising_alt, cruise_speed, CL_max, wing_surface, A_disk = A_disk, P_max = P_max,
                           plotting = True)
 
-E_tot, t_tot, max_power = mission_profile.total_energy()
+E_tot, t_tot, max_power, max_thrust = mission_profile.total_energy()
 
 print('Total energy', E_tot/1e6, 'MJ')
 print("Total time", t_tot/3600, 'hr')
