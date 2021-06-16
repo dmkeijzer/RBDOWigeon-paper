@@ -81,7 +81,7 @@ def mass(MTOM, S1, S2, n_ult, AR_wing1, AR_wing2, pos_frontwing, pos_backwing, P
     props = wei.Propulsion(n_prop, m_prop, pos_prop)
     cg_props = props.pos_prop
     m_prop = props.mass
-    Mass = wei.Weight(m_pax, wing, fuselage, lgear, props, cargo_m=cargo_m, cargo_pos=const.cargo_pos[0], battery_m=m_bat,
+    Mass = wei.Weight(m_pax*const.payload_cont, wing, fuselage, lgear, props, cargo_m=cargo_m, cargo_pos=const.cargo_pos[0], battery_m=m_bat,
                       battery_pos=const.cg_bat[0], p_pax=[1.75, 3.75, 3.75, 6, 6])
 
     # print('gear mass', lgear.mass, props.mass)
@@ -346,7 +346,7 @@ class RunDSE:
 
         # Overall efficiency from battery to engine
         eff_overall = const.eff_bat_eng_cr * (t_hor/t_tot) + const.eff_bat_eng_h * (1-(t_hor/t_tot))
-        energy = energy * 2.77778e-7 * 1000 / eff_overall  # From [J] to [Wh]
+        energy = energy * 2.77778e-7 * 1000*const.energy_cont / eff_overall  # From [J] to [Wh]
 
         # TODO: check safety factor (1.02 *)
 
@@ -397,9 +397,11 @@ class RunDSE:
                                                                                      const.m_pax,  const.m_cargo_tot,
                                                                                      m_bat)
 
+        MTOM = MTOM*const.mass_cont
+
 
         print(x_CG_MTOM)
-        x_CG_MTOM = 3.9#0.8*x_CG_MTOM
+        x_CG_MTOM = 3.8#0.8*x_CG_MTOM
 
         # ----------------- Stability and control -------------------
 

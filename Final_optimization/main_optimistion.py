@@ -10,10 +10,10 @@ CLmax = 1.68
 prop_radius = 0.55
 de_da = 0.25
 Sv = 1.1
-V_stall = 40
+V_stall = 35
 max_power = 1.5e6
-AR_wing1 = 7.5
-AR_wing2 = 8.5
+AR_wing1 = 7.9
+AR_wing2 = 8.6
 Sr_Sf = 1.2
 s1 = (1 + Sr_Sf)**-1
 
