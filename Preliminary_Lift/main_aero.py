@@ -25,7 +25,7 @@ AR = 3.75
 
 
 W = STR["MTOW"] #[N]
-Vcruise = 70#FP["V_cruise"] #[m/s]
+Vcruise = 40#FP["V_cruise"] #[m/s]
 Wing_loading = FP["WS"]
 
 #Cruise conditions
@@ -144,7 +144,7 @@ x = LLT2wings(b,2*AR,C_r,C_t,0,5, h_d, 6,b,2*AR,C_r,C_t,0,5, 70, 0, 1.5)
 #x = LLT1wing
 print(x)
 D = 0.965 #m
-T = 146.5 #N
+T = 400.5 #N
 ne1 = 6
 ne2 = 6
 
@@ -152,6 +152,10 @@ alpha_wp = np.arange(-5,18,0.25)
 Cl_alpha_curve2 = Wing_params.CLa(tc, CDs, CDs_f, Afus, alpha_wp, deda)
 CLwp = Wing_params.CLa_wprop(T, Vcruise,rho,D,ne1,ne2,tc,CDs_w, CDs_f, Afus, alpha_wp, deda)
 
+print("C_T", Wing_params.C_T(ne1,ne2,T, Vcruise, rho))
+print("deltaV", Wing_params.deltaV(T, Vcruise, rho, D, ne1, ne2))
+print("CLmax", CLwp[1], CLmax)
+print("Deff", Wing_params.Deff(T,Vcruise, rho, D, ne1, ne2))
 plt.plot(alpha_wp, CLwp[0])
 plt.plot(alpha_wp, Cl_alpha_curve2[2])
 plt.show()
