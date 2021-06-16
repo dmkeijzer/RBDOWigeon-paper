@@ -23,3 +23,10 @@ class TestFatigue(unittest.TestCase):
     def test_Basquins(self):
         self.assertAlmostEqual(self.fatigue.mat.BasquinLaw(140)*1e-6, 0.819970, places=1)
         self.assertAlmostEqual(self.fatigue.mat.BasquinLaw(200)*1e-6, 0.12304, places=0)
+    
+    def test_Paris(self):
+        steel = Material.load(file='data/materials.csv', material='AISI 1045', Condition='Annealed')
+        steel.C = 1.294e-12
+        steel.m = 3.4
+        rat = steel.ParisFatigueN(100, 0, 1, 5e-3, 100e-3) / steel.ParisFatigueN(100, 0, 1, 5e-3, 50e-3)
+        self.assertAlmostEqual(rat, 1.1, places=1)
