@@ -359,7 +359,7 @@ def optimise_wings(CLmaxf, CLmaxr, CLdesf, CLdesr, CD0f, CD0r,
                    xranger, zrangef, zranger, crmaxf, crmaxr, bmaxf, bmaxr,
                    Arangef, Aranger, xcg_range, impose_stability=True,
                    init_Af=7, init_Ar=7, init_xf=0.5, init_xr=6.5, init_zf=0.5,
-                   init_zr=1.5, init_Sr_Sf=1):
+                   init_zr=1.5, init_Sr_Sf=1.):
     # FIXME: span efficiency factor is assumed to be constant
     """
     Optimise for maximum wingspan on the front wing while meeting stability
@@ -564,7 +564,11 @@ def plot_Sf_Sr_Af_plane(CLmaxf, CLmaxr, CLdesf, CLdesr, CD0f,
 
     plt.xlabel(r"$S_r/S_f$")
     plt.ylabel(r"$A_f$")
-    margin = xcg_stab_grid - xcg_ctrl_grid
+    margin = Cma(Claf, Clar, lambda_c4f, lambda_c4r, taperf, taperr, CLdesf,
+                 CLdesr, Af_grid, Ar, ef, er, xf, xr, zf, zr, zcg, Vr_Vf_2,
+                 Sr_Sf_grid, xcg_range[1], S, rho, Pbr, W)
+    # margin = xcg_stab_grid
+    # margin = xcg_stab_grid - xcg_ctrl_grid
     max_val = np.abs(margin).max()
     plt.pcolormesh(Sr_Sf_grid, Af_grid, margin, vmin=-max_val, vmax=max_val,
                    cmap="coolwarm")
@@ -580,54 +584,78 @@ def plot_Sf_Sr_Af_plane(CLmaxf, CLmaxr, CLdesf, CLdesr, CD0f,
 
 
 if __name__ == "__main__":
-    Cmacf = -0.0645
-    Cmacr = -0.0645
-    CLmaxf = 1.44333
-    CLmaxr = 1.44333
-    CLdesf = 0.7382799
-    CLdesr = 0.7382799
-    CD0f = 0.00822
-    CD0r = 0.00822
+    # Cmacf = -0.0645
+    # Cmacr = -0.0645
+    CLmaxf = 1.7135/1.4
+    CLmaxr = 0.67448
+    # CLdesf = 0.7382799
+    # CLdesr = 0.7382799
+    CD0f = 0.00856
+    CD0r = 0.00856
     taperf = 0.45
     taperr = 0.45
     lambda_c4f = 0
     lambda_c4r = 0
-    ef = 0.958
-    er = 0.958
-    Claf = 6.1879
-    Clar = 6.1879
-    zcg = 0.7
-    Vr_Vf_2 = 0.8
+    ef = 0.65
+    er = 0.65
+    Claf = 6.028232202020173
+    Clar = 6.028232202020173
+    zcg = 0.4 * 1.7
+    Vr_Vf_2 = 1
     elev_fac = 1.4
-    rho = 1.225
-    Pbr = 110024 / 1.2 * 0.9 / 12 * 3
-    S = 8.417113787320769 * 2
-    W = 2939.949692 * 9.80665
+    rho = 1.111617926993772
+    Pbr = 10561.929511285156
+    S = 18.379085418840855
+    # W = 2939.949692 * 9.80665
+    # Initial estimates
+    MTOM = 34460.871830379496  #2800
+    W = MTOM * 9.80665
+    V_cr = 66
+    h_cr = 1000
+    C_L_cr = 0.5960658181816159
+    prop_radius = 0.55
+    de_da = 0.25
+    Sv = 1.1
+    V_stall = 40
+    max_power = 1.5e6
+    AR_wing1_init = 8
+    AR_wing2_init = 9
+    Sr_Sf_init = 1.7
 
-    xf = [0.3, 1.5]
-    xr = [5.5, 7]
-    zf = [0.3, 0.8]
-    zr = [1, 1.7]
-    crmaxf = 1.5
-    crmaxr = 2.5
-    bmax = 14
-    xcg_range = [2.85, 3.05]
-    Arange = [2, 9]
-    impose_stability = False
+    # Positions of the wings [horizontally, vertically]
+    xf_init = 0.5
+    zf_init = 0.3
+    xr_init = 6
+    zr_init = 1.7
+
+    xf = [0.45, 0.65]
+    xr = [6, 7]
+    zf = [0.25, 0.35]
+    zr = [1.65, 1.7]
+    crmaxf = 2.1
+    crmaxr = 3
+    bmax = 11
+    xcg_range = [3.8870312891046765, 3.8870312891046765+0.2]
+    Arange = [7, 12]
+
+    impose_stability = True
 
     Af, Ar, xf, xr, zf, zr, Sr_Sf = optimise_wings(
-        CLmaxf, CLmaxr, CLdesf, CLdesr, CD0f,
+        CLmaxf, CLmaxr, C_L_cr, C_L_cr, CD0f,
         CD0r, taperf, taperr, lambda_c4f, lambda_c4r, ef, er,
         Claf, Clar, zcg, Vr_Vf_2, elev_fac, rho, Pbr, S, W,
         xf, xr, zf, zr, crmaxf, crmaxf, bmax, bmax, Arange, Arange,
-        xcg_range, impose_stability=impose_stability)
+        xcg_range, impose_stability=impose_stability,
+        init_Af=6, init_Ar=9, init_xf=xf_init, init_xr=xr_init, init_zf=zf_init,
+        init_zr=zr_init, init_Sr_Sf=Sr_Sf_init
+    )
 
     print(Af, Ar, xf, xr, zf, zr, Sr_Sf)
 
-    plot_Sr_Sf_range = [0.2, 5]
-    plot_Af_range = [0.1, 15]
+    plot_Sr_Sf_range = [0.5, 3]
+    plot_Af_range = [3, 13]
 
-    plot_Sf_Sr_Af_plane(CLmaxf, CLmaxr, CLdesf, CLdesr, CD0f,
+    plot_Sf_Sr_Af_plane(CLmaxf, CLmaxr, C_L_cr, C_L_cr, CD0f,
                         CD0r, taperf, taperr, lambda_c4f, lambda_c4r, ef, er,
                         Claf, Clar, zcg, Vr_Vf_2, elev_fac, rho, Pbr, S, W,
                         Ar, xf, xr, zf, zr, xcg_range, plot_Sr_Sf_range,
