@@ -146,6 +146,12 @@ class Control_surface:
             plt.legend()
             plt.show()
         else:
+            ba = (b2 - b1) / 100 * self.bfwd / 2 * 2
+            ca = Sa_S * self.Sfwd / ba
+            # print("c_a = ",ca)
+            ca_r = ca * 2 / (1 + self.taper_a)
+            # print("ca_root = ",ca_r)
+            ca_t = ca_r * self.taper_a
             da_max = -30 * np.pi / 180
             dphi_dt = 60 * np.pi / 180 /1.3
             minClda = -(dphi_dt) * self.Clp() * max(self.bfwd, self.brear) / (2 * self.Vmc * da_max)
@@ -164,6 +170,7 @@ class Control_surface:
             plt.xlabel(r"$b_2$ [$\% b_{i}/2$]", fontsize=12)
             # plt.vlines(b1,min(Sa_S),max(Sa_S),"r",label=r"Smallest limit set by $b_1$")
             plt.show()
+        return ca_t, ca_r, b1, b2
 
 
 
