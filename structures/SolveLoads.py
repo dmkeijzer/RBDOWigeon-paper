@@ -1,5 +1,5 @@
-from Geometry import Stringer, WingBox, WingStructure
-from Equilibrium import PointLoad, Moment, RunningLoad, EquilibriumEquation, DistributedMoment
+from structures.Geometry import Stringer, WingBox, WingStructure
+from structures.Equilibrium import PointLoad, Moment, RunningLoad, EquilibriumEquation, DistributedMoment
 from sklearn.preprocessing import PolynomialFeatures
 from sklearn.linear_model import LinearRegression
 from MathFunctions import StepFunction
