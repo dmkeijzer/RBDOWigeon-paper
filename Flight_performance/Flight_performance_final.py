@@ -83,12 +83,12 @@ class mission:
         if isinstance(V, np.ndarray):
             Tlst = []
             for v in V:
-                T_max  = optimize.newton(thrust_to_power_max, x0 = 20000, args=(v, rho))
+                T_max  = optimize.newton(thrust_to_power_max, x0=20000, args=(v, rho), maxiter=1000)
                 Tlst.append(T_max)
 
             return np.array(Tlst)
         else:
-            return optimize.newton(thrust_to_power_max, x0 = 20000, args=(V, rho))
+            return optimize.newton(thrust_to_power_max, x0=20000, args=(V, rho), maxiter=100000)
 
     def aero_coefficients(self, angle_of_attack):
         """
@@ -260,6 +260,7 @@ class mission:
             rho_lst.append(rho)
 
             # Check if end conditions are satisfied
+
             if abs(vx - vx_tgt) < 0.8 and abs(y - y_tgt) < 0.5 and abs(vy) < 0.5 and t >= 5 or t > 600:
                 running = False
 
@@ -502,7 +503,7 @@ class evtol_performance:
         eff = eff_hover + V*(eff_prop - eff_hover)/self.v_cruise
 
         P_r = P_a/eff
-
+        print(P_a, P_r)
         return P_r - self.P_max
 
     def max_thrust(self, rho, V):
@@ -510,12 +511,12 @@ class evtol_performance:
         if isinstance(V, np.ndarray):
             Tlst = []
             for v in V:
-                T_max  = optimize.newton(self.thrust_to_power, x0 = 20000, args=(v, rho))
+                T_max  = optimize.newton(self.thrust_to_power, x0=20000, args=(v, rho), maxiter=100000)
                 Tlst.append(T_max)
 
             return np.array(Tlst)
         else:
-            return optimize.newton(self.thrust_to_power, x0 = 20000, args=(V, rho))
+            return optimize.newton(self.thrust_to_power, x0=20000, args=(V, rho), maxiter=100000)
 
     def climb_performance(self, testing = False):
 
@@ -628,7 +629,7 @@ class evtol_performance:
             for i, h in enumerate(altitudes):
 
                 # Solve the equation for the rate of climb
-                RC[i] = self.vertical_equilibrium(h, m)#optimize.root_scalar(self.vertical_equilibrium, x0 = 5, args = (h, m, testing))#fsolve(self.vertical_equilibrium, 5, args = (h, m, testing))
+                RC[i] = self.vertical_equilibrium(h, m)  # optimize.root_scalar(self.vertical_equilibrium, x0 = 5, args = (h, m, testing))#fsolve(self.vertical_equilibrium, 5, args = (h, m, testing))
 
             # Plot the results
             plt.plot(altitudes, RC, label = 'mass: ' + str(m))
