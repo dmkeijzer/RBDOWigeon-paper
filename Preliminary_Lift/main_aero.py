@@ -11,7 +11,7 @@ from Preliminary_Lift.Airfoil_analysis import airfoil_stats
 import os
 import json
 import matplotlib.pyplot as plt
-from Preliminary_Lift.LLTtest2 import LLT1wing , LLT2wings, downwash, downwash_upwash
+from Preliminary_Lift.LLTtest2 import LLT1wing , LLT2wings, downwash, downwash_upwash, downwash_fore
 from scipy.special import ellipk, ellipe
 from scipy.interpolate import interp1d
 root_path = os.path.join(os.getcwd(), os.pardir)
