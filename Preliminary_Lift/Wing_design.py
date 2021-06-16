@@ -232,6 +232,9 @@ class wing_design:
         CLWS2 = self.CLW2 + self.CLS2
         return CLWS1 , CLWS2
 
+    # T_per_eng_during_stall, V_stall, rho, prop_radius * 2, n_prop_1,
+    # n_prop_2, const.tc, CDs_w, CDs_f, Afus, alpha_wp, de_da
+
     def CLa_wprop(self, T, V_inf, rho, D, ne1,ne2, tc, CDs_W, CDs_f, Afus, alpha_wp, de_da):
         self.CLmax_s(de_da)
 

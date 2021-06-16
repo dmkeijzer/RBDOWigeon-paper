@@ -12,18 +12,18 @@ de_da = 0.25
 Sv = 1.1
 V_stall = 40
 max_power = 1.5e6
-AR_wing1 = 8
-AR_wing2 = 9
-Sr_Sf = 1.7
+AR_wing1 = 7.5
+AR_wing2 = 8.5
+Sr_Sf = 1.2
 s1 = (1 + Sr_Sf)**-1
 
 # Positions of the wings [horizontally, vertically]
 xf = 0.5
 zf = 0.3
-xr = 6
+xr = 7.5
 
 zr = 1.7
-max_thrust_stall = MTOM*const.g
+max_thrust_stall = MTOM*const.g*0.5
 
 # Initial estimates for the variables
 initial_estimate = [MTOM, 0, V_cr, h_cr, C_L_cr, CLmax, prop_radius, de_da, Sv, V_stall, max_power, AR_wing1,
