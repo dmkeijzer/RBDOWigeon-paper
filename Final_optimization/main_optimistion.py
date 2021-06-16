@@ -1,4 +1,4 @@
-import integration_class as int_class
+import integration_class_ar_input as int_class
 
 # Initial estimates
 MTOM = 3000
@@ -11,8 +11,8 @@ de_da = 0.25
 Sv = 1.1
 V_stall = 40
 max_power = 2000000
-AR_wing1 = 8
-AR_wing2 = 8
+AR_wing1 = 10
+AR_wing2 = 10
 Sr_Sf = 1
 s1 = 0.5
 
@@ -23,12 +23,13 @@ xr = 7
 zr = 1.7
 
 # Spans
-b1 = 8
-b2 = 8
+b1 = None
+b2 = None
 
 # Initial estimates for the variables
 initial_estimate = [MTOM, 0, V_cr, h_cr, C_L_cr, CLmax, prop_radius, de_da, Sv, V_stall, max_power, AR_wing1,
-                    AR_wing2, Sr_Sf, s1, xf, zf, xr, zr, b1, b2]
+                    AR_wing2, Sr_Sf, s1, xf, zf, xr, zr, b1, b2,  # Parameters used to replace wing_optimization:
+                    ]
 
 # Optimisation class
 optimisation_class = int_class.RunDSE(initial_estimate)

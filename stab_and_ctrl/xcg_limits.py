@@ -175,6 +175,50 @@ def xcg_ctrl(lambda_c4f, lambda_c4r, CLf, CLr, CD0f, CD0r, Af, Ar, ef,
     return num / den
 
 
+def get_Sr_Sf_for_controllability(lambda_c4f, lambda_c4r, CLf, CLr, elev_fac,
+                                  CD0f, CD0r, Af, Ar, ef, er, macf, macr, xf,
+                                  xr, zf, zr, zcg, xcg_front, Vr_Vf_2):
+    """
+    Calculate the maximum Sr_Sf to place the controllability point in front
+    of the front CG position.
+    :param lambda_c4f:
+    :param lambda_c4r:
+    :param CLf:
+    :param CLr:
+    :param elev_fac:
+    :param CD0f:
+    :param CD0r:
+    :param Af:
+    :param Ar:
+    :param ef:
+    :param er:
+    :param macf:
+    :param macr:
+    :param xf:
+    :param xr:
+    :param zf:
+    :param zr:
+    :param zcg:
+    :param xcg_front:
+    :param Vr_Vf_2:
+    :return:
+    """
+    CLf = CLf * elev_fac
+
+    Cmacf = Cm_ac(lambda_c4f, Af)[0]
+    Cmacr = Cm_ac(lambda_c4r, Ar)[0]
+
+    num = (-Cmacf
+           - CLf * (xcg_front - xf) / macf
+           + (CD0f + CLf ** 2 / (np.pi * Af * ef)) * (zcg - zf) / macf)
+
+    den = (Cmacr * Vr_Vf_2 * macr / macf
+           - CLr * Vr_Vf_2 * (xr - xcg_front) / macf
+           + (CD0r + CLr**2 / (np.pi * Ar * er)) * Vr_Vf_2 * (zr - zcg) / macf)
+
+    return num / den
+
+
 def CLa(Cla, A, lambda_c2, M=0, eta=0.95):
     """
     Calculate wing lift slope based on aerofoil lift slope
@@ -526,9 +570,9 @@ def plot_Sf_Sr_Af_plane(CLmaxf, CLmaxr, CLdesf, CLdesr, CD0f,
                    cmap="coolwarm")
     plt.colorbar()
     plt.contour(Sr_Sf_grid, Af_grid, xcg_ctrl_grid,
-                [xcg_range[0]], colors=["tab:blue"], label="controllability")
+                [xcg_range[0]], colors=["tab:blue"])
     plt.contour(Sr_Sf_grid, Af_grid, xcg_stab_grid,
-                [xcg_range[1]], colors=["tab:orange"], label="stability")
+                [xcg_range[1]], colors=["tab:orange"])
     plt.legend()
 
     if Sr_Sf is not None:
@@ -569,7 +613,7 @@ if __name__ == "__main__":
     bmax = 14
     xcg_range = [2.85, 3.05]
     Arange = [2, 9]
-    impose_stability = True
+    impose_stability = False
 
     Af, Ar, xf, xr, zf, zr, Sr_Sf = optimise_wings(
         CLmaxf, CLmaxr, CLdesf, CLdesr, CD0f,
