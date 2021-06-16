@@ -454,10 +454,11 @@ def optimise_wings(CLmaxf, CLmaxr, CLdesf, CLdesr, CD0f, CD0r,
     # we filter out those cases
     cg_limits = find_cg_limits(result.x)
     if xcg_range[0] < cg_limits[0] or xcg_range[1] < cg_limits[0]:
-        return None
+        # return None
+        print("First wingop if statement executed")
     if (impose_stability and xcg_range[0] > cg_limits[1]
             or xcg_range[1] > cg_limits[1]):
-        return None
+        print("Second wingop if statement executed")
 
     return result.x
 

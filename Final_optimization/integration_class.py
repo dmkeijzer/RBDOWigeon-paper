@@ -271,8 +271,8 @@ class RunDSE:
         CLmax = wing_design.CLa_wprop(T_per_eng_during_stall, V_stall, rho, 2*prop_radius, n_prop_1, n_prop_2,
                                          const.tc, CDs_w, CDs_f, Afus, alpha_wp, de_da)[1]
 
-        print("1", CLmax, "2", T_per_eng_during_stall, V_stall, rho, 2*prop_radius, n_prop_1, n_prop_2,
-              const.tc, CDs_w, CDs_f, Afus, alpha_wp, de_da, "end\n")
+        # print("1", CLmax, "2", T_per_eng_during_stall, V_stall, rho, 2*prop_radius, n_prop_1, n_prop_2,
+        #       const.tc, CDs_w, CDs_f, Afus, alpha_wp, de_da, "end\n")
 
         CD0 = drag.CD0()
         CD_cr = drag.CD(C_L=C_L_cr)
@@ -299,7 +299,8 @@ class RunDSE:
         # Cruise speed
         V_cr, CL_cr_check = V.cruise()
 
-        print(V_cr, MTOM, CLmax, S_tot)
+        print("V_cr", V_cr, "MTOM", MTOM, "CLmax", CLmax, "S_tot", S_tot)
+        print("")
 
         # Update the stall speed
         V_stall = V.stall()
@@ -445,6 +446,7 @@ class RunDSE:
         # #  x_wf = x_wf, x_wr = x_wr: x-location of rotors approx aerodynamic centers
         # # cg_pax, cg_pil, cg_wf, cg_wr: cg locations of passengers, pilot, front wing and rear wing
 
+
         # Hover controllability
         x_f_rotated = xf - xmac_to_xle(const.sweepc41, AR_wing1, taper, b1, const.dihedral1)[0] + 0.45*wing_plan_1[1]
         x_r_rotated = xr - xmac_to_xle(const.sweepc42, AR_wing2, taper, b2, const.dihedral2)[0] + 0.45*wing_plan_2[1]
@@ -541,6 +543,9 @@ class RunDSE:
                                                                      impose_stability=True)
                                                                      # TODO: revise stability margin
 
+        print("AR1", AR_wing1, "AR2", AR_wing2, xf, xr, zf, zr, "Sr_Sf", Sr_Sf)
+        print("")
+
         # Calculate new S1 with new ratio
         S1 = S_tot/(1 + Sr_Sf)
         S2 = S1 * Sr_Sf
@@ -559,6 +564,7 @@ class RunDSE:
 
         # lambda_c4f, bf, lh, h_ht, A, CLaf, rho, Pbr, Sf, CLf, W
         de_da = deps_da_empirical(const.sweepc41, b1, xr - xf, zr - zf, AR_wing1, CLafwd, rho, P_cr / n_prop, S1, CL_cr_1, MTOM * g0)
+
 
         """
         :param h_ht: Distance between wings normal to their chord planes 
@@ -601,6 +607,7 @@ class RunDSE:
         optim_outputs = [MTOM, energy, time, CM_a]
 
         print("MTOM:", MTOM, ", energy:", energy, ", battery mass:", m_bat)
+        print("")
 
         # Other necessary outputs
         other_outputs = [track_width, z_mlg]
