@@ -297,8 +297,8 @@ while iterate or (count < 10):
 
     else:
         MTOM = MTOM_new
-    print("New MTOM:", MTOM)
-    print(" ")
+    # print("New MTOM:", MTOM)
+    # print(" ")
     count += 1
 
 
@@ -310,48 +310,48 @@ vertical_tail = vert_tail.VT_sizing(MTOM*g0, h_cr, x_CG_MTOM, l_fus, h_fus, w_fu
 v_tail = vertical_tail.final_VT_rudder(n_prop, D_cr, wing_plan_1[0]/2, l_fus-x_CG_MTOM, 0.9, 0.35)
 
 print("Converged MTOM:", MTOM, "[kg]")
-print("CG position:", x_CG_MTOM)
-print("")
-
-print("Energy:", energy, "[kWh]")
-print("Battery mass:", m_bat, "[kg]")
-print("Wing surface:", S_tot, "[m^2]")
-print("")
+# print("CG position:", x_CG_MTOM)
+# print("")
+#
+# print("Energy:", energy, "[kWh]")
+# print("Battery mass:", m_bat, "[kg]")
+# print("Wing surface:", S_tot, "[m^2]")
+# print("")
 print("Propeller radius:", prop_radius, "[m]")
-print("Disk loading:", disk_load, "[kg/m^2]")
-print("Cruise drag:", D_cr, "[N]")
+# print("Disk loading:", disk_load, "[kg/m^2]")
+# print("Cruise drag:", D_cr, "[N]")
 print("Thrust per engine at cruise:", D_cr/n_prop, "[N]")
-print("")
-print("Span:", wing_plan_1[0])
-print("MAC:", wing_plan_1[3])
-print("")
+# print("")
+# print("Span:", wing_plan_1[0])
+# print("MAC:", wing_plan_1[3])
+# print("")
 print("Cruise speed:", V_cr, "[m/s]")
-print("Cruise height:", h_cr, "[m]")
-print("")
-print("CL_cr:", C_L_cr, "CD_cr:", CD_cr, "L/D at cr:", C_L_cr/CD_cr)
-print("W/D:", MTOM*g0/D_cr)
-print("")
+# print("Cruise height:", h_cr, "[m]")
+# print("")
+# print("CL_cr:", C_L_cr, "CD_cr:", CD_cr, "L/D at cr:", C_L_cr/CD_cr)
+# print("W/D:", MTOM*g0/D_cr)
+# print("")
 
 # Sv,C_vr,C_vt,bv,Sweep_v_c2,c_r,c_r_root,c_r_tip,b_r,ARv
 
 # print("Params for Miguel")
 # print("CG", x_CG_MTOM)
 # print("V_cr", V_cr)
-print("V_stall", V_stall)
+# print("V_stall", V_stall)
 # print("CLmax", CLmax)
 # print("CLalpha", CL_alpha_1, CL_alpha_2)
 # print("S1, S2", S1, S2)
 # print("AR:", AR_wing)
 # print("MAC", wing_plan_1[3], wing_plan_2[3])
-print("Spans:", wing_plan_1[0], wing_plan_2[0])
-print("Taper:", taper)
-# [b2, c_r2, c_t2, c_MAC2, y_MAC2, X_LEMAC2]
-print("C_r", wing_plan_1[1], wing_plan_2[1])
-print("")
-print("New S_v:", v_tail[0])
-print("C_vr:", v_tail[1])
-print("C_vt:", v_tail[2])
-print("b_v:", v_tail[3])
+# print("Spans:", wing_plan_1[0], wing_plan_2[0])
+# print("Taper:", taper)
+# # [b2, c_r2, c_t2, c_MAC2, y_MAC2, X_LEMAC2]
+# print("C_r", wing_plan_1[1], wing_plan_2[1])
+# print("")
+# print("New S_v:", v_tail[0])
+# print("C_vr:", v_tail[1])
+# print("C_vt:", v_tail[2])
+# print("b_v:", v_tail[3])
 
 # print("Vertical tail surface", vertical_tail.final_VT_rudder(n_prop, ))
 print(" ")
@@ -370,28 +370,32 @@ print("Propeller rpm:", rpm)
 # V_tip = omega*prop_radius
 
 print("Propeller blade")
+print("")
+print("Design thrust:", 3*D_cr/n_prop)
+print("")
+print(B, prop_radius, rpm, xi_0, rho, dyn_vis, V_cr, 20, a, 100000, 3*D_cr/n_prop)
 blade = BEM.BEM(B, prop_radius, rpm, xi_0, rho, dyn_vis, V_cr, 20, a, 100000, T=3*D_cr/n_prop)
 # blade = BEM.BEM(B, prop_radius, rpm, xi_0, rho, dyn_vis, V_cr, 20, a, 100000, MTOM*g0)
 
 design = blade.optimise_blade(0)[1]
 coefs = blade.optimise_blade(0)[3]
 
-print("Chord per station:", design[0])
-print("")
-print("Pitch per station in deg:", np.rad2deg(design[1]))
-print("")
-print("AoA per station in [deg]:", np.rad2deg(design[2]))
-print("")
-print("Radial coordinates [m]:", design[3])
-print("")
-print("D/L ratio per station:", design[4])
-print("")
-print("Propeller efficiency:", design[5])
-print("")
-print("Thrust coefficient:", design[6])
-print("")
-print("Power coefficient:", design[7])
-print("")
+# print("Chord per station:", design[0])
+# print("")
+# print("Pitch per station in deg:", np.rad2deg(design[1]))
+# print("")
+# print("AoA per station in [deg]:", np.rad2deg(design[2]))
+# print("")
+# print("Radial coordinates [m]:", design[3])
+# print("")
+# print("D/L ratio per station:", design[4])
+# print("")
+# print("Propeller efficiency:", design[5])
+# print("")
+# print("Thrust coefficient:", design[6])
+# print("")
+# print("Power coefficient:", design[7])
+# print("")
 # print("Exit speed per station:", V_e)
 # print("")
 # print("Average exit speed per station:", np.average(V_e))
@@ -409,18 +413,20 @@ Omega = rpm * 2 * np.pi / 60
 
 RN = (Omega * design[3]) * design[0] * rho / dyn_vis
 
-
-blade_hover = BEM.OffDesignAnalysisBEM(V_cr, B, R, design[0], design[1], design[3],
+print(V_cr, B, prop_radius, design[0], design[1], design[3], coefs[0], coefs[1], rpm, rho, dyn_vis, a, RN)
+blade_hover = BEM.OffDesignAnalysisBEM(V_cr, B, prop_radius, design[0], design[1], design[3],
                                        coefs[0], coefs[1], rpm, rho, dyn_vis, a, RN)
 blade_hover_analysis = blade_hover.analyse_propeller()
 
-print("Hover analysis", blade_hover_analysis)
+print("Thrust from analysis", blade_hover_analysis[0])
 
 # Polinomial regression for smooth distribution
 coef_chords = np.polynomial.polynomial.polyfit(design[3], design[0], 5)
 coef_pitchs = np.polynomial.polynomial.polyfit(design[3], design[1], 5)
 
-radial_stations_Koen = np.array([2/12, 3/12, 4/12, 5/12, 6/12, 7/12, 8/12, 9/12, 10/12, 11/12, 12/12-0.001])*prop_radius
+radial_stations_Koen = np.array([1/10, (1/10 + 1/11*9/10), (1/10 + 2/11*9/10), (1/10 + 3/11*9/10), (1/10 + 4/11*9/10),
+                                 (1/10 + 5/11*9/10), (1/10 + 6/11*9/10), (1/10 + 7/11*9/10), (1/10 + 8/11*9/10),
+                                 (1/10 + 9/11*9/10), (1/10 + 10/11*9/10), (1/10 + 11/11*9/10)-0.001])*prop_radius
 
 
 chord_fun = np.polynomial.polynomial.Polynomial(coef_chords)
@@ -429,9 +435,38 @@ pitch_fun = np.polynomial.polynomial.Polynomial(coef_pitchs)
 koen_chords = chord_fun(radial_stations_Koen) * 1000
 koen_pitch = np.rad2deg(pitch_fun(radial_stations_Koen))
 
-print("Koen chords:", koen_chords)
-print("Koen pitchs:", koen_pitch)
-print("Hub radius:", xi_0)
+# print("Koen chords:", koen_chords)
+# print("Koen pitchs:", koen_pitch)
+# print("Hub radius:", xi_0)
+
+coef_cl = np.polynomial.polynomial.polyfit(design[3], coefs[0], 5)
+coef_cd = np.polynomial.polynomial.polyfit(design[3], coefs[1], 5)
+
+cl_fun = np.polynomial.polynomial.Polynomial(coef_cl)
+cd_fun = np.polynomial.polynomial.Polynomial(coef_cd)
+
+koen_cls = cl_fun(radial_stations_Koen)
+koen_cds = cd_fun(radial_stations_Koen)
+
+
+# Rotational speed
+Omega = rpm * 2 * np.pi / 60
+# This is an initial estimate for the Reynolds number per blade
+RN = (Omega * radial_stations_Koen) * koen_chords * rho / dyn_vis
+
+
+blade_hover = BEM.OffDesignAnalysisBEM(V_cr, B, prop_radius, koen_chords/1000, np.deg2rad(koen_pitch), radial_stations_Koen,
+                                       koen_cls, koen_cds, rpm, rho, dyn_vis, a, RN)
+
+blade_hover_analysis = blade_hover.analyse_propeller()
+
+print("Thrust from analysis CATIA version", blade_hover_analysis[0])
+
+
+plotter = bp.PlotBlade(koen_chords/1000, np.deg2rad(koen_pitch), radial_stations_Koen, prop_radius, xi_0)
+
+plotter.plot_blade()
+plotter.plot_3D_blade()
 
 # # Plot
 # axs[1].axis('equal')
