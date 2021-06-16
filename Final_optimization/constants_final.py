@@ -6,6 +6,11 @@ gamma = 1.4                 # [-]
 R = 287                     # [J/kg/K]
 rho_0 = 1.225               # [kg/m^3]
 
+# Contingency
+energy_cont     = 1
+payload_cont    = 1
+mass_cont = 1.1
+
 # General
 mission_range = 300e3       # [m] Mission range  TODO: Maybe add 50 km
 
@@ -63,7 +68,7 @@ sp_mass_en = 1/3500     # [kg/W]
 n_prop_1 = 6               #number of propellors on the front wing
 n_prop_2 = 6               #number of propellers on the rear wing
 n_prop = n_prop_1+n_prop_2 #Total number of propellers
-# Hello
+
 # Power
 sp_en_den = 500     # [Wh/kg] Specific energy density
 vol_en_den = 900    # [Wh/l] Volumetric energy density
