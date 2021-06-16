@@ -374,6 +374,7 @@ blade = BEM.BEM(B, prop_radius, rpm, xi_0, rho, dyn_vis, V_cr, 20, a, 100000, T=
 # blade = BEM.BEM(B, prop_radius, rpm, xi_0, rho, dyn_vis, V_cr, 20, a, 100000, MTOM*g0)
 
 design = blade.optimise_blade(0)[1]
+coefs = blade.optimise_blade(0)[3]
 
 print("Chord per station:", design[0])
 print("")
@@ -402,6 +403,18 @@ plotter = bp.PlotBlade(design[0], design[1], design[3], prop_radius, xi_0)
 
 plotter.plot_blade()
 plotter.plot_3D_blade()
+
+# Off-design analysis
+Omega = rpm * 2 * np.pi / 60
+
+RN = (Omega * design[3]) * design[0] * rho / dyn_vis
+
+
+blade_hover = BEM.OffDesignAnalysisBEM(V_cr, B, R, design[0], design[1], design[3],
+                                       coefs[0], coefs[1], rpm, rho, dyn_vis, a, RN)
+blade_hover_analysis = blade_hover.analyse_propeller()
+
+print("Hover analysis", blade_hover_analysis)
 
 # Polinomial regression for smooth distribution
 coef_chords = np.polynomial.polynomial.polyfit(design[3], design[0], 5)

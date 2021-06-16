@@ -252,24 +252,23 @@ class RunDSE:
         alpha_wp = 1    # If we only want CLmax (and not slope) this does not matter
 
         # Drag at stall
-        # error = 1
-        # while error > 0.05:  # FIXME this goes crazy on the second iteration
-        #     D_stall = drag.CD(CLmax) * 0.5 * rho * V_stall**2 * S_tot
-        #     T_per_eng_during_stall = D_stall/n_prop
-        #
-        #     CLmaxnew = wing_design.CLa_wprop(T_per_eng_during_stall, V_stall, rho, 2*prop_radius, n_prop_1, n_prop_2,
-        #                                      const.tc, CDs_w, CDs_f, Afus, alpha_wp, de_da)[1]
-        #     print("1", CLmaxnew, "2", T_per_eng_during_stall, V_stall, rho, 2*prop_radius, n_prop_1, n_prop_2,
-        #                                      const.tc, CDs_w, CDs_f, Afus, alpha_wp, de_da, "end\n")
-        #     error = np.abs(CLmaxnew-CLmax)/CLmax
-        #     CLmax = CLmaxnew
+        error = 1
+        while error > 0.05:  # FIXME this goes crazy on the second iteration
+            D_stall = drag.CD(CLmax) * 0.5 * rho * V_stall**2 * S_tot
+            T_per_eng_during_stall = D_stall/n_prop
+
+            CLmaxnew = wing_design.CLa_wprop(T_per_eng_during_stall, V_stall, rho, 2*prop_radius, n_prop_1, n_prop_2,
+                                             const.tc, CDs_w, CDs_f, Afus, alpha_wp, de_da)[1]
+            print("1", CLmaxnew, "end\n")
+            error = np.abs(CLmaxnew-CLmax)/CLmax
+            CLmax = CLmaxnew
 
         # FIXME no iter
-        D_stall = drag.CD(CLmax) * 0.5 * rho * V_stall**2 * S_tot
-        T_per_eng_during_stall = D_stall/n_prop
-
-        CLmax = wing_design.CLa_wprop(T_per_eng_during_stall, V_stall, rho, 2*prop_radius, n_prop_1, n_prop_2,
-                                         const.tc, CDs_w, CDs_f, Afus, alpha_wp, de_da)[1]
+        # D_stall = drag.CD(CLmax) * 0.5 * rho * V_stall**2 * S_tot
+        # T_per_eng_during_stall = D_stall/n_prop
+        #
+        # CLmax = wing_design.CLa_wprop(T_per_eng_during_stall, V_stall, rho, 2*prop_radius, n_prop_1, n_prop_2,
+        #                               const.tc, CDs_w, CDs_f, Afus, alpha_wp, de_da)[1]
 
         # print("1", CLmax, "2", T_per_eng_during_stall, V_stall, rho, 2*prop_radius, n_prop_1, n_prop_2,
         #       const.tc, CDs_w, CDs_f, Afus, alpha_wp, de_da, "end\n")
@@ -332,7 +331,7 @@ class RunDSE:
         energy, t_tot, max_power, max_thrust, t_hor = mission.total_energy()
 
         # Overall efficiency from battery to engine
-        eff_overall = const.eff_bat_eng_cr * (t_hor/t_tot) + const.eff_bat_eng_h * ((1-t_hor)/t_tot)
+        eff_overall = const.eff_bat_eng_cr * (t_hor/t_tot) + const.eff_bat_eng_h * (1-(t_hor/t_tot))
         energy = energy * 2.77778e-7 * 1000 / eff_overall  # From [J] to [Wh]
         # TODO: check safety factor (1.02 *)
 
