@@ -1,11 +1,13 @@
 import numpy as np
 from matplotlib import pyplot as plt
+from stab_and_ctrl.Aileron_Sizing import Control_surface
 from matplotlib import colors as mc
 
 class Elevator_sizing:
     def __init__(self,W,h,xcg,lfus,hfus,wfus,V0,Vstall,CD0,theta0,CLfwd,CLrear,
-                 CLafwd,CLarear, Cmacfwd,Cmacrear,
-                 Sfwd,Srear,Afwd,Arear,Lambda_c4_fwd,Lambda_c4_rear,cfwd,crear,bfwd,brear,taper,dCLfwd):
+                 CLafwd,CLarear, Clafwd,Clarear, Cd0fwd, Cd0rear, Cmacfwd,Cmacrear,
+                 Sfwd,Srear,Afwd,Arear,Lambda_c4_fwd,Lambda_c4_rear,cfwd,crear,bfwd,brear,taper,dCLfwd,
+                 Sa_S,b1,b2,taper_a,eta_rear):
         self.W = W         # Weight [N]
         self.h = h     # Height [m]
         self.lfus = lfus # Length of the fuselage
@@ -41,6 +43,12 @@ class Elevator_sizing:
         self.xcg = xcg
         self.c = self.Sfwd/self.S*self.cfwd+self.Srear/self.S*self.crear
         self.dCLfwd = dCLfwd
+        self.b1 = b1
+        self.b2  = b2
+        self.taper_a = taper_a
+        self.Sa_S = Sa_S
+        self.Clafwd, self.Clarear, self.Cd0fwd, self.Cd0rear = Clafwd, Clarear, Cd0fwd,Cd0rear
+        self.eta_rear =eta_rear
 
     def Sweep(self,AR,Sweepm,n,m):
         """
@@ -87,6 +95,11 @@ class Elevator_sizing:
             plt.legend()
             plt.show()
         else:
+            aileron =Control_surface(self.V0,self.Vs,self.CLfwd,self.CLrear,
+                 self.CLafwd,self.CLarear, self.Clafwd,self.Clarear,self.Cd0fwd,self.Cd0rear,
+                 self.Sfwd,self.Srear,self.Afwd,self.Arear,self.cfwd,self.crear,self.bfwd,self.brear,self.taper,self.eta_rear)
+            ca_t  = aileron.plotting(self.Sa_S,self.b1,self.b2,rear=True)[0]
+            Se_S_geo = self.b2/100/2*self.bfwd*(ca_t+ca_t/self.taper_a**2)/self.Sfwd
             X, Y = np.meshgrid(be_b, Se_S)
             Z =  self.dCLfwd_f(Y,X,de_max)
             fig, ax = plt.subplots(1, 1)
@@ -97,8 +110,10 @@ class Elevator_sizing:
             plt.clabel(minimum,fmt=r"Min. : %.3f"%(mindCL))
             cbar = plt.colorbar(cp, orientation="horizontal")
             cbar.set_label(r"$\Delta C_{L_{fwd}}$ [-]")
+            plt.hlines(Se_S_geo,min(be_b),max(be_b),label="Required value from aileron")
             plt.ylabel(r"$S_e/S_{fwd}$ [-]", fontsize=12)
             plt.xlabel(r"$b_e$ [$\% b_{fwd}$]", fontsize=12)
+            plt.legend()
             # plt.vlines(b1,min(Sa_S),max(Sa_S),"r",label=r"Smallest limit set by $b_1$")
             plt.show()
 

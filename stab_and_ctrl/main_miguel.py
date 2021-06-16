@@ -6,17 +6,21 @@ from stab_and_ctrl.Elevator_sizing import Elevator_sizing
 from stab_and_ctrl.Stability_derivatives import Stab_Derivatives
 from structures.Weight import *
 from stab_and_ctrl.Model_cruise import Aircraft
+from Aero_tools import ISA
 import constants as const
 from matplotlib import pyplot as plt
 
 # example values based on inputs_config_1.json
 W = 2950*9.80665
 h = 1000
+ISA_atm = ISA(h)
+T = ISA_atm.temperature()
 lfus = 7.2
 hfus = 1.705
 wfus = 1.38
 xcg = 2.95
 V0 = 64.72389428906716
+M0= V0/(np.sqrt(1.4*287*T))
 Vstall = 40
 Pbr = 110024/1.2 * 0.9 /12
 # M0 = V0 / np.sqrt(const.gamma * const.R * 288.15)
@@ -45,7 +49,7 @@ Cmacrear = -0.0645
 Sfwd = 8.417113787320769
 Srear = 8.417113787320769
 S = Srear+Sfwd
-Afwd = 9*1
+Afwd =9
 Arear = 9
 Gamma = 0
 Lambda_c4_fwd = 0.0*np.pi/180
@@ -124,11 +128,12 @@ aileron.plotting(Sa_S,b1,b2,True)
 aileron.plotting(Sa_S=0.145,b1=b1,b2=99.0,rear=True)
 
 #### Plotting Elevator ####
-elevator = Elevator_sizing(W,h,xcg,lfus,hfus,wfus,V0,Vstall,CD0,theta0,CLfwd,CLrear,CLafwd,CLarear,
-                           Cmacfwd,Cmacrear,Sfwd,Srear,Afwd,Arear,0,0,cfwd,crear,bfwd,brear,taper,dCLfwd=0.4*CLfwd)
+elevator = Elevator_sizing(W,h,xcg,lfus,hfus,wfus,V0,Vstall,CD0,theta0,CLfwd,CLrear,CLafwd,CLarear,Clafwd,Clarear, Cd0fwd, Cd0rear,
+                           Cmacfwd,Cmacrear,Sfwd,Srear,Afwd,Arear,0,0,cfwd,crear,bfwd,brear,taper,dCLfwd=0.15*CLfwd,
+                           Sa_S=0.145,b1=55,b2=99,taper_a=0.65,eta_rear=0.90)
 beb = np.linspace(10,100,150)
 SeS = np.linspace(0.1,0.4,150)
-de_max = 17.5
+de_max = 15
 elevator.plotting(SeS,beb,de_max)
 
 # wps.plotting(0, lfus, dx, elevator_effect, d)
@@ -161,12 +166,53 @@ Ixx, Iyy, Izz, Ixz = weight.MMI()
 print(Ixx, Izz, Ixz)
 Ka = 1.429
 
+
+def Sweep(AR, taper, Sweepm, n, m):
+    """
+    Inputs
+    :param AR: Aspect Ratio of VT
+    :param Sweepm: Sweep at mth chord [rad]
+    :param n: (example quarter chord: n =25)
+    :param m: mth chord (example half chord: m=50)
+    :return: Sweep at nth chord [rad]
+    """
+    tanSweep_m = np.tan(Sweepm)
+    tanSweep_n = tanSweep_m - 4 / (AR) * (n - m) / 100 * (1 - taper) / (1 + taper)
+    return np.arctan(tanSweep_n)
+
+Sweep_c2_fwd = Sweep(Afwd,taper,0,50,25)
+Sweep_c2_rear = Sweep(Arear,taper,0,50,25)
+def C_L_a(M0, A, Lambda_half, eta=0.95):
+    """
+    Inputs:
+    :param M: Mach number
+    :param b: wing span
+    :param S: wing area
+    :param Lambda_half: Sweep angle at 0.5*chord
+    :param eta: =0.95
+    :return: Lift curve slope for tail AND wing using DATCOM method
+    """
+    M = M0
+    beta = np.sqrt(1 - M ** 2)
+    # print("Lambda_1/2c = ",Lambda_half)
+    value = 2 * np.pi * A / (2 + np.sqrt(4 + ((A * beta / eta) ** 2) * (1 + (np.tan(Lambda_half) / beta) ** 2)))
+    return value
+# xcg2 = xcg*0.5
+# xcg3 = xcg*2
+CLafwd =C_L_a(M0,Afwd,Sweep_c2_fwd)
+CLarear = C_L_a(M0,Arear,Sweep_c2_rear)
+
 if isinstance(ARv,float) and isinstance(sweepTE,float):
+    #print("---------------------For xcg:-----------------------")
+    print("-------------------------------------------------------------------")
+    print("-----------------------Stability Derivatives-----------------------")
+    print("-------------------------------------------------------------------")
     stability_derivatives = Stab_Derivatives(W,h,lfus,hfus,wfus, d,dy,xcg,Zcg,cfwd,crear,Afwd,Arear,Vstall,
                      V0,Tt0,CLdesfwd,CLdesrear,CD0_a,CL0,theta0,alpha0,
                      Clafwd,Clarear, Cd0fwd, Cd0rear, CLafwd,CLarear,Sfwd,Srear,0,-2*np.pi/180,
                      efwd,erear,Lambda_c4_fwd,Lambda_c4_rear,taper,0.4,
                      bv,Sv,ARv,sweepTE,Pbr,CD0,eta_rear=0.90,eta_v=0.9)
+
     print("q-derivatives:",stability_derivatives.q_derivatives())
     print("alpha-derivatives:",stability_derivatives.alpha_derivatives())
     print("u-derivatives:",stability_derivatives.u_derivatives())
@@ -174,7 +220,7 @@ if isinstance(ARv,float) and isinstance(sweepTE,float):
     print("p-derivatives:",stability_derivatives.p_derivatives())
     print("r-derivatives:", stability_derivatives.r_derivatives())
     print("beta-derivatives:", stability_derivatives.beta_derivatives())
-    print("-----Control Derivatives----------")
+    print("------------------Control Derivatives----------------------")
     print("de-derivatives:", stability_derivatives.de_derivatives(Se_S=0.15,be_b=0.99))
     print("da-derivatives:",stability_derivatives.da_derivatives(Sa_S=0.145,b1=55,b2=99.0))
     print("dr-derivatives:", stability_derivatives.dr_derivatives(cr_cv=0.4,br_bv=0.85))
@@ -182,16 +228,73 @@ if isinstance(ARv,float) and isinstance(sweepTE,float):
     print("Iyy = %.5f "%(Iyy))
     stability_derivatives.asym_stability_req(Ixx,Izz,Ixz,0.145,55,97.5,0.4,0.85)
     C_X, C_Z, C_m, C_Y, C_l,C_n = \
-        stability_derivatives.return_stab_derivatives(Se_S = 0.15,be_b = 0.99,
-                                                      Sa_S=0.145,b1=b1,b2=99.0,cr_cv=0.4,br_bv=0.85,
-                                                      Ixx=Ixx, Iyy=Iyy,Izz=Izz, Ixz=Ixz)
+            stability_derivatives.return_stab_derivatives(Se_S = 0.15,be_b = 0.99,
+                                                          Sa_S=0.145,b1=b1,b2=99.0,cr_cv=0.4,br_bv=0.85,
+                                                          Ixx=Ixx, Iyy=Iyy,Izz=Izz, Ixz=Ixz)
+    print("----------------------Responses--------------------------")
     aircraft = Aircraft(W, h, S, c, b, V0, theta0, alpha0, q0, b0, phi0, p0, r0, Iyy, Ixx, Izz, Ixz, C_X, C_Z,C_m, CL0,
-                        C_Y, C_l, C_n,Ka)
+                            C_Y, C_l, C_n,Ka)
     # sys = aircraft.compute_sym_sys(V0,Iyy/(W/9.80665*b**2), C_X,C_Z,C_m)
     # aircraft.plot_open_loop(sys,1,0)
     aircraft.plot_results(V0)
+    # print("---------------------For 2*xcg:-------------------------")
+    # stability_derivatives = Stab_Derivatives(W, h, lfus, hfus, wfus, d, dy, xcg3, Zcg, cfwd, crear, Afwd, Arear, Vstall,
+    #                                          V0, Tt0, CLdesfwd, CLdesrear, CD0_a, CL0, theta0, alpha0,
+    #                                          Clafwd, Clarear, Cd0fwd, Cd0rear, CLafwd, CLarear, Sfwd, Srear, 0,
+    #                                          -2 * np.pi / 180,
+    #                                          efwd, erear, Lambda_c4_fwd, Lambda_c4_rear, taper, 0.4,
+    #                                          bv, Sv, ARv, sweepTE, Pbr, CD0, eta_rear=0.90, eta_v=0.9)
+    #
+    # print("q-derivatives:", stability_derivatives.q_derivatives())
+    # print("alpha-derivatives:", stability_derivatives.alpha_derivatives())
+    # print("u-derivatives:", stability_derivatives.u_derivatives())
+    # print("alpha_dot derivatives:", stability_derivatives.alpha_dot_derivatives())
+    # print("p-derivatives:", stability_derivatives.p_derivatives())
+    # print("r-derivatives:", stability_derivatives.r_derivatives())
+    # print("beta-derivatives:", stability_derivatives.beta_derivatives())
+    # print("-----Control Derivatives----------")
+    # print("de-derivatives:", stability_derivatives.de_derivatives(Se_S=0.15, be_b=0.99))
+    # print("da-derivatives:", stability_derivatives.da_derivatives(Sa_S=0.145, b1=55, b2=99.0))
+    # print("dr-derivatives:", stability_derivatives.dr_derivatives(cr_cv=0.4, br_bv=0.85))
+    # print("Kyy2 = %.5f" % (Iyy / (W / 9.80665 * c ** 2)))
+    # print("Iyy = %.5f " % (Iyy))
+    # stability_derivatives.asym_stability_req(Ixx, Izz, Ixz, 0.145, 55, 97.5, 0.4, 0.85)
+    # C_X, C_Z, C_m, C_Y, C_l, C_n = \
+    #     stability_derivatives.return_stab_derivatives(Se_S=0.15, be_b=0.99,
+    #                                                   Sa_S=0.145, b1=b1, b2=99.0, cr_cv=0.4, br_bv=0.85,
+    #                                                   Ixx=Ixx, Iyy=Iyy, Izz=Izz, Ixz=Ixz)
+    #
+    # print("---------------------For 0.5*xcg:-----------------------")
+    # stability_derivatives = Stab_Derivatives(W, h, lfus, hfus, wfus, d, dy, xcg2, Zcg, cfwd, crear, Afwd, Arear, Vstall,
+    #                                          V0, Tt0, CLdesfwd, CLdesrear, CD0_a, CL0, theta0, alpha0,
+    #                                          Clafwd, Clarear, Cd0fwd, Cd0rear, CLafwd, CLarear, Sfwd, Srear, 0,
+    #                                          -2 * np.pi / 180,
+    #                                          efwd, erear, Lambda_c4_fwd, Lambda_c4_rear, taper, 0.4,
+    #                                          bv, Sv, ARv, sweepTE, Pbr, CD0, eta_rear=0.90, eta_v=0.9)
+    #
+    # print("q-derivatives:", stability_derivatives.q_derivatives())
+    # print("alpha-derivatives:", stability_derivatives.alpha_derivatives())
+    # print("u-derivatives:", stability_derivatives.u_derivatives())
+    # print("alpha_dot derivatives:", stability_derivatives.alpha_dot_derivatives())
+    # print("p-derivatives:", stability_derivatives.p_derivatives())
+    # print("r-derivatives:", stability_derivatives.r_derivatives())
+    # print("beta-derivatives:", stability_derivatives.beta_derivatives())
+    # print("-----Control Derivatives----------")
+    # print("de-derivatives:", stability_derivatives.de_derivatives(Se_S=0.15, be_b=0.99))
+    # print("da-derivatives:", stability_derivatives.da_derivatives(Sa_S=0.145, b1=55, b2=99.0))
+    # print("dr-derivatives:", stability_derivatives.dr_derivatives(cr_cv=0.4, br_bv=0.85))
+    # print("Kyy2 = %.5f" % (Iyy / (W / 9.80665 * c ** 2)))
+    # print("Iyy = %.5f " % (Iyy))
+    # stability_derivatives.asym_stability_req(Ixx, Izz, Ixz, 0.145, 55, 97.5, 0.4, 0.85)
+    # C_X, C_Z, C_m, C_Y, C_l, C_n = \
+    #     stability_derivatives.return_stab_derivatives(Se_S=0.15, be_b=0.99,
+    #                                                   Sa_S=0.145, b1=b1, b2=99.0, cr_cv=0.4, br_bv=0.85,
+    #                                                   Ixx=Ixx, Iyy=Iyy, Izz=Izz, Ixz=Ixz)
     # closed = aircraft.sym_sys_tuned
     # aircraft.plot_results(V0,closed)
     # aircraft.plot_results(V0)
+
+
+
 
 
