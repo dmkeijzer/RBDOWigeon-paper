@@ -38,16 +38,22 @@ def Cd(CL):
     df = pd.read_csv("../Preliminary_Lift/Airfoil_data/NACA44017_Re4.500.csv")
     Cl_vals = np.array(df["CL"][df["alpha"]<18.25])
     Cd_vals = np.array(df["CD"][df["alpha"]<18.25])
-    #print(Cl_vals)
+    ## # print(Cl_vals)
     fcd = interp1d(Cl_vals, Cd_vals, kind='quadratic', fill_value="extrapolate")
 
-    if CL > float(df["CL"][df["alpha"] == 18]):
 
-        return float(df["CD"][df["alpha"] == 18])
+    #
+    # if CL > float(df["CL"][df["alpha"] == 18]):
+    #
+    #     return float(df["CD"][df["alpha"] == 18])
+    #
+    # else:
+    #print('test', fcd(CL), np.array(df["CD"])[np.array(df["alpha"]) == 18])
 
-    else:
+    CL = np.minimum(CL, np.array(df["CL"])[np.array(df["alpha"]) == 18])
+    CD = fcd(CL)[0]
 
-        return fcd(CL)
+    return CD
 
 def Cm_ac(sweep, ARw):
     df1 = pd.read_csv("../Preliminary_Lift/Airfoil_data/NACA44017_Re4.500.csv")

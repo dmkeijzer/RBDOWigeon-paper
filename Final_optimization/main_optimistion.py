@@ -13,14 +13,15 @@ Sv = 1.1
 V_stall = 40
 max_power = 1.5e6
 AR_wing1 = 8
-AR_wing2 = 8
-Sr_Sf = 1.4
+AR_wing2 = 9
+Sr_Sf = 1.7
 s1 = (1 + Sr_Sf)**-1
 
 # Positions of the wings [horizontally, vertically]
 xf = 0.5
 zf = 0.3
-xr = 7
+xr = 6
+
 zr = 1.7
 max_thrust_stall = MTOM*const.g
 

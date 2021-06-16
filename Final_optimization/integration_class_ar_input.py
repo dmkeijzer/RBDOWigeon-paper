@@ -269,13 +269,13 @@ class RunDSE:
         while error > 0.05:
 
             D_stall = drag.CD(CLmax) * 0.5 * rho * V_stall**2 * S_tot
-            print(CLmax)
+            #print(CLmax)
             T_per_eng_during_stall = np.minimum(D_stall/n_prop, max_thrust_stall/n_prop)
-
+            # print("Stall thrust: ", T_per_eng_during_stall)
             CLmaxnew = wing_design.CLa_wprop(T_per_eng_during_stall, V_stall, rho, 2*prop_radius, n_prop_1, n_prop_2,
                                              const.tc, CDs_w, CDs_f, Afus, alpha_wp, de_da)[1]
-            print(CLmaxnew)
-            print('')
+            #print(CLmaxnew)
+            #print('')
             error = np.abs(CLmaxnew-CLmax)/CLmax
             CLmax = CLmaxnew
 
@@ -442,6 +442,7 @@ class RunDSE:
         # # Leading edge position
         # xrangef_LE = [0, 2.1 - wing_plan_1[1]]
         # xranger_LE = [6, l_fus-wing_plan_2[1]]
+        print('rear wing bounds: ',[6, l_fus-wing_plan_2[1]])
         #
         # # MAC position
         # xrangef = [0 + xmac_to_xle(const.sweepc41, AR_wing1, taper, b1, const.dihedral1)[0],
