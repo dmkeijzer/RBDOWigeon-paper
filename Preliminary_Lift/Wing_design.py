@@ -248,7 +248,7 @@ class wing_design:
         CLmaxwp = curve(self.a_s[1])
         CLmaxwp1 = curve1(self.a_s[1])
         CLmaxwp2 = curve2(self.a_s[1])
-        return curve(alpha_wp), CLmaxwp, slope1wp, slope2wp, CLmaxwp1, CLmaxwp2
+        return curve(alpha_wp), min(CLmaxwp,3), slope1wp, slope2wp, min(CLmaxwp1,3), min(CLmaxwp2,3)
 
 
 
