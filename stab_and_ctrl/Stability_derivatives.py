@@ -457,7 +457,7 @@ class Stab_Derivatives:
         plt.plot(clb2, cnb_E(-clb2), color="k", label="Limit for Spiral stability when E = 0")
         plt.xlabel(r"-$C_{l_{\beta}}$ [rad$^{-1}$]", fontsize=12)
         plt.ylabel(r"$C_{n_{\beta}}$ [rad$^{-1}$]", fontsize=12)
-        plt.scatter(-C_l_b, C_n_b, color="k", marker="x", label="Tandem Wing")
+        plt.scatter(-C_l_b, C_n_b, color="k", marker="x", label="Wigeon")
         plt.legend()
         plt.show()
         return
