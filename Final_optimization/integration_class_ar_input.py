@@ -63,7 +63,7 @@ n_ult = const.n_ult
 
 # ------------------ Constants for weight estimation ----------------
 # TODO: revise Pmax
-Pmax_weight = 15.25  # this is defined as maximum perimeter in Roskam, so i took top down view of the fuselage perimeter
+Pmax_weight = 17  # this is defined as maximum perimeter in Roskam, so I took top down view of the fuselage perimeter
 
 # ------------- Initial mass estimate -------------
 def mass(MTOM, S1, S2, n_ult, AR_wing1, AR_wing2, pos_frontwing, pos_backwing, Pmax, l_fus, n_pax, pos_fus,
@@ -376,8 +376,6 @@ class RunDSE:
 
         m_bat = battery.mass()
 
-        # The mass of one engine is the specific mass of the engines (kg/W) x Total power of ONE ENGINE
-        m_prop = const.sp_mass_en * P_max_eng_ind
 
         # -------------------- Update weight ------------------------
         pos_fus = l_fus*0.4
@@ -387,6 +385,9 @@ class RunDSE:
         pos_prop_back = [(xr - 0.25*MAC2) - 0.2] * n_prop_2
 
         pos_prop = np.hstack((np.array(pos_prop_front), np.array(pos_prop_back)))
+
+        # The mass of one engine is the specific mass of the engines (kg/W) x Total power of ONE ENGINE
+        m_prop = const.sp_mass_en * P_max_eng_ind * np.ones(np.shape(pos_prop))
 
         pos_lgear = (1.75+6)/2  # TODO revise if needed
         MTOM, m_wf, m_wr, m_fus, m_prop, cg_fus0, cg_gear, cg_props, x_CG_MTOM = mass(MTOM, S1, S2, n_ult, AR_wing1,

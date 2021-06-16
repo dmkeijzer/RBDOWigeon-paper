@@ -57,7 +57,7 @@ class Weight:
         self.wmass, self.fmass, self.lmass, self.pmass = np.sum(self.wing.mass), self.fuselage.mass, self.landing_gear.mass, self.prop.mass
         self.cmass, self.cpos = cargo_m, cargo_pos
         self.bmass, self.battery_pos = battery_m, battery_pos
-        #moments of components
+        # moments of components
         self.moment_pax = np.sum(self.m_pax * np.array(self.p_pax))
         self.moment_w = np.sum(np.array(self.wing.moment))
         self.moment_f = self.fuselage.moment
@@ -65,15 +65,18 @@ class Weight:
         self.moment_p = self.prop.moment
         self.moment_c = self.cmass * self.cpos
         self.moment_b = self.bmass * self.battery_pos
-        #operational empty mass centre of gravity
+        # operational empty mass centre of gravity
         self.oem_cg = (self.moment_w + self.moment_f + self.moment_l + self.moment_p + self.moment_b) \
         /(self.wmass + self.pmass + self.lmass + self.fmass + self.bmass)
 
         self.mtom_cg = (self.moment_w + self.moment_f + self.moment_l + self.moment_p + self.moment_pax + self.moment_c + self.moment_b) \
         /(self.wmass + self.pmass + self.lmass + self.fmass + self.cmass + self.bmass + self.tot_m_pax)
 
-        #masses
+        # masses
         self.oem = (self.wmass + self.pmass + self.lmass + self.fmass + self.bmass)
+
+        print("Check inside function:", self.wmass, self.pmass, self.lmass, self.fmass, self.cmass, self.bmass, self.tot_m_pax)
+        print("")
         self.mtom = (self.wmass + self.pmass + self.lmass + self.fmass + self.cmass + self.bmass + self.tot_m_pax)
 
     def print_weight_fractions(self):
