@@ -6,6 +6,11 @@ gamma = 1.4                 # [-]
 R = 287                     # [J/kg/K]
 rho_0 = 1.225               # [kg/m^3]
 
+# Contingency
+energy_cont     = 1
+payload_cont    = 1
+mass_cont = 1.1
+
 # General
 mission_range = 300e3       # [m] Mission range  TODO: Maybe add 50 km
 
@@ -38,6 +43,7 @@ IF_v = 1.04                 # From ADSEE 2 L2 Interference factor vertical tail 
 flamw = 0.35                # From ADSEE 2 L2 GA aircraft
 Abase = 0                   # Base area of the fuselage [m2]
 tc = 0.12                   # NACA0012 for winglets and Vtail [-]
+tc_wing = 0.17              # t/c for wing
 xcm = 0.3                   # NACA0012 for winglets and Vtail [-]
 k_wl = 2.0                  # Constant for winglets (could be changed to 2 if we need extra eff)
 Vr_Vf_2 = 1                 # Speed ratio between wing 1 and 2
@@ -57,11 +63,11 @@ eff_prop = 0.85    # [-] Propeller efficiency during normal flight
 eff_hover = 0.75   # [-] Propeller efficiency during hover
 # TODO: revise
 # eff_eng_bat = 0.7  # [-] Efficiency from batteries to engines (including engine, battery, and electronics efficiencies)
-sp_mass_en = 1/3500     # [kg/W]
+sp_mass_en = 1/3600     # [kg/W]
 
-n_prop_1 = 6
-n_prop_2 = 6
-n_prop = n_prop_1+n_prop_2
+n_prop_1 = 6                # number of propellors on the front wing
+n_prop_2 = 6                # number of propellers on the rear wing
+n_prop = n_prop_1+n_prop_2  # Total number of propellers
 
 # Power
 sp_en_den = 500     # [Wh/kg] Specific energy density
@@ -69,7 +75,7 @@ vol_en_den = 900    # [Wh/l] Volumetric energy density
 bat_cost = 100      # [$/kWh] Cost of batteries in US dollars per kilogram
 DoD = 0.8           # [-] Depth of Discharge of the total battery
 P_den = 10000       # [W/kg] Power density of battery
-EOL_C = 0.8         # [-] Fraction of initial capacity that is available at end-of-life
+EOL_C = 0.85        # [-] Fraction of initial capacity that is available at end-of-life
 eff_bat_eng_cr = 0.9  # Efficiency from the battery to the engines (including both) in cruise
 eff_bat_eng_h = 0.75  # Efficiency from the battery to the engines (including both) in hover
 

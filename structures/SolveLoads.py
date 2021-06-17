@@ -1,5 +1,5 @@
-from structures.Geometry import Stringer, WingBox, WingStructure
-from structures.Equilibrium import PointLoad, Moment, RunningLoad, EquilibriumEquation, DistributedMoment
+from Geometry import Stringer, WingBox, WingStructure
+from Equilibrium import PointLoad, Moment, RunningLoad, EquilibriumEquation, DistributedMoment
 from sklearn.preprocessing import PolynomialFeatures
 from sklearn.linear_model import LinearRegression
 from MathFunctions import StepFunction
@@ -75,16 +75,16 @@ class WingLoads:
         dragcoef, liftcoef, momcoef = lin.coef_
         interd, interl, interm = lin.intercept_
     
-        drag = StepFunction([[dragcoef[i], 0, i] for i in range(len(dragcoef))]) + interd
-        lift = StepFunction([[liftcoef[i], 0, i] for i in range(len(liftcoef))]) + interl
-        Mac = StepFunction([[momcoef[i], 0, i] for i in range(len(momcoef))]) + interm
+        drag = StepFunction([[dragcoef[i], 0, i] for i in range(len(dragcoef))] + [[interd, 0, 0]])
+        lift = StepFunction([[liftcoef[i], 0, i] for i in range(len(liftcoef))] + [[interl, 0, 0]])
+        Mac = StepFunction([[momcoef[i], 0, i] for i in range(len(momcoef))] + [[interm, 0, 0]])
         Thrust = StepFunction([[-self.engines.Tcruise, p, 0] for p in self.engines.pos])
         ThrustW = StepFunction([[-self.engines.w, p, 0] for p in self.engines.pos])
         MThrust = StepFunction([[0.45*self.wing(p).b * self.engines.w / self.frac, p, 0] for p in self.engines.pos])
     
         wgt = StepFunction([[-wingWeight / self.span, 0, 0]])
         self.Vy = -(lift + wgt).integral(self.RFy) - ThrustW
-        self.Vx = -(Thrust + drag.integral() + self.RFx)
+        self.Vx = -(Thrust + drag.integral(self.RFx))
         self.T = -(Mac + lift * self.acp).integral(self.RMz) - MThrust
         self.My, self.Mx = self.Vx.integral(self.RMy), self.Vy.integral(-self.RMx)
         return lift, wgt
@@ -92,7 +92,7 @@ class WingLoads:
     def internalLoadsVTO(self, wingWeight, ground = False):
         wgt = StepFunction([[wingWeight / self.span, 0, 0]]) # Fx
         Thrusts = StepFunction([[(-self.engines.Thover if not ground else 0)+self.engines.w, p, 0] for p in self.engines.pos]) # Fx
-        self.ViVx = Vx = -(Thrusts + wgt.integral() + self.VFx)
+        self.ViVx = Vx = -(Thrusts + wgt.integral(self.VFx))
         self.ViMy = My = Vx.integral(self.VMy)
         return Vx, My
     
@@ -105,7 +105,6 @@ class WingLoads:
         x, y = np.array(coordinates).T
         sigma = root.o(x, y, self.Mx(0), self.My(0))
         tau = np.array([root.tau(ix, iy, self.Vx(0), self.Vy(0), self.T(0)) for ix, iy in coordinates])
-        print(root.q(-root.b/2, 0, self.Vx(0), self.Vy(0), self.T(0)))
         
         return np.array(coordinates), sigma, tau, np.sqrt(3*tau**2 + sigma**2)
 
