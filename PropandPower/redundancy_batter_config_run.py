@@ -36,11 +36,11 @@ N_par_new = red.N_par_new()
 print("Number of modules for ", n_mot * n_bat_mot, "batteries:", N_par_new)
 
 N_cells_mot_new = red.N_cells_mot_new()
-print("New number of cells required for the motors", N_cells_mot_new)
+print("New number of cells required for the motors", N_cells_mot_new, "Which is:")
 
 increase_mot = red.increase_mot()
 abs_increase = red.increase()[0]
 per_increase = red.increase()[1]
 
-print("This is", abs_increase, "cells more than needed for energy")
-print("This is a ", per_increase, "% increase in cells")
+print("    -", abs_increase, "cells more than needed for energy")
+print("    -", per_increase, "% increase in cells")
