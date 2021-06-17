@@ -41,20 +41,23 @@ def xcg_stab(CLaf, CLar, CLf, CLr, Af, Ar, ef, er, xf, xr, zf, zr, zcg,
 
 
 def Cma(Claf, Clar, lambda_c4f, lambda_c4r, taperf, taperr, CLf, CLr, Af, Ar,
-        ef, er, xf, xr, zf, zr, zcg, Vr_Vf_2, Sr_Sf, xcg, S, rho, Pbr, W):
+        ef, er, xf, xr, zf, zr, zcg, Vr_Vf_2, Sr_Sf, xcg, S, rho, Pbr, W,
+        macf, macr):
     lambda_c2f = lambda_c4_to_lambda_c2(Af, taperf, lambda_c4f)
     lambda_c2r = lambda_c4_to_lambda_c2(Ar, taperr, lambda_c4r)
     CLaf = CLa(Claf, Af, lambda_c2f)
     CLar = CLa(Clar, Ar, lambda_c2r)
     bf,  _ = bf_br(S, Sr_Sf, Af, Ar)
     Sf = S / (1 + Sr_Sf)
+    mac = (macf + macr) / 2
+
     de_da = deps_da_empirical(lambda_c4f, bf, xr - xf, zr - zf, Af, CLaf,
                               rho, Pbr, Sf, CLf, W)
     return (CLaf * (xcg - xf)
             - CLar * (xr - xcg) * (1 - de_da) * Vr_Vf_2 * Sr_Sf
             - 2 * CLf / (np.pi * Af * ef) * CLaf * (zcg - zf)
             + 2 * CLr / (np.pi * Ar * er) * CLar * (zr - zcg)
-            * (1 - de_da) * Vr_Vf_2 * Sr_Sf)
+            * (1 - de_da) * Vr_Vf_2 * Sr_Sf) * Sf / (S * mac)
 
 
 # TODO: improve downwash estimation
