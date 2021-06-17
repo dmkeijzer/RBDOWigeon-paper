@@ -30,7 +30,7 @@ class redundancy_power:
         :param C_cell: capacitance of a single cell [Ah]
         :param n_mot: number of motors [-]
         :param n_bat_mot: number of batteries per motor [-]
-        :param per_mot: ratio of power going to the motors [-]
+        :param per_mot: ratio of power going to the motors, of total energy [-]
         """
         self.V_motor = V_motor
         self.E_tot = E_tot

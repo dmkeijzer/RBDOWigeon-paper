@@ -21,4 +21,7 @@ print("volume", bat.volume())
 print()
 print("cost", bat.price())
 
+print("mass_energy", bat.mass_both()[0])
+print("mass_power", bat.mass_both()[1])
+
 

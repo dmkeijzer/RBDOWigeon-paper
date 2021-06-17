@@ -37,3 +37,8 @@ class Battery:
 
     def price(self):
         return self.mass() * self.sp_en_den * self.cost / 1000  # divide by 1000 since cost is in kWh
+
+    def mass_both(self):
+        m_en = self.energy / self.sp_en_den / (self.DoD * self.EOL_C) * self.safety
+        m_p = self.P_max / self.P_den / (self.DoD * self.EOL_C) * self.safety
+        return m_en, m_p

@@ -121,7 +121,7 @@ class WingBox:
         elif inrge(self.b/2-self.tsp, self.b/2, -self.h/2, self.h/2):
             s = self.h/2 + y
             return vit * (0.5 * s * s - self.h * s / 2) + self.Vshear(Vy, self.b/2, -self.h/2)
-        elif inrge(-self.b/2, self.b/2, self.h/2-self.tsk, self.h/2):
+        elif -self.b/2 <= x < self.b/2 and self.h/2-self.tsk < y <= self.h/2:
             s = self.b/2 - x
             return vit * (self.h*s/2) + self.Vshear(Vy, self.b/2, self.h/2)
         elif inrge(-self.b/2, -self.b/2+self.tsp, -self.h/2, self.h/2):
