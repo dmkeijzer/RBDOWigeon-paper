@@ -12,8 +12,8 @@ de_da = 0.25
 Sv = 1.1
 V_stall = 35
 max_power = 1.5e6
-AR_wing1 = 7.9
-AR_wing2 = 8.6
+AR_wing1 = 7.25
+AR_wing2 = 7.85
 Sr_Sf = 1.2
 s1 = (1 + Sr_Sf)**-1
 

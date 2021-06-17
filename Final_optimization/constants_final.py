@@ -63,11 +63,11 @@ eff_prop = 0.85    # [-] Propeller efficiency during normal flight
 eff_hover = 0.75   # [-] Propeller efficiency during hover
 # TODO: revise
 # eff_eng_bat = 0.7  # [-] Efficiency from batteries to engines (including engine, battery, and electronics efficiencies)
-sp_mass_en = 1/3500     # [kg/W]
+sp_mass_en = 1/3600     # [kg/W]
 
-n_prop_1 = 6               #number of propellors on the front wing
-n_prop_2 = 6               #number of propellers on the rear wing
-n_prop = n_prop_1+n_prop_2 #Total number of propellers
+n_prop_1 = 6                # number of propellors on the front wing
+n_prop_2 = 6                # number of propellers on the rear wing
+n_prop = n_prop_1+n_prop_2  # Total number of propellers
 
 # Power
 sp_en_den = 500     # [Wh/kg] Specific energy density

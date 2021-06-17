@@ -398,7 +398,7 @@ class RunDSE:
                                                                                      const.m_pax,  const.m_cargo_tot,
                                                                                      m_bat)
 
-        MTOM = MTOM*const.mass_cont
+        # MTOM = MTOM*const.mass_cont
 
 
         print(x_CG_MTOM)
@@ -450,7 +450,7 @@ class RunDSE:
         CD0fwd = drag.Cd_w(0)
         CD0rear = CD0fwd
         CLafwd = wing_design.liftslope(0)[1][0]  # TODO: unit check
-        #CLarear = wing_design.liftslope(0)[2][0]  # TODO: unit check
+        # CLarear = wing_design.liftslope(0)[2][0]  # TODO: unit check
         Clafwd = airfoil.airfoil_stats()[4] * 180/np.pi  # TODO: unit check
         Clarear = airfoil.airfoil_stats()[4] * 180/np.pi  # TODO: unit check
 
@@ -461,7 +461,7 @@ class RunDSE:
         # # Leading edge position
         # xrangef_LE = [0, 2.1 - wing_plan_1[1]]
         # xranger_LE = [6, l_fus-wing_plan_2[1]]
-        print('rear wing bounds: ',[6, l_fus-wing_plan_2[1]])
+        print('rear wing bounds: ', [6, l_fus-wing_plan_2[1]])
         #
         # # MAC position
         # xrangef = [0 + xmac_to_xle(const.sweepc41, AR_wing1, taper, b1, const.dihedral1)[0],

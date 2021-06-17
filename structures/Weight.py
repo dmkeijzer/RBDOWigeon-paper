@@ -1,6 +1,6 @@
 """ New weight estimation file """
 import numpy as np
-
+import Final_optimization.constants_final as const
 
 class Wing:
     # Roskam method (not accurate because does not take into account density of material but good enough for comparison
@@ -77,7 +77,8 @@ class Weight:
 
         print("Check inside function:", self.wmass, self.pmass, self.lmass, self.fmass, self.cmass, self.bmass, self.tot_m_pax)
         print("")
-        self.mtom = (self.wmass + self.pmass + self.lmass + self.fmass + self.cmass + self.bmass + self.tot_m_pax)
+        self.mtom = (self.wmass*const.mass_cont + self.pmass*const.mass_cont + self.lmass*const.mass_cont +
+                     self.fmass*const.mass_cont + self.cmass + self.bmass*const.mass_cont + self.tot_m_pax)
 
     def print_weight_fractions(self):
         d = {}
