@@ -82,8 +82,13 @@ def mass(MTOM, S1, S2, n_ult, AR_wing1, AR_wing2, pos_frontwing, pos_backwing, P
     props = wei.Propulsion(n_prop, m_prop, pos_prop)
     cg_props = props.pos_prop
     m_prop = props.mass
-    Mass = wei.Weight(m_pax*const.payload_cont, wing, fuselage, lgear, props, cargo_m=cargo_m, cargo_pos=const.cargo_pos[0], battery_m=m_bat,
-                      battery_pos=const.cg_bat[0], p_pax=[1.75, 3.75, 3.75, 6, 6], contingency = contingency)
+
+    # print('weight inputs', m_pax*const.payload_cont, wing.mass, fuselage.mass, lgear.mass, props.mass, cargo_m,
+    #       const.cargo_pos[0], m_bat,
+    #                   const.cg_bat[0], [1.75, 3.75, 3.75, 6, 6], contingency)
+
+    Mass = wei.Weight(m_pax, wing, fuselage, lgear, props, cargo_m=cargo_m, cargo_pos=const.cargo_pos[0], battery_m=m_bat,
+                      battery_pos=const.cg_bat[0], p_pax=[1.75, 3.25, 3.25, 4.75, 4.75], contingency = contingency)
 
     # print('gear mass', lgear.mass, props.mass)
     print('prop mass', n_prop_1*np.sum(m_prop)/n_prop, n_prop)
@@ -204,18 +209,6 @@ class RunDSE:
         pos_front_wing = [xf, zf]
         pos_back_wing = [xr, zr]
 
-        #b1 = internal_inputs[19]
-        #b2 = internal_inputs[20]
-
-        # Inputs replacing the optimization done by stability and control
-        # AR_wing1 = internal_inputs[21]
-        # AR_wing2 = internal_inputs[22]
-
-        #xr = internal_inputs[21]
-        #zr = internal_inputs[22]
-
-        #Sr_Sf = internal_inputs[23]
-
         # Distances (positive if back wing is further aft and higher)
         wing_distance_hor = xr - xf
         wing_distance_ver = zr - zf
@@ -258,9 +251,17 @@ class RunDSE:
 
         # Calculate the fuselage length
         l_tc = xr - xmac_to_xle(const.sweepc41, AR_wing1, taper, b1, const.dihedral1)[0] + \
-               (2 * b2 / (AR_wing2 * (1 + taper)))
+               (2 * b2 / (AR_wing2 * (1 + taper))) - (const.l_nosecone + const.l_cylinder)
+
+        print(xr)
+        print(xmac_to_xle(const.sweepc41, AR_wing1, taper, b1, const.dihedral1)[0])
+        print(2 * b2 / (AR_wing2 * (1 + taper)))
+
+        print('tailcone', l_tc)
         #print('Tailcone:', l_tc)
         l_fus = l_tc + const.l_nosecone + const.l_cylinder
+
+        print(l_fus)
 
         # ------ Drag ------
         Afus = np.pi * np.sqrt(w_fus * h_fus)**2 / 4
@@ -317,6 +318,7 @@ class RunDSE:
 
         # ----------------------- Performance ------------------------
 
+        print('stall speed things:', h_cr, MTOM, CLmax, S_tot, V_stall)
         V = at.speeds(h_cr, MTOM, CLmax, S_tot, drag)
 
         # Cruise speed
@@ -324,6 +326,7 @@ class RunDSE:
 
         # Update the stall speed
         V_stall = V.stall()
+        print('stall speed', V_stall)
 
         # Cruise CL of the wings
         L_cr = MTOM * g0
@@ -412,7 +415,7 @@ class RunDSE:
         # MTOM = MTOM*const.mass_cont
 
         print(x_CG_MTOM)
-        x_CG_MTOM = 3.8#0.8*x_CG_MTOM
+        #x_CG_MTOM = 3.0#0.8*x_CG_MTOM
 
         # ----------------- Stability and control -------------------
 
@@ -425,7 +428,7 @@ class RunDSE:
                                K=max_thrust/n_prop, ku=0.1)
 
         # Loading
-        cg_pax = [[3.75, 0.5, h_fus*0.4], [3.75, -0.5, h_fus*0.4], [6, 0.5, h_fus*0.4], [6, -0.5, h_fus*0.4]]
+        cg_pax = [[3.25, 0.5, h_fus*0.4], [3.25, -0.5, h_fus*0.4], [4.75, 0.5, h_fus*0.4], [4.75, -0.5, h_fus*0.4]]
         # Approximated with new layout
         cg_pil = [1.75, 0, h_fus/2]  # Pilot is higher than pax
         cg_fus = [l_fus*0.4, 0, h_fus*0.5]
@@ -549,6 +552,7 @@ class RunDSE:
                               zf, zr, Zcg, const.Vr_Vf_2, Sr_Sf)
 
         Sv = v_tail[0]
+        print('tail area', Sv)
 
         # Variables that are updated (the 0 is a placeholder, not used)
         internal_inputs = [MTOM, 0, V_cr, h_cr, C_L_cr, CLmax, prop_radius, de_da, Sv, V_stall, max_power, AR_wing1,

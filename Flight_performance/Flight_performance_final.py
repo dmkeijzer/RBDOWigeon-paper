@@ -390,6 +390,7 @@ class mission:
         d_desc, E_desc, t_desc, P_m_la, T_m_la = self.numerical_simulation(vx_start=self.v_cruise,
                                                                            y_start=self.h_cruise,
                                                                            th_start = np.radians(5), y_tgt=0, vx_tgt=0)
+        #E_climb, E_desc = 0, 0
 
         # Distance spent in cruise
         d_cruise = self.mission_dist# - d_desc - d_climb

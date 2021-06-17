@@ -98,7 +98,7 @@ br_bv = 0.85                    # Span of rudder wrt span tail
 cr_cv = 0.4                     # Ratio of the chords
 
 # CGs
-cg_bat = [3.25, 0, 0.4*h_fuselage]
+cg_bat = [0.5, 0, 0.4*h_fuselage]
 cargo_pos = [6.5, 0, 0.3*h_fuselage]       # [m] Cargo position
 
 
