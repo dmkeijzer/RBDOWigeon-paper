@@ -185,8 +185,10 @@ def plot_stagger_gap(b, CL, S):
     ax.set_ylabel('Gap [m]')
     cp = plt.contourf(stagger,gap,dCL)
     plt.colorbar(cp)
+    plt.plot(6,1.2,color='r')
     plt.show()
-plot_stagger_gap(b, 0.4, S_ref) # plot_stagger_gap(7, 0.4, 16)
+
+plot_stagger_gap(7, 0.4, 16) # plot_stagger_gap(b, 0.4, S_ref)
 
 
 
