@@ -49,7 +49,8 @@ def Cma(Claf, Clar, lambda_c4f, lambda_c4r, taperf, taperr, CLf, CLr, Af, Ar,
     CLar = CLa(Clar, Ar, lambda_c2r)
     bf,  _ = bf_br(S, Sr_Sf, Af, Ar)
     Sf = S / (1 + Sr_Sf)
-    mac = (macf + macr) / 2
+    Sr = S - Sf
+    mac = (macf * Sf + macr * Sr) / S
 
     de_da = deps_da_empirical(lambda_c4f, bf, xr - xf, zr - zf, Af, CLaf,
                               rho, Pbr, Sf, CLf, W)
