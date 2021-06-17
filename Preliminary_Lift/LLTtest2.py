@@ -91,10 +91,7 @@ class Wing:
         ax.set_ylim(min(x)-xrng/7., max(x)+xrng/7.)
         ax.set_aspect('equal', 'datalim')
         ax.set_ylim(ax.get_ylim()[::-1])
-        ax.annotate("Area: {:.4f}\nAR: {:.4f}\nMAC: {:.4f}".format(self.area,
-                                                                   self.aspect_ratio, self.cbar), xy=(0.80,0.95),
-                    xycoords='axes fraction', verticalalignment='top',
-                    bbox=dict(boxstyle='square', fc='w', ec='m'), color='m')
+        #ax.annotate("Area: {:.4f}\nAR: {:.4f}\nMAC: {:.4f}".format(self.area, self.aspect_ratio, self.cbar), xy=(0.80,0.95), xycoords='axes fraction', verticalalignment='top', bbox=dict(boxstyle='square', fc='w', ec='m'), color='m')
 
 # WEISSINGER
 eps = 1E-10
@@ -288,7 +285,6 @@ def create_plot(wing, y, cl, ccl, CL, CDi):
 
 def create_plot_comp(wing, y, cl, ccl, CL, CDi,  cl2, ccl2, CL2, CDi2):
     """ Plots lift distribution and wing geometry """
-
     # Mirror to left side for plotting
     npt = y.shape[0]
     y = np.hstack((y, np.flipud(-y[0:npt-1])))
@@ -304,7 +300,7 @@ def create_plot_comp(wing, y, cl, ccl, CL, CDi,  cl2, ccl2, CL2, CDi2):
     axarr[0].set_ylabel('Sectional lift coefficient $C_l$')
     axarr[0].legend(['Fore Wing', 'Hind Wing'], numpoints=1)
     axarr[0].grid()
-    axarr[0].annotate("Fore CL: {:.4f}\nFore CDi: {:.5f}\n Hind CL {:.4f}\nHind CDi: {:.5f}".format(CL,CDi, CL2, CDi2), xy=(0.72,0.43), xycoords='axes fraction', verticalalignment='top',  bbox=dict(boxstyle='square', fc='w', ec='m'), color='m')
+    axarr[0].annotate("Fore CL: {:.4f}\nFore CDi: {:.5f}\nHind CL: {:.4f}\nHind CDi: {:.5f}".format(CL,CDi, CL2, CDi2), xy=(0.72,0.43), xycoords='axes fraction', verticalalignment='top',  bbox=dict(boxstyle='square', fc='w', ec='m'), color='m')
 
     wing.plot(axarr[1])
     plt.show()
@@ -325,7 +321,7 @@ def create_plot_induced(wing, y, al_i,al_i2):
     axarr[0].set_ylabel('Induced AOA $\\alpha_i$')
     axarr[0].legend(['Fore Wing', 'Hind Wing'], numpoints=1)
     axarr[0].grid()
-    axarr[0].annotate("Fore CL: {:.4f}\nFore CDi: {:.5f}\n Hind CL {:.4f}\nHind CDi: {:.5f}".format(CL,CDi, CL2, CDi2), xy=(0.72,0.43), xycoords='axes fraction', verticalalignment='top',  bbox=dict(boxstyle='square', fc='w', ec='m'), color='m')
+    axarr[0].annotate("Fore CL: {:.4f}\nFore CDi: {:.5f}\nHind CL: {:.4f}\nHind CDi: {:.5f}".format(CL,CDi, CL2, CDi2), xy=(0.72,0.43), xycoords='axes fraction', verticalalignment='top',  bbox=dict(boxstyle='square', fc='w', ec='m'), color='m')
 
     wing.plot(axarr[1])
     plt.show()
@@ -385,7 +381,8 @@ def LLT2wings(span1, AR1,root1, tip1, sweep1, alpha1, z_h, x_h,span2, AR2, root2
     a_w = downwash_fore(np.append(0, ccl[1:] / cl[1:]), y, y2, cl, x_h, z_h, V_cr)
     de_da = np.average(a_w) * (180 / (np.pi * alpha1))
     y3, cl3, ccl3, al_i3, CL3, CDi3, e3 = weissinger_l(wing2, alpha2, 2 * npoints - 1, AR2, a_w, i2)
-    return CL, CL3, CDi, CDi3, e, e3, de_da
+    #return CL, CL3, CDi, CDi3, e, e3, de_da
+    return y3, cl3, ccl3, al_i3, CL3, CDi3, e3
 
 def downwash(span1, AR1,root1, tip1, sweep1, alpha1, z_h, x_h,span2, root2,tip2,sweep2,V_cr):
     npoints = 11
@@ -416,12 +413,10 @@ def LLT1wing(span1, AR1,root1, tip1, sweep1, alpha1):
     npoints = 11
     washout = 0
     wing = Wing(span1, root1, tip1, sweep1,washout)
-    y, cl, ccl, al_i, CL, CDi , e= weissinger_l(wing, alpha1, 2*npoints-1, AR1, np.zeros(43))
+    y, cl, ccl, al_i, CL, CDi , e= weissinger_l(wing, alpha1, 2*npoints-1, AR1, np.zeros(43), 0)
+    # return CL, CDi, e,
+    return  y, cl, ccl, al_i, CL, CDi , e
 
-
-
-
-    return CL, CDi, e,
 def sectional_lift(ccl, q_inf):
     return q_inf * ccl
 
@@ -436,3 +431,25 @@ def sectional_lift(ccl, q_inf):
 # y = downwash(8.573,14,0.844,0.380,0,5, 0.0 ,2,11.22497,1.93534,0.870,0,55)
 # print(x)
 # print(y)
+
+if __name__ == "__main__":
+
+    wing = Wing(8.704, 1.10695, 0.49813, 0,0)
+    y, cl, ccl, al_i, CL, CDi , e = LLT1wing(8.704, 4.5, 1.10695, 0.49813,0, 9 )
+    wing2 = Wing(8.704, 1.10695, 0.49813, 0,0)
+    y2, cl2, ccl2, al_i2, CL2, CDi2, e2 = LLT2wings(8.704, 4.5, 1.10695, 0.49813, 0, 9, 1.25,6, 8.704, 4.5, 1.10695, 0.49813,0, 9 , 75, 0 , 0 )
+
+    # print(cl,len(cl))
+    # print(cl2,len(cl2))
+
+    # print("{:<6}".format("Area: ") + str(wing.area))
+    # print("{:<6}".format("AR: ") + str(wing.aspect_ratio))
+    # print("{:<6}".format("MAC: ") + str(wing.cbar))
+    # print("{:<6}".format("CL: ") + str(CL))
+    # print("{:<6}".format("CDi: ") + str(CDi))
+    # print("{:<6}".format("e: ") + str(e))
+
+    create_plot(wing, y, cl, ccl, CL, CDi)
+    create_plot(wing2, y2, cl2, ccl2, CL2, CDi2)
+    create_plot_comp(wing, y, cl, ccl, CL, CDi, cl2, ccl2, CL2, CDi2)
+    create_plot_induced(wing,y,al_i,al_i2)
