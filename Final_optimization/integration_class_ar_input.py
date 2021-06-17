@@ -1,6 +1,7 @@
 import numpy as np
 import Aero_tools as at
 import constants_final as const
+import json
 
 # Aero
 import Preliminary_Lift.Drag as drag_comp
@@ -36,9 +37,9 @@ w_fus = const.w_fuselage
 
 l1_fus = const.l_nosecone
 l2_fus = const.l_cylinder
-l3_fus = const.l_tailcone
+#l3_fus = const.l_tailcone
 
-l_fus = l1_fus + l2_fus + l3_fus
+#l_fus = l1_fus + l2_fus + l3_fus
 
 h_fus = const.h_fuselage
 
@@ -67,7 +68,7 @@ Pmax_weight = 17  # this is defined as maximum perimeter in Roskam, so I took to
 
 # ------------- Initial mass estimate -------------
 def mass(MTOM, S1, S2, n_ult, AR_wing1, AR_wing2, pos_frontwing, pos_backwing, Pmax, l_fus, n_pax, pos_fus,
-         pos_lgear, n_prop, m_prop, pos_prop, m_pax, cargo_m, m_bat):
+         pos_lgear, n_prop, m_prop, pos_prop, m_pax, cargo_m, m_bat, contingency = False):
     wing = wei.Wing(MTOM, S1, S2, n_ult, AR_wing1, AR_wing2, [pos_frontwing, pos_backwing])
     m_wf = wing.wweight1
     m_wr = wing.wweight2
@@ -82,13 +83,13 @@ def mass(MTOM, S1, S2, n_ult, AR_wing1, AR_wing2, pos_frontwing, pos_backwing, P
     cg_props = props.pos_prop
     m_prop = props.mass
     Mass = wei.Weight(m_pax*const.payload_cont, wing, fuselage, lgear, props, cargo_m=cargo_m, cargo_pos=const.cargo_pos[0], battery_m=m_bat,
-                      battery_pos=const.cg_bat[0], p_pax=[1.75, 3.75, 3.75, 6, 6])
+                      battery_pos=const.cg_bat[0], p_pax=[1.75, 3.75, 3.75, 6, 6], contingency = contingency)
 
     # print('gear mass', lgear.mass, props.mass)
     print('prop mass', n_prop_1*np.sum(m_prop)/n_prop, n_prop)
     return Mass.mtom, m_wf + n_prop_1*np.sum(m_prop)/n_prop, m_wr + n_prop_2*np.sum(m_prop)/n_prop, m_fus, m_prop, \
            cg_fus, cg_gear, cg_props, \
-           Mass.mtom_cg
+           Mass.mtom_cg, lgear.mass
 
 def find_mac(S, b, taper):
     """
@@ -253,19 +254,26 @@ class RunDSE:
         # [b2, c_r2, c_t2, c_MAC2, y_MAC2, X_LEMAC2]
         wing_plan_1, wing_plan_2 = wing_design.wing_planform_double()
 
+        taper = wing_plan_1[2] / wing_plan_1[1]
+
+        # Calculate the fuselage length
+        l_tc = xr - xmac_to_xle(const.sweepc41, AR_wing1, taper, b1, const.dihedral1)[0] + \
+               (2 * b2 / (AR_wing2 * (1 + taper)))
+        #print('Tailcone:', l_tc)
+        l_fus = l_tc + const.l_nosecone + const.l_cylinder
+
         # ------ Drag ------
         Afus = np.pi * np.sqrt(w_fus * h_fus)**2 / 4
 
         # Airfoil characteristics
         airfoil_stats = airfoil.airfoil_stats()
 
-        drag = drag_comp.componentdrag('tandem', S_tot, l1_fus, l2_fus, l3_fus, np.sqrt(w_fus * h_fus), V_cr, rho,
+        drag = drag_comp.componentdrag('tandem', S_tot, const.l_nosecone, const.l_cylinder, l_tc, np.sqrt(w_fus * h_fus), V_cr, rho,
                                        wing_plan_1[3], AR_wing1, AR_wing2, M, const.k, const.flamf, const.flamw, dyn_vis, const.tc,
                                        const.xcm, 0, wing_design.sweep_atx(0)[0], fus_upsweep, wing_plan_1[2],
                                        wing_distance_ver, const.IF_f, const.IF_w, const.IF_v, airfoil_stats[2],
                                        const.Abase, Sv, s1, s2, h_wt_1, h_wt_2, const.k_wl)
 
-        taper = wing_plan_1[2] / wing_plan_1[1]
         CDs = drag.CD(CLmax)
         CDs_f = drag.CD0_f
         CDs_w = CDs - CDs_f
@@ -291,7 +299,6 @@ class RunDSE:
         CLmax = np.minimum(CLmax, 3)
         CD0 = drag.CD0()
         CD_cr = drag.CD(C_L=C_L_cr)
-
 
         # ----------------- Vertical drag -------------------
 
@@ -376,7 +383,6 @@ class RunDSE:
 
         m_bat = battery.mass()
 
-
         # -------------------- Update weight ------------------------
         pos_fus = l_fus*0.4
         MAC1 = find_mac(S1, b1, taper)
@@ -386,20 +392,24 @@ class RunDSE:
 
         pos_prop = np.hstack((np.array(pos_prop_front), np.array(pos_prop_back)))
 
+        pos_eng_front = [(xf - 0.25 * MAC1)] * n_prop_1
+        pos_eng_back = [(xr - 0.25 * MAC2)] * n_prop_2
+
+        pos_eng = np.hstack((np.array(pos_eng_front), np.array(pos_eng_back)))
+
         # The mass of one engine is the specific mass of the engines (kg/W) x Total power of ONE ENGINE
         m_prop = const.sp_mass_en * P_max_eng_ind * np.ones(np.shape(pos_prop))
 
         pos_lgear = (1.75+6)/2  # TODO revise if needed
-        MTOM, m_wf, m_wr, m_fus, m_prop, cg_fus0, cg_gear, cg_props, x_CG_MTOM = mass(MTOM, S1, S2, n_ult, AR_wing1,
+        MTOM, m_wf, m_wr, m_fus, m_prop, cg_fus0, cg_gear, cg_props, x_CG_MTOM, m_gear = mass(MTOM, S1, S2, n_ult, AR_wing1,
                                                                                      AR_wing2, pos_front_wing,
                                                                                      pos_back_wing, Pmax_weight, l_fus,
                                                                                      const.n_pax, pos_fus, pos_lgear,
                                                                                      n_prop, m_prop, pos_prop,
                                                                                      const.m_pax,  const.m_cargo_tot,
-                                                                                     m_bat)
+                                                                                     m_bat, contingency = True)
 
         # MTOM = MTOM*const.mass_cont
-
 
         print(x_CG_MTOM)
         x_CG_MTOM = 3.8#0.8*x_CG_MTOM
@@ -547,21 +557,90 @@ class RunDSE:
         # Outputs for optimisation cost function
         optim_outputs = [MTOM, energy, time, CM_a]
 
+        # Aerdodynamic moments
+        Cmac1 = airfoil.Cm_ac(const.sweepc41, AR_wing1)[0]
+        Cmac2 = airfoil.Cm_ac(const.sweepc42, AR_wing2)[0]
+
+        MTOM_nc, m_wf_nc, m_wr_nc, m_fus_nc, m_prop_nc, \
+        cg_fus0_nc, cg_gear_nc, cg_props_nc, x_CG_MTOM_nc, m_gear_nc = mass(MTOM, S1, S2, n_ult, AR_wing1,
+                                                                                     AR_wing2, pos_front_wing,
+                                                                                     pos_back_wing, Pmax_weight, l_fus,
+                                                                                     const.n_pax, pos_fus, pos_lgear,
+                                                                                     n_prop, m_prop, pos_prop,
+                                                                                     const.m_pax,  const.m_cargo_tot,
+                                                                                     m_bat, contingency = False)
+
+        lines       = [["MAC1" ,find_mac(S1, b1, taper)],  # Mean Aerodynamic Chord [m]
+                      ["MAC2" , find_mac(S2, b2, taper)],
+                      ["taper",taper],  # [-]
+                      ["rootchord1" , 2*b1/(AR_wing1*(1+taper))],  # [m]
+                      ["rootchord2" , 2*b2/(AR_wing2*(1+taper))],
+                      ["thicknessChordRatio",const.tc_wing],  # [-]
+                      ["xAC",0.25],  # [-] position of ac with respect to the chord
+                      ["mtom",MTOM_nc],
+                      ["S1" , S1],
+                      ["S2" , S2],  # surface areas of wing one and two
+                      ["span1",b1],
+                      ["span2",b2],
+                      ["nmax" ,3.2],  # maximum load factor
+                      ["Pmax" , Pmax_weight],
+                      # this is defined as maximum perimeter in Roskam, so i took top down view of the fuselage perimeter
+                      ["lf",l_fus],  # length of fuselage
+                      ["m_pax",const.m_pax],  # average mass of a passenger according to Google
+                      ["n_prop",const.n_prop],  # number of engines
+                      ["n_pax",const.n_pax],  # number of passengers (pilot included)
+                      ["pos_fus", cg_fus0],  # fuselage centre of mass away from the nose
+                      ["pos_lgear" , cg_gear],  # landing gear position away from the nose
+                      ["pos_frontwing" , xf],   # Position of the aerodynamic centre of the wing
+                      ["pos_backwing" , xr],
+                      ["zpos_frontwing", zf],  # Position of the aerodynamic centre of the wing
+                      ["zpos_backwing", zr],
+                      ["m_prop", m_prop],  # list of mass of engines (so 30 kg per engine with nacelle and propeller)
+                      ["pos_prop",pos_prop],
+                      # 8 on front wing and 8 on back wing
+                      ["Mac1" , Cmac1],  # aerodynamic moment around AC
+                      ["Mac2" , Cmac2],
+                      ["flighttime",t_tot/3600],  # [hr]
+                      # turnovertime,2,  # we dont actually need this xd
+                      ["takeofftime", (t_tot-t_hor)/2],
+                      ["enginePlacement", pos_eng], #list(np.linspace(0.1 * b / 2, 0.8 * b / 2, 4)),
+                      #engineMass,400 * 9.81 / 8, # See m_prop
+                      ["T_max",max_thrust], # [s] Time in vertical config
+                      ["p_pax" , [1.75, 3.75, 3.75, 6, 6]],
+                      ["battery_pos",const.cg_bat[0]],  # [m] Battery x-position
+                      ["cargo_m",const.m_cargo_tot],
+                      ["cargo_pos",const.cargo_pos[0]],
+                      ["battery_m",m_bat],
+                      ["P_max", max_power], # [W] Maximum disk power needed
+                      ["vol_bat", energy/ const.vol_en_den],
+                      ["price_bat", const.bat_cost*energy/1000],
+                      ["h_winglet_1",h_wt_1],
+                      ["h_winglet_2",h_wt_2],
+                      ["V_cruise", V_cr],
+                      ["CLmax", CLmax]]
+
+        txt = open("final_values.txt", 'w')
+        txt.truncate(0)
+        for element in lines:
+            txt.write(element[0] + " = "+  str(element[1]) + "\n")
+        txt.close()
+
         print("MTOM:            ", MTOM)
         print("     - Battery:  ", m_bat)
         print("     - Wing fore:", m_wf)
         print("     - Wing aft: ", m_wr)
         print("     - Fuselage: ", m_fus)
-        print("     - pax:      ", const.m_pax*const.n_pax)
-        print("Total based on components:", m_bat + m_wf + m_wr + m_fus + const.m_pax*const.n_pax)
+        print("     - pax:      ", const.m_pax * const.n_pax)
+        print("Total based on components:",
+              m_bat + m_wf + m_wr + m_fus + const.m_pax * const.n_pax + const.m_cargo_tot + m_gear)
+        print("MTOW w/o contingency:", MTOM_nc)
         print("Cruise speed:    ", V_cr)
         print("Max power:       ", max_power)
-        print("Energy used:     ", energy*3.6e-3)
+        print("Energy used:     ", energy * 3.6e-3)
         print("Wing surface:    ", S_tot)
         print("Wing spans:      ", b1, b2)
         print("CM alpha:        ", CM_a)
         print("Controllability: ", cg_fwd_lim - x_front)
-
 
         # Other necessary outputs
         other_outputs = [track_width, z_mlg]

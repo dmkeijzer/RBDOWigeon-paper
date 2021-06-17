@@ -69,6 +69,5 @@ def Cm_ac(sweep, ARw):
     Cm_ac_w = Cm_ac*(ARw*np.cos(sweep))/(ARw+2*np.cos(sweep))
     return Cm_ac_w, Cm_ac, ac, Cm_curve[2], CN_curve[2]
 
-
 #plt.plot(np.arange(0,1.7,0.05), Cd(np.arange(0,1.7,0.05)))
 #plt.show()

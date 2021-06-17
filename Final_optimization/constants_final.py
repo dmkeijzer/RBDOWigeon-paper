@@ -9,7 +9,7 @@ rho_0 = 1.225               # [kg/m^3]
 # Contingency
 energy_cont     = 1
 payload_cont    = 1
-mass_cont = 1.1
+mass_cont       = 1.1
 
 # General
 mission_range = 300e3       # [m] Mission range  TODO: Maybe add 50 km
@@ -25,8 +25,8 @@ w_fuselage = 1.38           # [m]
 h_fuselage = 1.7            # [m]
 l_nosecone = 2.5            # [m]
 l_cylinder = 2.5            # [m]
-l_tailcone = 2.7            # [m]
-l_fus = l_nosecone + l_cylinder + l_tailcone
+#l_tailcone = 2.7            # [m]
+#l_fus = l_nosecone + l_cylinder + l_tailcone
 upsweep = 8.43*np.pi/180    # [Degrees]
 
 
@@ -99,7 +99,7 @@ cr_cv = 0.4                     # Ratio of the chords
 
 # CGs
 cg_bat = [3.25, 0, 0.4*h_fuselage]
-cargo_pos = [6.5, 0, 0.3*l_fus]       # [m] Cargo position
+cargo_pos = [6.5, 0, 0.3*h_fuselage]       # [m] Cargo position
 
 
 # Structures

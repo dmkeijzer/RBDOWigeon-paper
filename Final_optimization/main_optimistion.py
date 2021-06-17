@@ -10,7 +10,7 @@ CLmax = 1.68
 prop_radius = 0.55
 de_da = 0.25
 Sv = 1.1
-V_stall = 35
+V_stall = 50
 max_power = 1.5e6
 AR_wing1 = 7.25
 AR_wing2 = 7.85
@@ -20,7 +20,7 @@ s1 = (1 + Sr_Sf)**-1
 # Positions of the wings [horizontally, vertically]
 xf = 0.5
 zf = 0.3
-xr = 7.5
+xr = 6.5
 
 zr = 1.7
 max_thrust_stall = MTOM*const.g*0.5

@@ -37,6 +37,7 @@ class LandingGear:
         self.pos = pos
         self.moment = self.mass * self.pos
 
+
 class Propulsion:
 
     def __init__(self, n_prop, m_prop = [], pos_prop = []):
@@ -49,7 +50,8 @@ class Propulsion:
 
 class Weight:
 
-    def __init__(self, m_pax, wing, fuselage, landing_gear, propulsion, cargo_m, cargo_pos, battery_m, battery_pos, p_pax = []):
+    def __init__(self, m_pax, wing, fuselage, landing_gear, propulsion, cargo_m, cargo_pos, battery_m, battery_pos, p_pax = [],
+                 contingency = False):
         self.m_pax, self.p_pax = m_pax, p_pax
         self.wing, self.fuselage, self.landing_gear, self.prop = wing, fuselage, landing_gear, propulsion
         # weights of components
@@ -77,8 +79,14 @@ class Weight:
 
         print("Check inside function:", self.wmass, self.pmass, self.lmass, self.fmass, self.cmass, self.bmass, self.tot_m_pax)
         print("")
-        self.mtom = (self.wmass*const.mass_cont + self.pmass*const.mass_cont + self.lmass*const.mass_cont +
-                     self.fmass*const.mass_cont + self.cmass + self.bmass*const.mass_cont + self.tot_m_pax)
+
+        if contingency:
+            self.mtom = (self.wmass*const.mass_cont + self.pmass*const.mass_cont + self.lmass*const.mass_cont +
+                         self.fmass*const.mass_cont + self.cmass + self.bmass*const.mass_cont + self.tot_m_pax)
+
+        else:
+            self.mtom = (self.wmass + self.pmass + self.lmass +
+                         self.fmass + self.cmass + self.bmass + self.tot_m_pax)
 
     def print_weight_fractions(self):
         d = {}
