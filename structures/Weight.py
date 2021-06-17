@@ -104,7 +104,7 @@ class Weight:
         # for key in d:
         #     d[key] = {k: list(i) if isinstance(i, np.ndarray) else i for k, i in zip(["mass", "fracOEM", "fracEM"], d[key])}
         # return d
-    def MMI(self):
+    def MMI(self, wmac = [], toc = [], vpos_wing = []):
         # COORDINATE SYSTEM: x points towards nose, y points towards right wing, z points down
         # fuselage  - modeled as a hollow cylinder with wall thickness of 5 cm
         irad = (self.fuselage.wf/2 - 0.05)
@@ -112,40 +112,52 @@ class Weight:
         fus_mmi_z = fus_mmi_y
         fus_mmi_x = self.fmass * ((self.fuselage.wf/2)**2 + irad**2)/2
 
-        # wing - modeled as a prism with span, average thickness and width at mac
-        t = self.wing.wmac * self.wing.toc
-        span = np.sqrt(self.wing.A_1 * self.wing.S1)
+        #front wing - modeled as a prism span, average thickness and width at mac
+        vpos = vpos_wing
+        t1 = wmac[0] * toc[0]
+        span1 = np.sqrt(self.wing.A_1 * self.wing.S1)
 
-        wing_mmi_x, wing_mmi_y, wing_mmi_z = self.wing.mass[0]*(span**2 + t**2)/12, self.wing.mass[0]*(span**2 + self.wing.wmac**2)/12, \
-                                             self.wing.mass[0] * (self.wing.wmac ** 2 + t ** 2) / 12
+        wing1_mmi_x, wing1_mmi_y, wing1_mmi_z = self.wing.mass[0] * (span1 ** 2 + t1 ** 2) / 12, self.wing.mass[0] \
+                                             * (span1 ** 2 + wmac[0] ** 2) / 12, \
+                                             self.wing.mass[0] * (wmac[0] ** 2 + t1 ** 2) / 12
+
+        # wing - modeled as a prism with span, average thickness and width at mac
+        t2 = wmac[1] * toc[1]
+        span2 = np.sqrt(self.wing.A_2 * self.wing.S2)
+
+        wing2_mmi_x, wing2_mmi_y, wing2_mmi_z = self.wing.mass[1]*(span2**2 + t2**2)/12, self.wing.mass[1]*(span2**2 + wmac[1]**2)/12, \
+                                             self.wing.mass[1] * (wmac[1] ** 2 + t2 ** 2) / 12
 
         # propulsion - modeled as a solid cylinder
         m_prop = self.pmass/self.prop.nprop
         lprop, rprop = 0.4, 0.12
         prop_mmi_x, prop_mmi_y, prop_mmi_z = m_prop*(rprop**2)/2, m_prop*(lprop**2 + 3 * rprop**2)/12, m_prop*(lprop**2 + 3 * rprop**2)/12
-
         # battery - modeled as a prism
         lbat, tbat, wbat = 0.4*self.fuselage.lf, 0.2, 1
         bat_mmi_x, bat_mmi_y, bat_mmi_z = self.bmass*(wbat**2 + tbat**2)/12, self.bmass*(wbat**2 + lbat**2)/12, self.bmass*(tbat**2 + lbat**2)/12
-
-        span = np.sqrt(self.wing.A_1*self.wing.S1)
-        oem_mmi_x = fus_mmi_x + 2 * (
-                    wing_mmi_x + self.wmass/2 * (1.705 /2)**2) + \
-                    self.prop.nprop/4 * np.sum(m_prop * (np.sqrt((1.705/2)**2 +  (np.linspace(0.9, span/2, int(self.prop.nprop/4))) ** 2 ))** 2) + \
+        span = span2
+        oem_mmi_x = fus_mmi_x + (
+                    wing1_mmi_x + self.wing.mass[0] * ((1.705/2) - vpos[0])**2) + (wing2_mmi_x + self.wing.mass[1] * (vpos[1] - (1.705 /2))**2) + \
+                    self.prop.nprop/4 * np.sum(m_prop * (np.sqrt((1.705/2)**2 +  (np.linspace(0.9, span1/2, int(self.prop.nprop/4))) ** 2 ))** 2) + \
                                          self.prop.nprop * prop_mmi_x + bat_mmi_x + self.bmass * (1.705/2) ** 2
-        oem_mmi_y = fus_mmi_y + 2* (wing_mmi_y + self.wmass/2*(self.wing.pos2/2)**2) +\
-                    self.prop.nprop/4 * np.sum(m_prop * (np.sqrt((self.wing.pos2/2)**2 +  (np.linspace(0.9, span/2, int(self.prop.nprop/4))) ** 2))**2) +\
-                                                         self.prop.nprop * prop_mmi_y + bat_mmi_y
-        oem_mmi_z = fus_mmi_z + (wing_mmi_z + self.wmass/2 * (
-            np.sqrt((1.705 / 2) ** 2 + (self.wing.pos2/2) ** 2)) ** 2) * 2 + bat_mmi_z + self.bmass * (1.705 / 2) ** 2 + (
+
+        oem_mmi_y = fus_mmi_y + (wing1_mmi_y + self.wing.mass[0]*(self.oem_cg - self.wing.pos1)**2) + (wing2_mmi_y + self.wing.mass[1]*(self.wing.pos2 - self.oem_cg)**2)+\
+                    self.prop.nprop/4 * np.sum(m_prop * (np.sqrt((self.wing.pos2/2)**2 + (np.linspace(0.9, span/2, int(self.prop.nprop/4))) ** 2))**2) +\
+                                                         self.prop.nprop * prop_mmi_y + bat_mmi_y + self.bmass * (self.battery_pos - self.oem_cg)**2
+
+        oem_mmi_z = fus_mmi_z + (wing1_mmi_z + self.wing.mass[0] * (
+            np.sqrt((1.705 / 2 - vpos[0]) ** 2 + (self.oem_cg - self.wing.pos1) ** 2)) ** 2) + (wing2_mmi_z + self.wing.mass[1] * (
+            np.sqrt((1.705 / 2 - vpos[1]) ** 2 + (self.wing.pos2 - self.oem_cg) ** 2)) ** 2) + bat_mmi_z + self.bmass * np.sqrt((1.705 / 2)**2 + (self.battery_pos - self.oem_cg)**2 ) ** 2 + (
                                 m_prop * ((np.sqrt((1.705 / 2) ** 2 + (self.wing.pos2/2) ** 2)) ** 2) + prop_mmi_z) * self.prop.nprop
-        oem_mmi_xy = (self.wmass/2 * (1.705 / 2) * self.wing.pos1/2) * 2 + self.prop.nprop * (m_prop * (1.705 / 2) * self.wing.pos1/2)
+        oem_mmi_xy = (self.wing.mass[0] * (1.705 / 2 - vpos[0]) * (self.oem_cg - self.wing.pos1)) * 2 + self.prop.nprop * (m_prop * (1.705 / 2) * self.wing.pos1/2) + \
+                     (self.wing.mass[1] * (vpos[1] - 1.705 / 2) * (self.wing.pos2 - self.oem_cg)) + self.bmass * np.sqrt((1.705 / 2)**2 + (self.battery_pos - self.oem_cg)**2 ) ** 2
         return oem_mmi_x, oem_mmi_z, oem_mmi_y, oem_mmi_xy
 
 if __name__ == '__main__':
     mtom = 3000 # maximum take-off mass from statistical data - Class I estimation
     S1, S2 = 5.5, 5.5 # surface areas of wing one and two
-    A = 14 # aspect ratio of a wing, not aircraft
+    A1 = 7.75 # aspect ratio of a wing, not aircraft
+    A2 = 7.85  # aspect ratio of a wing, not aircraft
     n_ult = 3.2*1.5 # 3.2 is the max we found, 1.5 is the safety factor
     Pmax = 15.25 # this is defined as maximum perimeter in Roskam, so i took top down view of the fuselage perimeter
     lf = 7.2 # length of fuselage
@@ -157,10 +169,11 @@ if __name__ == '__main__':
     pos_frontwing, pos_backwing = 0.2, 7 # positions of the wings away from the nose
     m_prop = [30]*16 # list of mass of engines (so 30 kg per engine with nacelle and propeller)
     pos_prop = [0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 7.0, 7.0, 7.0, 7.0, 7.0, 7.0, 7.0, 7.0] # 8 on front wing and 8 on back wing
-    wing = Wing(mtom, S1, S2, n_ult, A, [pos_frontwing, pos_backwing])
+    wing = Wing(mtom, S1, S2, n_ult, A1, A2, [pos_frontwing, pos_backwing])
     fuselage = Fuselage(mtom, Pmax, lf, n_pax, pos_fus)
     lgear = LandingGear(mtom, pos_lgear)
     props = Propulsion(n_prop, m_prop, pos_prop)
-    weight = Weight(m_pax, wing, fuselage, lgear, props, cargo_m = 85, cargo_pos = 6, battery_m = 400, battery_pos = 3.6, p_pax = [1.5, 3, 3, 4.2, 4.2])
+    weight = Weight(m_pax, wing, fuselage, lgear, props, cargo_m = 85, cargo_pos = 6, battery_m = 400, battery_pos = 3.0, p_pax = [1.5, 3, 3, 4.2, 4.2])
     print(weight.print_weight_fractions())
-    print(weight.MMI())
+    Ixx, Iyy, Izz, Ixz = weight.MMI(wmac = [0.7, 0.8], toc = [0.17, 0.17], vpos_wing = [0.3, 1.6])
+    print('Ixx, Iyy, Izz, Ixz:', + Ixx, Iyy, Izz, Ixz)
