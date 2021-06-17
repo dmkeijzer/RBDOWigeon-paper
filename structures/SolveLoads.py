@@ -99,15 +99,12 @@ class WingLoads:
     def stressesCruise(self):
         root = self.wing(0)
         # q, tau, o
-        print(root)
-        print('Vy cruise ', self.Vy(0))
-        coordinates = [[x, root.h/2] for x in np.linspace(-root.b/2, root.b/2, 999)] + [[root.b/2, y] for y in np.linspace(root.h/2, -root.h/2, 999)] \
-        + [[x, -root.h/2] for x in np.linspace(-root.b/2, root.b/2, 999)] + [[-root.b/2, y] for y in np.linspace(root.h/2, -root.h/2, 999)]
+        coordinates = [[x, root.h/2] for x in np.linspace(-root.b/2, root.b/2, 1000)] + [[root.b/2, y] for y in np.linspace(root.h/2, -root.h/2, 1000)] \
+        + [[x, -root.h/2] for x in np.linspace(-root.b/2, root.b/2, 1000)] + [[-root.b/2, y] for y in np.linspace(root.h/2, -root.h/2, 1000)]
         
         x, y = np.array(coordinates).T
         sigma = root.o(x, y, self.Mx(0), self.My(0))
         tau = np.array([root.tau(ix, iy, self.Vx(0), self.Vy(0), self.T(0)) for ix, iy in coordinates])
-        print(root.q(-root.b/2, 0, self.Vx(0), self.Vy(0), self.T(0)))
         
         return np.array(coordinates), sigma, tau, np.sqrt(3*tau**2 + sigma**2)
 
