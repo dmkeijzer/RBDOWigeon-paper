@@ -114,18 +114,22 @@ class WingBox:
         
     def Vshear(self, Vy, x, y):
         Ixx = self.Ixx()
+        print(f"{Vy, x, y, self.b/2, self.h/2 = }")
         inrge = lambda l1, u1, l2, u2: l1 <= x <= u1 and l2 <= y <= u2
         vit = - Vy * self.tsp / Ixx if (-self.b/2 <= x <= -self.b/2 + self.tsp) or (self.b/2 - self.tsp <= x <= self.b/2) else - Vy * self.tsk / Ixx
         if inrge(0, self.b/2, -self.h/2, -self.h/2 + self.tsk):
             return vit * (-self.h * x / 2)
         elif inrge(self.b/2-self.tsp, self.b/2, -self.h/2, self.h/2):
             s = self.h/2 + y
+            print('Active: ', x, y)
             return vit * (0.5 * s * s - self.h * s / 2) + self.Vshear(Vy, self.b/2, -self.h/2)
-        elif inrge(-self.b/2, self.b/2, self.h/2-self.tsk, self.h/2):
+        elif -self.b/2 <= x < self.b/2 and self.h/2-self.tsk < y <= self.h/2:
             s = self.b/2 - x
+            print('unActive: ', x, y)
             return vit * (self.h*s/2) + self.Vshear(Vy, self.b/2, self.h/2)
         elif inrge(-self.b/2, -self.b/2+self.tsp, -self.h/2, self.h/2):
             s = self.h/2 - y
+            print('unActive2: ', x, y)
             return vit * (-0.5 * s * s + self.h * s / 2) + self.Vshear(Vy, -self.b/2, self.h/2)
         elif inrge(-self.b/2, 0, -self.h/2, -self.h/2+self.tsk):
             return vit * (-self.h * (x + self.b/2) / 2) + self.Vshear(Vy, -self.b/2, -self.h/2)

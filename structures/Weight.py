@@ -1,6 +1,9 @@
 """ New weight estimation file """
+import sys
 import numpy as np
-import Final_optimization.constants_final as const
+
+sys.path.append('../Final_optimization/')
+import constants_final as const
 
 class Wing:
     # Roskam method (not accurate because does not take into account density of material but good enough for comparison
