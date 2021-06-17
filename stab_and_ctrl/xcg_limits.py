@@ -41,8 +41,7 @@ def xcg_stab(CLaf, CLar, CLf, CLr, Af, Ar, ef, er, xf, xr, zf, zr, zcg,
 
 
 def Cma(Claf, Clar, lambda_c4f, lambda_c4r, taperf, taperr, CLf, CLr, Af, Ar,
-        ef, er, xf, xr, zf, zr, zcg, Vr_Vf_2, Sr_Sf, xcg, S, rho, Pbr, W,
-        macf, macr):
+        ef, er, xf, xr, zf, zr, zcg, Vr_Vf_2, Sr_Sf, xcg, S, rho, Pbr, W):
     lambda_c2f = lambda_c4_to_lambda_c2(Af, taperf, lambda_c4f)
     lambda_c2r = lambda_c4_to_lambda_c2(Ar, taperr, lambda_c4r)
     CLaf = CLa(Claf, Af, lambda_c2f)
@@ -50,6 +49,10 @@ def Cma(Claf, Clar, lambda_c4f, lambda_c4r, taperf, taperr, CLf, CLr, Af, Ar,
     bf,  _ = bf_br(S, Sr_Sf, Af, Ar)
     Sf = S / (1 + Sr_Sf)
     Sr = S - Sf
+    bf = np.sqrt(Sf * Af)
+    br = np.sqrt(Sr * Ar)
+    macf = find_mac(Sf, bf, taperf)
+    macr = find_mac(Sr, br, taperr)
     mac = (macf * Sf + macr * Sr) / S
 
     de_da = deps_da_empirical(lambda_c4f, bf, xr - xf, zr - zf, Af, CLaf,
