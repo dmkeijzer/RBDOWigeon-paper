@@ -70,12 +70,12 @@ h_wl2 = 0.5
 k_wl = 2.0
 #7 9 0.45454545454545453 0 0.5454545454545454 0 0.1961932635918894 18.379085418840855 7.0 1.4 1.38 0.5 0.5 2.0 0
 Wing_params =  wing_design(AR1, AR2, s1,sweepc41,s2,sweepc42,M,S_ref, l_h,h_d,w_max,h_wl1,h_wl2, k_wl, i1)
-b = Wing_params.wing_planform_double()[1][0]
-C_r = Wing_params.wing_planform_double()[1][1]
-C_t = Wing_params.wing_planform_double()[1][2]
+b = Wing_params.wing_planform_double()[0][0]
+C_r = Wing_params.wing_planform_double()[0][1]
+C_t = Wing_params.wing_planform_double()[0][2]
 
 MAC = Wing_params.wing_planform_double()[1][3]
-
+print("YE",b, C_r, C_t, MAC)
 SweepLE = Wing_params.sweep_atx(0)[0]
 deda = 0.25 #downwash(Wing_params.wing_planform_double()[0][0] , Wing_params.AR1,
               #  Wing_params.wing_planform_double()[0][1], Wing_params.wing_planform_double()[0][2], Wing_params.sweepc41, 5, Wing_params.h_ht,
