@@ -49,7 +49,7 @@ class WingLoads:
                                  ukloads=[PointLoad([1, 0, 0], [0, 0, 0]), PointLoad([0, 1, 0], [0, 0, 0]),
                                           PointLoad([0, 0, 1], [0, 0, 0]), Moment([1, 0, 0]),
                                           Moment([0, 1, 0]), Moment([0, 0, 1])])
-
+#         print(Lift.force()*4, Drag.force(), 3024.8012022968796*9.81)
         eqn.SetupEquation()
         self.RFx, self.RFy, self.RFz, self.RMx, self.RMy, self.RMz = solved = eqn.SolveEquation()
         return solved
@@ -69,7 +69,7 @@ class WingLoads:
             self.equilibriumCruise(dragDistr, liftDistr, macDistr, wingWeight)
 
         lin = LinearRegression()
-        poly = PolynomialFeatures(degree=20)
+        poly = PolynomialFeatures(degree=len(liftDistr))
         X = poly.fit_transform(dragDistr[0].reshape(-1, 1))
         lin.fit(X, np.array([dragDistr[1], liftDistr[1], macDistr[1]]).T)
         dragcoef, liftcoef, momcoef = lin.coef_

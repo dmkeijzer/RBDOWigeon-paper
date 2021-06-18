@@ -38,7 +38,7 @@ def ShearStressPlot(oxx, x, Ch, Ca, shape, tsk, tsp, **others):
 
 def InternalLoading(x0, x1, **Loads):
     titles = [k + f' [kN{"" if k[0].upper() == "V" else "m"}]' for k in Loads]
-    fig = make_subplots(rows=len(list(Loads.keys())), cols=1, shared_xaxes=True, vertical_spacing=0.05)
+    fig = make_subplots(rows=len(list(Loads.keys())), cols=1, shared_xaxes=True, vertical_spacing=0.02)
     xs = linspace(x0, x1, 5000)
     for i, (li, load) in enumerate(zip(Loads.keys(), Loads.values())):
         fig.append_trace(go.Scatter(
@@ -48,10 +48,9 @@ def InternalLoading(x0, x1, **Loads):
         ), row=i+1, col=1)
         fig.update_yaxes(title_text=titles[i], row=i+1, col=1)
 
-    fig.update_xaxes(title_text="Spanwise Position [meters]", row=len(Loads.keys()), col=1)
+    fig.update_xaxes(title_text="Spanwise Position [m]", row=len(Loads.keys()), col=1)
     fig.update_layout(
-        title="Internal Load (NVM) Diagram",
-        template="plotly_dark")
+        title="Internal Load (NVM) Diagram") #yaxis2 = dict(side = 'right', position = 0.02, anchor = 'free'))
 
     return fig
 
