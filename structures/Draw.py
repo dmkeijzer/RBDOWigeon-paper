@@ -44,13 +44,13 @@ def InternalLoading(x0, x1, **Loads):
         fig.append_trace(go.Scatter(
             x=xs,
             y=[load(xi)*1e-3 for xi in xs],
-            name=li,
+            name=titles[i],
         ), row=i+1, col=1)
-        fig.update_yaxes(title_text=titles[i], row=i+1, col=1)
+        fig.update_yaxes(row=i+1, col=1)
 
     fig.update_xaxes(title_text="Spanwise Position [m]", row=len(Loads.keys()), col=1)
     fig.update_layout(
-        title="Internal Load (NVM) Diagram") #yaxis2 = dict(side = 'right', position = 0.02, anchor = 'free'))
+        title="Internal Load (NVM) Diagram")
 
     return fig
 
@@ -82,5 +82,5 @@ def DrawFatigue(t, y):
     fig.update_yaxes(title_text='Stress [MPa]', row=1, col=1)
 
     fig.update_xaxes(title_text="Time [hours]", row=1, col=1)
-    fig.update_layout(template="plotly_dark", title='Fatigue Cycle')
+    fig.update_layout(title='Fatigue Cycle')
     return fig

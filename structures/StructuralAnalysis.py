@@ -34,7 +34,7 @@ S1 = 9.910670535618632,
 S2 = 9.910670535618632, # surface areas of wing one and two
 span1 = 8.209297146662843,
 span2 = 8.209297146662843,
-nmax = 3.2, # maximum load factor
+nmax = 3.43, # maximum load factor
 Pmax = 17, # this is defined as maximum perimeter in Roskam, so i took top down view of the fuselage perimeter
 lf = 7.348878876267166, # length of fuselage
 wf = 1.38, # width of fuselage
@@ -83,13 +83,14 @@ class Structure:
         self.normalBox.StrPlacement(self.nStrT, self.nStrB, stringerGeometry = self.hatGeom, stringerType = 'Hat')
         print(self.normalBox.str[0])
         self.wing = WingStructure(self.span, self.taper, self.rootchord, self.normalBox)
-        self.enginePlacement = list(np.linspace(0.3 + self.wf / 2, 0.8*self.span1/2, int(len(self.pos_prop)/4)))
+        self.enginePlacement = list(np.linspace(0.3 + self.wf / 2, self.span1/2, int(len(self.pos_prop)/4)))
         self.AR1 = self.span1 **2 / self.S1
         self.AR2 = self.span2 **2 / self.S2
         self.omax, self.taumax, self.Ymax, self.cycles, self.matsk, self.matstr, self.loads, self.critbuckling = [None]*8
         self.omin, self.taumin, self.Ymin = [None]*3
         self.wingWeight = None
         self.tfat, self.fatcyc = [None]*2
+        self.fatigue = None
         self.matstr = Material.load(**(self.stringerMat | {'file': self.materialdata}))
         self.matsk = Material.load(**(self.skinMat | {'file': self.materialdata}))
 
@@ -167,7 +168,7 @@ class Structure:
         fdf = fatigue.getCycles()
         self.cycles = fatigue.MinersRule()
         err = abs((self.cycles - matsk.BasquinLaw(abs(oVTOfgrmd - ocrfmd))) / self.cycles)
-
+        self.fatigue = fatigue
         if self.cycles > matsk.BasquinLaw(abs(oVTOfgrmd - ocrfmd)):
             raise StructuralError(f"Invalid Number of Fatigue Cycles: {self.cycles}")
         return self.cycles
@@ -223,6 +224,8 @@ class Structure:
                 if self.cycles < 15*365*4:
                     raise StructuralError(f"Fatigue Life too low: {self.cycles}")
                 else:
+                    damage = self.fatigue.CrackGrowth(1.2 * 0.375 / 1000, root.tsk, round(self.cycles))
+                    print(f"Fatigue Life: {self.cycles} cycles, tolerance: {damage} cycles")
                     break
             else:
                 print("Success\n")
@@ -245,10 +248,19 @@ class Structure:
     plotFatigue = lambda self: DrawFatigue(self.tfat, self.fatcyc)
 
 state = dict(nStrT=2, nStrB=1,
-             thicknessOfSkin=1.3e-3, thicknessOfSpar=1.65e-2,
+             thicknessOfSkin=1.3e-3, thicknessOfSpar=18e-3,
              thicknessOfStringer=1e-3, ntofit=20, stringerMat = dict(material='Al 7075', Condition='T6'),
                 skinMat = dict(material='Al 7075', Condition='T6'))
 
 aluminum = Material.load(file='../data/materials.csv')
 struct = Structure(**(inputs | state ))
 struct.optimize()
+
+fig = struct.plotNVMcruise()
+fig.show(renderer='iframe')
+fig.write_html('NVM_cruise.html')
+
+fig2 = struct.plotNVMVTOL()
+fig2.write_html('NVM_vtol.html')
+
+struct.plotFatigue().write_html('fatigue.html')

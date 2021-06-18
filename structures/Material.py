@@ -3,12 +3,12 @@ from scipy.integrate import quad
 from numpy import cos, sin, pi
 
 class Material:
-    def __init__(self, E, density, o_yield, o_ult, Paris=(None, None), name=None, poisson=0.33, SNm = 4, SNC = 3.15e14, **others):
+    def __init__(self, E, density, o_yield, o_ult, Paris=(None, None), name=None, poisson=0.33, SNfp = 1697, SNb = -0.176, **others):
         self.E, self.rho, self.oy, self.oult, self.v = E, density, o_yield, o_ult, poisson
         self.C, self.m = Paris
         self.props = others
         self.name = name
-        self.SNm, self.SNC = SNm, SNC
+        self.SNfp, self.SNb = SNfp, SNb
         
     __repr__ = __str__ = lambda self: (self.name if self.name else "Material")+f"(E={self.E}, ρ={self.rho}, σy={self.oy}, σult={self.oult})"
     
@@ -31,7 +31,7 @@ class Material:
         return Material(mat.E, mat.rho, mat.oyield, mat.oult, (mat.ParisA, mat.Parism), mat.Material, mat.v)
     
     @staticmethod
-    def beta(aow, center=True): 
+    def beta(aow, center=False): 
         return (1/cos(pi * aow)) ** 0.5 if center else 1.1215 # pg 131
 
     @staticmethod
@@ -39,7 +39,7 @@ class Material:
         return beta * o * (pi * a) ** 0.5
     
     def ParisFatigueN(self, Smax, Smin, w, ai, af):
-        R, dS = abs(Smin / Smax), Smax - Smin
+        R, dS = Smin / Smax, Smax - Smin
         U = 0.5 + 0.4 * R
         def integrand(a):
             beta = self.beta(a/w)
@@ -50,4 +50,4 @@ class Material:
     ParisFatigueda = lambda self, a, w, Smax, Smin, n: \
         (0.5 + 0.4 * abs(Smin / Smax)) * n * self.C * (self.beta(a/w) * abs(Smax - Smin) * (pi * a) ** 0.5) ** self.m 
     
-    BasquinLaw = lambda self, S: self.SNC / (S ** self.SNm)
+    BasquinLaw = lambda self, S: (S / self.SNfp) ** (1 / self.SNb)
