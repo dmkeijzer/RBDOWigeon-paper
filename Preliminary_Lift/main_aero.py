@@ -105,7 +105,7 @@ xcm = 0.3 #NACA0012 for winglets and Vtail
 CL_CDmin = airfoil[2]
 CL_lst = np.arange(-0.5,1.8,0.025)
 #Other parameters
-S_v = 0.614
+S_v = 1.614
 S_t = 0
 
 
@@ -113,12 +113,15 @@ Drag = componentdrag('tandem',S_ref,l1,l2,l3,d_eq,Vcruise,rho,MAC,AR1,AR2,Mach(V
 
 
 CL_design = Drag.CL_des()
-print("Cl_des", CL_design/(np.cos(SweepLE)**2))
-fig2 , ax = plt.subplots(1,2)
-Cd= Drag.Cd_w(CL_lst*np.cos(SweepLE)**2)/1.1
-print(Cd)
 CD = Drag.CD(CL_lst)
+Cd= Drag.Cd_w(CL_lst*np.cos(SweepLE)**2)/1.1
+"""
+fig2 , ax = plt.subplots(1,2)
+
+print(Cd)
+
 print(CD)
+
 ax[0].plot(CL_lst, Cd)
 ax[0].set_xlabel('$C_l [-]$', fontsize = 16)
 ax[0].set_ylabel("$C_d [-]$", fontsize = 16)
@@ -126,11 +129,19 @@ ax[1].plot(CL_lst, CD)
 ax[1].set_xlabel('$C_L [-]$', fontsize = 16)
 ax[1].set_ylabel("$C_D [-]$", fontsize = 16)
 plt.show()
-
+"""
 fig1, ax1 = plt.subplots()
 
-drag_comp = [Drag.CD0_f*1.05, Drag.CD0_v*1.05, Drag.CD_upsweep(), Drag.Cd_w(0.492),Drag.CDi(0.492) ]
+drag_comp = (100/Drag.CD(0.496))*np.array([Drag.CD0_f*1.05, Drag.CD0_v*1.05, Drag.CD_upsweep(), float(Drag.Cd_w(0.496)),Drag.CDi(0.496) ])
+labels = '$C_{D_{0, fus}}$' , '$C_{D_{0,Tail, Wingtips}}$', '$C_{D_u}$' ,'$C_{d_w}$', '$C_{D_i}$'
+fig3, ax3 = plt.subplots()
+ax3.pie(drag_comp,  labels=labels, autopct='%1.1f%%', textprops={'fontsize': 20})
+ax1.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle.
 
+plt.show()
+
+print("Components",drag_comp)
+print("K", Drag.Drag_polar())
 Swet_f = Drag.Swet_f()
 
 Rey = Re(rho, Vcruise,MAC, mu)
@@ -138,7 +149,7 @@ Rey = Re(rho, Vcruise,MAC, mu)
 #Stall
 stall = Wing_params.CLmax_s(deda)
 CLmax = stall[0]
-print("CL_des", CL_design)
+print("CL_des, L/D", CL_design)
 CDs = Drag.CD(CLmax)
 CDs_f = Drag.CD0_f
 CDs_w = CDs - CDs_f
