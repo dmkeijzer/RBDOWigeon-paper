@@ -48,13 +48,20 @@ def Cma(Claf, Clar, lambda_c4f, lambda_c4r, taperf, taperr, CLf, CLr, Af, Ar,
     CLar = CLa(Clar, Ar, lambda_c2r)
     bf,  _ = bf_br(S, Sr_Sf, Af, Ar)
     Sf = S / (1 + Sr_Sf)
+    Sr = S - Sf
+    bf = np.sqrt(Sf * Af)
+    br = np.sqrt(Sr * Ar)
+    macf = find_mac(Sf, bf, taperf)
+    macr = find_mac(Sr, br, taperr)
+    mac = (macf * Sf + macr * Sr) / S
+
     de_da = deps_da_empirical(lambda_c4f, bf, xr - xf, zr - zf, Af, CLaf,
                               rho, Pbr, Sf, CLf, W)
     return (CLaf * (xcg - xf)
             - CLar * (xr - xcg) * (1 - de_da) * Vr_Vf_2 * Sr_Sf
             - 2 * CLf / (np.pi * Af * ef) * CLaf * (zcg - zf)
             + 2 * CLr / (np.pi * Ar * er) * CLar * (zr - zcg)
-            * (1 - de_da) * Vr_Vf_2 * Sr_Sf)
+            * (1 - de_da) * Vr_Vf_2 * Sr_Sf) * Sf / (S * mac)
 
 
 # TODO: improve downwash estimation
