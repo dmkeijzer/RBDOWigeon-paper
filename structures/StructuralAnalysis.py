@@ -193,6 +193,7 @@ class Structure:
             (omin, omax), (taumin, taumax), (Ymin, Ymax) = \
             self.compute_stresses(nStrT, nStrB, thicknessOfSkin, thicknessOfSpar) 
             root = self.loads.wing(0)
+            print("Stringer:", root.str[0])
 #             print(f"Mass of wing: {self.loads.mass(self.matsk)} kg")
             print(f"{nStrT, nStrB, 1e3*thicknessOfSkin, 1e3*thicknessOfSpar = }")
             if omin[1] > 0:
@@ -224,8 +225,8 @@ class Structure:
                 if self.cycles < 15*365*4:
                     raise StructuralError(f"Fatigue Life too low: {self.cycles}")
                 else:
-                    damage = self.fatigue.CrackGrowth(1.2 * 0.375 / 1000, root.tsk, round(self.cycles))
-                    print(f"Fatigue Life: {self.cycles} cycles, tolerance: {damage} cycles")
+                    cracklength, ncycs = self.fatigue.CrackGrowth(1.2 * 0.375 / 1000, root.tsk, round(self.cycles))
+                    print(f"Fatigue Life: {round(self.cycles/1e3)*1000} cycles, tolerance: {cracklength*1e3} critical crack length [mm], {ncycs} cycles")
                     break
             else:
                 print("Success\n")
