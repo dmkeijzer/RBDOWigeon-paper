@@ -60,8 +60,10 @@ class Stab_Derivatives:
         self.Cl0rear = CLrear0/(np.cos(self.Sweep(self.Arear, self.taper, 0, 25, 0)))**2 # Airfoil lift at zero angle of attack
         self.d = d
         self.dy = dy
-        self.xacfwd = 0.25 * self.cfwd + self.d
-        self.xacrear = self.lfus - (1 - 0.25) * self.crear
+        # self.xacfwd = 0.25 * self.cfwd + self.d
+        # self.xacrear = self.lfus - (1 - 0.25) * self.crear
+        self.xacfwd = 0.5
+        self.xacrear = 6.1
         self.Pbr = Pbr # Shaft power per engine [W]
         self.zcg = zcg
         self.ARv = ARv
@@ -77,6 +79,7 @@ class Stab_Derivatives:
                            self.bfwd,self.brear,self.taper,self.ARv,self.sweepTE)
         self.xacv = VT.xacv(self.ARv, self.sweepTE)
         self.lv = self.xacv-self.xcg
+        # print("xacv, xcg, lv", self.xacv,self.xcg, self.lv)
         ### It is assumed that aeroelastic effects are neglected ###
 
     def lh_arm(self):
@@ -109,7 +112,7 @@ class Stab_Derivatives:
                         lh** 4 * self.W ** 3)) ** (1 / 4) * (np.sin(phi * 6)) ** 2.5
         else:
             dsde_da = 0
-        # print("Configuration %.0f de/da = %.4f "%(conf,de_da))
+        # print("de/da = %.4f, de_P/da =%.4f "%(de_da*eta,dsde_da))
         return de_da*eta + dsde_da
     def Sweep(self,AR,taper,Sweepm,n,m):
         """
