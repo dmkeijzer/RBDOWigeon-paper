@@ -348,6 +348,6 @@ def sectional_lift(ccl, q_inf):
 
 ISA = ISA(400)
 rho = ISA.density()
-Vc = 55 # V_cruise
+Vc = 75 # V_cruise
 Ldash = sectional_lift(ccl, 0.5 * rho * Vc ** 2 ) # Sectional Lift Fore Wing [N/m]
 Ldash2 = sectional_lift(ccl2, 0.5 * rho * Vc ** 2 ) # Sectional Lift Hind Wing [N/m]

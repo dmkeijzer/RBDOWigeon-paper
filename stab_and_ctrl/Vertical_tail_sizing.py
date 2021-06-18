@@ -35,8 +35,10 @@ class VT_sizing:
         self.CLafwd, self.CLarear = CLafwd, CLarear # Wing lift curve slopes for both wings [1/rad]
         # self.Cmacfwd, self.Cmacrear = Cmacfwd,Cmacrear
         self.CD0 = CD0 # C_D_0 of forward wing
-        self.xacfwd = 0.25*self.cfwd
-        self.xacrear = self.lfus - (1 - 0.25) * self.crear
+        # self.xacfwd = 0.25*self.cfwd
+        # self.xacrear = self.lfus - (1 - 0.25) * self.crear
+        self.xacfwd = 0.5
+        self.xacrear = 6.1
         # self.de_da = self.deps_da(self.Sweepc4fwd,self.bfwd,self.lh(),self.hfus,self.Afwd,self.CLafwd)
         self.taper_v = 0.4
         self.Vs = Vstall # Stall speed [m/s]
@@ -111,9 +113,10 @@ class VT_sizing:
         # print(xacv)
         return xacv
 
-    def VT_controllability(self,nE,Tt0,yE,br_bv,cr_cv,ARv,sweepTE):
+    def VT_controllability(self,nf, nE,Tt0,br_bv,cr_cv,ARv,sweepTE):
         """
         Inputs:
+        :param nf: Number of failed engines [-]
         :param nE: Number of engines [-]
         :param Tt0: Take-off thrust [N]
         :param yE: Largest moment arm [m]
@@ -122,7 +125,16 @@ class VT_sizing:
         :return: Required vertical tail area [m^2] for controllability
         """
         lv = self.xacv(ARv,sweepTE)-self.xcg
-        N_E = Tt0/nE*yE # Asymmetric yaw moment [Nm]
+        N_E = 0
+        r = 0.50292
+        yE1 = max(self.brear,self.bfwd)/2
+        yE2 = yE1- r-0.3-r
+        yE3 = yE2-r-0.3-r
+        y = [yE1,yE2,yE3]
+        for i in range(nf):
+            yE =y[i]
+            N_E += Tt0/nE*yE# Asymmetric yaw moment [Nm]
+        N_E *=2
         N_D = 0.25*N_E # component due to drag [Nm]
         N_total = N_E + N_D
         Sr_Sv = 0.2
@@ -308,10 +320,25 @@ class VT_sizing:
             # levels = [0,0.1,1,1.]
             cp = ax.contourf(X, Y, Z, cmap='coolwarm',levels=25)
             Svstab = ax.contour(X, Y, Z, [self.VT_stability(ARv,sweepTE)], colors=["k"])
-            # print("Sv_stability = ",self.VT_stability(lv))
-            # plt.clabel(Svstab,fmt=r"Min. :  %.1f"%(self.VT_stability(lv)))
+            print("Sv_stability = ",self.VT_stability(self.ARv, self.sweepTE))
+            # plt.clabel(Svstab,fmt=r"Min. :  %.3f"%(self.VT_stability(self.ARv,self.sweepTE)))
             cbar = plt.colorbar(cp, orientation="horizontal")
             cbar.set_label(r"$S_v$ $[m^2]$")
+            plt.ylabel(r"$b_r/b_v$ [-]", fontsize=12)
+            plt.xlabel(r"$c_r/c_v$ [-]", fontsize=12)
+            plt.show()
+            X, Y = np.meshgrid(cr_cv, br_bv)
+            Sv = self.VT_controllability(nE, Tt0, yE, Y, X, ARv, sweepTE)
+            Z = np.sqrt(self.ARv*Sv)
+            fig, ax = plt.subplots(1, 1)
+            Sv_estimate = None
+            # ax.add_artist(ab)
+            # levels = [0,0.1,1,1.]
+            cp = ax.contourf(X, Y, Z, cmap='coolwarm', levels=25)
+            Svstab = ax.contour(X, Y, Z, [np.sqrt(self.VT_stability(ARv, sweepTE)*self.ARv)], colors=["k"])
+            # plt.clabel(Svstab, fmt=r"Min. :  %.3f" % (np.sqrt(self.VT_stability(ARv, sweepTE)*self.ARv)))
+            cbar = plt.colorbar(cp, orientation="horizontal")
+            cbar.set_label(r"$b_v$ $[m]$")
             plt.ylabel(r"$b_r/b_v$ [-]", fontsize=12)
             plt.xlabel(r"$c_r/c_v$ [-]", fontsize=12)
             plt.show()

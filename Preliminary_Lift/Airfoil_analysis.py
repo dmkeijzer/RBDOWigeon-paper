@@ -51,7 +51,7 @@ def Cd(CL):
     #print('test', fcd(CL), np.array(df["CD"])[np.array(df["alpha"]) == 18])
 
     CL = np.minimum(CL, np.array(df["CL"])[np.array(df["alpha"]) == 18])
-    CD = fcd(CL)[0]
+    CD = fcd(CL)
 
     return CD
 

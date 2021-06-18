@@ -76,8 +76,8 @@ class Weight:
         # masses
         self.oem = (self.wmass + self.pmass + self.lmass + self.fmass + self.bmass)
 
-        print("Check inside function:", self.wmass, self.pmass, self.lmass, self.fmass, self.cmass, self.bmass, self.tot_m_pax)
-        print("")
+#         print("Check inside function:", self.wmass, self.pmass, self.lmass, self.fmass, self.cmass, self.bmass, self.tot_m_pax)
+#         print("")
 
         if contingency:
             self.mtom = (self.wmass*const.mass_cont + self.pmass*const.mass_cont + self.lmass*const.mass_cont +
