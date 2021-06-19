@@ -78,3 +78,4 @@ Positions list(omin[0]), list(Ymax[0]), list(taumin[0]) = ([-0.4995515505068667,
 Maximal stresses omax[1]*1e-6, Ymax[1]*1e-6, taumax[1]*1e-6 = (58.02521298804731, 467.24836642468284, -13.009743889119076)
 Positions list(omax[0]), list(Ymax[0]), list(taumax[0]) = ([0.4995515505068667, -0.1415396059769456], [-0.48054958962672567, 0.1415396059769456], [0.4995515505068667, 0.00014168128726421703])
 Fatigue Life: 135848000 cycles, tolerance: 0.6500566232782267 critical crack length [mm], 1116000 cycles
+Optimized:  (2, 1, 0.0013, 0.018699999999999994)

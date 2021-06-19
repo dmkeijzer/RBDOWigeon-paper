@@ -52,7 +52,7 @@ Tcruise = 153.63377687614096,
 p_pax = [1.75, 3.75, 3.75, 6, 6],
 battery_pos = 0.5,
 cargo_m = 35, cargo_pos = 6.5, battery_m = 886.1868116321529,
-materialdata = '../data/materials.csv',
+materialdata = 'data/materials.csv',
 CL = Cl, CD = Cd, # Aerodynamics
 Vcruise = 72.18676185339652, # Cruise speed [m/s]
 )
