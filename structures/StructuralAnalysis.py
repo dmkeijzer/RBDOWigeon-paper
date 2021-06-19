@@ -57,21 +57,27 @@ CL = Cl, CD = Cd, # Aerodynamics
 Vcruise = 72.18676185339652, # Cruise speed [m/s]
 )
 
-total = 4 * 20 * 4 * 4
-iter = 1
+total = 4 * 4 * 4 * 4
+iter = 0
 for tsp in range(50, 250, 50):
-   for tsk in range(5, 210, 10):
+   for tsk in range(5, 21, 5):
       for ntofit in range(5, 25, 5):
          for nStrT in range(1, 5):
+            iter += 1
             print(f"\n{round(100*iter/total, 1)}% completed")
-            state = dict(nStrT=2, nStrB=1,
-                        thicknessOfSkin=tsk*1e-4, thicknessOfSpar=tsp*1e-4,
-                        thicknessOfStringer=1e-3, ntofit=ntofit, stringerMat = dict(material='Al 7075', Condition='T6'),
-                           skinMat = dict(material='Al 7075', Condition='T6'))
+            try:
+               state = dict(nStrT=2, nStrB=1,
+                           thicknessOfSkin=tsk*1e-4, thicknessOfSpar=tsp*1e-4,
+                           thicknessOfStringer=1e-3, ntofit=ntofit, stringerMat = dict(material='Al 7075', Condition='T6'),
+                              skinMat = dict(material='Al 7075', Condition='T6'))
 
-            struct = Structure(**(inputs | state ))
-            topStr, botStr, tsk, tstr, wingmass = struct.optimize()
-            print(f"\nOptimized: {topStr, botStr, tsk, tstr, wingmass = }")
-            with open("structures/results.txt", "a+") as r:
-               r.write("state: " + str(state))
-               r.write(f"Optimized: {topStr, botStr, tsk, tstr, wingmass = }")
+               struct = Structure(**(inputs | state ))
+               topStr, botStr, tsk, tstr, wingmass = struct.optimize()
+               print(f"\nOptimized: {topStr, botStr, tsk, tstr, wingmass = }")
+               with open("structures/results.txt", "a+") as r:
+                  r.write("\nstate: " + str(state))
+                  r.write(f"Optimized: {topStr, botStr, tsk, tstr, wingmass = }")
+            except Exception as e:
+               r.write("\nstate: " + str(state))
+               r.write(f"Optimized - ERROR: " + str(e))
+               continue
