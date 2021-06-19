@@ -64,4 +64,4 @@ state = dict(nStrT=2, nStrB=1,
 
 struct = Structure(**(inputs | state ))
 topStr, botStr, tsk, tstr = struct.optimize()
-print(f"Optimized: {topStr, botStr, tsk, tstr = }")
+print(f"\nOptimized: {topStr, botStr, tsk, tstr = }")

@@ -171,7 +171,7 @@ class Structure:
                     raise StructuralError(f"Fatigue Life too low: {self.cycles}")
                 else:
                     cracklength, ncycs = self.fatigue.CrackGrowth(1.2 * 0.375 / 1000, root.tsk, round(self.cycles))
-                    print(f"Fatigue Life: {round(self.cycles/1e3)*1000} cycles, tolerance: {cracklength*1e3} critical crack length [mm], {ncycs} cycles")
+                    print(f"Fatigue Life: {round(self.cycles/1e3)*1000} cycles, Damage tolerance: {cracklength*1e3} critical crack length [mm], {ncycs} cycles")
                     break
             else:
                 print("Success\n")
