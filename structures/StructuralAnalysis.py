@@ -63,4 +63,5 @@ state = dict(nStrT=2, nStrB=1,
                 skinMat = dict(material='Al 7075', Condition='T6'))
 
 struct = Structure(**(inputs | state ))
-print("Optimized: ", struct.optimize())
+topStr, botStr, tsk, tstr = struct.optimize()
+print(f"Optimized: {topStr, botStr, tsk, tstr = }")
