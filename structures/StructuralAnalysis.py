@@ -62,15 +62,5 @@ state = dict(nStrT=2, nStrB=1,
              thicknessOfStringer=1e-3, ntofit=20, stringerMat = dict(material='Al 7075', Condition='T6'),
                 skinMat = dict(material='Al 7075', Condition='T6'))
 
-aluminum = Material.load(file='../data/materials.csv')
 struct = Structure(**(inputs | state ))
-struct.optimize()
-
-fig = struct.plotNVMcruise()
-fig.show(renderer='iframe')
-fig.write_html('NVM_cruise.html')
-
-fig2 = struct.plotNVMVTOL()
-fig2.write_html('NVM_vtol.html')
-
-struct.plotFatigue().write_html('fatigue.html')
+print("Optimized: ", struct.optimize())
