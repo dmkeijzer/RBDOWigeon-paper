@@ -74,10 +74,10 @@ class Elevator_sizing:
         tau_a = -6.624*x**4+12.07*x**3-8.292*x**2+3.295*x+0.004942
         return tau_a
     def dCLfwd_f(self,Se_S,be_b,de_max):
-        dCL = self.tau_e(Se_S) * self.CLafwd * be_b * de_max * np.pi / 180/100*(1-1/self.bfwd)
+        dCL = self.tau_e(Se_S) * self.CLafwd * be_b * de_max * np.pi / 180/100
         return dCL
     def dCLrear(self,Se_S,be_b,de_max):
-        dCL = -self.tau_e(Se_S) * self.CLarear * be_b * de_max * np.pi / 180 / 100 * (1 - 1 / self.brear)
+        dCL = -self.tau_e(Se_S) * self.CLarear * be_b * de_max * np.pi / 180 / 100
         return dCL
     def Cm(self,Se_S,be_b,de_max):
         CDfwd = self.CD0 + self.CLfwd**2/(np.pi*0.65*self.Afwd)

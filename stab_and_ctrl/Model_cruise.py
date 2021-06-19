@@ -59,7 +59,7 @@ class Aircraft:
 
         ############### Compute Phugoid & Plotting ##############
         T_p = np.linspace(0, 200, 1000)
-        delta_e = self.pulse(T_p, 1,16)*radians(5.5)
+        delta_e = self.pulse(T_p, 1,16)*radians(0.2)
         u_motion, alpha_motion, theta_motion, pitch_motion = \
             self.phugoid(T_p, delta_e, V,sys=self.sym_sys)
 
