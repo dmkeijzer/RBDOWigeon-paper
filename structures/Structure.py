@@ -35,7 +35,7 @@ class Structure:
         self.omin, self.taumin, self.Ymin = [None]*3
         self.wingWeight = None
         self.tfat, self.fatcyc = [None]*2
-        self.fatigue = None
+        self.fatigue, self.wingmass = [None]*2
         self.matstr = Material.load(**(self.stringerMat | {'file': self.materialdata}))
         self.matsk = Material.load(**(self.skinMat | {'file': self.materialdata}))
 
@@ -138,6 +138,7 @@ class Structure:
             (omin, omax), (taumin, taumax), (Ymin, Ymax) = \
             self.compute_stresses(nStrT, nStrB, thicknessOfSkin, thicknessOfSpar) 
             root = self.loads.wing(0)
+            self.wingmass = self.loads.mass(self.matstr)
             print("Stringer:", root.str[0])
 #             print(f"Mass of wing: {self.loads.mass(self.matsk)} kg")
             print(f"{nStrT, nStrB, 1e3*thicknessOfSkin, 1e3*thicknessOfSpar = }")
@@ -156,6 +157,7 @@ class Structure:
             print(f"Positions {list(omin[0]), list(Ymax[0]), list(taumin[0]) = }")
             print(f"Maximal stresses {omax[1]*1e-6, Ymax[1]*1e-6, taumax[1]*1e-6 = }")
             print(f"Positions {list(omax[0]), list(Ymax[0]), list(taumax[0]) = }")
+            print("Wingmass: ", self.wingmass)
             if omin[1] <= -critbuckling or Ymax[1] >= self.matsk.oy:
                 print("Fail\n")
                 if bucklingmargin > yieldMargin:
@@ -166,7 +168,7 @@ class Structure:
                 else:
                     nStrT += 1
 
-            elif 1 < bucklingmargin < 1.2 and 1 < yieldMargin < 1.2:
+            elif 1 < bucklingmargin < 1.3 and 1 < yieldMargin < 1.3:
                 if self.cycles < 15*365*4:
                     raise StructuralError(f"Fatigue Life too low: {self.cycles}")
                 else:
@@ -184,7 +186,7 @@ class Structure:
                         thicknessOfSpar -= 0.0001
         
         self.nStrT, self.nStrB, self.thicknessOfSkin, self.thicknessOfSpar = nStrT, nStrB, thicknessOfSkin, thicknessOfSpar
-        return nStrT, nStrB, thicknessOfSkin, thicknessOfSpar
+        return nStrT, nStrB, thicknessOfSkin, thicknessOfSpar, self.wingmass
 
     plotNVMcruise = lambda self: InternalLoading(0, self.span/2, Vx = self.loads.Vx, Vy = self.loads.Vy,
                                                 Mx = self.loads.Mx, My = self.loads.My, T = self.loads.T)
