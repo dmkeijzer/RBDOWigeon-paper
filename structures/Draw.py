@@ -38,20 +38,19 @@ def ShearStressPlot(oxx, x, Ch, Ca, shape, tsk, tsp, **others):
 
 def InternalLoading(x0, x1, **Loads):
     titles = [k + f' [kN{"" if k[0].upper() == "V" else "m"}]' for k in Loads]
-    fig = make_subplots(rows=len(list(Loads.keys())), cols=1, shared_xaxes=True, vertical_spacing=0.05)
+    fig = make_subplots(rows=len(list(Loads.keys())), cols=1, shared_xaxes=True, vertical_spacing=0.02)
     xs = linspace(x0, x1, 5000)
     for i, (li, load) in enumerate(zip(Loads.keys(), Loads.values())):
         fig.append_trace(go.Scatter(
             x=xs,
             y=[load(xi)*1e-3 for xi in xs],
-            name=li,
+            name=titles[i],
         ), row=i+1, col=1)
-        fig.update_yaxes(title_text=titles[i], row=i+1, col=1)
+        fig.update_yaxes(row=i+1, col=1)
 
-    fig.update_xaxes(title_text="Spanwise Position [meters]", row=len(Loads.keys()), col=1)
+    fig.update_xaxes(title_text="Spanwise Position [m]", row=len(Loads.keys()), col=1)
     fig.update_layout(
-        title="Internal Load (NVM) Diagram",
-        template="plotly_dark")
+        title="Internal Load (NVM) Diagram")
 
     return fig
 
@@ -83,5 +82,5 @@ def DrawFatigue(t, y):
     fig.update_yaxes(title_text='Stress [MPa]', row=1, col=1)
 
     fig.update_xaxes(title_text="Time [hours]", row=1, col=1)
-    fig.update_layout(template="plotly_dark", title='Fatigue Cycle')
+    fig.update_layout(title='Fatigue Cycle')
     return fig

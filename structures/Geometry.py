@@ -116,18 +116,18 @@ class WingBox:
         Ixx = self.Ixx()
         inrge = lambda l1, u1, l2, u2: l1 <= x <= u1 and l2 <= y <= u2
         vit = - Vy * self.tsp / Ixx if (-self.b/2 <= x <= -self.b/2 + self.tsp) or (self.b/2 - self.tsp <= x <= self.b/2) else - Vy * self.tsk / Ixx
-        if inrge(0, self.b/2, -self.h/2, -self.h/2 + self.tsk):
+        if inrge(0, self.b/2 - 1.5*self.tsp, -self.h/2, -self.h/2 + self.tsk):
             return vit * (-self.h * x / 2)
-        elif inrge(self.b/2-self.tsp, self.b/2, -self.h/2, self.h/2):
+        elif inrge(self.b/2-1.5*self.tsp, self.b/2, -self.h/2, self.h/2):
             s = self.h/2 + y
-            return vit * (0.5 * s * s - self.h * s / 2) + self.Vshear(Vy, self.b/2, -self.h/2)
-        elif -self.b/2 <= x < self.b/2 and self.h/2-self.tsk < y <= self.h/2:
+            return vit * (0.5 * s * s - self.h * s / 2) + self.Vshear(Vy, self.b/2 - 1.5*self.tsp, -self.h/2)
+        elif inrge(-self.b/2 + 1.5*self.tsp, self.b/2 - 1.5*self.tsp, self.h/2-self.tsk, self.h/2):
             s = self.b/2 - x
             return vit * (self.h*s/2) + self.Vshear(Vy, self.b/2, self.h/2)
-        elif inrge(-self.b/2, -self.b/2+self.tsp, -self.h/2, self.h/2):
+        elif inrge(-self.b/2, -self.b/2+1.5*self.tsp, -self.h/2, self.h/2):
             s = self.h/2 - y
-            return vit * (-0.5 * s * s + self.h * s / 2) + self.Vshear(Vy, -self.b/2, self.h/2)
-        elif inrge(-self.b/2, 0, -self.h/2, -self.h/2+self.tsk):
+            return vit * (-0.5 * s * s + self.h * s / 2) + self.Vshear(Vy, -self.b/2 + 1.5*self.tsp, self.h/2)
+        elif inrge(-self.b/2 + 1.5*self.tsp, 0, -self.h/2, -self.h/2+self.tsk):
             return vit * (-self.h * (x + self.b/2) / 2) + self.Vshear(Vy, -self.b/2, -self.h/2)
         else:
             raise ValueError(f"Invalid Coordinates Supplied: {(x, y) = }")
@@ -164,7 +164,6 @@ class WingBox:
         ccarea = self.str[0].ccarea()
         # skin properties
         Esk, vsk = EofSkin, vOfSkin
-        
         # pitch depends on which panel is taken, top or bottom
         pitch = self.tspitch if top_panel else self.bspitch
         sigma_crskin = 4 * (np.pi ** 2 * Esk/(12 * (1 - vsk**2)))*(self.tsk / (pitch))**2
