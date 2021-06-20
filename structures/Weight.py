@@ -2,8 +2,9 @@
 import sys
 import numpy as np
 
-sys.path.append('../Final_optimization/')
-import constants_final as const
+sys.path.append('Final_optimization/')
+# import constants_final as const
+from Final_optimization import constants_final as const
 
 class Wing:
     # Roskam method (not accurate because does not take into account density of material but good enough for comparison
@@ -52,7 +53,8 @@ class Propulsion:
 
 class Weight:
 
-    def __init__(self, m_pax, wing, fuselage, landing_gear, propulsion, cargo_m, cargo_pos, battery_m, battery_pos, p_pax = []):
+    def __init__(self, m_pax, wing, fuselage, landing_gear, propulsion, cargo_m, cargo_pos, battery_m, battery_pos, p_pax = [],
+                 contingency = False):
         self.m_pax, self.p_pax = m_pax, p_pax
         self.wing, self.fuselage, self.landing_gear, self.prop = wing, fuselage, landing_gear, propulsion
         # weights of components
@@ -72,16 +74,26 @@ class Weight:
         self.oem_cg = (self.moment_w + self.moment_f + self.moment_l + self.moment_p + self.moment_b) \
         /(self.wmass + self.pmass + self.lmass + self.fmass + self.bmass)
 
-        self.mtom_cg = (self.moment_w + self.moment_f + self.moment_l + self.moment_p + self.moment_pax + self.moment_c + self.moment_b) \
-        /(self.wmass + self.pmass + self.lmass + self.fmass + self.cmass + self.bmass + self.tot_m_pax)
-
         # masses
         self.oem = (self.wmass + self.pmass + self.lmass + self.fmass + self.bmass)
 
-        print("Check inside function:", self.wmass, self.pmass, self.lmass, self.fmass, self.cmass, self.bmass, self.tot_m_pax)
-        print("")
-        self.mtom = (self.wmass*const.mass_cont + self.pmass*const.mass_cont + self.lmass*const.mass_cont +
-                     self.fmass*const.mass_cont + self.cmass + self.bmass*const.mass_cont + self.tot_m_pax)
+#         print("Check inside function:", self.wmass, self.pmass, self.lmass, self.fmass, self.cmass, self.bmass, self.tot_m_pax)
+#         print("")
+
+        if contingency:
+            self.mtom = (self.wmass*const.mass_cont + self.pmass*const.mass_cont + self.lmass*const.mass_cont +
+                         self.fmass*const.mass_cont + self.cmass + self.bmass*const.mass_cont + self.tot_m_pax)
+            self.mtom_cg = (self.moment_w*const.mass_cont + self.moment_f*const.mass_cont + self.moment_l*const.mass_cont +
+                            self.moment_p*const.mass_cont + self.moment_pax + self.moment_c + self.moment_b*const.mass_cont) \
+                           / (self.wmass*const.mass_cont + self.pmass*const.mass_cont + self.lmass*const.mass_cont +
+                              self.fmass*const.mass_cont + self.cmass + self.bmass*const.mass_cont + self.tot_m_pax)
+
+
+        else:
+            self.mtom = (self.wmass + self.pmass + self.lmass +
+                         self.fmass + self.cmass + self.bmass + self.tot_m_pax)
+            self.mtom_cg = (self.moment_w + self.moment_f + self.moment_l + self.moment_p + self.moment_pax + self.moment_c + self.moment_b) \
+                           / (self.wmass + self.pmass + self.lmass + self.fmass + self.cmass + self.bmass + self.tot_m_pax)
 
     def print_weight_fractions(self):
         d = {}
@@ -132,6 +144,7 @@ class Weight:
         m_prop = self.pmass/self.prop.nprop
         lprop, rprop = 0.4, 0.12
         prop_mmi_x, prop_mmi_y, prop_mmi_z = m_prop*(rprop**2)/2, m_prop*(lprop**2 + 3 * rprop**2)/12, m_prop*(lprop**2 + 3 * rprop**2)/12
+
         # battery - modeled as a prism
         lbat, tbat, wbat = 0.4*self.fuselage.lf, 0.2, 1
         bat_mmi_x, bat_mmi_y, bat_mmi_z = self.bmass*(wbat**2 + tbat**2)/12, self.bmass*(wbat**2 + lbat**2)/12, self.bmass*(tbat**2 + lbat**2)/12
@@ -149,8 +162,8 @@ class Weight:
             np.sqrt((1.705 / 2 - vpos[0]) ** 2 + (self.oem_cg - self.wing.pos1) ** 2)) ** 2) + (wing2_mmi_z + self.wing.mass[1] * (
             np.sqrt((1.705 / 2 - vpos[1]) ** 2 + (self.wing.pos2 - self.oem_cg) ** 2)) ** 2) + bat_mmi_z + self.bmass * np.sqrt((1.705 / 2)**2 + (self.battery_pos - self.oem_cg)**2 ) ** 2 + (
                                 m_prop * ((np.sqrt((1.705 / 2) ** 2 + (self.wing.pos2/2) ** 2)) ** 2) + prop_mmi_z) * self.prop.nprop
-        oem_mmi_xy = (self.wing.mass[0] * (1.705 / 2 - vpos[0]) * (self.oem_cg - self.wing.pos1)) * 2 + self.prop.nprop * (m_prop * (1.705 / 2) * self.wing.pos1/2) + \
-                     (self.wing.mass[1] * (vpos[1] - 1.705 / 2) * (self.wing.pos2 - self.oem_cg)) + self.bmass * np.sqrt((1.705 / 2)**2 + (self.battery_pos - self.oem_cg)**2 ) ** 2
+        oem_mmi_xy = (self.wing.mass[0] * (0.7 - vpos[0]) * (self.mtom_cg - self.wing.pos1)) + self.prop.nprop * (m_prop * (0.7-vpos[0]) * (self.mtom_cg-self.wing.pos1))/2 + \
+                     (self.wing.mass[1] * (vpos[1] - 0.7) * (self.wing.pos2 - self.mtom_cg)) +self.prop.nprop * (m_prop * (vpos[0]-0.7) * (self.wing.pos2-self.mtom_cg))/2
         return oem_mmi_x, oem_mmi_z, oem_mmi_y, oem_mmi_xy
 
 if __name__ == '__main__':

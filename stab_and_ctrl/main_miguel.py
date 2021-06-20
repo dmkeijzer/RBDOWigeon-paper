@@ -12,6 +12,7 @@ from matplotlib import pyplot as plt
 
 # example values based on inputs_config_1.json
 W = 3024.8012022968796*9.80665
+W = 0.9*W
 h = 1000
 ISA_atm = ISA(h)
 T = ISA_atm.temperature()
@@ -205,7 +206,10 @@ lgear = LandingGear(W/9.80665, pos_lgear)
 props = Propulsion(n_prop, m_prop, pos_prop)
 weight = Weight(m_pax, wing, fuselage, lgear, props, cargo_m=35, cargo_pos=6.5, battery_m=886.1868116321529, battery_pos=0.5,
                 p_pax=[1.75, 3.75, 3.75, 6, 6])
+print(weight.oem)
 
+# Iyy = 15368.81327 , Ixx = 7771.42196, Izz = 19319.20998, Ixz = 1155.55423
+# Kxx2 = 0.04236, Kyy2 = 3.52711, Kzz2 = 0.10530, Kxz = 0.00630
 Ixx, Iyy, Izz, Ixz = weight.MMI(wmac = [cfwd, crear], toc = [0.17, 0.17], vpos_wing = [0.3, 1.7])
 print("Iyy = %.5f , Ixx = %.5f, Izz = %.5f, Ixz = %.5f"%(Iyy, Ixx, Izz, Ixz))
 print("Kxx2 = %.5f, Kyy2 = %.5f, Kzz2 = %.5f, Kxz = %.5f"%(Ixx/(W/9.80665*b**2),Iyy/(W/9.80665*c**2),Izz/(W/9.80665*b**2),Ixz/(W/9.80665*b**2)))
