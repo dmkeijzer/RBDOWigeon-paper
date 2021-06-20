@@ -4,7 +4,7 @@ import numpy as np
 
 sys.path.append('Final_optimization/')
 # import constants_final as const
-from Final_optimization import constants_final as const
+import constants_final as const
 
 class Wing:
     # Roskam method (not accurate because does not take into account density of material but good enough for comparison
