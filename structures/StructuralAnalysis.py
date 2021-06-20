@@ -83,7 +83,7 @@ Vcruise = 72.18676185339652, # Cruise speed [m/s]
 #                   r.write(f"Optimized - ERROR: " + str(e))
 #                continue
 
-state = dict(nStrT=3, nStrB=1,
+state = dict(nStrT=4, nStrB=1,
             thicknessOfSkin=1e-3, thicknessOfSpar=18*1e-3,
             thicknessOfStringer=1e-3, ntofit=20, stringerMat = dict(material='Al 7075', Condition='T6'),
                skinMat = dict(material='Al 7075', Condition='T6'))
