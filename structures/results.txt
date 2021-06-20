@@ -1,0 +1,1 @@
+Optimized: topStr, botStr, tsk, tstr, wingmass = (3, 1, 0.0015, 0.014599999999999972, 543.5451029536028)

@@ -2,7 +2,7 @@
 import sys
 import numpy as np
 
-sys.path.append('../Final_optimization/')
+sys.path.append('Final_optimization/')
 import constants_final as const
 
 class Wing:
@@ -76,8 +76,8 @@ class Weight:
         # masses
         self.oem = (self.wmass + self.pmass + self.lmass + self.fmass + self.bmass)
 
-        print("Check inside function:", self.wmass, self.pmass, self.lmass, self.fmass, self.cmass, self.bmass, self.tot_m_pax)
-        print("")
+#         print("Check inside function:", self.wmass, self.pmass, self.lmass, self.fmass, self.cmass, self.bmass, self.tot_m_pax)
+#         print("")
 
         if contingency:
             self.mtom = (self.wmass*const.mass_cont + self.pmass*const.mass_cont + self.lmass*const.mass_cont +

@@ -209,7 +209,7 @@ plt.show()
 """
 def plot_stagger_gap(b, CL, S):
     gap = np.linspace(1,1.5,50)
-    stagger = np.linspace(1,7,50)
+    stagger = np.linspace(1,8,50)
 
     p = 1 / np.sqrt(1 +  gap ** 2)
     F = ellipk(p)
@@ -225,11 +225,12 @@ def plot_stagger_gap(b, CL, S):
     left, bottom, width, height = 0.1, 0.1, 0.8, 0.8
     ax = fig.add_axes([left, bottom, width, height])
     ax.set_title(' $ \Delta C_L$  for biplane wings')
-    ax.set_xlabel('Stagger [m]')
-    ax.set_ylabel('Gap [m]')
+    ax.set_xlabel('$S_t$ [m]')
+    ax.set_ylabel('$G$ [m]')
     cp = plt.contourf(stagger,gap,dCL)
     plt.colorbar(cp)
-    plt.plot(6,1.2,color='r')
+    point = plt.scatter(6,1.4,color='black', label= 'Wigeon', marker = 'x')
+    plt.legend()
     plt.show()
 
 plot_stagger_gap(7, 0.4, 16) # plot_stagger_gap(b, 0.4, S_ref)
