@@ -1,39 +1,42 @@
-from Flight_performance_final import mission, evtol_performance, Drag
+from Flight_performance_final import mission, evtol_performance
 from Aero_tools import speeds
-
-# TODO: Change later
 from Preliminary_Lift.main_aero import Cl_alpha_curve, CD_a_w, CD_a_f, alpha_lst, Drag
+import Final_optimization.constants_final as const
+
+from Preliminary_Lift.Drag import componentdrag
 
 # ========== Inputs ==========
-# TODO: Make consistent with the sizing done in midterm new
-mass = 2300
-cruising_alt = 300
-cruise_speed = 62
-CL_max = 1.7
-wing_surface = 14
-EOM = 1500
-A_disk = 8
-P_max  = 1.4e6
+mass = 2800
+cruising_alt = 1000
+cruise_speed = 72
+CL_max = 1.5856
+wing_surface = 19.82
+EOM = mass - (const.m_pax*4 + const.m_cargo_tot)
+A_disk = 0.795*const.n_prop
+P_max  = 1.81e6
 
 # Energy estimation and plotting
-mission_profile = mission(mass, cruising_alt, cruise_speed, CL_max, wing_surface, A_disk = A_disk, P_max = P_max,
+mission_profile = mission(mass, cruising_alt, cruise_speed, CL_max, wing_surface, A_disk, P_max,
+                          Cl_alpha_curve, CD_a_w, CD_a_f, alpha_lst, Drag, t_loiter = 15*60,
                           plotting = True)
 
-E_tot, t_tot, max_power, max_thrust = mission_profile.total_energy()
+E_tot, t_tot, max_power, max_thrust,_ = mission_profile.total_energy()
 
 print('Total energy', E_tot/1e6, 'MJ')
 print("Total time", t_tot/3600, 'hr')
 print("Max power", max_power/1e3, 'kW')
 
 # Other performance estimates
-performance = evtol_performance(cruising_alt, cruise_speed, wing_surface, CL_max, mass, battery_capacity = E_tot,
-                                EOM = EOM, A_disk = A_disk, P_max = P_max, loiter_time = 30*60)
+performance = evtol_performance(cruising_alt, cruise_speed, wing_surface, CL_max, mass, E_tot,
+                                EOM, 15*60, A_disk, P_max,
+                                Cl_alpha_curve, CD_a_w, CD_a_f, alpha_lst, Drag)
 
 # Performance things
 performance.power_polar(cruising_alt)
 V_climb = performance.climb_performance()
 performance.vertical_climb()
 performance.payload_range()
+performance.quickly_checking_something()
 
 # Optimal speeds
 V = speeds(cruising_alt, mass, CL_max, wing_surface, Drag)
@@ -41,4 +44,4 @@ V = speeds(cruising_alt, mass, CL_max, wing_surface, Drag)
 print("===== Optimal speeds =====")
 print("Stall speed:", V.stall())
 print("Cruise speed:", V.cruise()[0])
-print("Climb speed:", V_climb)
+print("Climb speed:", V_climb, V.climb())

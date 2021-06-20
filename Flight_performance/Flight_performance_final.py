@@ -28,7 +28,7 @@ class mission:
 
     def __init__(self, mass, cruising_alt, cruise_speed, CL_max, wing_surface, A_disk, P_max,
                  Cl_alpha_curve, CD_a_w, CD_a_f, alpha_lst, Drag,
-                 t_loiter=30 * 60, rotational_rate=5, roc=5, rod=4, mission_dist=300e3, plotting=False):
+                 t_loiter=15 * 60, rotational_rate=5, roc=5, rod=4, mission_dist=300e3, plotting=False):
 
         """
         :param mass:            [kg]    Aircraft mass
@@ -220,8 +220,8 @@ class mission:
             T_min, T_max = T - 200, T + 200  # TODO: Sanity check
 
             # Calculate the accelerations
-            ax = (-D * np.cos(gamma) - L * np.sin(gamma) + T * np.cos(th)) / self.m
-            ay = (L * np.cos(gamma) - self.m * g - D * np.sin(gamma) + T * np.sin(th)) / self.m
+            ax = float((-D * np.cos(gamma) - L * np.sin(gamma) + T * np.cos(th)) / self.m)
+            ay = float((L * np.cos(gamma) - self.m * g - D * np.sin(gamma) + T * np.sin(th)) / self.m)
 
             # Prevent going underground
             if y <= 0:
@@ -238,11 +238,11 @@ class mission:
             #T = (self.m*ax_tgt + D*np.cos(gamma) + L*np.sin(gamma))/np.cos(th)
 
             # Apply maximum and minimum bounds on thrust, based on maximum power, and on rate of change of thrust
-            T = np.minimum(np.maximum(np.minimum(np.maximum(T, T_min), T_max), 0), self.max_thrust(rho,V*np.cos(alpha)))
+            T = float(np.minimum(np.maximum(np.minimum(np.maximum(T, T_min), T_max), 0), self.max_thrust(rho,V*np.cos(alpha))))
 
             # Perform numerical integration
-            vx += ax * dt
-            vy += ay * dt
+            vx += float(ax) * dt
+            vy += float(ay) * dt
 
             x += vx * dt
             y += vy * dt
@@ -377,7 +377,7 @@ class mission:
 
         P = self.thrust_to_power(D_cruise, speed, rho)[1]
 
-        return P
+        return P, D_cruise
 
     def total_energy(self):
 
@@ -390,7 +390,7 @@ class mission:
         d_desc, E_desc, t_desc, P_m_la, T_m_la = self.numerical_simulation(vx_start=self.v_cruise,
                                                                            y_start=self.h_cruise,
                                                                            th_start = np.radians(5), y_tgt=0, vx_tgt=0)
-        #E_climb, E_desc = 0, 0
+        E_climb, E_desc = 0, 0
 
         # Distance spent in cruise
         d_cruise = self.mission_dist# - d_desc - d_climb
@@ -399,19 +399,31 @@ class mission:
         t_cruise = d_cruise / self.v_cruise
 
         # Get the brake power used in cruise
-        P_cruise = self.power_cruise_config(self.h_cruise, self.v_cruise, self.m)  # + self.P_systems
+        P_cruise,D_cruise = self.power_cruise_config(self.h_cruise, self.v_cruise, self.m)  # + self.P_systems
 
         V = speeds(altitude=self.h_cruise, m=self.m, CLmax=self.CL_max, S=self.S, componentdrag_object=self.Drag)
 
         # Loiter power
         V_loit = V.climb()
-        P_loiter = self.power_cruise_config(altitude=self.h_cruise, speed=V_loit, mass=self.m)  # + self.P_systems
+        P_loiter,_ = self.power_cruise_config(altitude=self.h_cruise, speed=V_loit, mass=self.m)  # + self.P_systems
 
         # Cruise energy
         E_cruise = P_cruise * t_cruise
 
         # Loiter energy
         E_loiter = P_loiter * self.t_loiter
+
+        # E_climb = 0.1*E_cruise
+        # E_desc = 0.05*E_cruise
+        #
+        # t_climb = 200
+        # t_desc = 300
+        #
+        # P_m_to = 1.7e6
+        # P_m_la = 1.5e6
+        #
+        # T_m_to = 34311.7687171136
+        # T_m_la  =30000
 
         # Get the total energy consumption
         E_tot = E_cruise + E_climb + E_desc + E_loiter
@@ -425,14 +437,19 @@ class mission:
         Time = [t_climb, t_cruise, t_desc, self.t_loiter]
 
         if self.plotting:
-            plt.subplot(211)
+
             plt.pie(Energy, labels=labels, autopct='%1.1f%%')
-
-            plt.subplot(212)
-            plt.pie(Time, labels=labels, autopct='%1.1f%%')
-
             plt.tight_layout()
+            plt.savefig(self.path + 'energy_breakdown.pdf')
             plt.show()
+
+
+            plt.pie(Time, labels=labels, autopct='%1.1f%%')
+            plt.tight_layout()
+            plt.savefig(self.path + 'time_breakdown.pdf')
+
+            plt.show()
+
 
         return E_tot, t_tot, max(P_m_to, P_m_la), max(T_m_to, T_m_la), t_cruise + self.t_loiter
 
@@ -504,7 +521,7 @@ class evtol_performance:
         eff = eff_hover + V*(eff_prop - eff_hover)/self.v_cruise
 
         P_r = P_a/eff
-        print(P_a, P_r)
+        #print(P_a, P_r)
         return P_r - self.P_max
 
     def max_thrust(self, rho, V):
@@ -518,6 +535,20 @@ class evtol_performance:
             return np.array(Tlst)
         else:
             return optimize.newton(self.thrust_to_power, x0=20000, args=(V, rho), maxiter=100000)
+
+    def quickly_checking_something(self):
+
+        h = np.arange(0, 1000, 10)
+        rhos = ISA(h).density()
+
+        V = 30
+        for rho in rhos:
+            T_max = self.max_thrust(rho, V)
+
+            plt.plot(rho, T_max, '+')
+        plt.title('thrust')
+        plt.show()
+
 
     def climb_performance(self, testing = False):
 
@@ -659,12 +690,12 @@ class evtol_performance:
                                                        y_tgt=cruising_altitude, vx_tgt=cruise_speed)
 
         # Power needed for cruise
-        P_cr = energy.power_cruise_config(altitude = cruising_altitude, speed = cruise_speed, mass = mass)
+        P_cr,_ = energy.power_cruise_config(altitude = cruising_altitude, speed = cruise_speed, mass = mass)
 
         V = speeds(altitude = cruising_altitude, m = mass, CLmax = self.CL_max, S = self.S, componentdrag_object=self.Drag)
 
         # Power needed for loiter
-        P_lt = energy.power_cruise_config(altitude = cruising_altitude, speed = V.climb(), mass = mass)
+        P_lt,_ = energy.power_cruise_config(altitude = cruising_altitude, speed = V.climb(), mass = mass)
 
         # Energy needed for loiter
         E_lt = P_lt*self.t_loiter
@@ -672,7 +703,7 @@ class evtol_performance:
         # Find the remaining energy for cruise
         E_cr = self.bat_E - E_la - E_to - E_lt*loiter
 
-        if E_cr <= 0:
+        if np.any(E_cr <= 0):
             print("No energy left for cruise")
 
         # Time in cruise
