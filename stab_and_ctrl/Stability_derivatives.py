@@ -60,12 +60,14 @@ class Stab_Derivatives:
         self.Cl0rear = CLrear0/(np.cos(self.Sweep(self.Arear, self.taper, 0, 25, 0)))**2 # Airfoil lift at zero angle of attack
         self.d = d
         self.dy = dy
-        self.xacfwd = 0.25 * self.cfwd + self.d
-        self.xacrear = self.lfus - (1 - 0.25) * self.crear
+        # self.xacfwd = 0.25 * self.cfwd + self.d
+        # self.xacrear = self.lfus - (1 - 0.25) * self.crear
+        self.xacfwd = 0.5
+        self.xacrear = 6.1
         self.Pbr = Pbr # Shaft power per engine [W]
         self.zcg = zcg
         self.ARv = ARv
-        self.b = max(self.bfwd,self.brear)
+        self.b = np.sqrt(0.5*(self.Srear/self.S*self.Arear+self.Sfwd/self.S*self.Afwd)*self.S)
         self.CD_0 = C_D_0 # PROFILE DRAG for one wing [-]
         self.Vstall = Vstall # Stall speed [m/s]
         self.eta_rear = eta_rear
@@ -77,6 +79,7 @@ class Stab_Derivatives:
                            self.bfwd,self.brear,self.taper,self.ARv,self.sweepTE)
         self.xacv = VT.xacv(self.ARv, self.sweepTE)
         self.lv = self.xacv-self.xcg
+        # print("xacv, xcg, lv", self.xacv,self.xcg, self.lv)
         ### It is assumed that aeroelastic effects are neglected ###
 
     def lh_arm(self):
@@ -109,7 +112,7 @@ class Stab_Derivatives:
                         lh** 4 * self.W ** 3)) ** (1 / 4) * (np.sin(phi * 6)) ** 2.5
         else:
             dsde_da = 0
-        # print("Configuration %.0f de/da = %.4f "%(conf,de_da))
+        # print("de/da = %.4f, de_P/da =%.4f "%(de_da*eta,dsde_da))
         return de_da*eta + dsde_da
     def Sweep(self,AR,taper,Sweepm,n,m):
         """
@@ -151,7 +154,7 @@ class Stab_Derivatives:
         CD0rear = self.CLfwd0**2/(np.pi*self.Afwd*self.efwd) + self.CD_0
         CT_fwd_u = -3*(CD0fwd)-3*self.CLfwd0*np.tan(self.th0+self.alpha0)
         CT_rear_u = -3 * (CD0rear) - 3 * self.CLrear0 * np.tan(self.th0 + self.alpha0)
-        CZ_u = -self.M0**2/(1-self.M0**2)*self.CL0
+        CZ_u = (-self.M0**2/(1-self.M0**2)*self.CL0)
         CD_M = 0 # Incompressible flow
         CLfwd_M =  self.M0/(1-self.M0**2)*self.CLfwd0
         CLrear_M  =self.M0/(1-self.M0**2)*self.CLrear0
@@ -251,7 +254,7 @@ class Stab_Derivatives:
         Cn_p = Cn_p_v+Cn_p_wings
         return CY_p, Cl_p,Cn_p
 
-    def beta_derivatives(self):
+    def beta_derivatives(self, g1, g2):
         """
         Analytical estimates of stability derivatives wrt side slip angle beta.
         :return: C_Y_beta, C_l_beta, C_n_beta
@@ -283,8 +286,8 @@ class Stab_Derivatives:
         Cl_b_wf_fwd = -1.2*np.sqrt(self.Afwd)*(self.dy-self.hfus/2)/self.bfwd**2*(self.lfus+self.wfus)
         Cl_b_wf_rear = -1.2*np.sqrt(self.Arear)*(self.hfus/2)/self.brear**2*(self.lfus+self.wfus)*self.eta_rear
         # Cl_b = -0.110
-        Cl_b_fwd = -self.CLafwd*self.Gamma_fwd/4*(2/3*(1+2*self.taper)/(1+self.taper))
-        Cl_b_rear = -self.CLarear * self.Gamma_rear / 4 * (2 / 3 * (1 + 2 * self.taper) / (1 + self.taper))*self.eta_rear
+        Cl_b_fwd = -self.CLafwd*g1/4*(2/3*(1+2*self.taper)/(1+self.taper))
+        Cl_b_rear = -self.CLarear * g2 / 4 * (2 / 3 * (1 + 2 * self.taper) / (1 + self.taper))*self.eta_rear
         # print(self.CLafwd,self.Gamma_fwd,self.taper)
         Cl_b = (Cl_b_wf_rear*self.Srear*self.brear + Cl_b_wf_fwd*self.Sfwd*self.bfwd +
                 Cl_b_fwd*self.Sfwd*self.bfwd+Cl_b_rear*self.Srear*self.brear)/(self.S*self.b)+Cl_b_v
@@ -311,9 +314,13 @@ class Stab_Derivatives:
         :return: C_X_de, C_Z_de, C_m_de
         """
         CX_de = 0
-        CL_de = self.CLafwd*self.tau_e(Se_S)*be_b*self.eta_rear*self.Sfwd/self.S
+        CL_de_fwd = self.CLafwd*self.tau_e(Se_S)*be_b*self.Sfwd/self.S/100
+        CL_de_rear = self.CLarear*self.tau_e(Se_S)*be_b*self.Srear/self.S*self.eta_rear/100
+        CL_de = -self.CLafwd*self.tau_e(Se_S)*be_b/100*self.Sfwd/self.S +\
+                self.CLarear*self.tau_e(Se_S)*be_b/100*self.Srear/self.S*self.eta_rear
         CZ_de = -CL_de
-        Cm_de = -CZ_de*(self.xcg-self.xacfwd)/self.c
+        Cm_de = -(CL_de_fwd*(self.xcg-self.xacfwd)/self.c+CL_de_rear*(self.xacrear-self.xcg)/self.c)
+
         return CX_de, CZ_de, Cm_de
 
     def da_derivatives(self,Sa_S,b1,b2):
@@ -366,19 +373,23 @@ class Stab_Derivatives:
         rho = self.rho
         return self.W/(rho*self.g(self.h)*self.S*self.b)
 
-    def asym_stability_req(self, Ixx, Izz, Ixz, Sa_S,b1,b2,cr_cv,br_bv):
+    def asym_stability_req(self, Ixx, Izz, Ixz, Sa_S,b1,b2,cr_cv,br_bv,g1,g2):
         mu_b = self.get_mub()
         Kxx2 = Ixx/(self.W/9.80665*self.b**2)
         Kzz2 = Izz/(self.W/9.80665*self.b**2)
         Kxz = Ixz/(self.W/9.80665*self.b**2)
         # print("Ixx, Izz =", Ixx, Izz)
         # print("Kxx2, Kzz2, Kxz = %.5f, %.5f, %.5f"%(Kxx2,Kzz2,Kxz))
+
         C_L = self.CL0
-        C_Y = [self.beta_derivatives()[0],0,self.p_derivatives()[0],self.r_derivatives()[0],\
+        C_Y = [self.beta_derivatives(0,0)[0],0,self.p_derivatives()[0],self.r_derivatives()[0],\
               self.da_derivatives(Sa_S,b1,b2)[0],self.dr_derivatives(cr_cv,br_bv)[0]]
-        C_l = [self.beta_derivatives()[1],self.p_derivatives()[1],self.r_derivatives()[1],\
+        C_l = [self.beta_derivatives(0,0)[1],self.p_derivatives()[1],self.r_derivatives()[1],\
               self.da_derivatives(Sa_S,b1,b2)[1],self.dr_derivatives(cr_cv,br_bv)[1]]
-        C_n = [self.beta_derivatives()[2],0, self.p_derivatives()[2], self.r_derivatives()[2], \
+        C_l_b_1 = self.beta_derivatives(g1,0)[1]
+        C_l_b_2 = self.beta_derivatives(0,g2)[1]
+        C_l_b_opt = self.beta_derivatives(g1,g2)[1]
+        C_n = [self.beta_derivatives(0,0)[2],0, self.p_derivatives()[2], self.r_derivatives()[2], \
                self.da_derivatives(Sa_S, b1, b2)[2], self.dr_derivatives(cr_cv, br_bv)[2]]
         C_y_b, C_y_b_dot, C_y_p, C_y_r, C_y_da, C_y_dr = C_Y
         C_l_b, C_l_p, C_l_r, C_l_da, C_l_dr = C_l
@@ -457,8 +468,11 @@ class Stab_Derivatives:
         plt.plot(clb2, cnb_E(-clb2), color="k", label="Limit for Spiral stability when E = 0")
         plt.xlabel(r"-$C_{l_{\beta}}$ [rad$^{-1}$]", fontsize=12)
         plt.ylabel(r"$C_{n_{\beta}}$ [rad$^{-1}$]", fontsize=12)
-        plt.scatter(-C_l_b, C_n_b, color="k", marker="x", label="Wigeon")
-        plt.legend()
+        plt.scatter(-C_l_b, C_n_b, color="k", marker="x", label="Wigeon with no dihedral")
+        plt.scatter(-C_l_b_1, C_n_b, color="r", marker="o", label=r"Wigeon with $\Gamma_{fwd} = %.1f$ deg "%(np.rad2deg(g1)))
+        plt.scatter(-C_l_b_2, C_n_b, color="b", marker="X", label=r"Wigeon with $\Gamma_{rear} = %.1f$ deg"%(np.rad2deg(g2)))
+        plt.scatter(-C_l_b_opt, C_n_b, color="g", marker="D", label=r"Wigeon with both $\Gamma_{fwd} = %.1f$ deg and $\Gamma_{rear} = %.1f$ deg"%(np.rad2deg(g1),np.rad2deg(g2)))
+        plt.legend(loc=1)
         plt.show()
         return
     def initial_coeff(self):
@@ -466,14 +480,14 @@ class Stab_Derivatives:
         C_Z0 = -self.W/(0.5*self.rho*self.V0**2*self.S)*np.cos(self.th0+self.alpha0)
         C_m0 =0
         return C_X0,C_Z0
-    def return_stab_derivatives(self,Se_S,be_b,Sa_S,b1,b2,cr_cv,br_bv,Ixx, Iyy, Izz, Ixz,matlab=True):
+    def return_stab_derivatives(self,Se_S,be_b,Sa_S,b1,b2,cr_cv,br_bv,Ixx, Iyy, Izz, Ixz,g1,g2,matlab=True):
         a = self.alpha_derivatives()
         a_dot = self.alpha_dot_derivatives()
         u = self.u_derivatives()
         initial = self.initial_coeff()
         q = self.q_derivatives()
         de = self.de_derivatives(Se_S,be_b)
-        b = self.beta_derivatives()
+        b = self.beta_derivatives(g1,g2)
         p = self.p_derivatives()
         r = self.r_derivatives()
         da = self.da_derivatives(Sa_S,b1,b2)
@@ -484,6 +498,7 @@ class Stab_Derivatives:
         C_X = [C_x_a, C_x_a_dot, C_x_u, C_x_0, C_x_q, C_x_d]
         C_Z = [C_z_a, C_z_a_dot, C_z_u, C_z_0, C_z_q, C_z_d]
         C_m = [C_m_a, C_m_a_dot, C_m_u, C_m_q, C_m_d]
+        # print(C_X, C_Z, C_m)
         C_y_b, C_y_b_dot, C_y_p, C_y_r, C_y_da, C_y_dr = b[0], 0, p[0],r[0],da[0],dr[0]
         C_l_b, C_l_p, C_l_r, C_l_da, C_l_dr = b[1],p[1],r[1],da[1],dr[1]
         C_n_b, C_n_b_dot, C_n_p, C_n_r, C_n_da, C_n_dr = b[2],0,p[2],r[2],da[2],dr[2]

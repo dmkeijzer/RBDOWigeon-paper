@@ -136,9 +136,9 @@ class Fatigue:
         self.ts = np.linspace(0, self.tAir + self.tot, 1000)
         gag, tg = [], self.tot / 2
         for t in self.ts:
-            acoustic = 0.2 * np.sum(np.sin(2*np.pi * t / np.arange(0.001/3600, 0.01/3600, 0.001/3600))) # noise in the given frequency range
-            turbulence = np.sum(np.sin(2*np.pi * t / np.arange(0.1/3600, 10/3600, 0.1/3600))) # same here
-            taxi = np.sum(np.sin(2*np.pi * t / np.arange(0.05/3600, 1/3600, 0.05/3600))) # and here, all frequencies taken from the textbook - Schijve Ch 9
+            acoustic = 0.05 * np.sum(np.sin(2*np.pi * t / np.arange(0.001/3600, 0.01/3600, 0.001/3600))) # noise in the given frequency range
+            turbulence = 0.1 * np.sum(np.sin(2*np.pi * t / np.arange(0.1/3600, 10/3600, 0.1/3600))) # same here
+            taxi = 0.1 * np.sum(np.sin(2*np.pi * t / np.arange(0.05/3600, 1/3600, 0.05/3600))) # and here, all frequencies taken from the textbook - Schijve Ch 9
             if t < tg or t > self.tAir + tg:
                 gag.append(self.Sg + (taxi if tg > t > 0.5 * tg or self.tAir + tg < t < self.tAir + 1.5 * tg else 0))
             elif tg + 0.5 <= t <= self.tAir + tg - 0.5:
@@ -153,6 +153,7 @@ class Fatigue:
                               columns='dS, Sm, count, ti, tf'.split(', '))
         df['Smax'] = df['Sm'] + df['dS'] / 2
         df['Smin'] = df['Sm'] - df['dS'] / 2
+        df = df[df['Smax'] != 0]
         self.df = df[df['count'] != 0]
         return self.df
     
@@ -163,9 +164,11 @@ class Fatigue:
     
     def CrackGrowth(self, a0, w, Nflights):
         length = a0
-        for j in range(Nflights):
-            for i in range(len(self.df)):
-                da = self.mat.ParisFatigueda(length, w,
-                                        self.df.iloc[i]['Smax'], self.df.iloc[i]['Smin'], self.df.iloc[i]['count'])
-                length += da
-        return length
+        step = 1000
+        for j in range(0, Nflights, step):
+            da = min(step, Nflights - j) * self.mat.ParisFatigueda(length, w,
+                                self.df['Smax'].values, self.df['Smin'].values, self.df['count'].values).sum()
+            if length >= w / 2:
+                break
+            length += da
+        return length, j
