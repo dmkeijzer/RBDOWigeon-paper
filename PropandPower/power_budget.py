@@ -27,3 +27,6 @@ class Power_Budget:
 
     def E_wing_rot(self, t_transition):
         return self.wing_rot_mech * t_transition
+
+PB = Power_Budget(886.2)
+print(PB.P_continuous())
