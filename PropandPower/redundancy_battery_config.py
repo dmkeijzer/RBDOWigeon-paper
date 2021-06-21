@@ -42,6 +42,7 @@ class redundancy_power:
         self.per_mot = per_mot
 
     def N_cells_mot(self):
+        print(self.E_cell)
         return int(np.ceil(self.E_tot * self.per_mot / self.E_cell * 1000))
 
     def N_cells_misc(self):
