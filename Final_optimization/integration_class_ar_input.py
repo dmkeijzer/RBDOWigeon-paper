@@ -361,7 +361,7 @@ class RunDSE:
         # TODO: check safety factor (1.02 *)
 
         # Cruise power
-        P_cr = mission.power_cruise_config(h_cr, V_cr, MTOM)
+        P_cr,D_cruise = mission.power_cruise_config(h_cr, V_cr, MTOM)
 
         # Engine sizing
 
@@ -499,6 +499,8 @@ class RunDSE:
         de_da = deps_da_empirical(const.sweepc41, b1, xr - xf, zr - zf, AR_wing1, CLafwd, rho, P_cr / n_prop, S1,
                                   CL_cr_1, MTOM * g0)
 
+        print("Downwash:", de_da)
+
         """
         :param h_ht: Distance between wings normal to their chord planes 
         """  # FIXME: I used vertical distance
@@ -524,6 +526,8 @@ class RunDSE:
         max_coeffs = wing_design.CLa_wprop(T_per_eng_during_stall, V_stall, rho, prop_radius * 2, n_prop_1,
                                            n_prop_2, const.tc_wing, CDs_w, CDs_f, Afus, alpha_wp, de_da)
         CLmf, CLmr = max_coeffs[4], max_coeffs[5]
+
+        print('max coeffs', CLmf, CLmr)
 
         CM_a = Cma(Clafwd, Clarear, const.sweepc41, const.sweepc42, taper, taper, CL_cr_1, CL_cr_2, AR_wing1, AR_wing2,
                    const.e_f, const.e_r, xf, xr, zf, zr, Zcg, const.Vr_Vf_2, Sr_Sf, x_CG_MTOM, S_tot, rho, P_cr/n_prop,
@@ -558,9 +562,6 @@ class RunDSE:
         internal_inputs = [MTOM, 0, V_cr, h_cr, C_L_cr, CLmax, prop_radius, de_da, Sv, V_stall, max_power, AR_wing1,
                            AR_wing2, Sr_Sf, s1, xf, zf, xr, zr, max_thrust_stall]
 
-        # Outputs for optimisation cost function
-        optim_outputs = [MTOM, energy, time, CM_a]
-
         # Aerdodynamic moments
         Cmac1 = airfoil.Cm_ac(const.sweepc41, AR_wing1)[0]
         Cmac2 = airfoil.Cm_ac(const.sweepc42, AR_wing2)[0]
@@ -574,6 +575,11 @@ class RunDSE:
                                                                                      const.m_pax,  const.m_cargo_tot,
                                                                                      m_bat, contingency = False)
 
+        # Outputs for optimisation cost function
+        optim_outputs = [MTOM, energy, time, CM_a, cg_fwd_lim - x_front, MTOM_nc]
+
+        print("cg's ", x_CG_MTOM, x_CG_MTOM_nc)
+
         lines       = [["MAC1" ,find_mac(S1, b1, taper)],  # Mean Aerodynamic Chord [m]
                       ["MAC2" , find_mac(S2, b2, taper)],
                       ["taper",taper],  # [-]
@@ -581,7 +587,8 @@ class RunDSE:
                       ["rootchord2" , 2*b2/(AR_wing2*(1+taper))],
                       ["thicknessChordRatio",const.tc_wing],  # [-]
                       ["xAC",0.25],  # [-] position of ac with respect to the chord
-                      ["mtom",MTOM_nc],
+                      ["MTOM_nc",MTOM_nc],
+                       ["MTOM", MTOM],
                       ["S1" , S1],
                       ["S2" , S2],  # surface areas of wing one and two
                       ["span1",b1],
@@ -606,7 +613,7 @@ class RunDSE:
                       ["Mac2" , Cmac2],
                       ["flighttime",t_tot/3600],  # [hr]
                       # turnovertime,2,  # we dont actually need this xd
-                      ["takeofftime", (t_tot-t_hor)/2],
+                      ["takeofftime", (t_tot-t_hor)/(2*3600)],
                       ["enginePlacement", pos_eng], #list(np.linspace(0.1 * b / 2, 0.8 * b / 2, 4)),
                       #engineMass,400 * 9.81 / 8, # See m_prop
                       ["T_max",max_thrust], # [s] Time in vertical config
@@ -621,13 +628,36 @@ class RunDSE:
                       ["h_winglet_1",h_wt_1],
                       ["h_winglet_2",h_wt_2],
                       ["V_cruise", V_cr],
-                      ["CLmax", CLmax]]
+                       ["h_cruise", h_cr],
+                      ["CLmax", CLmax],
+                       ["CD0fwd", CD0fwd],
+                       ["CD0fwd", CD0rear],
+                       ["CD0", CD0],
+                       ["Clafwd", Clafwd],
+                       ["Clarear", Clarear],
+                       ["CL_cr_fwd", CL_cr_1],
+                       ["CL_cr_rear", CL_cr_2],
+                       ["CL_cr", C_L_cr],
+                       ["P_br_cruise_per_engine", P_cr/n_prop],
+                       ["T_cr_per_engine", D_cruise/n_prop],
+                       ["x_cg_MTOM_nc", x_CG_MTOM_nc],
+                       ["Prop_radius", prop_radius]]
 
         txt = open("final_values.txt", 'w')
         txt.truncate(0)
         for element in lines:
             txt.write(element[0] + " = "+  str(element[1]) + "\n")
         txt.close()
+
+        mission_nc = FP.mission(float(MTOM_nc), float(h_cr), float(V_cr), float(CLmax), float(S_tot), float(n_prop * prop_area), P_max=float(max_power),
+                                Cl_alpha_curve=Cl_alpha_curve, CD_a_w=CD_a_w, CD_a_f=CD_a_f, alpha_lst=alpha_lst,
+                                Drag=drag, t_loiter=15 * 60, rotational_rate=5, mission_dist=const.mission_range)
+
+        T_cr_nc, P_cr_nc = mission_nc.power_cruise_config(h_cr, V_cr, MTOM)
+
+        E_tot_nc, t_tot_nc, P_max_nc, T_max_nc, t_hov_nc = mission_nc.total_energy()
+
+        print(E_tot_nc, t_tot_nc, P_max_nc, T_max_nc, t_hov_nc, T_cr_nc, P_cr_nc)
 
         print("MTOM:            ", MTOM)
         print("     - Battery:  ", m_bat)

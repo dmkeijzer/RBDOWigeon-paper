@@ -8,9 +8,9 @@ DoD = const.DoD
 P_den = const.P_den
 EOL_C = const.EOL_C
 
-energy = 1000
-P_max = 500
-safety = 1.2
+energy = 301111.1
+P_max = 1809362.3556091622
+safety = 1.0
 
 bat = bat.Battery(sp_en_den, vol_en_den, energy, bat_cost, DoD, P_den, P_max, safety, EOL_C)
 
@@ -24,4 +24,8 @@ print("cost", bat.price())
 print("mass_energy", bat.mass_both()[0])
 print("mass_power", bat.mass_both()[1])
 
+if bat.mass_both()[0] > bat.mass_both()[1]:
+    print("Energy limiting")
+else:
+    print("Power limiting")
 

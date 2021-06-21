@@ -1,36 +1,44 @@
 import openmdao.api as om
 import numpy as np
-from stab_and_ctrl.xcg_limits import xf, xr, zf, zr, xcg_range, Arange, bmax, crmaxf, crmaxr
+#from stab_and_ctrl.xcg_limits import xf, xr, zf, zr, xcg_range, Arange, bmax, crmaxf, crmaxr
+import constants_final as const
+import integration_class_ar_input as int_class
+
 
 class design_optimization(om.ExplicitComponent):
 
     def setup(self):
 
-        # Changing input parameters
-        self.add_input('Tail-cone_length', units = 'm')
-        self.add_input('Wing_surface', units = 'm^2')
-        self.add_input('Aspect_ratio_front', units = None)
-        self.add_input('Aspect_ratio_rear', units = None)
-        self.add_input('Relative_wing_size', units = None)  # Not really sure in what format this will be
-        self.add_input('Wing_position_1', units = 'm')
-        self.add_input('Wing_position_2', units = 'm')
+        # Design variables
+        self.add_input('AR1')
+        self.add_input('AR2')
+        self.add_input('Sr_Sf')
+        self.add_input('xr')
 
-        # Output
-        self.add_output('time', units = 's')
-        self.add_output('energy', units = None)  # Need to decide on Wh or J
-        self.add_output('mass', units = 'kg')
-        self.add_output('Cost_func')
+        # Constant inputs
+        self.add_input('xf')
+        self.add_input('zf')
+        self.add_input('zr')
+        self.add_input('max_power')
+        self.add_input('MTOM')
+        self.add_input('V_cr')
+        self.add_input('h_cr')
+        self.add_input('C_L_cr')
+        self.add_input('CLmax')
+        self.add_input('prop_radius')
+        self.add_input('de_da')
+        self.add_input('Sv')
+        self.add_input('V_stall')
 
         # Outputs used as constraints, these come from stability
-        self.add_output('xf', units = 'm')
-        self.add_output('xr', units = 'm')
-        self.add_output('zf', units = 'm')
-        self.add_output('zr', units = 'm')
-        self.add_output('crmaxf', units = 'm')
-        self.add_output('crmaxr', units = 'm')
-        self.add_output('bmax', units = 'm')
-        self.add_output('x_cg_range', units = 'm')
-        self.add_output('A_range', units = None)
+        self.add_output('mass')
+        self.add_output('CM_alpha')
+        self.add_output('ctrl_mar')
+        self.add_output('time')
+        self.add_output('MTOM_nc')
+        self.add_output('Energy')
+
+        self.add_output('Cost_func')
 
     def setup_partials(self):
 
@@ -39,67 +47,112 @@ class design_optimization(om.ExplicitComponent):
 
     def compute(self, inputs, outputs):
 
-        outputs['xf'] = None
-        outputs['xr'] = None
-        outputs['zf'] = None
-        outputs['zr'] = None
-        outputs['crmaxf'] = None
-        outputs['crmaxr'] = None
-        outputs['bmax'] = None
-        outputs['x_cg_range'] = None
-        outputs['A_range'] = None
+        MTOM = inputs['MTOM']
+        V_cr = inputs['V_cr']
+        h_cr = inputs['h_cr']
+        C_L_cr = inputs['C_L_cr']
+        CLmax = inputs['CLmax']
+        prop_radius = inputs['prop_radius']
+        de_da = inputs['de_da']
+        Sv = inputs['Sv']
+        V_stall = inputs['V_stall']
+        max_power = inputs['max_power']
+        xf = inputs['xf']
+        xr = inputs['xr']
+        zf = inputs['zf']
+        zr = inputs['zr']
 
-        raise NotImplementedError
+        AR_wing1 = inputs['AR1']
+        AR_wing2 = inputs['AR2']
+        Sr_Sf = inputs['Sr_Sf']
+        s1 = (1 + Sr_Sf)**-1
+        max_thrust_stall = MTOM*const.g*0.1
+
+        initial_estimate = [MTOM, 0, V_cr, h_cr, C_L_cr, CLmax, prop_radius, de_da, Sv, V_stall, max_power, AR_wing1,
+                            AR_wing2, Sr_Sf, s1, xf, zf, xr, zr, max_thrust_stall]
+
+        # Optimisation class
+        optimisation_class = int_class.RunDSE(initial_estimate)
+
+        # Run the file for # iterations
+        N_iter = 10
+        optim_outputs, internal_inputs, other_outputs = optimisation_class.multirun(N_iter, optim_inputs=[])
+
+        print('===== Progress update =====')
+        print('MTOM:        ', optim_outputs[0])
+        print('MTOM (nc):   ', optim_outputs[5])
+        print('CM_alpha:    ', optim_outputs[3])
+        print('ctrl margin: ', optim_outputs[4])
+
+        outputs['mass'] = optim_outputs[0]
+        outputs['energy'] = optim_outputs[1]
+        outputs['time'] = optim_outputs[2]
+        outputs['CM_alpha'] = optim_outputs[3]
+        outputs['ctrl_mar'] = optim_outputs[4]
+        outputs['MTOM_nc'] = optim_outputs[5]
+
+        outputs['Cost_func'] = optim_outputs[5]
 
 
 prob = om.Problem()
-prob.model.add_subsystem('Integrated_design', design_optimization(), promotes_inputs=['Tail_cone_length,'
-                                                                                      'Wing_surface',
-                                                                                      'Aspect_ratio_front',
-                                                                                      'Aspect_ratio_rear',
-                                                                                      'Relative_wing_size',
-                                                                                      'Wing_position_1',
-                                                                                      'Wing_position_2'])
+prob.model.add_subsystem('Integrated_design', design_optimization())#, promotes_inputs=['AR1',
+                                                                                      # 'AR2',
+                                                                                      # 'Sr_Sf',
+                                                                                      # 'zr',
+                                                                                      # 'xf',
+                                                                                      # 'zf',
+                                                                                      # 'max_power',
+                                                                                      # 'MTOM',
+                                                                                      # 'V_cr',
+                                                                                      # 'h_cr',
+                                                                                      # 'C_L_cr',
+                                                                                      # 'CLmax',
+                                                                                      # 'prop_radius',
+                                                                                      # 'de_da',
+                                                                                      # 'Sv',
+                                                                                      # 'V_stall'])
 
 # Initial values for the optimization TODO: Improve initial values
-prob.model.set_input_defaults('Tail_cone_length', 2)
-prob.model.set_input_defaults('Wing_surface', 14)
-prob.model.set_input_defaults('Aspect_ratio_front', 8)
-prob.model.set_input_defaults('Aspect_ratio_rear', 8)
-prob.model.set_input_defaults('Relative_wing_size', None)   # Change
-prob.model.set_input_defaults('Wing_position_1', 1)
-prob.model.set_input_defaults('Wing_position_2', 8)
+prob.model.set_input_defaults('Integrated_design.AR1', 6.8)
+prob.model.set_input_defaults('Integrated_design.AR2', 6.8)
+prob.model.set_input_defaults('Integrated_design.Sr_Sf', 1.)
+prob.model.set_input_defaults('Integrated_design.xr', 6.1)
+prob.model.set_input_defaults('Integrated_design.xf', 0.5)   # Change
+prob.model.set_input_defaults('Integrated_design.zr', 1.7)
+prob.model.set_input_defaults('Integrated_design.zf', 0.3)
+prob.model.set_input_defaults('Integrated_design.max_power', 1.5e6)
+prob.model.set_input_defaults('Integrated_design.MTOM', 2800.)
+prob.model.set_input_defaults('Integrated_design.V_cr', 66.)
+prob.model.set_input_defaults('Integrated_design.h_cr', 1000)
+prob.model.set_input_defaults('Integrated_design.C_L_cr', 0.8)
+prob.model.set_input_defaults('Integrated_design.CLmax', 1.68)
+prob.model.set_input_defaults('Integrated_design.prop_radius', 0.55)
+prob.model.set_input_defaults('Integrated_design.de_da', 0.25)
+prob.model.set_input_defaults('Integrated_design.Sv', 1.1)
+prob.model.set_input_defaults('Integrated_design.V_stall', 40.)
 
 # Define constraints TODO: Probably better to define them in a central file, like constants
-prob.model.add_constraint('Integrated_design.time', upper = 3, units = 'hr')
-prob.model.add_constraint('Integrated_design.mass', upper = 3175, units = 'kg')
+prob.model.add_constraint('Integrated_design.CM_alpha', upper = 0.1)
+prob.model.add_constraint('Integrated_design.MTOM', upper = 3175.)
+prob.model.add_constraint('Integrated_design.ctrl_mar', upper = 0.)
+
 
 # Stability constraints
 # TODO: if these bounds are changed in the integrated program, change the references
-prob.model.add_constraint('Integrated_design.xf', lower = xf[0], upper = xf[1], units = 'kg')
-prob.model.add_constraint('Integrated_design.xr', lower = xr[0], upper = xr[1], units = 'kg')
-prob.model.add_constraint('Integrated_design.zf', lower = zf[0], upper = zf[1], units = 'kg')
-prob.model.add_constraint('Integrated_design.zr', lower = zr[0], upper = zr[1], units = 'kg')
-prob.model.add_constraint('Integrated_design.crmaxf', upper = crmaxf, units = 'kg')
-prob.model.add_constraint('Integrated_design.crmaxr', upper = crmaxr, units = 'kg')
-prob.model.add_constraint('Integrated_design.bmax', upper = bmax, units = 'kg')
-prob.model.add_constraint('Integrated_design.x_cg_range', lower = xcg_range[0], upper = xcg_range[1], units = 'kg')
-#prob.model.add_constraint('Integrated_design.A_range', lower = xf[0], upper = xf[1], units = 'kg')
 
 # Select an appropriate optimizer TODO: Change if better algorithms are found
+# prob.driver = om.pyOptSparseDriver()
+# prob.driver.options['optimizer'] = "ALPSO"
+
 prob.driver = om.ScipyOptimizeDriver()
-prob.driver.options['optimizer'] = 'COBYLA'
+prob.driver.options['optimizer'] = 'Nelder-Mead'
 
-# Define design variables TODO: Add appropriate constraints
-prob.model.add_design_var('Tail_cone_length', lower = 0)
-prob.model.add_design_var('Wing_surface', lower = 0)
-prob.model.add_design_var('Aspect_ratio_front')
-prob.model.add_design_var('Aspect_ratio_rear')
-prob.model.add_design_var('Relative_wing_size')   # Change
-prob.model.add_design_var('Wing_position_1', lower = 0)
-prob.model.add_design_var('Wing_position_2', lower = 0)
+prob.model.add_design_var('Integrated_design.AR1')
+prob.model.add_design_var('Integrated_design.AR2')
+prob.model.add_design_var('Integrated_design.Sr_Sf')
+prob.model.add_design_var('Integrated_design.xr')
 
-prob.model.add_objective('cruise.D/L')
+prob.model.add_objective('Integrated_design.Cost_func')
 
 prob.setup()
 prob.run_driver()

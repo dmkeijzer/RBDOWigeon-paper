@@ -2,7 +2,7 @@ import integration_class_ar_input as int_class
 import constants_final as const
 
 # Initial estimates
-MTOM = 2900
+MTOM = 2800
 V_cr = 66
 h_cr = 1000
 C_L_cr = 0.8

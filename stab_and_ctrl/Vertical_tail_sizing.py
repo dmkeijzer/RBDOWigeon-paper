@@ -162,7 +162,7 @@ class VT_sizing:
         a = self.lfus/2
         b = self.wfus/2
         V = 2*np.pi/4*b**2*(self.lfus/2-(self.lfus/2)**3/(3*a**2))
-        bmax = max(self.bfwd,self.brear)
+        bmax = np.sqrt(0.5*(self.Srear/self.S*self.Arear+self.Sfwd/self.S*self.Afwd)*self.S)
         Cnb_fus = -2*V/(self.S*max(self.bfwd,self.brear))
         Cnb_w_fwd = self.CLfwd**2*(1/(4*np.pi*self.Afwd)-
                                    (np.tan(self.Sweepc4fwd)/(np.pi*self.Afwd+4*np.cos(self.Sweepc4fwd)))*

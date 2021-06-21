@@ -33,7 +33,7 @@ class Control_surface:
         self.Vmc = 1.2*self.Vs # Minimum controllable speed [m/s]
         # self.xcg = xcg
         self.c = self.Sfwd/self.S*self.cfwd+self.Srear/self.S*self.crear
-        self.taper_a = 0.95
+        self.taper_a = 0.45
         self.eta_rear = eta_rear
 
     def Sweep(self,AR,Sweepm,n,m):
@@ -65,7 +65,7 @@ class Control_surface:
         :param b2: Outer distance of the aileron [m]
         :return: Control derivative C_l_da [1/rad]
         """
-        b = max(self.bfwd, self.brear)
+        b =  np.sqrt(0.5*(self.Srear/self.S*self.Arear+self.Sfwd/self.S*self.Afwd)*self.S)
         b_1fwd = b1*self.bfwd / 2 / 100
         b_2fwd = b2*self.bfwd / 2 / 100
         b_1rear = b1 * self.brear / 2 / 100
@@ -86,18 +86,18 @@ class Control_surface:
         return Clda
 
     def Clp(self):
-        b = max(self.bfwd,self.brear)
+        b =  np.sqrt(0.5*(self.Srear/self.S*self.Arear+self.Sfwd/self.S*self.Afwd)*self.S)
         c_r_fwd = self.cfwd * 3 / 2 * (1 + self.taper) / (1 + self.taper + self.taper ** 2)
         c_r_rear =  self.crear*3/2*(1+self.taper)/(1+self.taper+self.taper**2)
-        Clp_fwd =-(self.Clafwd+self.Cd0fwd)*c_r_fwd*self.bfwd/(24*self.Sfwd)*(1+3*self.taper)*(1-1.1/self.bfwd)
-        Clp_rear = -(self.Clarear + self.Cd0rear) * c_r_rear * self.brear/(24 * self.Srear)*(1+3*self.taper)*self.eta_rear**(1-1/self.bfwd)
+        Clp_fwd =-(self.Clafwd+self.Cd0fwd)*c_r_fwd*self.bfwd/(24*self.Sfwd)*(1+3*self.taper)*(1-1.38/self.bfwd)
+        Clp_rear = -(self.Clarear + self.Cd0rear) * c_r_rear * self.brear/(24 * self.Srear)*(1+3*self.taper)*self.eta_rear**(1-1.38/self.bfwd)
         Clp = Clp_fwd*self.Sfwd*self.bfwd/(self.S*b)+Clp_rear*self.Srear*self.brear/(self.S*b)
         return Clp
 
-    def plotting(self,Sa_S,b1,b2,rear):
+    def plotting(self,Sa_S,b1,b2,Se_S, be_b, rear):
         if isinstance(Sa_S,(float,int)) and not isinstance(b2,(float,int)):
             da_max = -30*np.pi/180
-            dphi_dt = 60*np.pi/180/1.3
+            dphi_dt = 60*np.pi/180/1.3*0.95
             minClda = -(dphi_dt)*self.Clp()*max(self.bfwd,self.brear)/(2*self.Vmc*da_max)
             minClda = np.ones(len(b2))*minClda
             Clda_array = self.Clda(Sa_S,b1,b2,rear)
@@ -129,29 +129,65 @@ class Control_surface:
             xa_2 = b2/100*self.bfwd/2
             ya_2 = abs(b2/100*self.bfwd/2*np.tan(self.Sweep(self.Afwd, 0, 100, 25)))
             #### Aileron geometry ####
-            ba = (b2-b1)/100*self.bfwd/2*2
-            ca = Sa_S*self.Sfwd/ba
-            # print("c_a = ",ca)
-            ca_r = ca * 2/(1+self.taper_a)
-            # print("ca_root = ",ca_r)
-            ca_t = ca_r*self.taper_a
+            # ba = (b2-b1)/100*self.bfwd/2*2
+            # ca = Sa_S*self.Sfwd/ba
+            # # print("c_a = ",ca)
+            # ca_r = ca * 2/(1+self.taper_a)
+            # # print("ca_root = ",ca_r)
+            # ca_t = ca_r*self.taper_a
+            ce = Se_S * self.Sfwd / (be_b * self.bfwd / 100)
+            ce_r = ce * 2 / (1 + 0.45)
+            ce_t = ce_r * 0.45
+            ca_t = ce_t
+            ce_t2 = ce_r * (1 - 2 * (1 - 0.45) * (b2 * self.bfwd / 2 / 100 - 0.5) / (be_b * (self.bfwd) / 100))
+            print("ce_t = ",ce_t, "ce_t_with equation", ce_t2)
+            ca_r = ce_r * (1 - 2 * (1 - 0.45) * (b1 * self.bfwd / 2/100-0.5) / (be_b * (self.bfwd)/100))
+            ba = (b2 - b1) / 100 * self.bfwd / 2*2
             xa_3 = xa_2
             ya_3 = ca_t+ya_2
             xa_4 = xa_1
             ya_4 = ya_1+ca_r
             xa_points= [xa_1,xa_2,xa_3,xa_4,xa_1]
             ya_points= [ya_1,ya_2,ya_3,ya_4,ya_1]
+            ## Plot elevator ##
+            xe_1 = 1 / 2
+            ye_1 = abs(xe_1 * np.tan(self.Sweep(self.Afwd, 0, 100, 25)))
+            xe_2 = 99 * self.bfwd / 2 / 100
+            ye_2 = abs(xe_2 * np.tan(self.Sweep(self.Afwd, 0, 100, 25)))
+            #### Aileron geometry ####
+            ce = Se_S * self.Sfwd / (be_b * self.bfwd / 100)
+            # print("c_a = ",ca)
+            ce_r = ce * 2 / (1 + 0.45)
+            # print("ca_root = ",ca_r)
+            ce_t = ce_r *0.45
+            xe_3 = xe_2
+            ye_3 = ce_t + ye_2
+            xe_4 = xe_1
+            ye_4 = ye_1 + ce_r
+            xe_points = [xe_1, xe_2, xe_3, xe_4, xe_1]
+            ye_points = [ye_1, ye_2, ye_3, ye_4, ye_1]
             plt.plot(x_points, y_points,label="Forward Wing")
-            plt.plot(xa_points,ya_points,label="Aileron")
+            plt.plot(xa_points,ya_points,"g", label="Aileron")
+            plt.plot(xe_points,ye_points, "r", label="Elevator")
             plt.legend()
             plt.show()
         else:
-            ba = (b2 - b1) / 100 * self.bfwd / 2 * 2
-            ca = Sa_S * self.Sfwd / ba
+            ce = Se_S * self.Sfwd / (be_b * self.bfwd / 100)
             # print("c_a = ",ca)
-            ca_r = ca * 2 / (1 + self.taper_a)
+            ce_r = ce * 2 / (1 + 0.45)
+            # print("ce_r = %.3f"%(ce_r))
             # print("ca_root = ",ca_r)
-            ca_t = ca_r * self.taper_a
+            ce_t = ce_r * 0.45
+            # print("ce_t = %.3f" % (ce_t))
+            ca_t = ce_t
+            ca_r = ce_r*(1-2*(1-0.45)*(b1*self.bfwd/2/100-0.5)/(be_b*self.bfwd/100))
+            # print("be = %.5f"%(be_b*self.bfwd/100))
+            # print("ca_r = %.5f"%(ca_r))
+
+            ba = (b2 - b1) / 100 * self.bfwd / 2*2
+            Sa_S_geo = ba*(ca_t+ca_r)/2/self.Sfwd
+            # print("c_a = ",ca)
+            # print("ca_root = ",ca_r)
             da_max = -30 * np.pi / 180
             dphi_dt_1 = 10*0.3048/max(self.brear,self.bfwd)*2
             dphi_dt = 60 * np.pi / 180 / 1.3
@@ -169,8 +205,11 @@ class Control_surface:
             plt.clabel(minimum,fmt="Roll requirement")
             cbar = plt.colorbar(cp, orientation="horizontal")
             cbar.set_label(r"$p$ [$rad/s$]")
+            plt.plot(b1, Sa_S_geo, label="Constraint from elevator")
             plt.ylabel(r"$S_a/S_{i}$ [-]", fontsize=12)
             plt.xlabel(r"$b_1$ [$\% b_{i}/2$]", fontsize=12)
+            plt.ylim(min(Sa_S), max(Sa_S))
+            plt.legend()
             # plt.vlines(b1,min(Sa_S),max(Sa_S),"r",label=r"Smallest limit set by $b_1$")
             plt.show()
         return ca_t, ca_r, b1, b2
