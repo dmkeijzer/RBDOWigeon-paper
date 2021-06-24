@@ -17,18 +17,18 @@ from scipy.interpolate import interp1d
 import numpy as np
 root_path = os.path.join(os.getcwd(), os.pardir)
 
-datafile = open(os.path.join(root_path, "data/inputs_config_1.json"), "r")
-data = json.load(datafile)
-datafile.close()
-FP = data["Flight performance"]
-STR = data["Structures"]
+# datafile = open(os.path.join(root_path, "data/inputs_config_1.json"), "r")
+# data = json.load(datafile)
+# datafile.close()
+# FP = data["Flight performance"]
+# STR = data["Structures"]
 #AR = 3.75
 AR1 = 6.8
 AR2=  6.8
 
 W = 3024.8 #STR["MTOW"] #[N]
 Vcruise = 72.18#FP["V_cruise"] #[m/s]
-Wing_loading = FP["WS"]
+Vstall = 40
 
 #Cruise conditions
 h = 1000 # cruise height[m]
@@ -41,6 +41,9 @@ print("Mach",M)
 #Wing planform
 S_ref = 19.8213 #W/Wing_loading #[m**2] PLACEHOLDER
 
+
+CLmax = 1.5856096132929682
+Wing_loading =  0.5 * rho * Vstall * Vstall * CLmax
 
 # For double wing
 s1=0.5
@@ -65,8 +68,8 @@ w_max = 1.38
 h_max = 1.70
 d_eq = np.sqrt(h_max*w_max)
 #Winglets
-h_wl1 =0.5
-h_wl2 = 0.5
+h_wl1 = 0.5 #0.5
+h_wl2 = 0.5 #0.5
 k_wl = 2.0
 #7 9 0.45454545454545453 0 0.5454545454545454 0 0.1961932635918894 18.379085418840855 7.0 1.4 1.38 0.5 0.5 2.0 0
 Wing_params =  wing_design(AR1, AR2, s1,sweepc41,s2,sweepc42,M,S_ref, l_h,h_d,w_max,h_wl1,h_wl2, k_wl, i1)
@@ -129,8 +132,8 @@ ax[1].plot(CL_lst, CD)
 ax[1].set_xlabel('$C_L [-]$', fontsize = 16)
 ax[1].set_ylabel("$C_D [-]$", fontsize = 16)
 plt.show()
-"""
-fig1, ax1 = plt.subplots()
+
+#fig1, ax1 = plt.subplots()
 
 drag_comp = (100/Drag.CD(0.496))*np.array([Drag.CD0_f*1.05, Drag.CD0_v*1.05, Drag.CD_upsweep(), float(Drag.Cd_w(0.496)),Drag.CDi(0.496) ])
 labels = '$C_{D_{0, fus}}$' , '$C_{D_{0,Tail, Wingtips}}$', '$C_{D_u}$' ,'$C_{d_w}$', '$C_{D_i}$'
@@ -142,6 +145,7 @@ plt.show()
 
 print("Components",drag_comp)
 print("K", Drag.Drag_polar())
+"""
 Swet_f = Drag.Swet_f()
 
 Rey = Re(rho, Vcruise,MAC, mu)
@@ -184,26 +188,26 @@ D = 0.965 #m
 T = 153.5 #N
 ne1 = 6
 ne2 = 6
-"""
+
 #152.34774175721694 46.21428413797744 1.111617926993772 0.8934300657546558 6 6 0.17 0.17230950765784175 0.004628973850025598 1.8425440913304136 1 0.2723339479180486
 alpha_wp = np.arange(-5,18,0.25)
 Cl_alpha_curve2 = Wing_params.CLa(tc, CDs, CDs_f, Afus, alpha_wp, deda)
-CLwp = Wing_params.CLa_wprop(T, Vcruise,rho,D,ne1,ne2,tc,CDs_w, CDs_f, Afus, alpha_wp, 0.25)
+CLwp = Wing_params.CLa_wprop(T, Vcruise,rho,D,ne1,ne2,tc,CDs_w, CDs_f, Afus, alpha_wp, deda)
 #CLwp = Wing_params.CLa_wprop(200.34774175721694 ,46.21428413797744 ,1.111617926993772, 0.8934300657546558, 6, 6 ,0.17, 0.17230950765784175, 0.004628973850025598, 1.8425440913304136, alpha_wp ,deda)
-print("C_T", Wing_params.C_T(ne1,ne2,T, Vcruise, rho))
-print("deltaV", Wing_params.deltaV(T, Vcruise, rho, D, ne1, ne2))
-print("CLmax", CLwp[1], CLwp[4:6])
-print("CLalphanoprop", Wing_params.liftslope(deda)[0], Wing_params.liftslope(deda)[1], Wing_params.liftslope(deda)[4])
-print("CLalpha", s1*CLwp[2]+ s2*CLwp[3], CLwp[2:4])
-print("Deff", Wing_params.Deff(T,Vcruise, rho, D, ne1, ne2))
-plt.plot(alpha_wp, CLwp[6])
-plt.plot(alpha_wp, Cl_alpha_curve2[1])
-plt.show()
+# print("C_T", Wing_params.C_T(ne1,ne2,T, Vcruise, rho))
+# print("deltaV", Wing_params.deltaV(T, Vcruise, rho, D, ne1, ne2))
+# print("CLmax", CLwp[1], CLwp[4:6])
+# print("CLalphanoprop", Wing_params.liftslope(deda)[0], Wing_params.liftslope(deda)[1], Wing_params.liftslope(deda)[4])
+# print("CLalpha", s1*CLwp[2]+ s2*CLwp[3], CLwp[2:4])
+# print("Deff", Wing_params.Deff(T,Vcruise, rho, D, ne1, ne2))
+# plt.plot(alpha_wp, CLwp[6])
+# plt.plot(alpha_wp, Cl_alpha_curve2[1])
+# plt.show()
 
-plt.plot(alpha_wp, CLwp[7])
-plt.plot(alpha_wp, Cl_alpha_curve2[2])
-plt.show()
-"""
+# plt.plot(alpha_wp, CLwp[7])
+# plt.plot(alpha_wp, Cl_alpha_curve2[2])
+# plt.show()
+
 
 
 """

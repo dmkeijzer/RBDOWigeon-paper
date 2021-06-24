@@ -131,9 +131,10 @@ class VT_sizing:
         yE2 = yE1- r-0.3-r
         yE3 = yE2-r-0.3-r
         y = [yE1,yE2,yE3]
-        for i in range(nf):
+        for i in range(min(nf, 2)): # TODO: Ask stability and control about this
+            print('testing:', i, y)
             yE =y[i]
-            N_E += Tt0/nE*yE# Asymmetric yaw moment [Nm]
+            N_E += Tt0/nE*yE    # Asymmetric yaw moment [Nm]
         N_E *=2
         N_D = 0.25*N_E # component due to drag [Nm]
         N_total = N_E + N_D

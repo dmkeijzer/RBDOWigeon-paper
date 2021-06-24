@@ -7,6 +7,7 @@ import rainflow
 import numpy as np
 import pandas as pd
 
+
 class Engines:
     def __init__(self, ThrustHover, ThrustCruise, positions: list[float, int], weight):
         self.n, self.Thover, self.Tcruise = len(positions), ThrustHover, ThrustCruise
@@ -126,11 +127,12 @@ class WingLoads:
         return ([coord[l], arr[l]], [coord[h], arr[h]])
 
 class Fatigue:
-    def __init__(self, Sground, Stakeoff, Scruise, airTime, turnOver, takeOffTime, mat):
+    def __init__(self, Sground, Stakeoff, Scruise, airTime, turnOver, takeOffTime, mat, Lug):
         self.Sg, self.Sto, self.Scr, self.tAir, self.tTO = Sground, Stakeoff, Scruise, airTime, takeOffTime
         self.tot = turnOver
         self.cyc, self.df, self.ts = [None]*3
         self.mat = mat
+        self.a, self.c, self.d = Lug
 
     def determineCycle(self):
         self.ts = np.linspace(0, self.tAir + self.tot, 1000)
@@ -165,10 +167,14 @@ class Fatigue:
     def CrackGrowth(self, a0, w, Nflights):
         length = a0
         step = 1000
+        Kt = Fatigue.KtLug(self.a, self.c, self.d)
         for j in range(0, Nflights, step):
             da = min(step, Nflights - j) * self.mat.ParisFatigueda(length, w,
-                                self.df['Smax'].values, self.df['Smin'].values, self.df['count'].values).sum()
+                                self.df['Smax'].values * Kt, self.df['Smin'].values * Kt,
+                                                                   self.df['count'].values).sum()
             if length >= w / 2:
                 break
             length += da
         return length, j
+    
+    KtLug = staticmethod(lambda a, c, d: 3.8 * (c / a) ** 0.2 * (c / d) ** 0.5)

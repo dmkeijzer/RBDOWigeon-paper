@@ -253,15 +253,15 @@ class RunDSE:
         l_tc = xr - xmac_to_xle(const.sweepc41, AR_wing1, taper, b1, const.dihedral1)[0] + \
                (2 * b2 / (AR_wing2 * (1 + taper))) - (const.l_nosecone + const.l_cylinder)
 
-        print(xr)
-        print(xmac_to_xle(const.sweepc41, AR_wing1, taper, b1, const.dihedral1)[0])
-        print(2 * b2 / (AR_wing2 * (1 + taper)))
+        # print(xr)
+        # print(xmac_to_xle(const.sweepc41, AR_wing1, taper, b1, const.dihedral1)[0])
+        # print(2 * b2 / (AR_wing2 * (1 + taper)))
 
-        print('tailcone', l_tc)
-        #print('Tailcone:', l_tc)
+        # print('tailcone', l_tc)
+        # print('Tailcone:', l_tc)
         l_fus = l_tc + const.l_nosecone + const.l_cylinder
 
-        print(l_fus)
+        # print(l_fus)
 
         # ------ Drag ------
         Afus = np.pi * np.sqrt(w_fus * h_fus)**2 / 4
@@ -275,8 +275,8 @@ class RunDSE:
                                        wing_distance_ver, const.IF_f, const.IF_w, const.IF_v, airfoil_stats[2],
                                        const.Abase, Sv, s1, s2, h_wt_1, h_wt_2, const.k_wl)
 
-        CDs = drag.CD(CLmax)
-        CDs_f = drag.CD0_f
+        CDs = float(drag.CD(CLmax))
+        CDs_f = float(drag.CD0_f)
         CDs_w = CDs - CDs_f
 
         # CL_max
@@ -286,7 +286,7 @@ class RunDSE:
         error = 1
         while error > 0.05:
 
-            D_stall = drag.CD(CLmax) * 0.5 * rho * V_stall**2 * S_tot
+            D_stall = float(drag.CD(CLmax)) * 0.5 * rho * V_stall**2 * S_tot
             #print(CLmax)
             T_per_eng_during_stall = np.minimum(D_stall/n_prop, max_thrust_stall/n_prop)
             # print("Stall thrust: ", T_per_eng_during_stall)
@@ -298,8 +298,8 @@ class RunDSE:
             CLmax = CLmaxnew
 
         CLmax = np.minimum(CLmax, 3)
-        CD0 = drag.CD0()
-        CD_cr = drag.CD(C_L=C_L_cr)
+        CD0 = float(drag.CD0())
+        CD_cr = float(drag.CD(C_L=C_L_cr))
 
         # ----------------- Vertical drag -------------------
 
@@ -318,7 +318,7 @@ class RunDSE:
 
         # ----------------------- Performance ------------------------
 
-        print('stall speed things:', h_cr, MTOM, CLmax, S_tot, V_stall)
+        # print('stall speed things:', h_cr, MTOM, CLmax, S_tot, V_stall)
         V = at.speeds(h_cr, MTOM, CLmax, S_tot, drag)
 
         # Cruise speed
@@ -326,7 +326,7 @@ class RunDSE:
 
         # Update the stall speed
         V_stall = V.stall()
-        print('stall speed', V_stall)
+        # print('stall speed', V_stall)
 
         # Cruise CL of the wings
         L_cr = MTOM * g0
@@ -352,7 +352,7 @@ class RunDSE:
         max_thrust_stall = mission.max_thrust(rho, V_stall)
 
         # Get approximate overall efficiency
-        energy, t_tot, max_power, max_thrust, t_hor = mission.total_energy()
+        energy, t_tot, max_power, max_thrust, t_hor = mission.total_energy(simplified = True)
 
         # Overall efficiency from battery to engine
         eff_overall = const.eff_bat_eng_cr * (t_hor/t_tot) + const.eff_bat_eng_h * (1-(t_hor/t_tot))
@@ -440,7 +440,9 @@ class RunDSE:
         cg_wf = [xf + 0.25*MAC1, zf]
         cg_wr = [xr + 0.25*MAC2, zr]
         [x_front, x_aft], _, [_, z_top] = cg_calc.calc_cg_range(cg_wf, cg_wr)
-
+        x_front = float(x_front)
+        x_aft = float(x_aft)
+        z_top = float(z_top)
         print('cg', x_front, x_aft)
 
         # x_cg limit
@@ -494,12 +496,12 @@ class RunDSE:
         # New span of wing 1
         b1 = np.sqrt(AR_wing1 * S1)
         b2 = np.sqrt(AR_wing2 * S2)
-
+        # print('testing', b1, xr-xf, zr - zf, CLafwd, CL_cr_1, P_cr)
         # lambda_c4f, bf, lh, h_ht, A, CLaf, rho, Pbr, Sf, CLf, W
         de_da = deps_da_empirical(const.sweepc41, b1, xr - xf, zr - zf, AR_wing1, CLafwd, rho, P_cr / n_prop, S1,
                                   CL_cr_1, MTOM * g0)
 
-        print("Downwash:", de_da)
+        # print("Downwash:", de_da)
 
         """
         :param h_ht: Distance between wings normal to their chord planes 

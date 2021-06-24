@@ -19,7 +19,6 @@ m_pax = 88                              # Max per pax
 m_cargo_per_pax = 7                     # [kg] Cargo mass per pax
 m_cargo_tot = m_cargo_per_pax*n_pax     # [kg] Total cargo mass
 
-
 # Fuselage
 w_fuselage = 1.38           # [m]
 h_fuselage = 1.7            # [m]
@@ -28,7 +27,6 @@ l_cylinder = 2.5            # [m]
 #l_tailcone = 2.7            # [m]
 #l_fus = l_nosecone + l_cylinder + l_tailcone
 upsweep = 8.43*np.pi/180    # [Degrees]
-
 
 # Aerodynamics
 # s1 = 0.5                    # Fraction of total wing area for the 1st wing [-]

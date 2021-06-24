@@ -4,7 +4,7 @@ import redundancy_battery_config as con
 # Characteristics from the plane
 V_motor = 500  # V
 E_tot = 301.1111  # kWh
-per_mot = 0.97
+per_mot = 0.99
 
 # Cell characteristics
 V_cell = 3.4  # V
@@ -45,4 +45,3 @@ per_increase = red.increase()[1]
 print("    -", abs_increase, "cells more than needed for energy")
 print("    -", per_increase, "% increase in cells")
 
-print(E_cell)
