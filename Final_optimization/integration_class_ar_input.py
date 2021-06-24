@@ -370,13 +370,12 @@ class RunDSE:
         # Engine sizing
 
         # Maximum power [W] and thrust [N] of the engines (total)
-        time, P_max_eng_mission, T_max_tot = mission.total_energy()[1:4]
+        #time, P_max_eng_mission, T_max_tot = mission.total_energy(simplified = True)[1:4]
 
         # Maximum TW needed for controllability
         P_max_control = mission.thrust_to_power(const.TW_ratio_control * MTOM * const.g, 0, rho)[1]
 
-
-        P_max_eng_tot = max(P_max_eng_mission, P_max_control)
+        P_max_eng_tot = max(max_power, P_max_control)
 
         P_max_eng_ind = P_max_eng_tot/n_prop                    # Maximum power [W] of the engines (per engine)
         P_max_bat = P_max_eng_tot/const.eff_bat_eng_h           # Maximum power [W] to be delivered by the battery
@@ -596,7 +595,7 @@ class RunDSE:
                                                                                      m_bat, contingency = False)
 
         # Outputs for optimisation cost function
-        optim_outputs = [MTOM, energy, time, CM_a, cg_fwd_lim - x_front, MTOM_nc]
+        optim_outputs = [MTOM, energy, t_tot, CM_a, cg_fwd_lim - x_front, MTOM_nc]
 
         print("cg's ", x_CG_MTOM, x_CG_MTOM_nc)
 

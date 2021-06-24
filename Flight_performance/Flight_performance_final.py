@@ -88,6 +88,9 @@ class mission:
 
             return np.array(Tlst)
         else:
+
+            optimize.newton(thrust_to_power_max, x0=20000, args=(V, rho), maxiter=100000)
+
             return optimize.newton(thrust_to_power_max, x0=20000, args=(V, rho), maxiter=100000)
 
     def aero_coefficients(self, angle_of_attack):
@@ -157,7 +160,7 @@ class mission:
         return ax_tgt, ay_tgt
 
     def numerical_simulation(self, vx_start, y_start, th_start, y_tgt, vx_tgt):
-
+        print('this is still running')
         # Initialization
         vx = float(vx_start)
         vy = 0.
@@ -381,7 +384,7 @@ class mission:
 
     def total_energy(self, simplified = False):
 
-        P_cruise, D_cruise = self.power_cruise_config(self.h_cruise, self.v_cruise, self.m)
+        #P_cruise, D_cruise = self.power_cruise_config(self.h_cruise, self.v_cruise, self.m)
 
         # Distance spent in cruise
         d_cruise = self.mission_dist  # - d_desc - d_climb
@@ -418,6 +421,7 @@ class mission:
             P_m_la = 1
 
         else:
+            print('wrong if statement')
             # Get the energy and distance needed to reach cruise
             d_climb, E_climb, t_climb, P_m_to, T_m_to = self.numerical_simulation(vx_start=0.001, y_start=0,
                                                                                   th_start=np.pi / 2, y_tgt=self.h_cruise,
