@@ -403,8 +403,8 @@ class RunDSE:
         EOL_C = const.EOL_C
 
         # sp_en_den, vol_en_den, tot_energy, cost, DoD, P_den, P_max, safety, EOL_C
-        print("Before battery")
-        print("P_max_bat:", P_max_bat)
+        # print("Before battery")
+        # print("P_max_bat:", P_max_bat)
         battery = batt.Battery(sp_en_den, vol_en_den, energy, batt_cost, DoD, P_den, P_max_bat, safety_factor, EOL_C)
 
         m_bat = battery.mass()
