@@ -2,7 +2,8 @@
 import sys
 import numpy as np
 
-sys.path.append('../Final_optimization/')
+sys.path.append('Final_optimization/')
+# import constants_final as const
 import constants_final as const
 
 class Wing:
@@ -76,8 +77,8 @@ class Weight:
         # masses
         self.oem = (self.wmass + self.pmass + self.lmass + self.fmass + self.bmass)
 
-        print("Check inside function:", self.wmass, self.pmass, self.lmass, self.fmass, self.cmass, self.bmass, self.tot_m_pax)
-        print("")
+#         print("Check inside function:", self.wmass, self.pmass, self.lmass, self.fmass, self.cmass, self.bmass, self.tot_m_pax)
+#         print("")
 
         if contingency:
             self.mtom = (self.wmass*const.mass_cont + self.pmass*const.mass_cont + self.lmass*const.mass_cont +
@@ -123,7 +124,7 @@ class Weight:
         fus_mmi_z = fus_mmi_y
         fus_mmi_x = self.fmass * ((self.fuselage.wf/2)**2 + irad**2)/2
 
-        #front wing - modeled as a prism span, average thickness and width at mac
+        # front wing - modeled as a prism span, average thickness and width at mac
         vpos = vpos_wing
         t1 = wmac[0] * toc[0]
         span1 = np.sqrt(self.wing.A_1 * self.wing.S1)
@@ -132,12 +133,16 @@ class Weight:
                                              * (span1 ** 2 + wmac[0] ** 2) / 12, \
                                              self.wing.mass[0] * (wmac[0] ** 2 + t1 ** 2) / 12
 
-        # wing - modeled as a prism with span, average thickness and width at mac
+        # back wing - modeled as a prism with span, average thickness and width at mac
         t2 = wmac[1] * toc[1]
         span2 = np.sqrt(self.wing.A_2 * self.wing.S2)
 
         wing2_mmi_x, wing2_mmi_y, wing2_mmi_z = self.wing.mass[1]*(span2**2 + t2**2)/12, self.wing.mass[1]*(span2**2 + wmac[1]**2)/12, \
                                              self.wing.mass[1] * (wmac[1] ** 2 + t2 ** 2) / 12
+
+        # passengers - modeled as a prism 2.2 x 1.1 x 1 m (length x width x height)
+        pld_mmi_x, pld_mmi_y, pld_mmi_z = self.tot_m_pax * (1.1**2 + 1**2)/12, self.tot_m_pax*(1.1**2 + 2.2**2)/12, self.tot_m_pax*(2.2**2 + 1**2)
+
 
         # propulsion - modeled as a solid cylinder
         m_prop = self.pmass/self.prop.nprop
@@ -149,20 +154,24 @@ class Weight:
         bat_mmi_x, bat_mmi_y, bat_mmi_z = self.bmass*(wbat**2 + tbat**2)/12, self.bmass*(wbat**2 + lbat**2)/12, self.bmass*(tbat**2 + lbat**2)/12
         span = span2
         oem_mmi_x = fus_mmi_x + (
-                    wing1_mmi_x + self.wing.mass[0] * ((1.705/2) - vpos[0])**2) + (wing2_mmi_x + self.wing.mass[1] * (vpos[1] - (1.705 /2))**2) + \
-                    self.prop.nprop/4 * np.sum(m_prop * (np.sqrt((1.705/2)**2 +  (np.linspace(0.9, span1/2, int(self.prop.nprop/4))) ** 2 ))** 2) + \
-                                         self.prop.nprop * prop_mmi_x + bat_mmi_x + self.bmass * (1.705/2) ** 2
+                    wing1_mmi_x + self.wing.mass[0] * (0.7 - vpos[0])**2) + (wing2_mmi_x + self.wing.mass[1] * (vpos[1] - 0.7)**2) + \
+                    4 * np.sum(m_prop * (np.sqrt((0.7)**2 +  (np.linspace(0.9, span1/2, int(self.prop.nprop/4))) ** 2 ))** 2) + \
+                                         self.prop.nprop * prop_mmi_x + bat_mmi_x + pld_mmi_x
 
-        oem_mmi_y = fus_mmi_y + (wing1_mmi_y + self.wing.mass[0]*(self.oem_cg - self.wing.pos1)**2) + (wing2_mmi_y + self.wing.mass[1]*(self.wing.pos2 - self.oem_cg)**2)+\
-                    self.prop.nprop/4 * np.sum(m_prop * (np.sqrt((self.wing.pos2/2)**2 + (np.linspace(0.9, span/2, int(self.prop.nprop/4))) ** 2))**2) +\
-                                                         self.prop.nprop * prop_mmi_y + bat_mmi_y + self.bmass * (self.battery_pos - self.oem_cg)**2
+        oem_mmi_y = fus_mmi_y + (wing1_mmi_y + self.wing.mass[0]*(self.mtom_cg - self.wing.pos1)**2) + (wing2_mmi_y + self.wing.mass[1]*(self.wing.pos2 - self.mtom_cg)**2)+\
+                    4 * np.sum(m_prop * (np.sqrt((self.wing.pos2 - 0.7)**2 + (np.linspace(0.9, span/2, int(self.prop.nprop/4))) ** 2))**2) +\
+                                                         self.prop.nprop * prop_mmi_y + bat_mmi_y + self.bmass * (self.mtom_cg - self.battery_pos)**2 + pld_mmi_y + self.tot_m_pax*((lf/2 - 0.5) - self.mtom_cg)**2
 
         oem_mmi_z = fus_mmi_z + (wing1_mmi_z + self.wing.mass[0] * (
-            np.sqrt((1.705 / 2 - vpos[0]) ** 2 + (self.oem_cg - self.wing.pos1) ** 2)) ** 2) + (wing2_mmi_z + self.wing.mass[1] * (
-            np.sqrt((1.705 / 2 - vpos[1]) ** 2 + (self.wing.pos2 - self.oem_cg) ** 2)) ** 2) + bat_mmi_z + self.bmass * np.sqrt((1.705 / 2)**2 + (self.battery_pos - self.oem_cg)**2 ) ** 2 + (
-                                m_prop * ((np.sqrt((1.705 / 2) ** 2 + (self.wing.pos2/2) ** 2)) ** 2) + prop_mmi_z) * self.prop.nprop
-        oem_mmi_xy = (self.wing.mass[0] * (1.705 / 2 - vpos[0]) * (self.oem_cg - self.wing.pos1)) * 2 + self.prop.nprop * (m_prop * (1.705 / 2) * self.wing.pos1/2) + \
-                     (self.wing.mass[1] * (vpos[1] - 1.705 / 2) * (self.wing.pos2 - self.oem_cg)) + self.bmass * np.sqrt((1.705 / 2)**2 + (self.battery_pos - self.oem_cg)**2 ) ** 2
+            np.sqrt((0.7 - vpos[0]) ** 2 + (self.mtom_cg - self.wing.pos1) ** 2)) ** 2) + (wing2_mmi_z + self.wing.mass[1] * (
+            np.sqrt((vpos[1] - 0.7) ** 2 + (self.wing.pos2 - self.mtom_cg) ** 2)) ** 2) + bat_mmi_z + self.bmass * (self.mtom_cg - self.battery_pos)**2 + (
+                                m_prop * ((np.sqrt((0.7 - vpos[0]) ** 2 + (self.mtom_cg - self.wing.pos1) ** 2)) ** 2) + prop_mmi_z) * self.prop.nprop/2 + \
+                    pld_mmi_z + self.tot_m_pax*((lf/2 - 0.5) - self.mtom_cg)**2 + \
+                    (m_prop * ((np.sqrt((vpos[1] - 0.7) ** 2 + (self.wing.pos2 - self.mtom_cg) ** 2)) ** 2) + prop_mmi_z) * self.prop.nprop/2
+
+
+        oem_mmi_xy = (self.wing.mass[0] * (0.7 - vpos[0]) * (self.mtom_cg - self.wing.pos1)) + self.prop.nprop * (m_prop * (0.7-vpos[0]) * (self.mtom_cg-self.wing.pos1))/2 + \
+                     (self.wing.mass[1] * (vpos[1] - 0.7) * (self.wing.pos2 - self.mtom_cg)) +self.prop.nprop * (m_prop * (vpos[0]-0.7) * (self.wing.pos2-self.mtom_cg))/2
         return oem_mmi_x, oem_mmi_z, oem_mmi_y, oem_mmi_xy
 
 if __name__ == '__main__':

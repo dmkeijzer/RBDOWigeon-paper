@@ -11,7 +11,7 @@ ADKINS AND LIEBECK, based on Larrabee.
 
 
 class BEM:
-    def __init__(self, B, R, rpm, xi_0, rho, dyn_vis, V_fr, N_stations, a, RN_spacing, T=None, P=None):
+    def __init__(self, B, R, rpm, xi_0, rho, dyn_vis, V_fr, N_stations, a, RN_spacing=100000, T=None, P=None):
         """
         :param B: Number of blades [-]
         :param R: Outer radius of propeller [m]
@@ -22,7 +22,7 @@ class BEM:
         :param V_fr: Freestream velocity
         :param T: Thrust delivered BY the propeller [N]
         :param P: Power delivered TO the propeller [W]
-        :param N_stations: Number of stations to calculate [-]
+        :param N_stations: Number of stations to calculate [-] (preferably > 20)
         :param a: Speed of sound [m/s]
         :param RN_spacing: Spacing of the Reynold's numbers of the airfoil data files [-] (added for flexibility,
                            but probably should be 100,000)
@@ -78,7 +78,8 @@ class BEM:
 
     # Mach as a function of radius
     def M(self, r):
-        return self.Omega*r/self.a
+        speed = np.sqrt(self.V**2 + (self.Omega*r)**2)
+        return speed/self.a
 
     # Reynolds number
     def RN(self, Wc):
@@ -397,6 +398,116 @@ class BEM:
         # Calculate product of local speed with chord
         Wc = self.Wc(F, phis, zeta, Cl)
 
+        # After smoothing the Cl, get new AoA and E corresponding to such Cls
+        for station in range(len(Cl)):
+            # lift_coef = lift_coef * self.PG(self.M(stations_r[station]))
+
+            lift_coef = Cl[station]
+
+            # # Calculate product of local speed with chord
+            # Wc = self.Wc(F[station], phis[station], zeta, lift_coef)
+
+            # Calculate Reynolds number at the station to look for the correct airfoil datafile
+            Reyn = self.RN(Wc[station])
+
+            # Round Reynolds number to 100,000 to retrieve appropriate file from airfoil data folder
+            RN = self.RN_spacing * round(Reyn / self.RN_spacing)
+
+            # Maximum and minimum RN in database
+            if RN < 100000:
+                RN = 100000
+            if RN > 5000000:
+                RN = 5000000
+
+            # Look for corresponding airfoil data file for that RN
+            filename1 = "4412_Re%d_up.txt" % RN
+            filename2 = "4412_Re%d_dwn.txt" % RN
+
+            file_up = open('../PropandPower/Airfoil_Data/' + filename1, "r")
+            file_down = open('../PropandPower/Airfoil_Data/' + filename2, "r")
+
+            # Read lines
+            lines_up = file_up.readlines()
+            lines_down = file_up.readlines()
+
+            # Close files
+            file_up.close()
+            file_down.close()
+
+            # List and Boolean to save relevant lines
+            format_lines = []
+            save_lines = False
+
+            for line in lines_up:
+                # Separate variables inside file
+                a = line.split()
+
+                # If the save_lines boolean is True (when the code gets to numerical values), save to list
+                if save_lines:
+                    # Create a line with floats (instead of strings) to append to main list
+                    new_line = []
+                    for value in a:
+                        new_line.append(float(value))
+                    format_lines.append(new_line)
+
+                # Protect against empty lines
+                if len(a) > 0:
+                    # There is a line with ---- before the numbers, so once we get to this line, start saving
+                    if a[0].count('-') >= 1:
+                        save_lines = True
+
+            # Restart boolean for down file
+            save_lines = False
+
+            # Do the same process for down file and append to the same array as up
+            for line in lines_down:
+                a = line.split()
+
+                if save_lines:
+                    new_line = []
+                    for value in a:
+                        new_line.append(float(value))
+                    format_lines.append(new_line)
+
+                if len(a) > 0:
+                    if a[0].count('-') >= 1:
+                        save_lines = True
+
+            # Convert to numpy array with airfoil data
+            airfoil_data = np.array(format_lines)
+
+            # Format of each line:
+            # alpha, CL, CD, Re(CL), CM, S_xtr, P_xtr, CDp
+
+            # Order airfoil data by angle of attack, this can be eliminated to save time if needed
+            airfoil_data = airfoil_data[airfoil_data[:, 0].argsort()]
+
+            # Get index of line where Cl is the closest to the used value
+
+            # Save airfoil data array to have a copy to modify
+            airfoil_data_check = airfoil_data
+
+            # Subtract current Cl from list of Cls
+            # 'Uncorrect' Cl for Mach, since the files do not take Mach into account, only RN
+            # TODO: revise Mach corrections, maybe use W
+            airfoil_data_check[:, 1] -= (lift_coef * self.PG(self.M(stations_r[station])))
+
+            # Check what line has min Cl difference, and retrieve index of that column
+            index = np.argmin(np.abs(airfoil_data_check[:, 1]))
+
+            # Obtain the Cd and AoA from the line where Cl difference is min
+            # Correct the Cd obtained for Mach number
+            Cd_ret = airfoil_data[index, 2] / self.PG(self.M(stations_r[station]))  # Retrieved Cd
+            alpha_ret = np.deg2rad(airfoil_data[index, 0])  # Retrieved AoA (from deg to rad)
+
+            # Compute D/L ration
+            eps = Cd_ret / lift_coef
+
+            # Update arrays with values
+            Cd[station] = Cd_ret
+            alpha[station] = alpha_ret
+            E[station] = eps
+
         # Calculate interference factors
         a = (zeta/2) * (np.cos(phis))**2 * (1 - E*np.tan(phis))
         a_prime = (zeta/(2*self.x(stations_r))) * np.cos(phis) * np.sin(phis) * \
@@ -413,9 +524,6 @@ class BEM:
         beta = alpha + phis
         betas = beta
 
-        # # Exist speed per station TODO: revise
-        # # Ves[station] = self.V*(1 + 2*a)
-        # Ves[station] = self.V * (1 + zeta*np.cos(phis[station]))
 
         # # Possibly implement a function for eps as a function of r/R (xi)
         # eps_fun = spinplt.interp1d(E, stations_r/self.R, fill_value="extrapolate")
@@ -1024,8 +1132,8 @@ class OffDesignAnalysisBEM:
         C_P = spint.trapz(C_P_prim, self.r_stations)
 
         # print("C_P", C_P)
-        # print("P", C_P * self.rho * self.n**3 * self.D**5)
-
+        # print("P", 0.001 * C_P * self.rho * self.n**3 * self.D**5, "kW")
+        # print("")
         # Efficiency
         # eff = self.eff(C_T_2, C_P)
         eff = self.eff(C_T, C_P)
@@ -1036,7 +1144,7 @@ class OffDesignAnalysisBEM:
         # print("T:", C_T*self.rho*self.n**2*self.D**4)
         # print(a_facs)
         # print(a_prims)
-        return T, Q, eff
+        return [T, Q, eff], [C_T, C_P], [alphas, Cls, Cds]
 
 
 class Optiblade:

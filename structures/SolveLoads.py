@@ -7,6 +7,7 @@ import rainflow
 import numpy as np
 import pandas as pd
 
+
 class Engines:
     def __init__(self, ThrustHover, ThrustCruise, positions: list[float, int], weight):
         self.n, self.Thover, self.Tcruise = len(positions), ThrustHover, ThrustCruise
@@ -49,7 +50,7 @@ class WingLoads:
                                  ukloads=[PointLoad([1, 0, 0], [0, 0, 0]), PointLoad([0, 1, 0], [0, 0, 0]),
                                           PointLoad([0, 0, 1], [0, 0, 0]), Moment([1, 0, 0]),
                                           Moment([0, 1, 0]), Moment([0, 0, 1])])
-
+#         print(Lift.force()*4, Drag.force(), 3024.8012022968796*9.81)
         eqn.SetupEquation()
         self.RFx, self.RFy, self.RFz, self.RMx, self.RMy, self.RMz = solved = eqn.SolveEquation()
         return solved
@@ -69,7 +70,7 @@ class WingLoads:
             self.equilibriumCruise(dragDistr, liftDistr, macDistr, wingWeight)
 
         lin = LinearRegression()
-        poly = PolynomialFeatures(degree=20)
+        poly = PolynomialFeatures(degree=len(liftDistr))
         X = poly.fit_transform(dragDistr[0].reshape(-1, 1))
         lin.fit(X, np.array([dragDistr[1], liftDistr[1], macDistr[1]]).T)
         dragcoef, liftcoef, momcoef = lin.coef_
@@ -126,19 +127,20 @@ class WingLoads:
         return ([coord[l], arr[l]], [coord[h], arr[h]])
 
 class Fatigue:
-    def __init__(self, Sground, Stakeoff, Scruise, airTime, turnOver, takeOffTime, mat):
+    def __init__(self, Sground, Stakeoff, Scruise, airTime, turnOver, takeOffTime, mat, Lug):
         self.Sg, self.Sto, self.Scr, self.tAir, self.tTO = Sground, Stakeoff, Scruise, airTime, takeOffTime
         self.tot = turnOver
         self.cyc, self.df, self.ts = [None]*3
         self.mat = mat
+        self.a, self.c, self.d = Lug
 
     def determineCycle(self):
         self.ts = np.linspace(0, self.tAir + self.tot, 1000)
         gag, tg = [], self.tot / 2
         for t in self.ts:
-            acoustic = 0.2 * np.sum(np.sin(2*np.pi * t / np.arange(0.001/3600, 0.01/3600, 0.001/3600))) # noise in the given frequency range
-            turbulence = np.sum(np.sin(2*np.pi * t / np.arange(0.1/3600, 10/3600, 0.1/3600))) # same here
-            taxi = np.sum(np.sin(2*np.pi * t / np.arange(0.05/3600, 1/3600, 0.05/3600))) # and here, all frequencies taken from the textbook - Schijve Ch 9
+            acoustic = 0.05 * np.sum(np.sin(2*np.pi * t / np.arange(0.001/3600, 0.01/3600, 0.001/3600))) # noise in the given frequency range
+            turbulence = 0.1 * np.sum(np.sin(2*np.pi * t / np.arange(0.1/3600, 10/3600, 0.1/3600))) # same here
+            taxi = 0.1 * np.sum(np.sin(2*np.pi * t / np.arange(0.05/3600, 1/3600, 0.05/3600))) # and here, all frequencies taken from the textbook - Schijve Ch 9
             if t < tg or t > self.tAir + tg:
                 gag.append(self.Sg + (taxi if tg > t > 0.5 * tg or self.tAir + tg < t < self.tAir + 1.5 * tg else 0))
             elif tg + 0.5 <= t <= self.tAir + tg - 0.5:
@@ -153,6 +155,7 @@ class Fatigue:
                               columns='dS, Sm, count, ti, tf'.split(', '))
         df['Smax'] = df['Sm'] + df['dS'] / 2
         df['Smin'] = df['Sm'] - df['dS'] / 2
+        df = df[df['Smax'] != 0]
         self.df = df[df['count'] != 0]
         return self.df
     
@@ -163,9 +166,15 @@ class Fatigue:
     
     def CrackGrowth(self, a0, w, Nflights):
         length = a0
-        for j in range(Nflights):
-            for i in range(len(self.df)):
-                da = self.mat.ParisFatigueda(length, w,
-                                        self.df.iloc[i]['Smax'], self.df.iloc[i]['Smin'], self.df.iloc[i]['count'])
-                length += da
-        return length
+        step = 1000
+        Kt = Fatigue.KtLug(self.a, self.c, self.d)
+        for j in range(0, Nflights, step):
+            da = min(step, Nflights - j) * self.mat.ParisFatigueda(length, w,
+                                self.df['Smax'].values * Kt, self.df['Smin'].values * Kt,
+                                                                   self.df['count'].values).sum()
+            if length >= w / 2:
+                break
+            length += da
+        return length, j
+    
+    KtLug = staticmethod(lambda a, c, d: 3.8 * (c / a) ** 0.2 * (c / d) ** 0.5)

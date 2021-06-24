@@ -3,12 +3,12 @@ import redundancy_battery_config as con
 
 # Characteristics from the plane
 V_motor = 500  # V
-E_tot = 311121.1005976536  # kWh
-per_mot = 0.97
+E_tot = 301.1111  # kWh
+per_mot = 0.99
 
 # Cell characteristics
 V_cell = 3.4  # V
-C_cell = 250  # Ah
+C_cell = 5  # Ah
 E_cell = V_cell * C_cell  # Wh
 
 # inputs
@@ -33,7 +33,7 @@ N_par = red.N_par()
 print("Number of modules in parallel when using", N_ser, "cells in series:", N_par)
 
 N_par_new = red.N_par_new()
-print("Number of modules for ", n_mot * n_bat_mot, "batteries:", N_par_new)
+print("Number of modules for", n_mot * n_bat_mot, "batteries:", N_par_new)
 
 N_cells_mot_new = red.N_cells_mot_new()
 print("New number of cells required for the motors", N_cells_mot_new, "Which is:")
@@ -44,3 +44,4 @@ per_increase = red.increase()[1]
 
 print("    -", abs_increase, "cells more than needed for energy")
 print("    -", per_increase, "% increase in cells")
+
