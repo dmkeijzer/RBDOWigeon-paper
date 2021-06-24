@@ -5,6 +5,8 @@ import Final_optimization.constants_final as const
 
 from Preliminary_Lift.Drag import componentdrag
 
+
+
 # ========== Inputs ==========
 mass = 2800
 cruising_alt = 1000
@@ -27,16 +29,17 @@ print("Total time", t_tot/3600, 'hr')
 print("Max power", max_power/1e3, 'kW')
 
 # Other performance estimates
-performance = evtol_performance(cruising_alt, cruise_speed, wing_surface, CL_max, mass, E_tot,
+performance = evtol_performance(cruising_alt, cruise_speed, wing_surface, CL_max, mass, 880e6,
                                 EOM, 15*60, A_disk, P_max,
                                 Cl_alpha_curve, CD_a_w, CD_a_f, alpha_lst, Drag)
 
 # Performance things
+R,_ = performance.range(1000, 72, mass = mass, loiter=True)
+print('range', R)
 performance.power_polar(cruising_alt)
 V_climb = performance.climb_performance()
 performance.vertical_climb()
 performance.payload_range()
-performance.quickly_checking_something()
 
 # Optimal speeds
 V = speeds(cruising_alt, mass, CL_max, wing_surface, Drag)

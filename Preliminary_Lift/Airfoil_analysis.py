@@ -30,8 +30,7 @@ def airfoil_datapoint(type, Re, alpha):
         df = pd.read_csv("../Preliminary_Lift/Airfoil_data/NACA44017_Re2.500.csv")
     else:
         df = pd.read_csv("../Preliminary_Lift/Airfoil_data/NACA44017_Re4.500.csv")
-
-    return np.average(df[type][df["alpha"] == alpha])
+    return np.average(df[type][df["alpha"] == float(alpha)])
 
 
 def Cd(CL):
@@ -41,18 +40,10 @@ def Cd(CL):
     ## # print(Cl_vals)
     fcd = interp1d(Cl_vals, Cd_vals, kind='quadratic', fill_value="extrapolate")
 
-
-    #
-    # if CL > float(df["CL"][df["alpha"] == 18]):
-    #
-    #     return float(df["CD"][df["alpha"] == 18])
-    #
-    # else:
-    #print('test', fcd(CL), np.array(df["CD"])[np.array(df["alpha"]) == 18])
-
     CL = np.minimum(CL, np.array(df["CL"])[np.array(df["alpha"]) == 18])
     CD = fcd(CL)
-
+    if len(CD)==1:
+        CD = float(CD)
     return CD
 
 def Cm_ac(sweep, ARw):

@@ -128,7 +128,7 @@ class wing_design:
         deda = ls[3]
         CLmax1 = self.clmax *0.9
 
-        alpha_s2 = round(((self.a_saf-self.i1 -self.a_0L)*(1-deda) +self.a_0L)*4)/4
+        alpha_s2 = np.round(((self.a_saf-self.i1 -self.a_0L)*(1-deda) +self.a_0L)*4)/4
         CLmax2 = 0.9* airfoil_datapoint("CL", "Stall",alpha_s2)
         CLmax = self.s1*CLmax1 +self.s2*CLmax2
         self.a_s = (180/np.pi)* CLmax/CLa + self.a_0L
@@ -144,7 +144,7 @@ class wing_design:
         CDmax = (1 + 0.065*self.AR_i)/(0.9 + tc)
         B2 = (CDs_W - CDmax * np.sin(a_s))/np.cos(a_s)
 
-        alpha_ps = (np.pi/180)*np.arange(round(self.a_s[1])+1, 91, 1)
+        alpha_ps = (np.pi/180)*np.arange(np.round(self.a_s[1])+1, 91, 1)
         CL_ps = A1*np.sin(2*alpha_ps)+A2*((np.cos(alpha_ps)**2)/np.sin(alpha_ps))
         CD_ps = CDmax*np.sin(alpha_ps)+ B2 * np.cos(alpha_ps)
 
