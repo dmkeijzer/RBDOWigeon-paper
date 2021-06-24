@@ -87,7 +87,7 @@ def mass(MTOM, S1, S2, n_ult, AR_wing1, AR_wing2, pos_frontwing, pos_backwing, P
     lgear = wei.LandingGear(MTOM, pos_lgear)
 
     cg_gear = lgear.pos
-    print(m_prop)
+    # print(m_prop)
     props = wei.Propulsion(n_prop, m_prop, pos_prop)
     cg_props = props.pos_prop
     m_prop = props.mass
@@ -100,7 +100,7 @@ def mass(MTOM, S1, S2, n_ult, AR_wing1, AR_wing2, pos_frontwing, pos_backwing, P
                       battery_pos=const.cg_bat[0], p_pax=[1.75, 3.25, 3.25, 4.75, 4.75], contingency = contingency)
 
     # print('gear mass', lgear.mass, props.mass)
-    print('prop mass', n_prop_1*np.sum(m_prop)/n_prop, n_prop)
+    # print('prop mass', n_prop_1*np.sum(m_prop)/n_prop, n_prop)
     return Mass.mtom, m_wf + n_prop_1*np.sum(m_prop)/n_prop, m_wr + n_prop_2*np.sum(m_prop)/n_prop, m_fus, m_prop, \
            cg_fus, cg_gear, cg_props, \
            Mass.mtom_cg, lgear.mass
@@ -438,7 +438,7 @@ class RunDSE:
 
         # MTOM = MTOM*const.mass_cont
 
-        print(x_CG_MTOM)
+        # print(x_CG_MTOM)
         #x_CG_MTOM = 3.0#0.8*x_CG_MTOM
 
         # ----------------- Stability and control -------------------
@@ -469,7 +469,7 @@ class RunDSE:
         x_front = float(x_front)
         x_aft = float(x_aft)
         z_top = float(z_top)
-        print('cg', x_front, x_aft)
+        # print('cg', x_front, x_aft)
 
         # x_cg limit
 
@@ -502,7 +502,7 @@ class RunDSE:
         # # Leading edge position
         # xrangef_LE = [0, 2.1 - wing_plan_1[1]]
         # xranger_LE = [6, l_fus-wing_plan_2[1]]
-        print('rear wing bounds: ', [6, l_fus-wing_plan_2[1]])
+        # print('rear wing bounds: ', [6, l_fus-wing_plan_2[1]])
         #
         # # MAC position
         # xrangef = [0 + xmac_to_xle(const.sweepc41, AR_wing1, taper, b1, const.dihedral1)[0],
@@ -524,7 +524,7 @@ class RunDSE:
         b2 = np.sqrt(AR_wing2 * S2)
         # print('testing', b1, xr-xf, zr - zf, CLafwd, CL_cr_1, P_cr)
         # lambda_c4f, bf, lh, h_ht, A, CLaf, rho, Pbr, Sf, CLf, W
-        print("Before downwash")
+        # print("Before downwash")
         de_da = deps_da_empirical(const.sweepc41, b1, xr - xf, zr - zf, AR_wing1, CLafwd, rho, P_cr / n_prop, S1,
                                   CL_cr_1, MTOM * g0)
 
@@ -547,17 +547,17 @@ class RunDSE:
                                                                   phi=const.lat_lim, psi=const.turn_over,
                                                                   min_ng_load_frac=const.min_ng_load)
 
-        print('cg location', x_CG_MTOM)
+        # print('cg location', x_CG_MTOM)
 
-        print(Clafwd, Clarear, const.sweepc41, const.sweepc42, taper, taper, CL_cr_1, CL_cr_2, AR_wing1, AR_wing2,
-                   const.e_f, const.e_r, xf, xr, zf, zr, Zcg, const.Vr_Vf_2, Sr_Sf, x_CG_MTOM, S_tot, rho, P_cr/n_prop,
-                   MTOM*g0)
+        # print(Clafwd, Clarear, const.sweepc41, const.sweepc42, taper, taper, CL_cr_1, CL_cr_2, AR_wing1, AR_wing2,
+        #            const.e_f, const.e_r, xf, xr, zf, zr, Zcg, const.Vr_Vf_2, Sr_Sf, x_CG_MTOM, S_tot, rho, P_cr/n_prop,
+        #            MTOM*g0)
 
         max_coeffs = wing_design.CLa_wprop(T_per_eng_during_stall, V_stall, rho, prop_radius * 2, n_prop_1,
                                            n_prop_2, const.tc_wing, CDs_w, CDs_f, Afus, alpha_wp, de_da)
         CLmf, CLmr = max_coeffs[4], max_coeffs[5]
 
-        print('max coeffs', CLmf, CLmr)
+        # print('max coeffs', CLmf, CLmr)
 
         CM_a = Cma(Clafwd, Clarear, const.sweepc41, const.sweepc42, taper, taper, CL_cr_1, CL_cr_2, AR_wing1, AR_wing2,
                    const.e_f, const.e_r, xf, xr, zf, zr, Zcg, const.Vr_Vf_2, Sr_Sf, x_CG_MTOM, S_tot, rho, P_cr/n_prop,
@@ -580,14 +580,14 @@ class RunDSE:
 
 
 
-        print('max lift coeffs', CLmf, CLmr, max_coeffs[1], de_da)
+        # print('max lift coeffs', CLmf, CLmr, max_coeffs[1], de_da)
         #print(CLmf, CLmr, CD0fwd, CD0rear, find_mac(S1, b1, taper), find_mac(S2, b2, taper), xf, xr, zf, zr)
         cg_fwd_lim = xcg_ctrl(const.sweepc41, const.sweepc42, CLmf*const.elev_fac, CLmr, CD0fwd, CD0rear, AR_wing1,
                               AR_wing2, const.e_f, const.e_r, find_mac(S1, b1, taper), find_mac(S2, b2, taper), xf, xr,
                               zf, zr, Zcg, const.Vr_Vf_2, Sr_Sf)
 
         Sv = v_tail[0]
-        print('tail area', Sv)
+        # print('tail area', Sv)
 
         # Variables that are updated (the 0 is a placeholder, not used)
         internal_inputs = [MTOM, 0, V_cr, h_cr, C_L_cr, CLmax, prop_radius, de_da, Sv, V_stall, max_power, AR_wing1,
@@ -609,7 +609,7 @@ class RunDSE:
         # Outputs for optimisation cost function
         optim_outputs = [MTOM, energy, time, CM_a, cg_fwd_lim - x_front, MTOM_nc]
 
-        print("cg's ", x_CG_MTOM, x_CG_MTOM_nc)
+        # print("cg's ", x_CG_MTOM, x_CG_MTOM_nc)
 
         lines       = [["MAC1" ,find_mac(S1, b1, taper)],  # Mean Aerodynamic Chord [m]
                        ["MAC2" , find_mac(S2, b2, taper)],
@@ -688,28 +688,28 @@ class RunDSE:
 
         E_tot_nc, t_tot_nc, P_max_nc, T_max_nc, t_hov_nc = mission_nc.total_energy(simplified=True)
 
-        print(E_tot_nc, t_tot_nc, P_max_nc, T_max_nc, t_hov_nc, T_cr_nc, P_cr_nc)
-
-        print("MTOM:            ", MTOM)
-        print("     - Battery:  ", m_bat)
-        print("     - Wing fore:", m_wf)
-        print("     - Wing aft: ", m_wr)
-        print("     - Fuselage: ", m_fus)
-        print("     - pax:      ", const.m_pax * const.n_pax)
-        print("Total based on components:",
-              m_bat + m_wf + m_wr + m_fus + const.m_pax * const.n_pax + const.m_cargo_tot + m_gear)
-        print("MTOW w/o contingency:", MTOM_nc)
-        print("Cruise speed:    ", V_cr)
-        print("Max power:       ", max_power)
-        print("Energy used:     ", energy * 3.6e-3)
-        print("Wing surface:    ", S_tot)
-        print("Wing spans:      ", b1, b2)
-        print("CM alpha:        ", CM_a)
-        print("Controllability: ", cg_fwd_lim - x_front)
+        # print(E_tot_nc, t_tot_nc, P_max_nc, T_max_nc, t_hov_nc, T_cr_nc, P_cr_nc)
+        #
+        # print("MTOM:            ", MTOM)
+        # print("     - Battery:  ", m_bat)
+        # print("     - Wing fore:", m_wf)
+        # print("     - Wing aft: ", m_wr)
+        # print("     - Fuselage: ", m_fus)
+        # print("     - pax:      ", const.m_pax * const.n_pax)
+        # print("Total based on components:",
+        #       m_bat + m_wf + m_wr + m_fus + const.m_pax * const.n_pax + const.m_cargo_tot + m_gear)
+        # print("MTOW w/o contingency:", MTOM_nc)
+        # print("Cruise speed:    ", V_cr)
+        # print("Max power:       ", max_power)
+        # print("Energy used:     ", energy * 3.6e-3)
+        # print("Wing surface:    ", S_tot)
+        # print("Wing spans:      ", b1, b2)
+        # print("CM alpha:        ", CM_a)
+        # print("Controllability: ", cg_fwd_lim - x_front)
 
         # Other necessary outputs
         other_outputs = [track_width, z_mlg]
-        print("end")
+        # print("end")
         return optim_outputs, internal_inputs, other_outputs
 
     def multirun(self, N_iters, optim_inputs):
@@ -722,8 +722,8 @@ class RunDSE:
         internal_inputs = self.initial_est
 
         for i in range(N_iters):
-            print("Iteration #", i)
-            print("")
+            # print("Iteration #", i)
+            # print("")
             optim_outputs, internal_inputs, other_outputs = self.run(optim_inputs, internal_inputs)
 
         """
