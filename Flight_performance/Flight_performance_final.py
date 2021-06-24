@@ -381,6 +381,8 @@ class mission:
 
     def total_energy(self, simplified = False):
 
+        P_cruise, D_cruise = self.power_cruise_config(self.h_cruise, self.v_cruise, self.m)
+
         # Distance spent in cruise
         d_cruise = self.mission_dist  # - d_desc - d_climb
 
@@ -404,13 +406,13 @@ class mission:
 
         if simplified:
             d_climb = 13000
-            E_climb = 0.1*(E_cruise + E_loiter)
+            E_climb = 0.111*(E_cruise + E_loiter)
             t_climb = 200
             T_m_to  = 1.5*9.81*self.m
             P_m_to  = 1.7e6
 
             d_desc  = 20000
-            E_desc = 0.05*(E_cruise + E_loiter)
+            E_desc = 0.037*(E_cruise + E_loiter)
             t_desc = 300
             T_m_la  =1
             P_m_la = 1
@@ -425,8 +427,6 @@ class mission:
             d_desc, E_desc, t_desc, P_m_la, T_m_la = self.numerical_simulation(vx_start=self.v_cruise,
                                                                                y_start=self.h_cruise,
                                                                                th_start = np.radians(5), y_tgt=0, vx_tgt=0)
-
-
 
         # E_climb = 0.1*E_cruise
         # E_desc = 0.05*E_cruise
