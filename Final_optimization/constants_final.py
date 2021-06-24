@@ -47,11 +47,11 @@ k_wl = 2.0                  # Constant for winglets (could be changed to 2 if we
 Vr_Vf_2 = 1                 # Speed ratio between wing 1 and 2
 e_f = 0.65                  # Oswald efficiency for front wing
 e_r = 0.65                  # Oswald efficiency for rear wing
-h_wt_1 = 0.5                # Height of front wingtips [m]
-h_wt_2 = 0.5                # Height of back wingtips [m]
-dihedral1 = np.deg2rad(5)   # Dihedral front wing. New: -0.5
-dihedral2 = np.deg2rad(0)   # Dihedral back wing. New: -4
-i1 = 0                      # Trim angle of the front wing TODO if used deg or rad?
+h_wt_1 = 0.5                    # Height of front wingtips [m]
+h_wt_2 = 0.5                    # Height of back wingtips [m]
+dihedral1 = np.deg2rad(-0.5)    # Dihedral front wing. Old 5
+dihedral2 = np.deg2rad(-4)      # Dihedral back wing. Old 0
+i1 = 0                          # Trim angle of the front wing TODO if used deg or rad?
 
 # Propulsion
 xi_0 = 0.1         # Dimensionless radius of the hub (r_hub/R)
@@ -61,7 +61,7 @@ eff_prop = 0.85    # [-] Propeller efficiency during normal flight
 eff_hover = 0.75   # [-] Propeller efficiency during hover
 # TODO: revise
 # eff_eng_bat = 0.7  # [-] Efficiency from batteries to engines (including engine, battery, and electronics efficiencies)
-sp_mass_en = 1/3600     # [kg/W]
+sp_mass_en = 1/5000     # [kg/W]
 
 n_prop_1 = 6                # number of propellors on the front wing
 n_prop_2 = 6                # number of propellers on the rear wing
@@ -94,6 +94,8 @@ ARv = 1.5                       # AR of vertical tail
 sweep_vtail = np.deg2rad(25)    # Put in degrees and convert to rad
 br_bv = 0.85                    # Span of rudder wrt span tail
 cr_cv = 0.4                     # Ratio of the chords
+
+TW_ratio_control = 1.5
 
 # CGs
 cg_bat = [0.5, 0, 0.4*h_fuselage]
