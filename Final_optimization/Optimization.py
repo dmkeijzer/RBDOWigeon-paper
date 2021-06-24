@@ -47,30 +47,30 @@ class design_optimization(om.ExplicitComponent):
 
     def compute(self, inputs, outputs):
 
-        MTOM = inputs['MTOM']
-        V_cr = inputs['V_cr']
-        h_cr = inputs['h_cr']
-        C_L_cr = inputs['C_L_cr']
-        CLmax = inputs['CLmax']
-        prop_radius = inputs['prop_radius']
-        de_da = inputs['de_da']
-        Sv = inputs['Sv']
-        V_stall = inputs['V_stall']
-        max_power = inputs['max_power']
-        xf = inputs['xf']
-        xr = inputs['xr']
-        zf = inputs['zf']
-        zr = inputs['zr']
+        MTOM = inputs['MTOM'][0]
+        V_cr = inputs['V_cr'][0]
+        h_cr = inputs['h_cr'][0]
+        C_L_cr = inputs['C_L_cr'][0]
+        CLmax = inputs['CLmax'][0]
+        prop_radius = inputs['prop_radius'][0]
+        de_da = inputs['de_da'][0]
+        Sv = inputs['Sv'][0]
+        V_stall = inputs['V_stall'][0]
+        max_power = inputs['max_power'][0]
+        xf = inputs['xf'][0]
+        xr = inputs['xr'][0]
+        zf = inputs['zf'][0]
+        zr = inputs['zr'][0]
 
-        AR_wing1 = inputs['AR1']
-        AR_wing2 = inputs['AR2']
-        Sr_Sf = inputs['Sr_Sf']
+        AR_wing1 = inputs['AR1'][0]
+        AR_wing2 = inputs['AR2'][0]
+        Sr_Sf = inputs['Sr_Sf'][0]
         s1 = (1 + Sr_Sf)**-1
         max_thrust_stall = MTOM*const.g*0.1
 
         initial_estimate = [MTOM, 0, V_cr, h_cr, C_L_cr, CLmax, prop_radius, de_da, Sv, V_stall, max_power, AR_wing1,
                             AR_wing2, Sr_Sf, s1, xf, zf, xr, zr, max_thrust_stall]
-
+        print('Trying out optimization',initial_estimate)
         # Optimisation class
         optimisation_class = int_class.RunDSE(initial_estimate)
 
@@ -85,7 +85,7 @@ class design_optimization(om.ExplicitComponent):
         print('ctrl margin: ', optim_outputs[4])
 
         outputs['mass'] = optim_outputs[0]
-        outputs['energy'] = optim_outputs[1]
+        outputs['Energy'] = optim_outputs[1]
         outputs['time'] = optim_outputs[2]
         outputs['CM_alpha'] = optim_outputs[3]
         outputs['ctrl_mar'] = optim_outputs[4]
@@ -145,7 +145,7 @@ prob.model.add_constraint('Integrated_design.ctrl_mar', upper = 0.)
 # prob.driver.options['optimizer'] = "ALPSO"
 
 prob.driver = om.ScipyOptimizeDriver()
-prob.driver.options['optimizer'] = 'Nelder-Mead'
+prob.driver.options['optimizer'] = 'COBYLA'
 
 prob.model.add_design_var('Integrated_design.AR1')
 prob.model.add_design_var('Integrated_design.AR2')
