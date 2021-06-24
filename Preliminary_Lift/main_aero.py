@@ -22,13 +22,11 @@ data = json.load(datafile)
 datafile.close()
 FP = data["Flight performance"]
 STR = data["Structures"]
-#AR = 3.75
-AR1 = 6.8
-AR2=  6.8
+AR1 = 7.5
+AR2=  7.5
 
 W = 3024.8 #STR["MTOW"] #[N]
-Vcruise = 72.18#FP["V_cruise"] #[m/s]
-Wing_loading = FP["WS"]
+Vcruise = 40#FP["V_cruise"] #[m/s]
 
 #Cruise conditions
 h = 1000 # cruise height[m]
@@ -39,7 +37,7 @@ a = atm_flight.soundspeed()
 M = Mach(Vcruise,a)
 print("Mach",M)
 #Wing planform
-S_ref = 19.8213 #W/Wing_loading #[m**2] PLACEHOLDER
+S_ref = 16.8 #W/Wing_loading #[m**2] PLACEHOLDER
 
 
 # For double wing
@@ -53,8 +51,8 @@ sweepc42=0
 
 #Other paramters
 b_d = b  # fixed due to span limitations
-h_d = 1.4  #  Vertical gap between wings. Based on fuselage size
-l_h = 5.6 # Horizontal gap between wings. Based on fuselgae size
+h_d = 1.25  #  Vertical gap between wings. Based on fuselage size
+l_h = 6 # Horizontal gap between wings. Based on fuselgae size
 i1 = -0.0
 
 #Fuselage dimensions
@@ -65,8 +63,8 @@ w_max = 1.38
 h_max = 1.70
 d_eq = np.sqrt(h_max*w_max)
 #Winglets
-h_wl1 =0.5
-h_wl2 = 0.5
+h_wl1 = 0.5 #0.5
+h_wl2 = 0.5 #0.5
 k_wl = 2.0
 #7 9 0.45454545454545453 0 0.5454545454545454 0 0.1961932635918894 18.379085418840855 7.0 1.4 1.38 0.5 0.5 2.0 0
 Wing_params =  wing_design(AR1, AR2, s1,sweepc41,s2,sweepc42,M,S_ref, l_h,h_d,w_max,h_wl1,h_wl2, k_wl, i1)
@@ -103,7 +101,7 @@ tc = 0.12 #NACA0012 for winglets and Vtail
 tca = 0.17
 xcm = 0.3 #NACA0012 for winglets and Vtail
 CL_CDmin = airfoil[2]
-CL_lst = np.arange(-0.5,1.8,0.025)
+CL_lst = 0.0441 #np.arange(-0.5,1.8,0.025)
 #Other parameters
 S_v = 1.614
 S_t = 0
@@ -111,11 +109,14 @@ S_t = 0
 
 Drag = componentdrag('tandem',S_ref,l1,l2,l3,d_eq,Vcruise,rho,MAC,AR1,AR2,Mach(Vcruise,a),k,flamf,flamw,mu,tc,xcm,0,SweepLE,u,0,h_d,IF_f,IF_w, IF_v, CL_CDmin,Abase, S_v, s1, s2, h_wl1, h_wl2, k_wl)
 
-
+#print('SweepLE',SweepLE)
 CL_design = Drag.CL_des()
 CD = Drag.CD(CL_lst)
 Cd= Drag.Cd_w(CL_lst*np.cos(SweepLE)**2)/1.1
-"""
+print("CD", CD)
+
+#print(LLT2wings(Wing_params.wing_planform_double()[0][0], AR2,Wing_params.wing_planform_double()[0][1],Wing_params.wing_planform_double()[0][2], 0 ,5, h_d, l_h,Wing_params.wing_planform_double()[1][0], AR1,Wing_params.wing_planform_double()[1][1],Wing_params.wing_planform_double()[1][2], 0 ,5,70,0,0 ))
+
 fig2 , ax = plt.subplots(1,2)
 
 print(Cd)
@@ -129,9 +130,9 @@ ax[1].plot(CL_lst, CD)
 ax[1].set_xlabel('$C_L [-]$', fontsize = 16)
 ax[1].set_ylabel("$C_D [-]$", fontsize = 16)
 plt.show()
-"""
-fig1, ax1 = plt.subplots()
 
+#fig1, ax1 = plt.subplots()
+"""
 drag_comp = (100/Drag.CD(0.496))*np.array([Drag.CD0_f*1.05, Drag.CD0_v*1.05, Drag.CD_upsweep(), float(Drag.Cd_w(0.496)),Drag.CDi(0.496) ])
 labels = '$C_{D_{0, fus}}$' , '$C_{D_{0,Tail, Wingtips}}$', '$C_{D_u}$' ,'$C_{d_w}$', '$C_{D_i}$'
 fig3, ax3 = plt.subplots()
@@ -142,6 +143,7 @@ plt.show()
 
 print("Components",drag_comp)
 print("K", Drag.Drag_polar())
+"""
 Swet_f = Drag.Swet_f()
 
 Rey = Re(rho, Vcruise,MAC, mu)
@@ -149,7 +151,7 @@ Rey = Re(rho, Vcruise,MAC, mu)
 #Stall
 stall = Wing_params.CLmax_s(deda)
 CLmax = stall[0]
-print("CL_des, L/D", CL_design)
+print("CLmax, A_S",CLmax, stall[3])
 CDs = Drag.CD(CLmax)
 CDs_f = Drag.CD0_f
 CDs_w = CDs - CDs_f
@@ -180,30 +182,27 @@ plt.show()
 
 
 #print(x)
-D = 0.965 #m
-T = 153.5 #N
+D = 1.1 #m
+T = 300 #N
 ne1 = 6
 ne2 = 6
-"""
+
 #152.34774175721694 46.21428413797744 1.111617926993772 0.8934300657546558 6 6 0.17 0.17230950765784175 0.004628973850025598 1.8425440913304136 1 0.2723339479180486
 alpha_wp = np.arange(-5,18,0.25)
 Cl_alpha_curve2 = Wing_params.CLa(tc, CDs, CDs_f, Afus, alpha_wp, deda)
-CLwp = Wing_params.CLa_wprop(T, Vcruise,rho,D,ne1,ne2,tc,CDs_w, CDs_f, Afus, alpha_wp, 0.25)
+CLwp = Wing_params.CLa_wprop(T, Vcruise,rho,D,ne1,ne2,tc,CDs_w, CDs_f, Afus, alpha_wp, deda)
 #CLwp = Wing_params.CLa_wprop(200.34774175721694 ,46.21428413797744 ,1.111617926993772, 0.8934300657546558, 6, 6 ,0.17, 0.17230950765784175, 0.004628973850025598, 1.8425440913304136, alpha_wp ,deda)
 print("C_T", Wing_params.C_T(ne1,ne2,T, Vcruise, rho))
 print("deltaV", Wing_params.deltaV(T, Vcruise, rho, D, ne1, ne2))
-print("CLmax", CLwp[1], CLwp[4:6])
-print("CLalphanoprop", Wing_params.liftslope(deda)[0], Wing_params.liftslope(deda)[1], Wing_params.liftslope(deda)[4])
-print("CLalpha", s1*CLwp[2]+ s2*CLwp[3], CLwp[2:4])
-print("Deff", Wing_params.Deff(T,Vcruise, rho, D, ne1, ne2))
-plt.plot(alpha_wp, CLwp[6])
-plt.plot(alpha_wp, Cl_alpha_curve2[1])
+print("CLmax", CLwp[1])
+print("CLalphanoprop", Wing_params.liftslope(deda)[0])
+print("CLalphawp", s1*CLwp[2]+ s2*CLwp[3]*(1-deda))
+plt.plot(alpha_wp, CLwp[0])
+plt.plot(alpha_wp, Cl_alpha_curve2[0])
 plt.show()
 
-plt.plot(alpha_wp, CLwp[7])
-plt.plot(alpha_wp, Cl_alpha_curve2[2])
-plt.show()
-"""
+
+
 
 
 """

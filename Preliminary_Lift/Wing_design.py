@@ -194,14 +194,14 @@ class wing_design:
         self.T = T
         self.V_inf = V_inf
         self.rho = rho
-        return (ne1+ne2)*self.T/(self.rho*((self.V_inf)**2)*self.S)
+        return (ne1+ne2)*self.T/(0.5*self.rho*((V_inf)**2)*self.S)
 
     def CL_T(self,T, V_inf, rho,  alpha_wp, ne1,ne2):
         self.alphawp = alpha_wp
-        return np.sin(self.alphawp*(np.pi/180))*self.C_T(T, V_inf, rho, ne1,ne2)
+        return np.sin(self.alphawp*(np.pi/180))*self.C_T(ne1,ne2, T, V_inf, rho)
     def deltaV(self, T, V_inf, rho, D, ne1 , ne2):
         self.D = D
-        return V_inf * ( np.sqrt(1+ (self.C_T(T, V_inf, rho, ne1, ne2)*self.S)/((ne1+ne2)*(np.pi/4)*self.D**2))-1)
+        return V_inf * ( np.sqrt(1+ (self.C_T(ne1,ne2, T, V_inf, rho)*self.S)/((ne1+ne2)*(np.pi/4)*self.D**2))-1)
     def Deff(self, T, V_inf, rho, D , ne1 , ne2):
         return D*np.sqrt((V_inf+self.deltaV(T, V_inf, rho, D, ne1 , ne2)*0.5)/(V_inf+self.deltaV(T, V_inf, rho, D , ne1, ne2)))
     def a_ss(self, T, V_inf, rho, D ,alpha_wp, ne1, ne2):
@@ -220,14 +220,21 @@ class wing_design:
     def CL_W_S(self,  T, V_inf, rho, D , n_e1, n_e2, tc, CDs_W, CDs_f, Afus, alpha_wp, de_da):
         self.b1 = np.sqrt(self.AR1 * self.S1)
         self.b2 = np.sqrt(self.AR2 * self.S2)
+        SW = np.tan(self.sweep_atx(0.5))
+        beta = np.sqrt(1 - self.M ** 2)
+        ARS1 = self.Aseff(n_e1, n_e2, T, V_inf, rho, D)[0]
+        ARS2 = self.Aseff(n_e1, n_e2, T, V_inf, rho, D)[1]
+        slope1p = self.Clalpha * (ARS1 / (2 + np.sqrt(4 + ((ARS1 * beta / 0.95) ** 2) * ((1 + SW ** 2) / (beta ** 2)))))
+        slope2p = self.Clalpha * (ARS2 / (2 + np.sqrt(4 + ((ARS2 * beta / 0.95) ** 2) * ((1 + SW ** 2) / (beta ** 2)))))*(1-de_da)
+
         pt1 = 2*self.CLa(tc, CDs_W, CDs_f, Afus, alpha_wp, de_da)[1]/(np.pi*self.AR1)
         pt2 = 2*self.CLa(tc, CDs_W, CDs_f, Afus, alpha_wp, de_da)[2]/(np.pi*self.AR2)
-        pt3 = 2*self.CLa(tc, CDs_W, CDs_f, Afus, self.a_ss(T, V_inf, rho, D , alpha_wp, n_e1, n_e2), de_da)[1]*np.sin(self.a_ss(T, V_inf, rho, D , alpha_wp, n_e1, n_e2)*np.pi/180)/(np.pi*self.Aseff(n_e1, n_e2, T, V_inf, rho, D)[0])    #self.a_ss(T, V_inf, rho, D , alpha_wp)
-        pt4 = 2*self.CLa(tc, CDs_W, CDs_f, Afus, self.a_ss(T, V_inf, rho, D , alpha_wp, n_e1, n_e2), de_da)[2]*np.sin(self.a_ss(T, V_inf, rho, D , alpha_wp, n_e1, n_e2)*np.pi/180)/(np.pi*self.Aseff(n_e1, n_e2, T, V_inf, rho, D)[1])  #*np.sin(self.a_ss(T, V_inf, rho, D , alpha_wp, n_e1, n_e2)*np.pi/180)
-        self.CLW1 = (2/self.S1)*((np.pi/4)*self.b1**2 - n_e1*(np.pi/4)*self.Deff(T, V_inf, rho, D, n_e1, n_e2)**2)*pt1
-        self.CLW2 = (2 / self.S2) * ((np.pi / 4) * self.b2 ** 2 - n_e2 * (np.pi / 4) * self.Deff(T, V_inf, rho, D, n_e1, n_e2)**2)*pt2
-        self.CLS1 = n_e1*(np.pi*(self.Deff(T, V_inf, rho, D, n_e1, n_e2)**2 )/(2*self.S1))*((self.V_inf +self.deltaV( T, V_inf, rho, D, n_e1, n_e2))**2/self.V_inf**2)* pt3
-        self.CLS2 = n_e2 * (np.pi * (self.Deff(T, V_inf, rho, D, n_e1, n_e2)**2) / (2 * self.S2)) * ((self.V_inf + self.deltaV( T, V_inf, rho, D, n_e1, n_e2)) ** 2 / self.V_inf ** 2)*pt4
+        pt3 = 2*slope1p[0]*np.sin(self.a_ss(T, V_inf, rho, D , alpha_wp, n_e1, n_e2)*np.pi/180)/(np.pi*ARS1)#2*self.CLa(tc, CDs_W, CDs_f, Afus, self.a_ss(T, V_inf, rho, D , alpha_wp, n_e1, n_e2), de_da)[1]*np.sin(self.a_ss(T, V_inf, rho, D , alpha_wp, n_e1, n_e2)*np.pi/180)/(np.pi*ARS1)    #self.a_ss(T, V_inf, rho, D , alpha_wp)
+        pt4 = 2*slope2p[1]*np.sin(self.a_ss(T, V_inf, rho, D , alpha_wp, n_e1, n_e2)*np.pi/180)/(np.pi*ARS2)  #*np.sin(self.a_ss(T, V_inf, rho, D , alpha_wp, n_e1, n_e2)*np.pi/180)
+        self.CLW1 = (2/self.S1)*((np.pi/4)*self.b1**2 - n_e1*(np.pi/4)*(self.Deff(T, V_inf, rho, D, n_e1, n_e2))**2)*pt1
+        self.CLW2 = (2 / self.S2) * ((np.pi / 4) * self.b2 ** 2 - n_e2*(np.pi / 4) *(  self.Deff(T, V_inf, rho, D, n_e1, n_e2))**2)*pt2
+        self.CLS1 = n_e1*(np.pi*(self.Deff(T, V_inf, rho, D, n_e1, n_e2)**2 )/(2*self.S1))*((V_inf +self.deltaV( T, V_inf, rho, D, n_e1, n_e2))**2/V_inf**2)* pt3
+        self.CLS2 = n_e2 * (np.pi * (self.Deff(T, V_inf, rho, D, n_e1, n_e2)**2) / (2 * self.S2)) * ((V_inf + self.deltaV( T, V_inf, rho, D, n_e1, n_e2)) ** 2 / V_inf ** 2)*pt4
         CLWS1 = self.CLW1 + self.CLS1
         CLWS2 = self.CLW2 + self.CLS2
         return CLWS1 , CLWS2
@@ -239,11 +246,11 @@ class wing_design:
         self.CLmax_s(de_da)
 
         alpha = np.arange(-5, self.a_s[1]+1, 0.25)
-        CLaw1 = self.CL_W_S(  T, V_inf, rho, D ,ne1,ne2, tc, CDs_W, CDs_f, Afus, alpha, de_da)[0] + self.CL_T(T, V_inf, rho,  alpha, ne1,ne2)
+        CLaw1 = self.CL_W_S(  T, V_inf, rho, D ,ne1,ne2, tc, CDs_W, CDs_f, Afus, alpha, de_da)[0]+ self.CL_T(T, V_inf, rho,  alpha, ne1,ne2)
         CLaw2 = self.CL_W_S(  T, V_inf, rho, D , ne1,ne2,tc, CDs_W, CDs_f, Afus, alpha, de_da)[1] + self.CL_T(T, V_inf, rho,  alpha, ne1,ne2)
         CLaw = self.s1 *CLaw1 + self.s2*CLaw2
-        slope1wp = linregress((np.pi/180)*alpha[0:int(0.5*len(alpha))], CLaw1[0:int(0.5*len(alpha))])[0]
-        slope2wp = linregress((np.pi/180)*alpha[0:int(0.5*len(alpha))], CLaw2[0:int(0.5*len(alpha))])[0]*(1/(1-de_da))
+        slope1wp = linregress((np.pi/180)*alpha[0:int(len(alpha))], CLaw1[0:int(len(alpha))])[0]
+        slope2wp = linregress((np.pi/180)*alpha[0:int(len(alpha))], CLaw2[0:int(len(alpha))])[0]*(1/(1-de_da))
 
         curve = interp1d(alpha, CLaw, kind='quadratic')
         curve1 = interp1d(alpha, CLaw1)
