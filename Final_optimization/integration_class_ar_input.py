@@ -26,6 +26,15 @@ from stab_and_ctrl.xcg_limits import xcg_limits, optimise_wings, Cma, deps_da_em
 import structures.Weight as wei
 
 # --------------------- Fixed parameters and constants ------------------------
+# TODO:
+#   Ask stability and control about engine failures in bug fix
+#   Revise list of parameters to change and double check with departments final values
+#   Agree with Koen on final value for engine sizing, battery sizing
+#   Double check with stability that TW of 1.5 is enough for OEI
+#   Fix array error which will come
+#   Print weight fractions for Nikita
+#   Print disk radius and loading
+
 # Constants from constants.py
 g0 = const.g
 rho0 = const.rho_0
@@ -348,15 +357,16 @@ class RunDSE:
         CD_a_f = wing_design.CDa_poststall(const.tc, CDs, CDs_f, Afus, alpha_lst, "fus", drag.CD, de_da)
 
         # Energy sizing
-        # print("Before mission")
+        # print("Before calling mission")
         mission = FP.mission(MTOM, h_cr, V_cr, CLmax, S_tot, n_prop * prop_area, P_max=max_power,
                              Cl_alpha_curve=Cl_alpha_curve, CD_a_w=CD_a_w, CD_a_f=CD_a_f, alpha_lst=alpha_lst,
                              Drag=drag, t_loiter=15*60, rotational_rate=5, mission_dist=const.mission_range)
 
+        # print("Before max thrust")
         max_thrust_stall = mission.max_thrust(rho, V_stall)
 
         # Get approximate overall efficiency
-        energy, t_tot, max_power, max_thrust, t_hor = mission.total_energy(simplified = True)
+        energy, t_tot, P_max_eng_mission, max_thrust, t_hor = mission.total_energy(simplified=True)
 
         # Overall efficiency from battery to engine
         eff_overall = const.eff_bat_eng_cr * (t_hor/t_tot) + const.eff_bat_eng_h * (1-(t_hor/t_tot))
@@ -370,8 +380,8 @@ class RunDSE:
         # Engine sizing
 
         # Maximum power [W] and thrust [N] of the engines (total)
-        time, P_max_eng_mission, T_max_tot = mission.total_energy()[1:4]
-
+        # time, P_max_eng_mission, T_max_tot = mission.total_energy()[1:4]
+        time = t_tot
         # Maximum TW needed for controllability
         P_max_control = mission.thrust_to_power(const.TW_ratio_control * MTOM * const.g, 0, rho)[1]
 
@@ -393,7 +403,8 @@ class RunDSE:
         EOL_C = const.EOL_C
 
         # sp_en_den, vol_en_den, tot_energy, cost, DoD, P_den, P_max, safety, EOL_C
-        # print("Before battery")
+        print("Before battery")
+        print("P_max_bat:", P_max_bat)
         battery = batt.Battery(sp_en_den, vol_en_den, energy, batt_cost, DoD, P_den, P_max_bat, safety_factor, EOL_C)
 
         m_bat = battery.mass()
