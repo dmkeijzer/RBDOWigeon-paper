@@ -107,7 +107,7 @@ class PlotBlade:
         axs[1].scatter(self.radial_coords, y_mins)
 
         # Plot smooth distribution  TODO: revise
-        radius = np.linspace(self.xi_0, self.R, 200)
+        radius = np.linspace(self.xi_0*self.R, self.R, 200)
         axs[1].plot(radius, y_min_fun(radius))
         axs[1].plot(radius, y_max_fun(radius))
 

@@ -161,7 +161,7 @@ Omega = rpm * 2 * np.pi / 60
 
 V = 0
 
-RN = Omega * design[0] * rho / dyn_visc
+RN = Omega * design[3] * design[0] * rho / dyn_visc
 
 # TODO: J has to be the same as in cruise for max efficiency (Larrabee)
 # zeta_new, [cs, betas, alpha, stations_r, E, eff, self.Tc, Pc], Ves, [Cl, Cd]  #-np.deg2rad(30)

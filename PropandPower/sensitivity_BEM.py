@@ -10,36 +10,38 @@ a = ISA.soundspeed()
 rho = ISA.density()
 dyn_visc = ISA.viscosity_dyn()
 
+# Path to save graphs
+path = '../PropandPower/Figures/'
 
 # Midterm
 # B, R, rpm, xi_0, rho, dyn_vis, V_fr, N_stations, a, RN_spacing, T=None, P=None
 # B = 5
 xi_0 = 0.1
-R = 0.55
+R = 0.5029
 A_prop = np.pi*R**2
-MTOM = 3000
+MTOM = 3024.80
 
 # M_t_max = 0.6
 # rpm = M_t_max*a*60 / (np.pi * 2*R)
 # rpm = 2000
 # rpm = 1500
 
-V_cruise = 74
-V_h = 52.87
+V_cruise = 72.18676
+V_h = 1
 N_stations = 30
 RN_spacing = 100000
 
-T_cr_per_eng = 27.55 * 6
+T_cr_per_eng = 153.63377
 T_h_per_eng = MTOM*9.80665 / 12
+T_max_per_eng = 1.4 * MTOM*9.80665 / 12
 
+# Range of variables for sensitivity analysis
+Bs = np.arange(2, 10)
+rpms = np.arange(1000, 4001, 100)
+X, Y = np.meshgrid(rpms, Bs[::-1])  # Reorder Bs, idk why it is necessary
 
-# # Range of variables for sensitivity analysis
-# Bs = np.arange(2, 9)
-# rpms = np.arange(1000, 4501, 100)
-# X, Y = np.meshgrid(rpms, Bs[::-1])  # Reorder Bs, idk why it is necessary
-#
-# Z = np.ones(np.shape(X))
-#
+Z = np.ones(np.shape(X))
+
 # for y in range(len(Bs)):
 #     for x in range(len(rpms)):
 #
@@ -54,27 +56,31 @@ T_h_per_eng = MTOM*9.80665 / 12
 #
 #         # The parameter of interest is the propeller efficiency
 #         Z[y][x] = design[5]
-#
-# # Plot sensitivity plot
+
+# Plot sensitivity plot
 # cont = plt.contourf(X, Y, Z, cmap='coolwarm', levels=20)
 # cbar = plt.colorbar(cont, orientation="vertical")
 #
-# cbar.set_label(r'$\eta$')
+# cbar.set_label(r'$\eta$ [-]')
 # plt.ylabel("B", fontsize=12)
 # plt.xlabel("Rotational speed [rpm]", fontsize=12)
 #
+# # Save figures
+# plt.tight_layout()
+# plt.savefig(path + 'sensitivity_design_BEM_B_rpm' + '.pdf')
+#
 # plt.show()
-# Range of variables for sensitivity analysis
 
-# B = 5
-# rpm = 2500
-#
-# Vs = np.arange(45, 80)
-# rs = np.arange(0.35, 0.7, 0.01)
-# X, Y = np.meshgrid(rs, Vs[::-1])  # Reorder Vs, idk why it is necessary
-#
-# Z = np.ones(np.shape(X))
-#
+# Range of variables for sensitivity analysis
+B = 5
+rpm = 2500
+
+Vs = np.arange(45, 80)
+rs = np.arange(0.35, 0.7, 0.01)
+X, Y = np.meshgrid(rs, Vs[::-1])  # Reorder Vs, idk why it is necessary
+
+Z = np.ones(np.shape(X))
+
 # for y in range(len(Vs)):
 #     for x in range(len(rs)):
 #
@@ -94,20 +100,26 @@ T_h_per_eng = MTOM*9.80665 / 12
 # cont = plt.contourf(X, Y, Z, cmap='coolwarm', levels=20)
 # cbar = plt.colorbar(cont, orientation="vertical")
 #
-# cbar.set_label(r'$\eta$')
+# cbar.set_label(r'$\eta$ [-]')
 # plt.ylabel("V [m/s]", fontsize=12)
 # plt.xlabel("R [m]", fontsize=12)
 #
+# # Save figures
+# plt.tight_layout()
+# plt.savefig(path + 'sensitivity_design_BEM_V_R' + '.pdf')
+#
 # plt.show()
 
+# Off design analysis
 B = 5
 D = 2*R
 rpm = 1500
-R = 0.55
+R = 0.5029
 xi_0 = 0.1
-V_cruise = 74
+V_cruise = 72.18676
 
-T_cr_per_eng = 27.55 * 12
+T_cr_per_eng = 153.63377
+
 
 # Base propeller
 propeller = BEM.BEM(B, R, rpm, xi_0, rho, dyn_visc, V_cruise, N_stations, a, RN_spacing, T=T_cr_per_eng)
@@ -128,14 +140,18 @@ deltas = np.arange(0, 15.1, 0.5)
 X, Y = np.meshgrid(rpms, deltas[::-1])  # Reorder Vs, idk why it is necessary
 
 Z = np.ones(np.shape(X))
+Z2 = np.ones(np.shape(X))
 
+effs = []
+thrust = []
 
 for y in range(len(deltas)):
-    for x in range(len(rpms)):
+    # for x in range(len(rpms)):
 
         # Check combinations of number of blades and rpm
         delta = deltas[::-1][y]  # Reorder deltas here too
-        rpm = rpms[x]
+        # rpm = rpms[x]
+        rpm = 2000
 
         n = rpm / 60
         blade_hover = BEM.OffDesignAnalysisBEM(V_cruise, B, R, design[0], design[1] - np.deg2rad(delta), design[3],
@@ -143,15 +159,52 @@ for y in range(len(deltas)):
 
         blade_hover_analysis = blade_hover.analyse_propeller()
 
-        # The parameter of interest is the thrust
-        Z[y][x] = blade_hover_analysis[1]
+        # # The parameter of interest is the thrust
+        # Z[y][x] = blade_hover_analysis[0][0]
+        # Z2[y][x] = blade_hover_analysis[0][2]
 
-# Plot sensitivity plot
-cont = plt.contourf(X, Y, Z, cmap='coolwarm', levels=20)
-cbar = plt.colorbar(cont, orientation="vertical")
+        thrust.append(blade_hover_analysis[0][0])
+        effs.append(blade_hover_analysis[0][2])
 
-cbar.set_label('Thrust [N]')
-plt.ylabel(r'$\delta$ [deg]', fontsize=12)
-plt.xlabel("Rotational speed [rpm]", fontsize=12)
+# Plot efficiency against advance ratio
+plt.plot(deltas, effs)
+plt.xlabel(r'$\Delta \beta$')
+plt.ylabel(r'$\eta$ [-]')
 
 plt.show()
+
+# Plot efficiency against advance ratio
+plt.plot(deltas, thrust)
+plt.xlabel(r'$\Delta \beta$')
+plt.ylabel('T [N]')
+
+plt.show()
+
+# # Plot sensitivity plot
+# cont = plt.contourf(X, Y, Z, cmap='coolwarm', levels=20)
+# cbar = plt.colorbar(cont, orientation="vertical")
+#
+# cbar.set_label('Thrust [N]')
+# plt.ylabel(r'$\delta$ [deg]', fontsize=12)
+# plt.xlabel("Rotational speed [rpm]", fontsize=12)
+#
+# # Save figures
+# plt.tight_layout()
+# plt.savefig(path + 'sensitivity_offdesign_BEM_rpm_delta_T' + '.pdf')
+#
+# plt.show()
+#
+#
+# # Plot sensitivity plot
+# cont = plt.contourf(X, Y, Z2, cmap='coolwarm', levels=20)
+# cbar = plt.colorbar(cont, orientation="vertical")
+#
+# cbar.set_label(r'$\eta$ [-]')
+# plt.ylabel(r'$\delta$ [deg]', fontsize=12)
+# plt.xlabel("Rotational speed [rpm]", fontsize=12)
+#
+# # Save figures
+# plt.tight_layout()
+# plt.savefig(path + 'sensitivity_offdesign_BEM_rpm_delta_eff' + '.pdf')
+#
+# plt.show()

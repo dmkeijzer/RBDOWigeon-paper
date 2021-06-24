@@ -1,3 +1,4 @@
+import matplotlib.pyplot as plt
 import numpy as np
 import BEM as BEM
 import Blade_plotter as BP
@@ -54,9 +55,9 @@ print("Disk loading:", eng_sizing.disk_loading(), "kg/m^2")
 print("")
 
 # Design parameters
-B = 6
-rpm_cruise = 2000
-T_factor = 3
+B = 5
+rpm_cruise = 1350
+T_factor = 2.6
 
 # Design the blade
 
@@ -101,7 +102,7 @@ print("")
 print("############# Off-design analysis #############")
 print("")
 
-max_M_tip = 0.7
+max_M_tip = 0.75
 omega_max = max_M_tip*soundspeed/prop_radius
 
 rpm_max = omega_max/0.10472
@@ -110,23 +111,139 @@ print("Maximum allowable rpm:", rpm_max, "rpm")
 print("")
 
 # Hover constants
-V_h = 1
+V_h = 10
 
 # Hover design parameters
-delta_pitch = 40
+# delta_pitch_hover = 54
 rpm_hover = 4000
 Omega_hover = rpm_hover * 2 * np.pi / 60
 n_hover = Omega_hover / (2 * np.pi)
+# delta_pitch_hover = 45
 
 # Atmospheric parameters still assumed at 1 km
+# ISA = at.ISA(500)
+# rho = ISA.density()
+# dyn_vis = ISA.viscosity_dyn()
+# soundspeed = ISA.soundspeed()
 
 # Initial estimate for RN
 RN = Omega_hover * design[0] * rho / dyn_vis
 
-hover_blade = BEM.OffDesignAnalysisBEM(V_h, B, prop_radius, design[0], design[1]-np.deg2rad(delta_pitch), design[3],
-                                       coefs[0], coefs[1], rpm_hover, rho, dyn_vis, soundspeed, RN)
+max_T = 0
+# best_combo = []
+Ts = []
+Vs = []
+dif = 10000
+# for rpm_cr in range(1000, 1200, 10):
+#
+#     # print(design[1], design[1]-np.deg2rad(delta_pitch_hover))
+#     hover_blade = BEM.OffDesignAnalysisBEM(V_cruise, B, prop_radius, design[0], design[1], design[3],
+#                                            coefs[0], coefs[1], rpm_cr, rho, dyn_vis, soundspeed, RN)
+#
+#
+#     # Outputs: [T, Q, eff], [C_T, C_P], [alphas]
+#     hover_performance = hover_blade.analyse_propeller()
+#     T = hover_performance[0][0]
+#     Ts.append(T)
+#     Vs.append(V_h)
+#     # print(T)
+#
+#     # See if D/L is minimum. If so, save the values
+#     if np.abs(T-T_cr_per_engine) < dif:
+#         best_combo = [rpm_cr, T]
+#         dif = np.abs(T-T_cr_per_engine)
+#
+# plt.plot(Vs, Ts)
+# plt.show()
+
+hover_blade = BEM.OffDesignAnalysisBEM(V_cruise, B, prop_radius, design[0], design[1],
+                                       design[3], coefs[0], coefs[1], 1090, rho, dyn_vis, soundspeed, RN)
+
 # Outputs: [T, Q, eff], [C_T, C_P], [alphas]
 hover_performance = hover_blade.analyse_propeller()
+# T = hover_performance[0][0]
+
+print("Required cruise thrust:", T_cr_per_engine, "N")
+print("")
+print("Cruise thrust:", hover_performance[0][0], "N")
+print("")
+print("With:")
+print("     Cruise speed:", V_h, "m/s")
+print("     Cruise rpm:", 1100, "rpm")
+print("     Blade pitch change:", 0, "deg")
+print("")
+print("Cruise efficiency:", hover_performance[0][2], "[-]")
+print("")
+print("Necessary cruise power:", 0.001 * hover_performance[1][1] * rho * n_hover**3 * prop_diameter**5, "kW")
+print("")
+print("AoA per station:", np.rad2deg(hover_performance[2][0]))
+print("")
+print("Cl per station:", hover_performance[2][1])
+print("Cd per station:", hover_performance[2][2])
+
+
+print("############# Off-design analysis #############")
+print("")
+
+max_M_tip = 0.75
+omega_max = max_M_tip*soundspeed/prop_radius
+
+rpm_max = omega_max/0.10472
+
+print("Maximum allowable rpm:", rpm_max, "rpm")
+print("")
+
+# Hover constants
+V_h = 10
+
+# Hover design parameters
+# delta_pitch_hover = 54
+rpm_hover = 4000
+Omega_hover = rpm_hover * 2 * np.pi / 60
+n_hover = Omega_hover / (2 * np.pi)
+# delta_pitch_hover = 45
+
+# Atmospheric parameters still assumed at 1 km
+ISA = at.ISA(500)
+rho = ISA.density()
+dyn_vis = ISA.viscosity_dyn()
+soundspeed = ISA.soundspeed()
+
+# Initial estimate for RN
+RN = Omega_hover * design[0] * rho / dyn_vis
+
+max_T = 0
+# best_combo = []
+Ts = []
+Vs = []
+for delta_pitch_hover in range(1, 55):
+
+    # print(design[1], design[1]-np.deg2rad(delta_pitch_hover))
+    hover_blade = BEM.OffDesignAnalysisBEM(V_h, B, prop_radius, design[0], design[1]-np.deg2rad(delta_pitch_hover), design[3],
+                                           coefs[0], coefs[1], rpm_hover, rho, dyn_vis, soundspeed, RN)
+
+
+    # Outputs: [T, Q, eff], [C_T, C_P], [alphas]
+    hover_performance = hover_blade.analyse_propeller()
+    T = hover_performance[0][0]
+    Ts.append(T)
+    Vs.append(V_h)
+    # print(T)
+
+    # See if D/L is minimum. If so, save the values
+    if T > max_T:
+        best_combo = [delta_pitch_hover, T]
+        max_T = T
+
+# plt.plot(Vs, Ts)
+# plt.show()
+
+hover_blade = BEM.OffDesignAnalysisBEM(V_h, B, prop_radius, design[0], design[1] - np.deg2rad(best_combo[0]),
+                                       design[3], coefs[0], coefs[1], rpm_hover, rho, dyn_vis, soundspeed, RN)
+
+# Outputs: [T, Q, eff], [C_T, C_P], [alphas]
+hover_performance = hover_blade.analyse_propeller()
+# T = hover_performance[0][0]
 
 print("Minimum thrust to hover:", MTOM*g0/n_prop, "N")
 print("")
@@ -135,7 +252,7 @@ print("")
 print("With:")
 print("     Hover speed:", V_h, "m/s")
 print("     Hover rpm:", rpm_hover, "rpm")
-print("     Blade pitch change:", delta_pitch, "deg")
+print("     Blade pitch change:", best_combo[0], "deg")
 print("")
 print("Hover efficiency:", hover_performance[0][2], "[-]")
 print("")
@@ -149,20 +266,45 @@ print("Cd per station:", hover_performance[2][2])
 print("############# Off-design analysis: Max thrust #############")
 print("")
 # Max thrust
-maxT_blade = BEM.OffDesignAnalysisBEM(V_h, B, prop_radius, design[0], design[1]-np.deg2rad(delta_pitch), design[3],
-                                       coefs[0], coefs[1], rpm_max, rho, dyn_vis, soundspeed, RN)
+
+max_T = 0
+# best_combo = []
+Ts = []
+Vs = []
+for delta_pitch_max_T in range(1, 75):
+
+    # print(design[1], design[1]-np.deg2rad(delta_pitch_hover))
+    maxT_blade = BEM.OffDesignAnalysisBEM(V_h, B, prop_radius, design[0], design[1]-np.deg2rad(delta_pitch_max_T), design[3],
+                                          coefs[0], coefs[1], rpm_max, rho, dyn_vis, soundspeed, RN)
+
+
+    # Outputs: [T, Q, eff], [C_T, C_P], [alphas]
+    maxT_performance = maxT_blade.analyse_propeller()
+    T = maxT_performance[0][0]
+    Ts.append(T)
+    Vs.append(V_h)
+    # print(T)
+
+    # See if D/L is minimum. If so, save the values
+    if T > max_T:
+        best_combo = [delta_pitch_max_T, T]
+        max_T = T
+
+# print(design[1], design[1]-np.deg2rad(delta_pitch_hover))
+maxT_blade = BEM.OffDesignAnalysisBEM(V_h, B, prop_radius, design[0], design[1] - np.deg2rad(best_combo[0]),
+                                      design[3], coefs[0], coefs[1], rpm_max, rho, dyn_vis, soundspeed, RN)
 
 # Outputs: [T, Q, eff], [C_T, C_P], [alphas]
 maxT_performance = maxT_blade.analyse_propeller()
 
 print("Required maximum thrust (T/W ratio of 1.5):", 1.5*MTOM*g0/n_prop, "N")
 print("")
-print("Max thrust:", hover_performance[0][0], "N")
+print("Max thrust:", maxT_performance[0][0], "N")
 print("")
 print("With:")
 print("     Hover speed:", V_h, "m/s")
 print("     Max rpm:", rpm_max, "rpm")
-print("     Blade pitch change:", delta_pitch, "deg")
+print("     Blade pitch change:", best_combo[0], "deg")
 print("")
 print("Max T efficiency:", hover_performance[0][2], "[-]")
 print("")
@@ -179,6 +321,26 @@ plotter = BP.PlotBlade(design[0], design[1], design[3], prop_radius, xi_0)
 # Plot blade
 plotter.plot_blade()
 plotter.plot_3D_blade()
+
+# Polinomial regression for smooth distribution
+coef_chords = np.polynomial.polynomial.polyfit(design[3], design[0], 5)
+coef_pitchs = np.polynomial.polynomial.polyfit(design[3], design[1], 5)
+
+radial_stations_Koen = np.array([1/10, (1/10 + 1/11*9/10), (1/10 + 2/11*9/10), (1/10 + 3/11*9/10), (1/10 + 4/11*9/10),
+                                 (1/10 + 5/11*9/10), (1/10 + 6/11*9/10), (1/10 + 7/11*9/10), (1/10 + 8/11*9/10),
+                                 (1/10 + 9/11*9/10), (1/10 + 10/11*9/10), (1/10 + 11/11*9/10)-0.001])*prop_radius
+
+
+chord_fun = np.polynomial.polynomial.Polynomial(coef_chords)
+pitch_fun = np.polynomial.polynomial.Polynomial(coef_pitchs)
+
+koen_chords = chord_fun(radial_stations_Koen) * 1000
+koen_pitch = np.rad2deg(pitch_fun(radial_stations_Koen))
+
+print("Koen chords:", koen_chords)
+print("Koen pitchs:", koen_pitch)
+print("Hub radius:", xi_0)
+
 
 
 # Constants from optimisation

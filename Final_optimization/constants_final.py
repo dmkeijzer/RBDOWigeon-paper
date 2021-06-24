@@ -51,9 +51,9 @@ e_f = 0.65                  # Oswald efficiency for front wing
 e_r = 0.65                  # Oswald efficiency for rear wing
 h_wt_1 = 0.5                # Height of front wingtips [m]
 h_wt_2 = 0.5                # Height of back wingtips [m]
-dihedral1 = np.deg2rad(5)   # Dihedral front wing
-dihedral2 = np.deg2rad(0)   # Dihedral back wing
-i1 = 0                      # Trim angle of the front wing TODO deg or rad?
+dihedral1 = np.deg2rad(5)   # Dihedral front wing. New: -0.5
+dihedral2 = np.deg2rad(0)   # Dihedral back wing. New: -4
+i1 = 0                      # Trim angle of the front wing TODO if used deg or rad?
 
 # Propulsion
 xi_0 = 0.1         # Dimensionless radius of the hub (r_hub/R)
