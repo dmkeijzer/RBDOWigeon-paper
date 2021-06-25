@@ -48,6 +48,7 @@ class VT_sizing:
         self.c = self.Sfwd/self.S*self.cfwd+self.Srear/self.S*self.crear
         self.ARv = ARv
         self.sweepTE = sweepTE
+        self.b = np.sqrt(0.5 * (self.Srear / self.S * self.Arear + self.Sfwd / self.S * self.Afwd) * self.S)
 
     def Sweep(self,AR,Sweepm,n,m):
         """
@@ -136,6 +137,7 @@ class VT_sizing:
         y = [yE1,yE2,yE3]
         for i in range(nf):
             yE =y[i]
+            # print(N_E)
             N_E += Tt0/nE*yE# Asymmetric yaw moment [Nm]
         yE1 = self.brear / 2
         yE2 = yE1 - r2 - cpp - r2
@@ -143,9 +145,12 @@ class VT_sizing:
         y = [yE1, yE2, yE3]
         for i in range(nf):
             yE = y[i]
+            # print(N_E)
             N_E += Tt0 / nE * yE  # Asymmetric yaw moment [Nm]
+        # print(N_E)
         N_D = 0.25*N_E # component due to drag [Nm]
         N_total = N_E + N_D
+        # print(N_total)
         Sr_Sv = 0.2
         dr_max = 25*np.pi/180
         C_rudder = self.initial_VT()[3]*cr_cv
@@ -172,7 +177,7 @@ class VT_sizing:
         b = self.wfus/2
         V = 2*np.pi/4*b**2*(self.lfus/2-(self.lfus/2)**3/(3*a**2))
         bmax = np.sqrt(0.5*(self.Srear/self.S*self.Arear+self.Sfwd/self.S*self.Afwd)*self.S)
-        Cnb_fus = -2*V/(self.S*max(self.bfwd,self.brear))
+        Cnb_fus = -2*V/(self.S*self.b)
         Cnb_w_fwd = self.CLfwd**2*(1/(4*np.pi*self.Afwd)-
                                    (np.tan(self.Sweepc4fwd)/(np.pi*self.Afwd+4*np.cos(self.Sweepc4fwd)))*
                                    (np.cos(self.Sweepc4fwd)-self.Afwd/2-self.Afwd**2/(8*np.cos(self.Sweepc4fwd))-
@@ -184,8 +189,8 @@ class VT_sizing:
         CYb_v = -self.C_L_a(ARv,self.Sweep(ARv,sweepTE,50,100))
 
         Cnb = 0.0571
-        Sv = self.S*(Cnb-Cnb_fus-Cnb_w_fwd*self.Sfwd*self.bfwd/(self.S*bmax)-
-                     Cnb_w_rear*self.Srear*self.brear/(self.S*bmax))/(-CYb_v)*bmax/lv
+        Sv = self.S*(Cnb-Cnb_fus-Cnb_w_fwd*self.Sfwd*self.bfwd/(self.S*self.b)-
+                     Cnb_w_rear*self.Srear*self.brear/(self.S*self.b))/(-CYb_v)*self.b/lv
         # print("Stability: lv = ", lv)
         # print("Print inside the function Svstab", Sv)
         return Sv

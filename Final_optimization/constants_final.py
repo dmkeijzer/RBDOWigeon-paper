@@ -24,10 +24,10 @@ w_fuselage = 1.38            # [m]
 h_fuselage = 1.7             # [m]
 l_nosecone = 2.5             # [m]
 l_cylinder = 2.5             # [m]
-#l_tailcone = 2.7            # [m]
+l_tailcone = 2.7            # [m]
 #l_fus = l_nosecone + l_cylinder + l_tailcone
 # upsweep = 8.43*np.pi/180     # [Degrees]
-upsweep = np.arctan(0.4/l_tail)
+# upsweep = np.arctan(0.4/l_tail)
 
 
 # Aerodynamics
