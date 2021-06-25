@@ -151,9 +151,9 @@ prob.model.set_input_defaults('Integrated_design.Sv', 1.1)
 prob.model.set_input_defaults('Integrated_design.V_stall', 40.)
 
 # Define constraints TODO: Probably better to define them in a central file, like constants
-prob.model.add_constraint('Integrated_design.CM_alpha', upper = 0.1)
-prob.model.add_constraint('Integrated_design.MTOM', upper = 3175.)
-prob.model.add_constraint('Integrated_design.ctrl_mar', upper = 0.)
+prob.model.add_constraint('Integrated_design.CM_alpha', upper=0.1)
+prob.model.add_constraint('Integrated_design.MTOM', upper=3175.)
+prob.model.add_constraint('Integrated_design.ctrl_mar', upper=0.)
 
 
 # Stability constraints
