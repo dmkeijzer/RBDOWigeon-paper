@@ -70,13 +70,32 @@ class design_optimization(om.ExplicitComponent):
 
         initial_estimate = [MTOM, 0, V_cr, h_cr, C_L_cr, CLmax, prop_radius, de_da, Sv, V_stall, max_power, AR_wing1,
                             AR_wing2, Sr_Sf, s1, xf, zf, xr, zr, max_thrust_stall]
-        print('Trying out optimization',initial_estimate)
+        # print('Trying out optimization',initial_estimate)
         # Optimisation class
         optimisation_class = int_class.RunDSE(initial_estimate)
 
         # Run the file for # iterations
-        N_iter = 10
+        N_iter = 15
         optim_outputs, internal_inputs, other_outputs = optimisation_class.multirun(N_iter, optim_inputs=[])
+
+        # inputs['MTOM'] = internal_inputs[0]
+        # inputs['V_cr'] = internal_inputs[2]
+        # inputs['h_cr'] = internal_inputs[3]
+        # inputs['C_L_cr'] = internal_inputs[4]
+        # inputs['CLmax']  = internal_inputs[5]
+        # inputs['prop_radius'] = internal_inputs[6]
+        # inputs['de_da'] = internal_inputs[7]
+        # inputs['Sv'] = internal_inputs[8]
+        # inputs['V_stall'] = internal_inputs[9]
+        # inputs['max_power'] = internal_inputs[10]
+        # inputs['xf'] = internal_inputs[15]
+        # inputs['xr'] = internal_inputs[17]
+        # inputs['zf'] = internal_inputs[16]
+        # inputs['zr'] = internal_inputs[18]
+
+        # inputs['AR1'] = internal_inputs[11]
+        # inputs['AR2'] = internal_inputs[12]
+        # inputs['Sr_Sf'] = internal_inputs[13]
 
         print('===== Progress update =====')
         print('MTOM:        ', optim_outputs[0])
@@ -91,7 +110,7 @@ class design_optimization(om.ExplicitComponent):
         outputs['ctrl_mar'] = optim_outputs[4]
         outputs['MTOM_nc'] = optim_outputs[5]
 
-        outputs['Cost_func'] = optim_outputs[5]
+        outputs['Cost_func'] = optim_outputs[1]
 
 
 prob = om.Problem()
