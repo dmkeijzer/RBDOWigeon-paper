@@ -118,21 +118,59 @@ class WingLoads:
         x, y = np.array(coordinates).T
         sigma = root.o(x, y, Mx = 0, My = self.ViMy(0))
         tau = np.array([root.tau(ix, iy, Vx = self.ViVx(0), Vy = 0, T = 0) for ix, iy in coordinates])
-        
         return np.array(coordinates), sigma, tau, np.sqrt(3*tau**2 + sigma**2)
+    
+    def LugLoad(self):
+        eqf = self.RMz / self.wing(0).b
+        FmaxN = self.RFy / 2 + eqf
+        eqmx = self.RMx / self.wing(0).b
+        FmaxT = eqmx
+        return [FmaxN, FmaxT]
     
     @staticmethod
     def extreme(coord, arr):
         h, l = np.argmax(arr), np.argmin(arr)
         return ([coord[l], arr[l]], [coord[h], arr[h]])
 
+class Lug:
+    def __init__(self, a, c, d, t, mat=7075):
+        self.a, self.c, self.d, self.t = a, c, d, t
+        self.b, self.m = (6.0, -0.020803428405001143) if mat == 7075 else (5.929411764705884, -0.011764705882352944)
+        self.mat = mat
+        self.k1, self.k2 = (a * d / (c ** 2)) ** 0.5, (10 / d) ** 0.2
+
+    Kt = lambda self: 3.8 * (self.c / self.a) ** 0.2 * (self.c / self.d) ** 0.5
+    
+    def stress(self, F):
+        reflug = ReferenceLug(self.t, self.mat)
+        Sref = reflug.stress(F)
+        N = reflug.SN(Sref)
+        theta = 0.25 * np.log10(N) - 0.5 if 1e3 <= N <= 1e6 else 1
+        return Sref * (1 + theta * (self.k1 * self.k2 - 1))
+    
+    Ka = lambda self, alpha: alpha * (0.007 * self.c / self.a - 0.008) + 1
+    
+    Fatigue = lambda self, F, alpha=0: self.SN(self.Kt() * self.Ka(alpha) * self.stress(F, alpha))
+
+    SN = lambda self, S: 10 ** (self.b + S * self.m)
+
+    __repr__ = __str__ = lambda self: "Lug(" + ', '.join(f"{k}={self.__dict__[k]}" for k in self.__dict__) + ")"
+
+
+class ReferenceLug(Lug):
+    def __init__(self, t, mat=7075):
+        super().__init__(*([10]*3 + [t, mat]))
+    
+    stress = lambda self, F, alpha=0: F /  (2 * self.c * self.t)
+
+
 class Fatigue:
-    def __init__(self, Sground, Stakeoff, Scruise, airTime, turnOver, takeOffTime, mat, Lug):
+    def __init__(self, Sground, Stakeoff, Scruise, airTime, turnOver, takeOffTime, mat, lug=None):
         self.Sg, self.Sto, self.Scr, self.tAir, self.tTO = Sground, Stakeoff, Scruise, airTime, takeOffTime
         self.tot = turnOver
         self.cyc, self.df, self.ts = [None]*3
         self.mat = mat
-        self.a, self.c, self.d = Lug
+        self.lug = lug if lug is not None else False
 
     def determineCycle(self):
         self.ts = np.linspace(0, self.tAir + self.tot, 1000)
@@ -167,7 +205,7 @@ class Fatigue:
     def CrackGrowth(self, a0, w, Nflights):
         length = a0
         step = 1000
-        Kt = Fatigue.KtLug(self.a, self.c, self.d)
+        Kt = 1 if not Lug else Fatigue.KtLug(self.a, self.c, self.d)
         for j in range(0, Nflights, step):
             da = min(step, Nflights - j) * self.mat.ParisFatigueda(length, w,
                                 self.df['Smax'].values * Kt, self.df['Smin'].values * Kt,
@@ -177,4 +215,3 @@ class Fatigue:
             length += da
         return length, j
     
-    KtLug = staticmethod(lambda a, c, d: 3.8 * (c / a) ** 0.2 * (c / d) ** 0.5)

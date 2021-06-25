@@ -47,36 +47,55 @@ class design_optimization(om.ExplicitComponent):
 
     def compute(self, inputs, outputs):
 
-        MTOM = inputs['MTOM']
-        V_cr = inputs['V_cr']
-        h_cr = inputs['h_cr']
-        C_L_cr = inputs['C_L_cr']
-        CLmax = inputs['CLmax']
-        prop_radius = inputs['prop_radius']
-        de_da = inputs['de_da']
-        Sv = inputs['Sv']
-        V_stall = inputs['V_stall']
-        max_power = inputs['max_power']
-        xf = inputs['xf']
-        xr = inputs['xr']
-        zf = inputs['zf']
-        zr = inputs['zr']
+        MTOM = inputs['MTOM'][0]
+        V_cr = inputs['V_cr'][0]
+        h_cr = inputs['h_cr'][0]
+        C_L_cr = inputs['C_L_cr'][0]
+        CLmax = inputs['CLmax'][0]
+        prop_radius = inputs['prop_radius'][0]
+        de_da = inputs['de_da'][0]
+        Sv = inputs['Sv'][0]
+        V_stall = inputs['V_stall'][0]
+        max_power = inputs['max_power'][0]
+        xf = inputs['xf'][0]
+        xr = inputs['xr'][0]
+        zf = inputs['zf'][0]
+        zr = inputs['zr'][0]
 
-        AR_wing1 = inputs['AR1']
-        AR_wing2 = inputs['AR2']
-        Sr_Sf = inputs['Sr_Sf']
+        AR_wing1 = inputs['AR1'][0]
+        AR_wing2 = inputs['AR2'][0]
+        Sr_Sf = inputs['Sr_Sf'][0]
         s1 = (1 + Sr_Sf)**-1
         max_thrust_stall = MTOM*const.g*0.1
 
         initial_estimate = [MTOM, 0, V_cr, h_cr, C_L_cr, CLmax, prop_radius, de_da, Sv, V_stall, max_power, AR_wing1,
                             AR_wing2, Sr_Sf, s1, xf, zf, xr, zr, max_thrust_stall]
-
+        # print('Trying out optimization',initial_estimate)
         # Optimisation class
         optimisation_class = int_class.RunDSE(initial_estimate)
 
         # Run the file for # iterations
-        N_iter = 10
+        N_iter = 15
         optim_outputs, internal_inputs, other_outputs = optimisation_class.multirun(N_iter, optim_inputs=[])
+
+        # inputs['MTOM'] = internal_inputs[0]
+        # inputs['V_cr'] = internal_inputs[2]
+        # inputs['h_cr'] = internal_inputs[3]
+        # inputs['C_L_cr'] = internal_inputs[4]
+        # inputs['CLmax']  = internal_inputs[5]
+        # inputs['prop_radius'] = internal_inputs[6]
+        # inputs['de_da'] = internal_inputs[7]
+        # inputs['Sv'] = internal_inputs[8]
+        # inputs['V_stall'] = internal_inputs[9]
+        # inputs['max_power'] = internal_inputs[10]
+        # inputs['xf'] = internal_inputs[15]
+        # inputs['xr'] = internal_inputs[17]
+        # inputs['zf'] = internal_inputs[16]
+        # inputs['zr'] = internal_inputs[18]
+
+        # inputs['AR1'] = internal_inputs[11]
+        # inputs['AR2'] = internal_inputs[12]
+        # inputs['Sr_Sf'] = internal_inputs[13]
 
         print('===== Progress update =====')
         print('MTOM:        ', optim_outputs[0])
@@ -85,13 +104,13 @@ class design_optimization(om.ExplicitComponent):
         print('ctrl margin: ', optim_outputs[4])
 
         outputs['mass'] = optim_outputs[0]
-        outputs['energy'] = optim_outputs[1]
+        outputs['Energy'] = optim_outputs[1]
         outputs['time'] = optim_outputs[2]
         outputs['CM_alpha'] = optim_outputs[3]
         outputs['ctrl_mar'] = optim_outputs[4]
         outputs['MTOM_nc'] = optim_outputs[5]
 
-        outputs['Cost_func'] = optim_outputs[5]
+        outputs['Cost_func'] = optim_outputs[1]
 
 
 prob = om.Problem()
@@ -132,9 +151,9 @@ prob.model.set_input_defaults('Integrated_design.Sv', 1.1)
 prob.model.set_input_defaults('Integrated_design.V_stall', 40.)
 
 # Define constraints TODO: Probably better to define them in a central file, like constants
-prob.model.add_constraint('Integrated_design.CM_alpha', upper = 0.1)
-prob.model.add_constraint('Integrated_design.MTOM', upper = 3175.)
-prob.model.add_constraint('Integrated_design.ctrl_mar', upper = 0.)
+prob.model.add_constraint('Integrated_design.CM_alpha', upper=0.1)
+prob.model.add_constraint('Integrated_design.MTOM', upper=3175.)
+prob.model.add_constraint('Integrated_design.ctrl_mar', upper=0.)
 
 
 # Stability constraints
@@ -145,7 +164,7 @@ prob.model.add_constraint('Integrated_design.ctrl_mar', upper = 0.)
 # prob.driver.options['optimizer'] = "ALPSO"
 
 prob.driver = om.ScipyOptimizeDriver()
-prob.driver.options['optimizer'] = 'Nelder-Mead'
+prob.driver.options['optimizer'] = 'COBYLA'
 
 prob.model.add_design_var('Integrated_design.AR1')
 prob.model.add_design_var('Integrated_design.AR2')

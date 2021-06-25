@@ -190,11 +190,11 @@ class Stab_Derivatives:
         :return: C_X_q, C_Z_q, C_m_q
         """
         CX_q  =0
-        CZ_q = -self.CLafwd*(self.xcg-self.xacfwd)*self.Sfwd/(self.S*self.c)+\
+        CZ_q = self.CLafwd*(self.xcg-self.xacfwd)*self.Sfwd/(self.S*self.c)-\
                self.CLarear*(self.xacrear-self.xcg)*self.Srear/(self.S*self.c)*self.eta_rear
         Cm_q = -(self.CLafwd*(self.xcg-self.xacfwd)**2*self.Sfwd/(self.S*self.c**2)+
                  self.CLarear*(self.xacrear-self.xcg)**2*self.Srear/(self.S*self.c**2)*self.eta_rear)
-        return CX_q,CZ_q,Cm_q
+        return CX_q,-CZ_q,Cm_q
 
     def alpha_dot_derivatives(self):
         """
@@ -378,8 +378,8 @@ class Stab_Derivatives:
         Kxx2 = Ixx/(self.W/9.80665*self.b**2)
         Kzz2 = Izz/(self.W/9.80665*self.b**2)
         Kxz = Ixz/(self.W/9.80665*self.b**2)
-        # print("Ixx, Izz =", Ixx, Izz)
-        # print("Kxx2, Kzz2, Kxz = %.5f, %.5f, %.5f"%(Kxx2,Kzz2,Kxz))
+        print("Inside Ixx, Izz =", Ixx, Izz)
+        print("Inside Kxx2, Kzz2, Kxz = %.5f, %.5f, %.5f"%(Kxx2,Kzz2,Kxz))
 
         C_L = self.CL0
         C_Y = [self.beta_derivatives(0,0)[0],0,self.p_derivatives()[0],self.r_derivatives()[0],\
