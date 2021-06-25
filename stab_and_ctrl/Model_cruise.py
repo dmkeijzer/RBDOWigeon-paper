@@ -41,6 +41,9 @@ class Aircraft:
         self.eig_s_tuned = self.get_eigenvalues(self.sym_sys_tuned,V,"sym")
         self.prop_s = self.get_period_prop(self.sym_sys,V,"sym")
         self.prop_a = self.get_period_prop_a(self.asym_sys, V, "asym")
+        self.muc = self.get_muc(self.W,self.h,self.S,self.c)
+        self.mub = self.get_mub(self.W, self.h, self.S, self.b)
+        print("mu_c = %.4f , mu_b = %.4f "%(self.muc,self.mub))
 
     def plot_results(self, V):
         T = np.linspace(0, 250, 2500)
@@ -58,8 +61,8 @@ class Aircraft:
         # print("Properties of motion:", self.prop_s[0], self.prop_s[1])
 
         ############### Compute Phugoid & Plotting ##############
-        T_p = np.linspace(0, 200, 1000)
-        delta_e = self.pulse(T_p, 1,16)*radians(0.2)
+        T_p = np.linspace(0, 500, 1000)
+        delta_e = self.pulse(T_p, 1,16)*radians(0.5)
         u_motion, alpha_motion, theta_motion, pitch_motion = \
             self.phugoid(T_p, delta_e, V,sys=self.sym_sys)
 
@@ -86,8 +89,8 @@ class Aircraft:
         plt.show()
 
         ############### Compute Short Period & Plotting ##############
-        T_sp = np.linspace(0, 10, 100)
-        delta_e = self.pulse(T_sp,1,1.1)*radians(0.2)
+        T_sp = np.linspace(0, 20, 100)
+        delta_e = self.pulse(T_sp,1,1.5)*radians(0.5)
         u_motion, alpha_motion, theta_motion, pitch_motion = \
             self.short_period(T_sp, delta_e, V,sys=self.sym_sys)
 
