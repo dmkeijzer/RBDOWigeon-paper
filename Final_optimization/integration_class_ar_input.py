@@ -440,14 +440,24 @@ class RunDSE:
         m_prop = const.sp_mass_en * P_max_eng_ind * np.ones(np.shape(pos_prop))
 
         pos_lgear = (1.75+6)/2  # TODO revise if needed
+
         # print("Before mass")
-        MTOM, m_wf, m_wr, m_fus, m_prop, cg_fus0, cg_gear, cg_props, x_CG_MTOM, m_gear = mass(MTOM, S1, S2, n_ult, AR_wing1,
+
+        # print('first test: ', MTOM, S1, S2, n_ult, AR_wing1, AR_wing2, pos_front_wing,
+        #       pos_back_wing, Pmax_weight, l_fus,
+        #       const.n_pax, pos_fus, pos_lgear,
+        #       n_prop, m_prop, pos_prop,
+        #       const.m_pax, const.m_cargo_tot,
+        #       m_bat)
+        MTOM, m_wf, m_wr, m_fus, m_prop_ct, cg_fus0, cg_gear, cg_props, x_CG_MTOM, m_gear = mass(MTOM, S1, S2, n_ult, AR_wing1,
                                                                                      AR_wing2, pos_front_wing,
                                                                                      pos_back_wing, Pmax_weight, l_fus,
                                                                                      const.n_pax, pos_fus, pos_lgear,
                                                                                      n_prop, m_prop, pos_prop,
                                                                                      const.m_pax,  const.m_cargo_tot,
                                                                                      m_bat, contingency = True)
+
+
 
         # MTOM = MTOM*const.mass_cont
 
@@ -470,6 +480,7 @@ class RunDSE:
         # Approximated with new layout
         cg_pil = [1.75, 0, h_fus/2]  # Pilot is higher than pax
         cg_fus = [l_fus*0.4, 0, h_fus*0.5]
+
         # print("Before CG from stability")
         cg_calc = CgCalculator(m_wf, m_wr, m_fus, m_bat, const.m_cargo_tot, const.m_pax, const.m_pax,
                                cg_fus=cg_fus, cg_bat=const.cg_bat, cg_cargo=const.cargo_pos, cg_pax=cg_pax,
@@ -480,6 +491,7 @@ class RunDSE:
         # Get the cg range, based on wing placement, the loading order can be changed if needed
         cg_wf = [xf + 0.25*MAC1, zf]
         cg_wr = [xr + 0.25*MAC2, zr]
+        # print(l_fus, cg_wf, cg_wr)
         [x_front, x_aft], _, [_, z_top] = cg_calc.calc_cg_range(cg_wf, cg_wr)
         x_front = float(x_front)
         x_aft = float(x_aft)
@@ -607,12 +619,19 @@ class RunDSE:
         # print('tail area', Sv)
 
         # Variables that are updated (the 0 is a placeholder, not used)
-        internal_inputs = [MTOM, 0, V_cr, h_cr, C_L_cr, CLmax, prop_radius1, de_da, Sv, V_stall, max_power, AR_wing1,
+        internal_inputs = [MTOM, S_tot, V_cr, h_cr, C_L_cr, CLmax, prop_radius1, de_da, Sv, V_stall, max_power, AR_wing1,
                            AR_wing2, Sr_Sf, s1, xf, zf, xr, zr, max_thrust_stall]
 
         # Aerdodynamic moments
         Cmac1 = airfoil.Cm_ac(const.sweepc41, AR_wing1)[0]
         Cmac2 = airfoil.Cm_ac(const.sweepc42, AR_wing2)[0]
+        #
+        # print('second test: ', MTOM, S1, S2, n_ult, AR_wing1, AR_wing2, pos_front_wing,
+        #       pos_back_wing, Pmax_weight, l_fus,
+        #       const.n_pax, pos_fus, pos_lgear,
+        #       n_prop, m_prop, pos_prop,
+        #       const.m_pax, const.m_cargo_tot,
+        #       m_bat)
 
         MTOM_nc, m_wf_nc, m_wr_nc, m_fus_nc, m_prop_nc, \
         cg_fus0_nc, cg_gear_nc, cg_props_nc, x_CG_MTOM_nc, m_gear_nc = mass(MTOM, S1, S2, n_ult, AR_wing1,

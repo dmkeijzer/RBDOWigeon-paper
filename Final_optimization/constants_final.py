@@ -9,7 +9,7 @@ rho_0 = 1.225               # [kg/m^3]
 # Contingency
 energy_cont     = 1
 payload_cont    = 1
-mass_cont       = 1.1
+mass_cont       = 1
 
 # General
 mission_range = 300e3       # [m] Mission range  TODO: Maybe add 50 km
