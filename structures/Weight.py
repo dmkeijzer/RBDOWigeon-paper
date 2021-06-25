@@ -4,6 +4,7 @@ import numpy as np
 
 sys.path.append('Final_optimization/')
 # import constants_final as const
+<<<<<<< Updated upstream
 from Final_optimization import constants_final as const
 class Vtail:
     def __init__(self, mtom, Sv, Av, rchord, toc, sweep_deg):
@@ -13,6 +14,9 @@ class Vtail:
         self.trv = rchord * toc * 3.28084
         self.sweep = sweep_deg * np.pi/180
         self.mass = ((1.68 * self.mtom_lbs ** 0.567 * self.Sv_ft ** 1.249 * self.Av ** 0.482)/(639.95 * self.trv ** 0.747 * np.cos(self.sweep)**0.882)) * 0.453592
+=======
+import constants_final as const
+>>>>>>> Stashed changes
 
 class Wing:
     # Roskam method (not accurate because does not take into account density of material but good enough for comparison
@@ -91,20 +95,27 @@ class Weight:
 #         print("")
 
         if contingency:
+            # self.mtom = (self.wmass*const.mass_cont + self.pmass*const.mass_cont + self.lmass*const.mass_cont +
+            #              self.fmass*const.mass_cont + self.cmass + self.bmass*const.mass_cont + self.tot_m_pax + self.vmass * const.mass_cont)
+            # self.mtom_cg = (self.moment_w*const.mass_cont + self.moment_f*const.mass_cont + self.moment_l*const.mass_cont +
+            #                 self.moment_p*const.mass_cont + self.moment_pax + self.moment_c + self.moment_b*const.mass_cont + self.moment_v * const.mass_cont) \
+            #                / (self.wmass*const.mass_cont + self.pmass*const.mass_cont + self.lmass*const.mass_cont +
+            #                   self.fmass*const.mass_cont + self.cmass + self.bmass*const.mass_cont + self.tot_m_pax + self.vmass * const.mass_cont)
+
+
             self.mtom = (self.wmass*const.mass_cont + self.pmass*const.mass_cont + self.lmass*const.mass_cont +
-                         self.fmass*const.mass_cont + self.cmass + self.bmass*const.mass_cont + self.tot_m_pax + self.vmass * const.mass_cont)
-            self.mtom_cg = (self.moment_w*const.mass_cont + self.moment_f*const.mass_cont + self.moment_l*const.mass_cont +
-                            self.moment_p*const.mass_cont + self.moment_pax + self.moment_c + self.moment_b*const.mass_cont + self.moment_v * const.mass_cont) \
-                           / (self.wmass*const.mass_cont + self.pmass*const.mass_cont + self.lmass*const.mass_cont +
-                              self.fmass*const.mass_cont + self.cmass + self.bmass*const.mass_cont + self.tot_m_pax + self.vmass * const.mass_cont)
-
-
+                         self.fmass*const.mass_cont + self.cmass + self.bmass*const.mass_cont + self.tot_m_pax + self.vmass*const.mass_cont)
+            self.mtom_cg = (self.moment_w*const.mass_cont + self.moment_p*const.mass_cont + self.moment_l*const.mass_cont + self.moment_f*const.mass_cont + self.moment_c + self.moment_b*const.mass_cont +self.moment_pax  +  self.moment_v*const.mass_cont) \
+                           /self.mtom #(self.wmass + self.pmass + self.lmass + self.fmass + self.cmass + self.bmass + self.tot_m_pax + self.vmass)
+            print('testing', self.moment_l)#(self.moment_w*const.mass_cont + self.moment_p*const.mass_cont + self.moment_l*const.mass_cont + self.moment_f*const.mass_cont + self.moment_c + self.moment_b*const.mass_cont +self.moment_pax  +  self.moment_v*const.mass_cont))
         else:
             self.mtom = (self.wmass + self.pmass + self.lmass +
                          self.fmass + self.cmass + self.bmass + self.tot_m_pax + self.vmass)
-            self.mtom_cg = (self.moment_w + self.moment_f + self.moment_l + self.moment_p + self.moment_pax + self.moment_c + self.moment_b + self.moment_v) \
-                           / (self.wmass + self.pmass + self.lmass + self.fmass + self.cmass + self.bmass + self.tot_m_pax + self.vmass)
+            self.mtom_cg = (self.moment_w + self.moment_p + self.moment_l + self.moment_f + self.moment_c + self.moment_b + self.moment_pax + self.moment_v) \
+                           / self.mtom # (self.wmass + self.pmass + self.lmass + self.fmass + self.cmass + self.bmass + self.tot_m_pax + self.vmass)
+            print('testing NC', self.moment_l)#(self.moment_w + self.moment_p + self.moment_l + self.moment_f + self.moment_c + self.moment_b + self.moment_pax + self.moment_v))
 
+            # self.moment_p: 1480 vs 17767
     def print_weight_fractions(self):
         d = {}
         d["Front wing"] = [self.wing.mass[0], self.wing.mass[0]/self.oem, self.wing.mass[0]/self.mtom]

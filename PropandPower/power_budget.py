@@ -7,7 +7,7 @@ class Power_Budget:
         # Constant required power
         self.avionics = 252  # [W]
         self.airco = 3000  # [W]
-        self.battery_cooling = 30 * m/72  # [W] Per 72 kg.
+        self.battery_cooling = 30 * m/72  # [W]
         self.autopilot = 151  # [W]
         self.trim = 54  # [W]
         self.passenger_power = 400  # [W]
@@ -16,7 +16,7 @@ class Power_Budget:
 
         # Non continuous power
         self.landing_gear = 50  # [W]
-        self.wing_rot_mech = 3000  # [W] # Might require checks if values are nonesensical
+        self.wing_rot_mech = 3000  # [W]
 
     def P_continuous(self):
         return self.avionics + self.airco + self.battery_cooling + self.autopilot + self.trim + self.passenger_power \
