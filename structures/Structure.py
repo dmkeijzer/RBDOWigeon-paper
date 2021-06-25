@@ -1,5 +1,5 @@
 from Geometry import HatStringer, JStringer, ZStringer, WingBox, WingStructure, StructuralError
-from SolveLoads import WingLoads, Engines, Fatigue
+from SolveLoads import WingLoads, Engines, Fatigue, Lug, ReferenceLug
 from Weight import *
 from Material import Material
 from Draw import InternalLoading, DrawFatigue
@@ -116,6 +116,12 @@ class Structure:
         self.fatigue = fatigue
         if self.cycles > matsk.BasquinLaw(abs(oVTOfgrmd - ocrfmd)):
             raise StructuralError(f"Invalid Number of Fatigue Cycles: {self.cycles}")
+
+        Flug = np.array(self.loads.lugload())
+
+        P = Flug.norm()
+        alpha = np.angle(Flug)
+        lug = Lug()
         return self.cycles
     
     def compute_buckling(self, stringerMat, skinMat):
