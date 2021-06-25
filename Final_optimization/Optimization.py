@@ -37,6 +37,7 @@ class design_optimization(om.ExplicitComponent):
         self.add_output('time')
         self.add_output('MTOM_nc')
         self.add_output('Energy')
+        self.add_output('br_bf')
 
         self.add_output('Cost_func')
 
@@ -70,6 +71,8 @@ class design_optimization(om.ExplicitComponent):
 
         initial_estimate = [MTOM, 0, V_cr, h_cr, C_L_cr, CLmax, prop_radius, de_da, Sv, V_stall, max_power, AR_wing1,
                             AR_wing2, Sr_Sf, s1, xf, zf, xr, zr, max_thrust_stall]
+
+
         # print('Trying out optimization',initial_estimate)
         # Optimisation class
         optimisation_class = int_class.RunDSE(initial_estimate)
@@ -78,30 +81,22 @@ class design_optimization(om.ExplicitComponent):
         N_iter = 15
         optim_outputs, internal_inputs, other_outputs = optimisation_class.multirun(N_iter, optim_inputs=[])
 
-        # inputs['MTOM'] = internal_inputs[0]
-        # inputs['V_cr'] = internal_inputs[2]
-        # inputs['h_cr'] = internal_inputs[3]
-        # inputs['C_L_cr'] = internal_inputs[4]
-        # inputs['CLmax']  = internal_inputs[5]
-        # inputs['prop_radius'] = internal_inputs[6]
-        # inputs['de_da'] = internal_inputs[7]
-        # inputs['Sv'] = internal_inputs[8]
-        # inputs['V_stall'] = internal_inputs[9]
-        # inputs['max_power'] = internal_inputs[10]
-        # inputs['xf'] = internal_inputs[15]
-        # inputs['xr'] = internal_inputs[17]
-        # inputs['zf'] = internal_inputs[16]
-        # inputs['zr'] = internal_inputs[18]
+        S_tot = internal_inputs[1]
+        S1 = s1*S_tot
+        S2 = S1*Sr_Sf
 
-        # inputs['AR1'] = internal_inputs[11]
-        # inputs['AR2'] = internal_inputs[12]
-        # inputs['Sr_Sf'] = internal_inputs[13]
+        b1 = np.sqrt(AR_wing1*S1)
+        b2 = np.sqrt(AR_wing2*S2)
+
+        outputs['br_bf'] = b2/b1
 
         print('===== Progress update =====')
         print('MTOM:        ', optim_outputs[0])
         print('MTOM (nc):   ', optim_outputs[5])
         print('CM_alpha:    ', optim_outputs[3])
         print('ctrl margin: ', optim_outputs[4])
+        print('Front wing:  ', xf)
+        print('Rear wing:   ', xr)
 
         outputs['mass'] = optim_outputs[0]
         outputs['Energy'] = optim_outputs[1]
@@ -154,6 +149,10 @@ prob.model.set_input_defaults('Integrated_design.V_stall', 40.)
 prob.model.add_constraint('Integrated_design.CM_alpha', upper=0.1)
 prob.model.add_constraint('Integrated_design.MTOM', upper=3175.)
 prob.model.add_constraint('Integrated_design.ctrl_mar', upper=0.)
+prob.model.add_constraint('Integrated_design.Sr_Sf', lower = 0.01)
+prob.model.add_constraint('Integrated_design.br_bf', lower = 0.7, upper = 1.3)
+prob.model.add_constraint('Integrated_design.xr', upper = 8)
+
 
 
 # Stability constraints
@@ -166,9 +165,9 @@ prob.model.add_constraint('Integrated_design.ctrl_mar', upper=0.)
 prob.driver = om.ScipyOptimizeDriver()
 prob.driver.options['optimizer'] = 'COBYLA'
 
-prob.model.add_design_var('Integrated_design.AR1')
-prob.model.add_design_var('Integrated_design.AR2')
-prob.model.add_design_var('Integrated_design.Sr_Sf')
+prob.model.add_design_var('Integrated_design.AR1', lower = 5, upper = 15)
+prob.model.add_design_var('Integrated_design.AR2', lower = 5, upper = 15)
+prob.model.add_design_var('Integrated_design.Sr_Sf', lower = 0.01)
 prob.model.add_design_var('Integrated_design.xr')
 
 prob.model.add_objective('Integrated_design.Cost_func')
