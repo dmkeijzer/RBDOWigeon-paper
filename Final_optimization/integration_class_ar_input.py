@@ -34,6 +34,8 @@ import structures.Weight as wei
 #   Fix array error which will come
 #   Print weight fractions for Nikita
 #   Print disk radius and loading
+#   Print different propeller radii and ask Miguel about them, add to Vertical_tail_sizing
+#   Change inputs for VT_controllability
 
 # Constants from constants.py
 g0 = const.g
@@ -101,6 +103,9 @@ def mass(MTOM, S1, S2, n_ult, AR_wing1, AR_wing2, pos_frontwing, pos_backwing, P
 
     # print('gear mass', lgear.mass, props.mass)
     # print('prop mass', n_prop_1*np.sum(m_prop)/n_prop, n_prop)
+    print('loading diagram', m_wf, m_wr, m_fus, m_bat, const.m_cargo_tot, const.m_pax, const.m_pax)
+
+    print('structures', wing.wweight1 + n_prop_1*np.sum(m_prop)/n_prop, wing.wweight1)
     return Mass.mtom, m_wf + n_prop_1*np.sum(m_prop)/n_prop, m_wr + n_prop_2*np.sum(m_prop)/n_prop, m_fus, m_prop, \
            cg_fus, cg_gear, cg_props, \
            Mass.mtom_cg, lgear.mass
@@ -262,6 +267,8 @@ class RunDSE:
         # Calculate the fuselage length
         l_tc = xr - xmac_to_xle(const.sweepc41, AR_wing1, taper, b1, const.dihedral1)[0] + \
                (2 * b2 / (AR_wing2 * (1 + taper))) - (const.l_nosecone + const.l_cylinder)
+
+        upsweep = np.arctan(0.4 / l_tc)
 
         # print(xr)
         # print(xmac_to_xle(const.sweepc41, AR_wing1, taper, b1, const.dihedral1)[0])
@@ -462,6 +469,8 @@ class RunDSE:
                                cg_fus=cg_fus, cg_bat=const.cg_bat, cg_cargo=const.cargo_pos, cg_pax=cg_pax,
                                cg_pil=cg_pil)
 
+        print('loading diagram', m_wf, m_wr, m_fus, m_bat, const.m_cargo_tot, const.m_pax, const.m_pax)
+
         # Get the cg range, based on wing placement, the loading order can be changed if needed
         cg_wf = [xf + 0.25*MAC1, zf]
         cg_wr = [xr + 0.25*MAC2, zr]
@@ -560,7 +569,7 @@ class RunDSE:
         # print('max coeffs', CLmf, CLmr)
 
         CM_a = Cma(Clafwd, Clarear, const.sweepc41, const.sweepc42, taper, taper, CL_cr_1, CL_cr_2, AR_wing1, AR_wing2,
-                   const.e_f, const.e_r, xf, xr, zf, zr, Zcg, const.Vr_Vf_2, Sr_Sf, x_CG_MTOM, S_tot, rho, P_cr/n_prop,
+                   const.e_f, const.e_r, xf, xr, zf, zr, Zcg, const.Vr_Vf_2, Sr_Sf, x_aft, S_tot, rho, P_cr/n_prop,
                    MTOM*g0)
 
         # Load vertical tail
@@ -571,14 +580,14 @@ class RunDSE:
                                             b1, b2, taper, ARv=const.ARv, sweepTE=const.sweep_vtail)
 
         # nE, Tt0, yE, br_bv, cr_cv, ARv, sweepTE
-        v_tail = vertical_tail.final_VT_rudder(n_prop, D_cr, max(b1/2, b2/2), const.br_bv, const.cr_cv, const.ARv,
+        v_tail = vertical_tail.final_VT_rudder(int(n_prop/4), D_cr, max(b1/2, b2/2), const.br_bv, const.cr_cv, const.ARv,
                                                const.sweep_vtail)
 
         # print('clmaxes',T_per_eng_during_stall, V_stall, rho, prop_radius*2, n_prop_1,
         #     n_prop_2, const.tc_wing, CDs_w, CDs_f, Afus, alpha_wp, de_da)
         # Controllability limit
 
-
+        print(x_aft, x_front, x_CG_MTOM)
 
         # print('max lift coeffs', CLmf, CLmr, max_coeffs[1], de_da)
         #print(CLmf, CLmr, CD0fwd, CD0rear, find_mac(S1, b1, taper), find_mac(S2, b2, taper), xf, xr, zf, zr)

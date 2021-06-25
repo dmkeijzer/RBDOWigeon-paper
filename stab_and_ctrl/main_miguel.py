@@ -12,7 +12,7 @@ from matplotlib import pyplot as plt
 
 # example values based on inputs_config_1.json
 W = 3024.8012022968796*9.80665
-W = 0.9*W
+W = 2793.7948931207516*9.80665
 h = 1000
 ISA_atm = ISA(h)
 T = ISA_atm.temperature()
@@ -112,6 +112,8 @@ elevator_effect = 1.4
 dx = 0.1
 
 #### Plotting Vertical Tail ####
+r1 = 0.50292
+r2 = r1
 P_br_cruise_per_engine = 13627.720621056835
 T_cr = 153.63377687614096*12
 nE = 12
@@ -129,20 +131,20 @@ sweepc4 = vt_sizing.Sweep(ARv, sweepTE,25,100)
 print("sweep = ",np.rad2deg(sweepc4))
 
 if isinstance(ARv,(float,int)) and isinstance(sweepTE,(float,int)):
-    vt_sizing.plotting(nf,nE,Tt0,br_bv=brbv,cr_cv=crcv,ARv=ARv,sweepTE=sweepTE)
-    vt_sizing.plotting(nf,nE, Tt0,  br_bv=1.0, cr_cv=0.24,ARv=ARv,sweepTE=sweepTE)
-    Sv = vt_sizing.final_VT_rudder(nf,nE,Tt0,br_bv=1.0,cr_cv=0.24,ARv=ARv,sweepTE=sweepTE)[0]
+    vt_sizing.plotting(r1,r2,nf,nE,Tt0,br_bv=brbv,cr_cv=crcv,ARv=ARv,sweepTE=sweepTE)
+    vt_sizing.plotting(r1,r2,nf,nE, Tt0, br_bv=1.0, cr_cv=0.24,ARv=ARv,sweepTE=sweepTE)
+    Sv = vt_sizing.final_VT_rudder(r1,r2,nf,nE,Tt0,br_bv=1.0,cr_cv=0.24,ARv=ARv,sweepTE=sweepTE)[0]
     Svstab = vt_sizing.VT_stability(ARv,sweepTE)
-    Svctrl = vt_sizing.VT_controllability(nf,nE,Tt0,br_bv=1.0, cr_cv=0.24,ARv=ARv,sweepTE=sweepTE)
-    bv =  vt_sizing.final_VT_rudder(nf,nE,Tt0,br_bv=1.0,cr_cv=0.24,ARv=ARv,sweepTE=sweepTE)[3]
-    cvr = vt_sizing.final_VT_rudder(nf,nE,Tt0,br_bv=1.0,cr_cv=0.24,ARv=ARv,sweepTE=sweepTE)[1]
-    cvt = vt_sizing.final_VT_rudder(nf,nE, Tt0, br_bv=1.0, cr_cv=0.24, ARv=ARv, sweepTE=sweepTE)[2]
+    Svctrl = vt_sizing.VT_controllability(r1,r2,nf,nE,Tt0,br_bv=1.0, cr_cv=0.24,ARv=ARv,sweepTE=sweepTE)
+    bv =  vt_sizing.final_VT_rudder(r1,r2,nf,nE,Tt0,br_bv=1.0,cr_cv=0.24,ARv=ARv,sweepTE=sweepTE)[3]
+    cvr = vt_sizing.final_VT_rudder(r1,r2,nf,nE,Tt0,br_bv=1.0,cr_cv=0.24,ARv=ARv,sweepTE=sweepTE)[1]
+    cvt = vt_sizing.final_VT_rudder(r1,r2,nf,nE, Tt0, br_bv=1.0, cr_cv=0.24, ARv=ARv, sweepTE=sweepTE)[2]
     print("Stability outside: Sv = ",Svstab)
     print("Controllability outside: Sv = ", Svctrl)
     print()
     print("Final: Sv, bv, cv_root, cv_tip =", Sv,bv,cvr,cvt)
 else:
-    vt_sizing.plotting(nf,nE,Tt0,br_bv=0.8,cr_cv=0.35,ARv=ARv,sweepTE=sweepTE)
+    vt_sizing.plotting(r1,r2,nf,nE,Tt0,br_bv=0.8,cr_cv=0.35,ARv=ARv,sweepTE=sweepTE)
 
 #### Plotting Elevator ####
 elevator = Elevator_sizing(W,h,xcg,Zcg,dy, lfus,hfus,wfus,V0,Vstall,CD0,0,CLfwd,CLrear,CLafwd,CLarear,Clafwd,Clarear, Cd0fwd, Cd0rear,
@@ -206,7 +208,6 @@ lgear = LandingGear(W/9.80665, pos_lgear)
 props = Propulsion(n_prop, m_prop, pos_prop)
 weight = Weight(m_pax, wing, fuselage, lgear, props, cargo_m=35, cargo_pos=6.5, battery_m=886.1868116321529, battery_pos=0.5,
                 p_pax=[1.75, 3.75, 3.75, 6, 6])
-print(weight.oem)
 
 # Iyy = 15368.81327 , Ixx = 7771.42196, Izz = 19319.20998, Ixz = 1155.55423
 # Kxx2 = 0.04236, Kyy2 = 3.52711, Kzz2 = 0.10530, Kxz = 0.00630
@@ -228,8 +229,8 @@ if isinstance(ARv,float) and isinstance(sweepTE,float):
                      Clafwd,Clarear, Cd0fwd, Cd0rear, CLafwd,CLarear,Sfwd,Srear,0,0,
                      efwd,erear,Lambda_c4_fwd,Lambda_c4_rear,taper, 0.4,
                      bv,Sv,ARv,sweepTE,P_br_cruise_per_engine,CD0fwd,eta_rear=1,eta_v=0.95)
-    G1 = np.deg2rad(-1.5)
-    G2 = np.deg2rad(-5.25)
+    G1 = np.deg2rad(-0.5)
+    G2 = np.deg2rad(-4.0)
     print("q-derivatives:",stability_derivatives.q_derivatives())
     print("alpha-derivatives:",stability_derivatives.alpha_derivatives())
     print("u-derivatives:",stability_derivatives.u_derivatives())

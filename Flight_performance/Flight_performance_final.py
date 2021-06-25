@@ -160,7 +160,7 @@ class mission:
         return ax_tgt, ay_tgt
 
     def numerical_simulation(self, vx_start, y_start, th_start, y_tgt, vx_tgt):
-        print('this is still running')
+        # print('this is still running')
         # Initialization
         vx = float(vx_start)
         vy = 0.
@@ -421,7 +421,7 @@ class mission:
             P_m_la = 1
 
         else:
-            print('wrong if statement')
+            # print('wrong if statement')
             # Get the energy and distance needed to reach cruise
             d_climb, E_climb, t_climb, P_m_to, T_m_to = self.numerical_simulation(vx_start=0.001, y_start=0,
                                                                                   th_start=np.pi / 2, y_tgt=self.h_cruise,
@@ -539,7 +539,7 @@ class evtol_performance:
         eff = eff_hover + V*(eff_prop - eff_hover)/self.v_cruise
 
         P_r = P_a/eff
-        #print(P_a, P_r)
+        ## print(P_a, P_r)
         return P_r - self.P_max
 
     def max_thrust(self, rho, V):
