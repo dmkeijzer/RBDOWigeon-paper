@@ -5,6 +5,14 @@ import numpy as np
 sys.path.append('Final_optimization/')
 # import constants_final as const
 from Final_optimization import constants_final as const
+class Vtail:
+    def __init__(self, mtom, Sv, Av, rchord, toc, sweep_deg):
+        self.mtom_lbs = 2.20462 * mtom
+        self.Sv_ft = Sv * 3.28084 ** 2
+        self.Av = Av
+        self.trv = rchord * toc * 3.28084
+        self.sweep = sweep_deg * np.pi/180
+        self.mass = ((1.68 * self.mtom_lbs ** 0.567 * self.Sv_ft ** 1.249 * self.Av ** 0.482)/(639.95 * self.trv ** 0.747 * np.cos(self.sweep)**0.882)) * 0.453592
 
 class Wing:
     # Roskam method (not accurate because does not take into account density of material but good enough for comparison
@@ -16,7 +24,7 @@ class Wing:
         self.pos1, self.pos2 = pos
         self.wweight1 = 0.04674*((self.mtow_lbs/2)**0.397)*(self.S1_ft**0.36)*(self.n_ult**0.397)*(self.A_1**1.712)*0.453592
         self.wweight2 = 0.04674*((self.mtow_lbs/2)**0.397)*(self.S2_ft**0.36)*(self.n_ult**0.397)*(self.A_2**1.712)*0.453592
-        self.mass = [self.wweight1, self.wweight2]
+        self.mass = np.array([self.wweight1, self.wweight2]) * 0.453592
         self.moment = np.array(self.mass)*np.array(pos)
         self.wmac, self.toc = wmac, toc
 
@@ -54,7 +62,7 @@ class Propulsion:
 class Weight:
 
     def __init__(self, m_pax, wing, fuselage, landing_gear, propulsion, cargo_m, cargo_pos, battery_m, battery_pos, p_pax = [],
-                 contingency = False):
+                 contingency = False, Vtail_mass = 1, vtail_pos = 1):
         self.m_pax, self.p_pax = m_pax, p_pax
         self.wing, self.fuselage, self.landing_gear, self.prop = wing, fuselage, landing_gear, propulsion
         # weights of components
@@ -62,6 +70,7 @@ class Weight:
         self.wmass, self.fmass, self.lmass, self.pmass = np.sum(self.wing.mass), self.fuselage.mass, self.landing_gear.mass, self.prop.mass
         self.cmass, self.cpos = cargo_m, cargo_pos
         self.bmass, self.battery_pos = battery_m, battery_pos
+        self.vmass, self.vpos = Vtail_mass, vtail_pos
         # moments of components
         self.moment_pax = np.sum(self.m_pax * np.array(self.p_pax))
         self.moment_w = np.sum(np.array(self.wing.moment))
@@ -70,30 +79,31 @@ class Weight:
         self.moment_p = self.prop.moment
         self.moment_c = self.cmass * self.cpos
         self.moment_b = self.bmass * self.battery_pos
+        self.moment_v = self.vmass * self.vpos
         # operational empty mass centre of gravity
-        self.oem_cg = (self.moment_w + self.moment_f + self.moment_l + self.moment_p + self.moment_b) \
-        /(self.wmass + self.pmass + self.lmass + self.fmass + self.bmass)
+        self.oem_cg = (self.moment_w + self.moment_f + self.moment_l + self.moment_p + self.moment_b + self.moment_v) \
+        /(self.wmass + self.pmass + self.lmass + self.fmass + self.bmass + self.vmass)
 
         # masses
-        self.oem = (self.wmass + self.pmass + self.lmass + self.fmass + self.bmass)
+        self.oem = (self.wmass + self.pmass + self.lmass + self.fmass + self.bmass + self.vmass)
 
 #         print("Check inside function:", self.wmass, self.pmass, self.lmass, self.fmass, self.cmass, self.bmass, self.tot_m_pax)
 #         print("")
 
         if contingency:
             self.mtom = (self.wmass*const.mass_cont + self.pmass*const.mass_cont + self.lmass*const.mass_cont +
-                         self.fmass*const.mass_cont + self.cmass + self.bmass*const.mass_cont + self.tot_m_pax)
+                         self.fmass*const.mass_cont + self.cmass + self.bmass*const.mass_cont + self.tot_m_pax + self.vmass * const.mass_cont)
             self.mtom_cg = (self.moment_w*const.mass_cont + self.moment_f*const.mass_cont + self.moment_l*const.mass_cont +
-                            self.moment_p*const.mass_cont + self.moment_pax + self.moment_c + self.moment_b*const.mass_cont) \
+                            self.moment_p*const.mass_cont + self.moment_pax + self.moment_c + self.moment_b*const.mass_cont + self.moment_v * const.mass_cont) \
                            / (self.wmass*const.mass_cont + self.pmass*const.mass_cont + self.lmass*const.mass_cont +
-                              self.fmass*const.mass_cont + self.cmass + self.bmass*const.mass_cont + self.tot_m_pax)
+                              self.fmass*const.mass_cont + self.cmass + self.bmass*const.mass_cont + self.tot_m_pax + self.vmass * const.mass_cont)
 
 
         else:
             self.mtom = (self.wmass + self.pmass + self.lmass +
-                         self.fmass + self.cmass + self.bmass + self.tot_m_pax)
-            self.mtom_cg = (self.moment_w + self.moment_f + self.moment_l + self.moment_p + self.moment_pax + self.moment_c + self.moment_b) \
-                           / (self.wmass + self.pmass + self.lmass + self.fmass + self.cmass + self.bmass + self.tot_m_pax)
+                         self.fmass + self.cmass + self.bmass + self.tot_m_pax + self.vmass)
+            self.mtom_cg = (self.moment_w + self.moment_f + self.moment_l + self.moment_p + self.moment_pax + self.moment_c + self.moment_b + self.moment_v) \
+                           / (self.wmass + self.pmass + self.lmass + self.fmass + self.cmass + self.bmass + self.tot_m_pax + self.vmass)
 
     def print_weight_fractions(self):
         d = {}
@@ -101,10 +111,11 @@ class Weight:
         d["Back wing"] = [self.wing.mass[1], self.wing.mass[1]/self.oem, self.wing.mass[1]/self.mtom]
         d['Fuselage'] = [self.fmass, self.fmass/self.oem, self.fmass/self.mtom]
         d['Landing gear'] = [self.lmass, self.lmass/self.oem, self.lmass/self.mtom]
+        d['Vertical tail'] = [self.vmass, self.vmass/self.oem, self.vmass/self.mtom]
         d['Propulsion'] = [self.pmass, self.pmass/self.oem, self.pmass/self.mtom]
         d['Cargo'] = [self.cmass, 0.0, self.cmass/self.mtom]
         d['Battery'] = [self.bmass, self.bmass/self.oem, self.bmass/self.mtom]
-        d['Payload'] = [self.tot_m_pax, 0.0, self.tot_m_pax/self.oem]
+        d['Payload'] = [self.tot_m_pax, 0.0, self.tot_m_pax/self.mtom]
 
         print("{:<15} {:<20} {:<25} {:<15}".format('Component', 'Mass[kg]', 'fraction of OEM', 'fraction of MTOM'))
         print('--------------------------------------------------------------------------------')
@@ -177,25 +188,25 @@ class Weight:
 
 if __name__ == '__main__':
     mtom = 3000 # maximum take-off mass from statistical data - Class I estimation
-    S1, S2 = 5.5, 5.5 # surface areas of wing one and two
-    A1 = 7.75 # aspect ratio of a wing, not aircraft
-    A2 = 7.85  # aspect ratio of a wing, not aircraft
-    n_ult = 3.2*1.5 # 3.2 is the max we found, 1.5 is the safety factor
-    Pmax = 15.25 # this is defined as maximum perimeter in Roskam, so i took top down view of the fuselage perimeter
-    lf = 7.2 # length of fuselage
-    m_pax = 95 # average mass of a passenger according to Google
-    n_prop = 16 # number of engines
+    S1, S2 = 9.910670535618632, 9.910670535618632 # surface areas of wing one and two
+    A1 = 6.8 # aspect ratio of a wing, not aircraft
+    A2 = 6.8  # aspect ratio of a wing, not aircraft
+    n_ult = 3.4*1.5 # 3.2 is the max we found, 1.5 is the safety factor
+    Pmax = 17 # this is defined as maximum perimeter in Roskam, so i took top down view of the fuselage perimeter
+    lf = 7.379403359777299 # length of fuselage
+    m_pax = 88 # average mass of a passenger according to Google
+    n_prop = 12 # number of engines
     n_pax = 5 # number of passengers (pilot included)
     pos_fus = 3.6 # fuselage centre of mass away from the nose
     pos_lgear = 3.6 # landing gear position away from the nose
     pos_frontwing, pos_backwing = 0.2, 7 # positions of the wings away from the nose
-    m_prop = [30]*16 # list of mass of engines (so 30 kg per engine with nacelle and propeller)
-    pos_prop = [0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 7.0, 7.0, 7.0, 7.0, 7.0, 7.0, 7.0, 7.0] # 8 on front wing and 8 on back wing
+    m_prop = [576.2165134804536/12]*12 # list of mass of engines (so 30 kg per engine with nacelle and propeller)
+    pos_prop = [-0.02401748, -0.02401748, -0.02401748, -0.02401748, -0.02401748, -0.02401748, 5.57598252,  5.57598252, 5.57598252,  5.57598252,  5.57598252,  5.57598252] # 8 on front wing and 8 on back wing
     wing = Wing(mtom, S1, S2, n_ult, A1, A2, [pos_frontwing, pos_backwing])
     fuselage = Fuselage(mtom, Pmax, lf, n_pax, pos_fus)
     lgear = LandingGear(mtom, pos_lgear)
     props = Propulsion(n_prop, m_prop, pos_prop)
-    weight = Weight(m_pax, wing, fuselage, lgear, props, cargo_m = 85, cargo_pos = 6, battery_m = 400, battery_pos = 3.0, p_pax = [1.5, 3, 3, 4.2, 4.2])
+    weight = Weight(m_pax, wing, fuselage, lgear, props, cargo_m = 35, cargo_pos = 6, battery_m = 880, battery_pos = 3.0, p_pax = [1.5, 3, 3, 4.2, 4.2])
     print(weight.print_weight_fractions())
     Ixx, Iyy, Izz, Ixz = weight.MMI(wmac = [0.7, 0.8], toc = [0.17, 0.17], vpos_wing = [0.3, 1.6])
     print('Ixx, Iyy, Izz, Ixz:', + Ixx, Iyy, Izz, Ixz)
