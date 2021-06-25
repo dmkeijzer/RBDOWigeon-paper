@@ -123,9 +123,9 @@ class WingLoads:
     def LugLoad(self):
         eqf = self.RMz / self.wing(0).b
         FmaxN = self.RFy / 2 + eqf
-        eqmx = self.RMx / self.wing(0).b
+        eqmx = self.RMy / self.wing(0).b
         FmaxT = eqmx
-        return [FmaxN, FmaxT]
+        return [FmaxN / 2, FmaxT / 2]
     
     @staticmethod
     def extreme(coord, arr):
@@ -136,6 +136,7 @@ class Lug:
     def __init__(self, a, c, d, t, mat=7075):
         self.a, self.c, self.d, self.t = a, c, d, t
         self.b, self.m = (6.0, -0.020803428405001143) if mat == 7075 else (5.929411764705884, -0.011764705882352944)
+        self.density = 2810
         self.mat = mat
         self.k1, self.k2 = (a * d / (c ** 2)) ** 0.5, (10 / d) ** 0.2
 
@@ -150,7 +151,9 @@ class Lug:
     
     Ka = lambda self, alpha: alpha * (0.007 * self.c / self.a - 0.008) + 1
     
-    Fatigue = lambda self, F, alpha=0: self.SN(self.Kt() * self.Ka(alpha) * self.stress(F, alpha))
+    mass = lambda self: 1e-9 * self.t * self.density * (np.pi * ((self.a + self.d / 2) ** 2 - self.d ** 2 / 4) + 50 * (2 * self.c + self.d))
+    
+    Fatigue = lambda self, F, alpha=0: self.SN(self.Kt() * self.Ka(alpha) * self.stress(F))
 
     SN = lambda self, S: 10 ** (self.b + S * self.m)
 
@@ -165,12 +168,11 @@ class ReferenceLug(Lug):
 
 
 class Fatigue:
-    def __init__(self, Sground, Stakeoff, Scruise, airTime, turnOver, takeOffTime, mat, lug=None):
+    def __init__(self, Sground, Stakeoff, Scruise, airTime, turnOver, takeOffTime, mat):
         self.Sg, self.Sto, self.Scr, self.tAir, self.tTO = Sground, Stakeoff, Scruise, airTime, takeOffTime
         self.tot = turnOver
         self.cyc, self.df, self.ts = [None]*3
         self.mat = mat
-        self.lug = lug if lug is not None else False
 
     def determineCycle(self):
         self.ts = np.linspace(0, self.tAir + self.tot, 1000)
@@ -205,10 +207,9 @@ class Fatigue:
     def CrackGrowth(self, a0, w, Nflights):
         length = a0
         step = 1000
-        Kt = 1 if not Lug else Fatigue.KtLug(self.a, self.c, self.d)
         for j in range(0, Nflights, step):
             da = min(step, Nflights - j) * self.mat.ParisFatigueda(length, w,
-                                self.df['Smax'].values * Kt, self.df['Smin'].values * Kt,
+                                self.df['Smax'].values, self.df['Smin'].values,
                                                                    self.df['count'].values).sum()
             if length >= w / 2:
                 break
