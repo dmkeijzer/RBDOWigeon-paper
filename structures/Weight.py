@@ -4,7 +4,7 @@ import numpy as np
 
 sys.path.append('Final_optimization/')
 # import constants_final as const
-import constants_final as const
+from Final_optimization import constants_final as const
 
 class Wing:
     # Roskam method (not accurate because does not take into account density of material but good enough for comparison
@@ -119,6 +119,7 @@ class Weight:
     def MMI(self, wmac = [], toc = [], vpos_wing = []):
         # COORDINATE SYSTEM: x points towards nose, y points towards right wing, z points down
         # fuselage  - modeled as a hollow cylinder with wall thickness of 5 cm
+        lf = self.fuselage.lf
         irad = (self.fuselage.wf/2 - 0.05)
         fus_mmi_y = self.fmass * (self.fuselage.lf**2 + 3*(self.fuselage.wf/2)**2 + 3*irad**2)/12
         fus_mmi_z = fus_mmi_y
