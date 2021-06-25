@@ -12,132 +12,145 @@ class LandingGearCalc:
 
     @author Jakob Schoser
     """
-    def __init__(self, max_tw: float, x_ng_min: float, y_max_rotor: float,
-                 gamma: float, z_rotor_line_root: float, rotor_rad: float,
-                 fus_back_bottom: list, fus_back_top: list):
+    def __init__(self, x_ng: float, x_tg: float, tw_ng: float,
+                 tilt_max_rad: float, y_tilt: float, tilt_tip_rad: float,
+                 b: float, taper: float, z_wing: float, gamma: float,
+                 y_max_rotor: float, z_offset_rotor: float, rotor_rad: float,
+                 l_fus: float, h_fus: float):
         """
-        Construct a landing gear position calculator object
-        :param max_tw: Maximum track width for the main landing gear
-        :param x_ng_min: Minimum x-location for the nose gear
-        :param y_max_rotor: Maximum y-location of the centre of the most
-        outboard rotor on the front wing
-        :param gamma: Dihedral of the front wing
-        :param z_rotor_line_root: z-location of the point where the straight
-        line passing through all rotor centres on the front wing intersects
-        with the symmetry plane
-        :param rotor_rad: Radius of the most outboard rotor on the front wing
-        :param fus_back_bottom: [x, y]-location of the back bottom corner
-        of the fuselage
-        :param fus_back_top: [x, y]-location of the back top corner
-        of the fuselage
+        :param x_ng: x-location of the nose landing gears
+        :param x_tg: x-location of the rear landing gears
+        :param tw_ng: maximum track width of the front landing gears
+        (limited by the rotation of the wings in the front)
+        :param tilt_max_rad: length of the root chord of the rotating part
+        of the front wing behind the tilting point (i.e., the radius of the
+        circle segment traced out by the trailing edge)
+        :param y_tilt: y-location where the rotating part of the front wing
+        starts
+        :param tilt_tip_rad: length of the tip chord behind the rotation axis
+        :param b: span of the front wing
+        :param taper: taper ratio of the front wing
+        :param z_wing: z-position of the front wing in the symmetry plane
+        :param gamma: dihedral of the front wing
+        :param y_max_rotor: y-position of the most outboard rotor
+        :param z_offset_rotor: offset of the rotor line in z-direction
+        (compared to wing)
+        :param rotor_rad: radius of rotors on the front wing
+        :param l_fus: length of the fuselage
+        :param h_fus: height of the fuselage
         """
-        self.max_tw = max_tw
-        self.x_ng_min = x_ng_min
-        self.y_max_rotor = y_max_rotor
+        self.x_ng = x_ng
+        self.x_tg = x_tg
+        self.tw_ng = tw_ng
+        self.tilt_max_rad = tilt_max_rad
+        self.y_tilt = y_tilt
+        self.tilt_tip_rad = tilt_tip_rad
+        self.b = b
+        self.taper = taper
+        self.z_wing = z_wing
         self.gamma = gamma
-        self.z_rotor_line_root = z_rotor_line_root
+        self.y_max_rotor = y_max_rotor
+        self.z_offset_rotor = z_offset_rotor
         self.rotor_rad = rotor_rad
-        self.fus_back_bottom = np.array(fus_back_bottom)
-        self.fus_back_top = np.array(fus_back_top)
+        self.l_fus = l_fus
+        self.h_fus = h_fus
 
-    def optimum_placement(self, x_cg_range: list, x_cg_margin: float,
+    def calc_min_h_root(self, tw_tg, phi):
+        z_root = (self.z_wing + self.y_tilt * np.tan(self.gamma)
+                  - self.tilt_max_rad)
+        y_dist = self.y_tilt - tw_tg / 2
+        return y_dist * np.tan(phi) - z_root
+
+    def calc_min_h_tip(self, tw_tg, phi):
+        z_tip = (self.z_wing + self.b / 2 * np.tan(self.gamma)
+                 - self.tilt_tip_rad)
+        y_dist = self.b / 2 - tw_tg / 2
+        return y_dist * np.tan(phi) - z_tip
+
+    def calc_min_h_rotor(self, tw_tg, phi):
+        z_rot = (self.z_wing + self.b / 2 * np.tan(self.gamma) - self.rotor_rad)
+        y_dist = self.y_max_rotor - tw_tg / 2
+        return y_dist * np.tan(phi) - z_rot
+
+    def calc_min_h_tipback(self, theta):
+        return np.tan(theta) * (self.l_fus - self.x_tg) - self.h_fus
+
+    def calc_psi(self, tw_tg, z_cg, h_lg):
+        alpha = np.arctan((tw_tg - self.tw_ng) / 2 / (self.x_tg - self.x_ng))
+        bn = self.x_tg - self.x_ng + np.tan(alpha) / (self.tw_ng / 2)
+        c = bn * np.sin(alpha)
+        return np.arctan((z_cg + h_lg) / c)
+
+    def calc_ng_lf(self, x_cg):
+        return (self.x_tg - x_cg) / (self.x_tg - self.x_ng)
+
+    def calc_tg_lf(self, x_cg):
+        return 1 - self.calc_ng_lf(x_cg)
+
+    def optimum_placement(self, x_cg_range: list,
                           z_cg_max: float, theta: float, phi: float,
-                          psi: float, min_ng_load_frac: float) -> tuple:
+                          psi: float, min_lf: float, tw_tg_max=4.,
+                          tw_tg_res=20) -> tuple:
         # TODO: consider compression of the landing gear
         # TODO: consider y-offset of CG in turnover angle
         """
         Place the landing gear with respect to geometric constraints
         :param x_cg_range: x-range of CG locations
-        :param x_cg_margin: margin applied to the aft CG location
         :param z_cg_max: z-location of the highest CG
         :param theta: Pitch angle limit
         :param phi: Lateral ground clearance angle
         :param psi: Turnover angle
-        :param min_ng_load_frac: Minimum fraction of the weight to be carried
-        by the nose gear
-        :return: (x-location of the nose gear, x-location of the main
-        landing gear, track width of the main landing gear, height of the
-        main landing gear). (None, None, None, None) if the required track
-        width exceeds the maximum track width
+        :param min_lf: Minimum fraction of the weight to be carried
+        by the least loaded pair of gears
+        :param tw_tg_max: Maximum track with of the tail gear that is tested
+        for
+        :param tw_tg_res: Resolution of the array containing all track widths
+        to be tried out
+        :return: (track width of the main landing gear, height of the
+        main landing gear). (None, None) if no feasible configuration
+        was found with the given parameters
         """
-        # calculate [x, z]-position of MLG due to pitch limit during emergency
-        # landing on a regular airfield
-        fus_slope = (
-                (self.fus_back_top[1] - self.fus_back_bottom[1])
-                / (self.fus_back_top[0] - self.fus_back_bottom[0])
-        )
+        tw_tg_list = np.linspace(self.tw_ng, tw_tg_max, tw_tg_res)
+        min_h_tipback = (np.ones(tw_tg_list.shape)
+                         * self.calc_min_h_tipback(theta))
+        min_h_root = self.calc_min_h_root(tw_tg_list, phi)
+        min_h_tip = self.calc_min_h_tip(tw_tg_list, phi)
+        min_h_rotor = self.calc_min_h_rotor(tw_tg_list, phi)
+        h_list = np.max(min_h_tipback, min_h_root, min_h_tip, min_h_rotor)
+        psi_list = self.calc_psi(tw_tg_list, z_cg_max, h_list)
 
-        # if the top point on the fuselage back is limiting
-        if np.arctan(fus_slope) <= theta:
-            fus_lim_pt = self.fus_back_top
-        # if the bottom point on the fuselage back is limiting
-        else:
-            fus_lim_pt = self.fus_back_bottom
+        if np.max(psi_list) > psi:
+            return None, None
 
-        # apply margin to critical CG for tip-back
-        cg_rear = (np.array([x_cg_range[1], z_cg_max])
-                   + np.array([x_cg_margin, 0]))
+        tw_tg = tw_tg_list[np.argmin(np.abs(psi_list - psi))]
+        h = h_list[np.argmin(np.abs(psi_list - psi))]
 
-        A = np.array([
-            [np.tan(theta), -1],
-            [-1, -np.tan(theta)]
-        ])
+        return tw_tg, h
 
-        b = fus_lim_pt - cg_rear
-
-        x = np.linalg.solve(A, b)
-        mlg_pos = cg_rear + x[0] * np.array([np.tan(theta), -1])
-
-        # calculate [x, z]-position of the nose landing gear based on the
-        # minimum load fraction it should have
-        d = (mlg_pos - cg_rear)[0] / min_ng_load_frac
-        ng_pos = mlg_pos - np.array([d, 0])
-        ng_pos[0] = max(ng_pos[0], self.x_ng_min)
-
-        # calculate the minimum track width based on turnover angle
-        c = z_cg_max / np.tan(psi)
-        alpha = np.arcsin(c / (x_cg_range[0] - ng_pos[0]))
-        tw = 2 * np.tan(alpha) * d
-
-        # calculate the minimum track width based on rotor clearance
-        z_rotor_centre = (self.z_rotor_line_root
-                          + self.y_max_rotor * np.tan(self.gamma))
-        z_rotor_bottom = z_rotor_centre - self.rotor_rad
-        tw = max(tw, 2 * (self.y_max_rotor
-                          - (z_rotor_bottom - mlg_pos[1]) / np.tan(phi)))
-
-        if tw > self.max_tw:
-            return None, None, None, None
-
-        return ng_pos[0], mlg_pos[0], tw, abs(mlg_pos[1])
-
-    def plot_lg(self, x_cg_range: list, x_cg_margin: float, z_cg_max: float,
-                x_ng: float, x_mlg: float, tw: float, h_mlg: float):
+    def plot_lg(self, x_cg_range: list, z_cg_max: float,
+                x_ng: float, x_tg: float, tw_ng: float, tw_tg: float,
+                h: float):
         """
         Create a side and front view plot of the given landing gear
         configuration.
         :param x_cg_range: x-range of CG locations
-        :param x_cg_margin: margin applied to the aft CG location
         :param z_cg_max: z-location of the highest CG
         :param x_ng: x-location of the nose gear
-        :param x_mlg: x-location of the main landing gear
-        :param tw: track width of the main landing gear
-        :param h_mlg: height of the main landing gear
+        :param x_tg: x-location of the tail gear
+        :param tw_ng: track width of the nose  gear
+        :param tw_tg: track width of the tail gear
+        :param h: height of the landing gear
         """
         # plot side view
         plt.subplot(211)
-        # plot rear CG margin
-        plt.plot([x_cg_range[1], x_cg_range[1] + x_cg_margin],
-                 [z_cg_max, z_cg_max], color="tab:green", marker="o",
-                 label="CG margin")
         # plot CG range
         plt.plot(x_cg_range, [z_cg_max, z_cg_max], color="k", marker="o",
                  label="CG range")
         # plot nose gear
-        plt.scatter([x_ng], [-h_mlg], color="tab:blue", label="Nose gear")
+        plt.scatter([x_ng], [-h], color="tab:blue", label="Nose gear")
         # plot main landing gear
-        plt.scatter([x_mlg], [-h_mlg], color="tab:orange",
-                    label="Main landing gear")
+        plt.scatter([x_tg], [-h], color="tab:orange",
+                    label="Tail gear")
         plt.legend()
         plt.gca().set_aspect('equal', adjustable='box')
 
@@ -146,11 +159,10 @@ class LandingGearCalc:
         # plot CG
         plt.scatter([0], [z_cg_max], color="k", label="CG range")
         # plot nose gear
-        plt.scatter([0], [-h_mlg], color="tab:blue", label="Nose gear")
-        # plot main landing gear
-        plt.scatter([tw/2], [-h_mlg], color="tab:orange",
-                    label="Main landing gear")
-        plt.scatter([-tw/2], [-h_mlg], color="tab:orange")
+        plt.scatter([-tw_ng/2, tw_ng/2], [-h, -h], color="tab:blue",
+                    label="Nose gear")
+        # plot tail gear
+        plt.scatter([-tw_tg/2, tw_tg/2], [-h, -h], color="tab:orange",
+                    label="Tail gear")
         plt.legend()
         plt.gca().set_aspect('equal', adjustable='box')
-
