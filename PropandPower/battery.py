@@ -3,7 +3,6 @@ import numpy as plt
 
 class Battery:
     """This class is to estimate the parameters of a battery"""
-
     def __init__(self, sp_en_den, vol_en_den, tot_energy, cost, DoD, P_den, P_max, safety, EOL_C):
         """
         :param sp_en_den: Specific energy density of the battery [Wh/kg]
