@@ -3,20 +3,14 @@ import numpy as np
 from Flight_performance.Flight_performance_final import mission, evtol_performance
 from Aero_tools import ISA, speeds
 from Final_optimization import constants_final as const
-import sys, os
-# Disable
-def blockPrint():
-    sys.stdout = open(os.devnull, 'w')
+#import sys, os
+import matplotlib
 
-# Restore
-def enablePrint():
-    sys.stdout = sys.__stdout__
-blockPrint()
 from Preliminary_Lift.main_aero import Cl_alpha_curve, CD_a_w, CD_a_f, alpha_lst, Drag
-enablePrint()
 
 
 
+plt.rcParams["figure.figsize"] = (5, 4)
 
 class sensitivity_analysis:
     """
@@ -39,7 +33,7 @@ class sensitivity_analysis:
         self.A_disk = A_disk
         self.P_max = P_max
 
-        plt.rcParams.update({'font.size': 16})
+
         self.path = '../Flight_performance/Figures/'
 
     def cruising_altitude(self):
@@ -68,7 +62,7 @@ class sensitivity_analysis:
         plt.xlabel('Cruising altitude [m]')
         plt.ylabel('Range [km]')
         plt.grid()
-        plt.tight_layout()
+        plt.tight_layout(pad=0.05)
         plt.savefig(self.path + 'energy_sensitivity_altitude' +'.pdf')
         plt.show()
 
@@ -76,7 +70,7 @@ class sensitivity_analysis:
         plt.xlabel('Cruising altitude [m]')
         plt.ylabel('Block speed [m/s]')
         plt.grid()
-        plt.tight_layout()
+        plt.tight_layout(pad=0.05)
         plt.savefig(self.path + 'time_sensitivity_altitude' + '.pdf')
         plt.show()
 
@@ -115,7 +109,7 @@ class sensitivity_analysis:
             plt.xlabel('Cruise speed [m/s]')
             plt.ylabel('Range [km]')
             plt.grid()
-            plt.tight_layout()
+            plt.tight_layout(pad=0.05)
             plt.savefig(self.path + 'energy_sensitivity_speed' + '.pdf')
             plt.show()
 
@@ -123,13 +117,13 @@ class sensitivity_analysis:
             plt.xlabel('Cruise speed [m/s]')
             plt.ylabel('Block speed [m/s]')
             plt.grid()
-            plt.tight_layout()
+            plt.tight_layout(pad=0.05)
             plt.savefig(self.path + 'time_sensitivity_speed' + '.pdf')
             plt.show()
 
         return V_opt
 
-    def wind(self, test_wind = 60, testing = False, plotting = True):
+    def wind(self, test_wind = 72, testing = False, plotting = True):
 
         # Different wind speeds (tail- and headwinds)
         winds = np.arange(-10, 12, 2)
@@ -164,7 +158,7 @@ class sensitivity_analysis:
             plt.xlabel('Wind [m/s]')
             plt.ylabel('Range [km]')
             plt.grid()
-            plt.tight_layout()
+            plt.tight_layout(pad=0.05)
             plt.savefig(self.path + 'energy_sensitivity_wind' + '.pdf')
             plt.show()
 
@@ -172,7 +166,7 @@ class sensitivity_analysis:
             plt.xlabel('Wind [m/s]')
             plt.ylabel('Block speed [m/s]')
             plt.grid()
-            plt.tight_layout()
+            plt.tight_layout(pad=0.05)
             plt.savefig(self.path + 'time_sensitivity_wind' + '.pdf')
             plt.show()
 
@@ -191,7 +185,7 @@ h_cr = 1000
 
 
 sensitivity = sensitivity_analysis(MTOM = mass, CLmax = CL_max, S = wing_surface, comp_drag=Drag,
-                                   battery_capacity=850e6, EOM=EOM, loiter_time= 15*60,
+                                   battery_capacity=1084e6, EOM=EOM, loiter_time= 15*60,
                                    A_disk = A_disk, P_max = P_max, V_cr = V_cr, h_cr=h_cr)
 
 sensitivity.cruising_altitude()

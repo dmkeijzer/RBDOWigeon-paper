@@ -3,6 +3,7 @@ from scipy.linalg import null_space
 from matplotlib import pyplot as plt
 from matplotlib import colors as mc
 from Aero_tools import ISA
+from Final_optimization import constants_final as const
 class VT_sizing:
     def __init__(self,W,h,xcg,lfus,hfus,wfus,V0,Vstall,CD0,CLfwd,CLrear,
                  CLafwd,CLarear,Sfwd,Srear,Afwd,Arear,Lambda_c4_fwd,Lambda_c4_rear,cfwd,crear,bfwd,brear,taper,ARv,sweepTE):
@@ -47,6 +48,7 @@ class VT_sizing:
         self.c = self.Sfwd/self.S*self.cfwd+self.Srear/self.S*self.crear
         self.ARv = ARv
         self.sweepTE = sweepTE
+        self.b = np.sqrt(0.5 * (self.Srear / self.S * self.Arear + self.Sfwd / self.S * self.Afwd) * self.S)
 
     def Sweep(self,AR,Sweepm,n,m):
         """
@@ -113,30 +115,42 @@ class VT_sizing:
         # print(xacv)
         return xacv
 
-    def VT_controllability(self,nf, nE,Tt0,br_bv,cr_cv,ARv,sweepTE):
+    def VT_controllability(self,r1,r2,nf, nE,Tt0,br_bv,cr_cv,ARv,sweepTE):
         """
         Inputs:
+        :param r1: Radius of propellers on forward wing
+        :param r2: Radius of propellers on rear wing
         :param nf: Number of failed engines [-]
         :param nE: Number of engines [-]
         :param Tt0: Take-off thrust [N]
-        :param yE: Largest moment arm [m]
-        :param ARv:
-        :param sweepTE:
+        :param ARv: Aspect ratio
+        :param sweepTE: Sweep of vertical tail
         :return: Required vertical tail area [m^2] for controllability
         """
         lv = self.xacv(ARv,sweepTE)-self.xcg
         N_E = 0
-        r = 0.50292
-        yE1 = max(self.brear,self.bfwd)/2
-        yE2 = yE1- r-0.3-r
-        yE3 = yE2-r-0.3-r
+        # r = 0.50292
+        yE1 = self.bfwd/2
+        cpp = const.c_pp
+        yE2 = yE1- r1-cpp-r1
+        yE3 = yE2-r1-cpp-r1
         y = [yE1,yE2,yE3]
         for i in range(nf):
             yE =y[i]
+            # print(N_E)
             N_E += Tt0/nE*yE# Asymmetric yaw moment [Nm]
-        N_E *=2
+        yE1 = self.brear / 2
+        yE2 = yE1 - r2 - cpp - r2
+        yE3 = yE2 - r2 - cpp - r2
+        y = [yE1, yE2, yE3]
+        for i in range(nf):
+            yE = y[i]
+            # print(N_E)
+            N_E += Tt0 / nE * yE  # Asymmetric yaw moment [Nm]
+        # print(N_E)
         N_D = 0.25*N_E # component due to drag [Nm]
         N_total = N_E + N_D
+        # print(N_total)
         Sr_Sv = 0.2
         dr_max = 25*np.pi/180
         C_rudder = self.initial_VT()[3]*cr_cv
@@ -163,7 +177,7 @@ class VT_sizing:
         b = self.wfus/2
         V = 2*np.pi/4*b**2*(self.lfus/2-(self.lfus/2)**3/(3*a**2))
         bmax = np.sqrt(0.5*(self.Srear/self.S*self.Arear+self.Sfwd/self.S*self.Afwd)*self.S)
-        Cnb_fus = -2*V/(self.S*max(self.bfwd,self.brear))
+        Cnb_fus = -2*V/(self.S*self.b)
         Cnb_w_fwd = self.CLfwd**2*(1/(4*np.pi*self.Afwd)-
                                    (np.tan(self.Sweepc4fwd)/(np.pi*self.Afwd+4*np.cos(self.Sweepc4fwd)))*
                                    (np.cos(self.Sweepc4fwd)-self.Afwd/2-self.Afwd**2/(8*np.cos(self.Sweepc4fwd))-
@@ -175,34 +189,37 @@ class VT_sizing:
         CYb_v = -self.C_L_a(ARv,self.Sweep(ARv,sweepTE,50,100))
 
         Cnb = 0.0571
-        Sv = self.S*(Cnb-Cnb_fus-Cnb_w_fwd*self.Sfwd*self.bfwd/(self.S*bmax)-
-                     Cnb_w_rear*self.Srear*self.brear/(self.S*bmax))/(-CYb_v)*bmax/lv
+        Sv = self.S*(Cnb-Cnb_fus-Cnb_w_fwd*self.Sfwd*self.bfwd/(self.S*self.b)-
+                     Cnb_w_rear*self.Srear*self.brear/(self.S*self.b))/(-CYb_v)*self.b/lv
         # print("Stability: lv = ", lv)
         # print("Print inside the function Svstab", Sv)
         return Sv
 
-    def final_VT_rudder(self,nE,Tt0,yE,br_bv, cr_cv,ARv,sweepTE):
+    def final_VT_rudder(self,r1,r2,nf,nE,Tt0,br_bv, cr_cv,ARv,sweepTE):
         """
         Inputs:
+        :param r1: Radius of propellers on forward wing
+        :param r2: Radius of propellers on rear wing
+        :param nf: Number of failed engines
         :param nE: Number of propellers
         :param Tt0: Thrust [N]
         :param yE: Moment arm [m]
         :return: Final design
         """
         if isinstance(br_bv,(float,int)) and isinstance(self.ARv,(float,int)) and isinstance(self.sweepTE,(float,int)):
-            Sv = max(self.VT_controllability(nE,Tt0,yE,br_bv,cr_cv,ARv,sweepTE),self.VT_stability(ARv,sweepTE))
+            Sv = max(self.VT_controllability(r1,r2,nf,nE,Tt0,br_bv,cr_cv,ARv,sweepTE),self.VT_stability(ARv,sweepTE))
             # print("Stability inside final VT: ", self.VT_stability(ARv,sweepTE))
             # print("Controllability inside final VT: ", self.VT_controllability(nE,Tt0,yE,br_bv,cr_cv,ARv,sweepTE))
             # print("Sv_max inside = ",Sv)
 
         elif isinstance(br_bv,(float,int)) and not isinstance(ARv,(float,int)) and not isinstance(sweepTE,(float,int)):
             Sv_stab = self.VT_stability(ARv,sweepTE)
-            Sv_ctrl = self.VT_controllability(nE,Tt0,yE,br_bv,cr_cv,ARv,sweepTE)
+            Sv_ctrl = self.VT_controllability(r1,r2,nf,nE,Tt0,br_bv,cr_cv,ARv,sweepTE)
             Sv = np.where(Sv_stab < Sv_ctrl,Sv_ctrl,Sv_stab)
 
         else:
             Sv_stab = self.VT_stability(ARv, sweepTE)
-            Sv_ctrl = self.VT_controllability(nE, Tt0, yE, br_bv, cr_cv,ARv,sweepTE)
+            Sv_ctrl = self.VT_controllability(r1,r2, nf,nE, Tt0, br_bv, cr_cv,ARv,sweepTE)
             Sv = np.where(Sv_stab < Sv_ctrl, Sv_ctrl, Sv_stab)
 
         bv = np.sqrt(ARv*Sv)
@@ -218,14 +235,14 @@ class VT_sizing:
         b_r = br_bv*bv
         return Sv,C_vr,C_vt,bv,Sweep_v_c2,c_r,c_r_root,c_r_tip,b_r,ARv
 
-    def plotting(self,nE,Tt0,yE,br_bv,cr_cv,ARv,sweepTE):
+    def plotting(self,r1,r2,nf,nE,Tt0,br_bv,cr_cv,ARv,sweepTE):
         if isinstance(br_bv,(float,int)) and isinstance(self.ARv,(float,int)) and isinstance(self.sweepTE,(float,int)):
             y_LE_0 = 0
             x_LE_0 = 0
-            c_root = self.final_VT_rudder(nE,Tt0,yE,br_bv,cr_cv,ARv=self.ARv,sweepTE=self.sweepTE)[1]
+            c_root = self.final_VT_rudder(r1,r2,nf,nE,Tt0,br_bv,cr_cv,ARv=self.ARv,sweepTE=self.sweepTE)[1]
             x_TE_1 = c_root
             y_TE_1 = 0
-            bv = self.final_VT_rudder(nE, Tt0, yE, br_bv, cr_cv,ARv=self.ARv,sweepTE=self.sweepTE)[3]
+            bv = self.final_VT_rudder(r1,r2,nf,nE, Tt0,  br_bv, cr_cv,ARv=self.ARv,sweepTE=self.sweepTE)[3]
             y_TE_2 = bv
             x_TE_2 = c_root+bv/np.tan(np.pi/2-self.sweepTE)
             y_LE_3 = y_TE_2
@@ -248,8 +265,8 @@ class VT_sizing:
             plt.show()
         elif not isinstance(self.ARv,(float,int)) and isinstance(br_bv,(float,int)) and isinstance(self.sweepTE,(float,int)):
             Svstab = self.VT_stability(ARv,sweepTE)
-            Svcontrol = self.VT_controllability(nE,Tt0,yE,br_bv,cr_cv,ARv,sweepTE)
-            bv = self.final_VT_rudder(nE,Tt0,yE,br_bv,cr_cv,ARv,sweepTE)[3]
+            Svcontrol = self.VT_controllability(r1,r2,nf,nE,Tt0,br_bv,cr_cv,ARv,sweepTE)
+            bv = self.final_VT_rudder(r1,r2,nf,nE,Tt0,br_bv,cr_cv,ARv=self.ARv,sweepTE=self.sweepTE)[3]
             Sv_estimate = None
             plt.plot(self.ARv,Svstab,label="Stability Curve")
             plt.plot(self.ARv,Svcontrol,label="Controllability for OEI condition")
@@ -263,7 +280,7 @@ class VT_sizing:
             plt.show()
         elif isinstance(self.ARv,(float,int)) and isinstance(br_bv,(float,int)) and not isinstance(self.sweepTE,(float,int)):
             Svstab = self.VT_stability(ARv,sweepTE)
-            Svcontrol = self.VT_controllability(nE, Tt0, yE, br_bv, cr_cv,ARv,sweepTE)
+            Svcontrol = self.VT_controllability(r1,r2,nf,nE,Tt0,br_bv,cr_cv,ARv,sweepTE)
             # bv = self.final_VT_rudder(nE, Tt0, yE, br_bv, cr_cv)[3]
             # cbar = plt.colorbar(cp, orientation="horizontal")
             # cbar.set_label(r"$S_v$")
@@ -283,7 +300,8 @@ class VT_sizing:
             # plt.show()
         elif not isinstance(self.ARv, (float, int)) and isinstance(br_bv, (float, int)) and not isinstance(self.sweepTE,(float, int)):
             X, Y = np.meshgrid(ARv, sweepTE)
-            Z = self.final_VT_rudder(nE, Tt0, yE, br_bv, cr_cv,X,Y)[0]
+            # r1, r2, nf, nE, Tt0, br_bv, cr_cv, ARv = self.ARv, sweepTE = self.sweepTE
+            Z = self.final_VT_rudder(r1,r2,nf,nE, Tt0, br_bv, cr_cv,X,Y)[0]
             fig, ax = plt.subplots(1, 1)
             Sv_estimate = None
             # ax.add_artist(ab)
@@ -297,7 +315,7 @@ class VT_sizing:
             plt.ylabel(r"$\Lambda_{v_{TE}}$ [deg]", fontsize=12)
             plt.xlabel(r"$AR_v$ [-]", fontsize=12)
             plt.show()
-            bv = self.final_VT_rudder(nE, Tt0, yE, br_bv, cr_cv, ARv=X, sweepTE=Y)[3]
+            bv = self.final_VT_rudder(r1,r2,nf,nE, Tt0, br_bv, cr_cv, ARv=X, sweepTE=Y)[3]
             fig, ax = plt.subplots(1, 1)
             Sv_estimate = None
             # ax.add_artist(ab)
@@ -313,7 +331,7 @@ class VT_sizing:
             plt.show()
         else:
             X, Y = np.meshgrid(cr_cv, br_bv)
-            Z = self.VT_controllability(nE,Tt0,yE,Y,X,ARv,sweepTE)
+            Z = self.VT_controllability(r1,r2,nf,nE,Tt0,Y,X,ARv,sweepTE)
             fig, ax = plt.subplots(1, 1)
             Sv_estimate = None
             # ax.add_artist(ab)
@@ -328,7 +346,7 @@ class VT_sizing:
             plt.xlabel(r"$c_r/c_v$ [-]", fontsize=12)
             plt.show()
             X, Y = np.meshgrid(cr_cv, br_bv)
-            Sv = self.VT_controllability(nE, Tt0, yE, Y, X, ARv, sweepTE)
+            Sv = self.VT_controllability(r1,r2,nf,nE, Tt0, Y, X, ARv, sweepTE)
             Z = np.sqrt(self.ARv*Sv)
             fig, ax = plt.subplots(1, 1)
             Sv_estimate = None

@@ -26,7 +26,7 @@ class PropSizing:
         Size the radius based on the span, assuming one tip mounted engine
         """
         return (self.b/2 - self.wf/2 - self.c_fp - (self.N_per_half_wing - 1)*self.c_pp) / \
-               (2*(self.N_per_half_wing - 1) + 1)
+               (2*self.N_per_half_wing - 1)  # (2*(self.N_per_half_wing - 1) + 1)
 
     def diameter(self):
         return 2*self.radius()

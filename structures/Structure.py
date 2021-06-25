@@ -1,5 +1,5 @@
 from Geometry import HatStringer, JStringer, ZStringer, WingBox, WingStructure, StructuralError
-from SolveLoads import WingLoads, Engines, Fatigue
+from SolveLoads import WingLoads, Engines, Fatigue, Lug, ReferenceLug
 from Weight import *
 from Material import Material
 from Draw import InternalLoading, DrawFatigue
@@ -118,6 +118,26 @@ class Structure:
             raise StructuralError(f"Invalid Number of Fatigue Cycles: {self.cycles}")
         return self.cycles
     
+    def design_lug(self):
+        Nflights = 365 * 15 * 3
+        Flug = np.abs(self.loads.LugLoad())
+        P = np.linalg.norm(Flug) / 1.5
+        alpha = 180 * np.arctan(Flug[1] / Flug[0]) / np.pi
+        designs, minweight = [], float('inf')
+        print(f"{P = }, {alpha = }")
+        for a in range(5, 40):
+            for t in range(5, 15):
+                lug = Lug(a, a, 14, t)
+                N = lug.Fatigue(P, alpha)
+                if N > Nflights * 2:
+                    if lug.mass() < minweight:
+                        if P / (2 * lug.c * lug.t) < 469 and P / (lug.d * lug.t) < 469:
+                            designs.append(lug)
+                            minweight = lug.mass()
+        print(Nflights, N, designs[-1].Fatigue(P, alpha))
+        return designs[-1], minweight
+
+
     def compute_buckling(self, stringerMat, skinMat):
 
         root = self.loads.wing(0)

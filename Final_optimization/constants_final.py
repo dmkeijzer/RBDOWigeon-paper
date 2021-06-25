@@ -9,7 +9,7 @@ rho_0 = 1.225               # [kg/m^3]
 # Contingency
 energy_cont     = 1
 payload_cont    = 1
-mass_cont       = 1.1
+mass_cont       = 1
 
 # General
 mission_range = 300e3       # [m] Mission range  TODO: Maybe add 50 km
@@ -19,15 +19,15 @@ m_pax = 88                              # Max per pax
 m_cargo_per_pax = 7                     # [kg] Cargo mass per pax
 m_cargo_tot = m_cargo_per_pax*n_pax     # [kg] Total cargo mass
 
-
 # Fuselage
-w_fuselage = 1.38           # [m]
-h_fuselage = 1.7            # [m]
-l_nosecone = 2.5            # [m]
-l_cylinder = 2.5            # [m]
-#l_tailcone = 2.7            # [m]
+w_fuselage = 1.38            # [m]
+h_fuselage = 1.7             # [m]
+l_nosecone = 2.5             # [m]
+l_cylinder = 2.5             # [m]
+l_tailcone = 2.7            # [m]
 #l_fus = l_nosecone + l_cylinder + l_tailcone
-upsweep = 8.43*np.pi/180    # [Degrees]
+# upsweep = 8.43*np.pi/180     # [Degrees]
+# upsweep = np.arctan(0.4/l_tail)
 
 
 # Aerodynamics
@@ -49,11 +49,11 @@ k_wl = 2.0                  # Constant for winglets (could be changed to 2 if we
 Vr_Vf_2 = 1                 # Speed ratio between wing 1 and 2
 e_f = 0.65                  # Oswald efficiency for front wing
 e_r = 0.65                  # Oswald efficiency for rear wing
-h_wt_1 = 0.5                # Height of front wingtips [m]
-h_wt_2 = 0.5                # Height of back wingtips [m]
-dihedral1 = np.deg2rad(5)   # Dihedral front wing
-dihedral2 = np.deg2rad(0)   # Dihedral back wing
-i1 = 0                      # Trim angle of the front wing TODO deg or rad?
+h_wt_1 = 0.5                    # Height of front wingtips [m]
+h_wt_2 = 0.5                    # Height of back wingtips [m]
+dihedral1 = np.deg2rad(-0.5)    # Dihedral front wing. Old 5
+dihedral2 = np.deg2rad(-4)      # Dihedral back wing. Old 0
+i1 = 0                          # Trim angle of the front wing TODO if used deg or rad?
 
 # Propulsion
 xi_0 = 0.1         # Dimensionless radius of the hub (r_hub/R)
@@ -63,21 +63,21 @@ eff_prop = 0.85    # [-] Propeller efficiency during normal flight
 eff_hover = 0.75   # [-] Propeller efficiency during hover
 # TODO: revise
 # eff_eng_bat = 0.7  # [-] Efficiency from batteries to engines (including engine, battery, and electronics efficiencies)
-sp_mass_en = 1/3600     # [kg/W]
+sp_mass_en = 1/5000     # [kg/W]
 
 n_prop_1 = 6                # number of propellors on the front wing
 n_prop_2 = 6                # number of propellers on the rear wing
 n_prop = n_prop_1+n_prop_2  # Total number of propellers
 
 # Power
-sp_en_den = 500     # [Wh/kg] Specific energy density
-vol_en_den = 900    # [Wh/l] Volumetric energy density
-bat_cost = 100      # [$/kWh] Cost of batteries in US dollars per kilogram
-DoD = 0.8           # [-] Depth of Discharge of the total battery
-P_den = 4000       # [W/kg] Power density of battery
-EOL_C = 0.85        # [-] Fraction of initial capacity that is available at end-of-life
-eff_bat_eng_cr = 0.9  # Efficiency from the battery to the engines (including both) in cruise
-eff_bat_eng_h = 0.75  # Efficiency from the battery to the engines (including both) in hover
+sp_en_den = 500         # [Wh/kg] Specific energy density
+vol_en_den = 900        # [Wh/l] Volumetric energy density
+bat_cost = 100          # [$/kWh] Cost of batteries in US dollars per kilogram
+DoD = 0.8               # [-] Depth of Discharge of the total battery
+P_den = 6500            # [W/kg] Power density of battery
+EOL_C = 0.85            # [-] Fraction of initial capacity that is available at end-of-life
+eff_bat_eng_cr = 0.9    # Efficiency from the battery to the engines (including both) in cruise
+eff_bat_eng_h = 0.75    # Efficiency from the battery to the engines (including both) in hover
 
 # Stability
 fus_back_bottom = [6.5, 0]
@@ -92,10 +92,12 @@ crmaxf = 2.1
 crmaxr = 3
 A_range_f = [5, 15]
 A_range_r = [5, 15]
-ARv = 1.5                       # AR of vertical tail
+ARv = 1.4                       # AR of vertical tail
 sweep_vtail = np.deg2rad(25)    # Put in degrees and convert to rad
-br_bv = 0.85                    # Span of rudder wrt span tail
-cr_cv = 0.4                     # Ratio of the chords
+br_bv = 1.00                    # Span of rudder wrt span tail
+cr_cv = 0.24                    # Ratio of the chords
+
+TW_ratio_control = 1.5
 
 # CGs
 cg_bat = [0.5, 0, 0.4*h_fuselage]
@@ -103,5 +105,5 @@ cargo_pos = [6.5, 0, 0.3*h_fuselage]       # [m] Cargo position
 
 
 # Structures
-n_ult = 3.2 * 1.5           # 3.2 is the max we found, 1.5 is the safety factor
+n_ult = 3.4 * 1.5           # 3.2 is the max we found, 1.5 is the safety factor
 

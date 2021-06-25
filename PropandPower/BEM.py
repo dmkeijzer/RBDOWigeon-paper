@@ -98,7 +98,9 @@ class BEM:
         # print(Cl)
         # print(self.B)
         # print("")
+        # TODO: ask and revise
         return 4*np.pi*self.lamb * F * np.sin(phi) * np.cos(phi) * self.V * self.R * zeta / (Cl * self.B)
+        # return 4 * np.pi * r * zeta * self.V * F * np.sin(phi) * np.cos(phi) / (Cl * self.B)
 
     # Non-dimensional speed
     def x(self, r):
@@ -274,6 +276,7 @@ class BEM:
 
                 # Calculate product of local speed with chord
                 Wc = self.Wc(F[station], phis[station], zeta, lift_coef)
+                # Wc = self.Wc(F[station], phis[station], zeta, lift_coef, stations_r[station])
 
                 # Calculate Reynolds number at the station to look for the correct airfoil datafile
                 Reyn = self.RN(Wc)
@@ -397,6 +400,7 @@ class BEM:
 
         # Calculate product of local speed with chord
         Wc = self.Wc(F, phis, zeta, Cl)
+        # Wc = self.Wc(F, phis, zeta, Cl, stations_r)
 
         # After smoothing the Cl, get new AoA and E corresponding to such Cls
         for station in range(len(Cl)):
@@ -590,7 +594,7 @@ class BEM:
 
             # Check convergence
             if zeta == 0:
-                convergence = zeta_new - zeta
+                convergence = np.abs(zeta_new - zeta)
             else:
                 convergence = np.abs(zeta_new - zeta)/zeta
 
@@ -721,6 +725,7 @@ class OffDesignAnalysisBEM:
         # TODO: check sign of a
         # print("a:", omega * K / (self.F(r, zeta) - omega*K))
         return magnitude  # *sign
+        # return np.abs(sigma * K / (self.F(r, phi_t) - sigma * K))
 
     def a_prim_fac(self, Cl, Cd, phi, c, r, phi_t):
         sigma = self.solidity_local(c, r)  # Local solidity
@@ -739,6 +744,7 @@ class OffDesignAnalysisBEM:
         magnitude = np.minimum(np.abs(sigma * K_prim / (self.F(r, phi_t) + sigma * K_prim)), 0.7)
 
         return magnitude  # *sign
+        # return np.abs(sigma * K_prim / (self.F(r, phi_t) + sigma * K_prim))
 
     def phi(self, a, a_prim, r):
         return np.arctan(self.V * (1 + a) / (self.Omega * r * (1 - a_prim)))
@@ -848,7 +854,7 @@ class OffDesignAnalysisBEM:
         """
         Start
         """
-        Reyn = self.RN_init  # TODO: implement
+        Reyn = self.RN_init
 
         for station in range(len(Reyn)):
 
@@ -1082,7 +1088,7 @@ class OffDesignAnalysisBEM:
             # print("phi", phi)
             # print("phi new", phi_new)
             # print("")
-            if np.max(conv) > 0.05:
+            if np.average(conv) > 0.03:
                 # print("### conv", conv, np.average(conv))
                 pass
             else:
