@@ -72,7 +72,10 @@ Pmax_weight = 17  # this is defined as maximum perimeter in Roskam, so I took to
 
 # ------------- Initial mass estimate -------------
 def mass(MTOM, S1, S2, n_ult, AR_wing1, AR_wing2, pos_frontwing, pos_backwing, Pmax, l_fus, n_pax, pos_fus,
-         pos_lgear, n_prop, m_prop, pos_prop, m_pax, cargo_m, m_bat, contingency = False):
+         pos_lgear, n_prop, m_prop, pos_prop, m_pax, cargo_m, m_bat, Sv, v_tail_rchord, contingency = False,
+         cg_bat=[None, None, None]):
+
+    print(cg_bat, "bat cg")
     wing = wei.Wing(MTOM, S1, S2, n_ult, AR_wing1, AR_wing2, [pos_frontwing, pos_backwing])
     m_wf = wing.wweight1
     m_wr = wing.wweight2
@@ -87,19 +90,19 @@ def mass(MTOM, S1, S2, n_ult, AR_wing1, AR_wing2, pos_frontwing, pos_backwing, P
     cg_props = props.pos_prop
     m_prop = props.mass
 
-    # TODO:implement
-    # vtail = wei.Vtail(MTOM, Sv, const.ARv, v_Tail_rchord, const.tc, vtail_sweep)
+    # Vertical tail sizing
+    vtail = wei.Vtail(MTOM, Sv, const.ARv, v_tail_rchord, const.tc, const.sweep_vtail_c4)
 
     # class Vtail:
     #     def __init__(self, mtom, Sv, Av, rchord, toc, sweep_deg):
 
     Mass = wei.Weight(m_pax, wing, fuselage, lgear, props, cargo_m=cargo_m, cargo_pos=const.cargo_pos[0],
-                      battery_m=m_bat, battery_pos=const.cg_bat[0], p_pax=[const.x_pil, const.x_f_pax, const.x_f_pax,
-                      const.x_r_pax, const.x_r_pax], contingency = contingency)
+                      battery_m=m_bat, battery_pos=cg_bat[0], p_pax=[const.x_pil, const.x_f_pax, const.x_f_pax,
+                      const.x_r_pax, const.x_r_pax], contingency = contingency, Vtail_mass=vtail.mass, vtail_pos=pos_backwing[0])
 
     return Mass.mtom, m_wf + n_prop_1*np.sum(m_prop)/n_prop, m_wr + n_prop_2*np.sum(m_prop)/n_prop, m_fus, m_prop, \
            cg_fus, cg_gear, cg_props, \
-           Mass.mtom_cg, lgear.mass
+           Mass.mtom_cg, lgear.mass, vtail.mass
 
 
 def find_mac(S, b, taper):
@@ -213,6 +216,16 @@ class RunDSE:
         zr = internal_inputs[18]
         max_thrust_stall = internal_inputs[19]
 
+        root_chord_vtail = internal_inputs[20]
+        TW_ratio_control = internal_inputs[21]
+
+        x_front = internal_inputs[22]
+        x_aft   = internal_inputs[23]
+
+        bat_pos = internal_inputs[25]
+
+        cg_bat = [bat_pos, 0, 0.4*const.h_fuselage]
+
         pos_front_wing = [xf, zf]
         pos_back_wing = [xr, zr]
 
@@ -322,6 +335,8 @@ class RunDSE:
         prop_radius2 = prop_sizing2.radius()
         prop_area2 = prop_sizing2.area_prop()
 
+        tot_prop_area = prop_area1*n_prop_1 + prop_area2*n_prop_2
+
         # ----------------------- Performance ------------------------
 
         V = at.speeds(h_cr, MTOM, CLmax, S_tot, drag)
@@ -364,7 +379,7 @@ class RunDSE:
         energy = energy * 2.77778e-7 * 1000*const.energy_cont / eff_overall  # From [J] to [Wh]
 
         # Cruise power
-        P_cr,D_cruise = mission.power_cruise_config(h_cr, V_cr, MTOM)
+        P_cr, D_cruise = mission.power_cruise_config(h_cr, V_cr, MTOM)
 
         # Engine sizing
 
@@ -372,7 +387,8 @@ class RunDSE:
         # time, P_max_eng_mission, T_max_tot = mission.total_energy()[1:4]
         time = t_tot
         # Maximum TW needed for controllability
-        P_max_control = mission.thrust_to_power(const.TW_ratio_control * MTOM * const.g, 0, rho)[1]
+        P_max_control = mission.thrust_to_power(TW_ratio_control * MTOM * const.g, 0, rho)[1]
+
 
         P_max_eng_tot = max(P_max_eng_mission, P_max_control)
 
@@ -414,13 +430,14 @@ class RunDSE:
         pos_lgear = (const.x_ng + const.x_tg)/2
 
         # Calculate some mass and balance related things
-        MTOM, m_wf, m_wr, m_fus, m_prop_ct, cg_fus0, cg_gear, cg_props, x_CG_MTOM, m_gear = mass(MTOM, S1, S2, n_ult, AR_wing1,
+        MTOM, m_wf, m_wr, m_fus, m_prop_ct, cg_fus0, cg_gear, cg_props, x_CG_MTOM, m_gear, vtail_mass = mass(MTOM, S1, S2, n_ult, AR_wing1,
                                                                                      AR_wing2, pos_front_wing,
                                                                                      pos_back_wing, Pmax_weight, l_fus,
                                                                                      const.n_pax, pos_fus, pos_lgear,
                                                                                      n_prop, m_prop, pos_prop,
                                                                                      const.m_pax,  const.m_cargo_tot,
-                                                                                     m_bat, contingency = True)
+                                                                                     m_bat, Sv, root_chord_vtail,
+                                                                                     contingency = True, cg_bat=cg_bat)
 
         # ----------------- Stability and control -------------------
 
@@ -458,7 +475,7 @@ class RunDSE:
 
         # print("Before CG from stability")
         cg_calc = CgCalculator(m_wf, m_wr, m_fus, m_bat, const.m_cargo_tot, const.m_pax, const.m_pax,
-                               cg_fus=cg_fus, cg_bat=const.cg_bat, cg_cargo=const.cargo_pos, cg_pax=cg_pax,
+                               cg_fus=cg_fus, cg_bat=cg_bat, cg_cargo=const.cargo_pos, cg_pax=cg_pax,
                                cg_pil=cg_pil)
 
         # Get the cg range, based on wing placement, the loading order can be changed if needed
@@ -533,26 +550,27 @@ class RunDSE:
                               zf, zr, Zcg, const.Vr_Vf_2, Sr_Sf)
 
         Sv = v_tail[0]
-        # print('tail area', Sv)
+        root_chord_vtail = v_tail[1]
 
         # Variables that are updated (the 0 is a placeholder, not used)
-        internal_inputs = [MTOM, S_tot, V_cr, h_cr, C_L_cr, CLmax, prop_radius1, de_da, Sv, V_stall, max_power, AR_wing1,
-                           AR_wing2, Sr_Sf, s1, xf, zf, xr, zr, max_thrust_stall]
+        internal_inputs = [MTOM, S_tot, V_cr, h_cr, C_L_cr, CLmax, prop_radius1, de_da, Sv, V_stall, P_max_eng_tot, AR_wing1,
+                           AR_wing2, Sr_Sf, s1, xf, zf, xr, zr, max_thrust_stall, root_chord_vtail, TW_ratio_control,
+                           x_front, x_aft, l_fus, bat_pos]
 
         # Aerodynamic moments
         Cmac1 = airfoil.Cm_ac(const.sweepc41, AR_wing1)[0]
         Cmac2 = airfoil.Cm_ac(const.sweepc42, AR_wing2)[0]
 
         # Redo the mass calculations, but without contingencies. This is done only to store it
-        MTOM_nc, m_wf_nc, m_wr_nc, m_fus_nc, m_prop_nc, \
-        cg_fus0_nc, cg_gear_nc, cg_props_nc, x_CG_MTOM_nc, m_gear_nc = mass(MTOM, S1, S2, n_ult, AR_wing1,
-                                                                                     AR_wing2, pos_front_wing,
-                                                                                     pos_back_wing, Pmax_weight, l_fus,
-                                                                                     const.n_pax, pos_fus, pos_lgear,
-                                                                                     n_prop, m_prop, pos_prop,
-                                                                                     const.m_pax,  const.m_cargo_tot,
-                                                                                     m_bat, contingency = False)
-
+        MTOM_nc, m_wf_nc, m_wr_nc, m_fus_nc, m_prop_nc, cg_fus0_nc, \
+        cg_gear_nc, cg_props_nc, x_CG_MTOM_nc, m_gear_nc, vtail_mass_nc      = mass(MTOM, S1, S2, n_ult, AR_wing1,
+                                                                                    AR_wing2, pos_front_wing,
+                                                                                    pos_back_wing, Pmax_weight, l_fus,
+                                                                                    const.n_pax, pos_fus, pos_lgear,
+                                                                                    n_prop, m_prop, pos_prop,
+                                                                                    const.m_pax,  const.m_cargo_tot,
+                                                                                    m_bat, Sv, root_chord_vtail,
+                                                                                    contingency = False, cg_bat=cg_bat)
 
         print("xcg and xcg nc", x_CG_MTOM, x_CG_MTOM_nc)
 
@@ -582,32 +600,32 @@ class RunDSE:
                        ["n_prop", const.n_prop],  # number of engines
                        ["n_pax", const.n_pax],  # number of passengers (pilot included)
                        ["pos_fus", cg_fus0],  # fuselage centre of mass away from the nose
-                       ["pos_lgear" , cg_gear],  # landing gear position away from the nose
-                       ["pos_frontwing" , xf],   # Position of the aerodynamic centre of the wing
-                       ["pos_backwing" , xr],
+                       ["pos_lgear", cg_gear],  # landing gear position away from the nose
+                       ["pos_frontwing", xf],   # Position of the aerodynamic centre of the wing
+                       ["pos_backwing", xr],
                        ["zpos_frontwing", zf],  # Position of the aerodynamic centre of the wing
                        ["zpos_backwing", zr],
                        ["m_prop", m_prop],  # list of mass of engines (so 30 kg per engine with nacelle and propeller)
-                       ["pos_prop",pos_prop],
+                       ["pos_prop", pos_prop],
                        # 8 on front wing and 8 on back wing
-                       ["Mac1" , Cmac1],  # aerodynamic moment around AC
-                       ["Mac2" , Cmac2],
-                       ["flighttime",t_tot/3600],  # [hr]
+                       ["Mac1", Cmac1],  # aerodynamic moment around AC
+                       ["Mac2", Cmac2],
+                       ["flighttime", t_tot/3600],  # [hr]
                        # turnovertime,2,  # we dont actually need this xd
                        ["takeofftime", (t_tot-t_hor)/(2*3600)],
-                       ["enginePlacement", pos_eng], #list(np.linspace(0.1 * b / 2, 0.8 * b / 2, 4)),
+                       ["enginePlacement", pos_eng],  # list(np.linspace(0.1 * b / 2, 0.8 * b / 2, 4)),
                        # engineMass,400 * 9.81 / 8, # See m_prop
-                       ["T_max", max_thrust], # [s] Time in vertical config
+                       ["T_max", max_thrust],  # [s] Time in vertical config
                        ["p_pax", [1.75, 3.75, 3.75, 6, 6]],
-                       ["battery_pos",const.cg_bat[0]],  # [m] Battery x-position
-                       ["cargo_m",const.m_cargo_tot],
-                       ["cargo_pos",const.cargo_pos[0]],
-                       ["battery_m",m_bat],
-                       ["P_max", max_power], # [W] Maximum disk power needed
+                       ["battery_pos", cg_bat[0]],  # [m] Battery x-position
+                       ["cargo_m", const.m_cargo_tot],
+                       ["cargo_pos", const.cargo_pos[0]],
+                       ["battery_m", m_bat],
+                       ["P_max", max_power],  # [W] Maximum disk power needed
                        ["vol_bat", energy/ const.vol_en_den],
                        ["price_bat", const.bat_cost*energy/1000],
-                       ["h_winglet_1",h_wt_1],
-                       ["h_winglet_2",h_wt_2],
+                       ["h_winglet_1", h_wt_1],
+                       ["h_winglet_2", h_wt_2],
                        ["V_cruise", V_cr],
                        ["h_cruise", h_cr],
                        ["CLmax", CLmax],
@@ -625,7 +643,14 @@ class RunDSE:
                        ["Prop_radius_front", prop_radius1],
                        ["Prop_radius_back", prop_radius2],
                        ["Disk_load_front", 0.5*MTOM/(prop_area1*n_prop/2)],
-                       ["Disk_load_back", 0.5*MTOM/(prop_area2*n_prop/2)]]
+                       ["Disk_load_back", 0.5*MTOM/(prop_area2*n_prop/2)],
+                       ["Root chord vertical tail", root_chord_vtail],
+                       ["Front_wing_mass", m_wf_nc],
+                       ["Rear_wing_mass", m_wr_nc],
+                       ["Fuselage_mass", m_fus_nc],
+                       ["Landing_gear_mass", m_gear_nc],
+                       ["Vertical_tail_mass", vtail_mass],
+                       ["Propulsion_mass", m_prop_nc]]
 
         txt = open("final_values.txt", 'w')
         txt.truncate(0)

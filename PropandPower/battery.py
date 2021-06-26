@@ -28,7 +28,7 @@ class Battery:
     def mass(self):
         m_en = self.energy / self.sp_en_den
         m_p = self.P_max / self.P_den
-        # print('m_en, m_p', m_en, m_p)
+        print('m_en, m_p', m_en, m_p)
         bat_mass = plt.maximum(m_en, m_p)
         return bat_mass / (self.DoD * self.EOL_C) * self.safety
 

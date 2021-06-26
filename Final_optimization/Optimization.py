@@ -75,8 +75,7 @@ class design_optimization(om.ExplicitComponent):
         max_thrust_stall = MTOM*const.g*0.1
 
         initial_estimate = [MTOM, 0, V_cr, h_cr, C_L_cr, CLmax, prop_radius, de_da, Sv, V_stall, max_power, AR_wing1,
-                            AR_wing2, Sr_Sf, s1, xf, zf, xr, zr, max_thrust_stall]
-
+                            AR_wing2, Sr_Sf, s1, xf, zf, xr, zr, max_thrust_stall, 1, 1.5, 2.4, 2.6, 8, bat_pos]
 
         # Optimisation class
         optimisation_class = int_class.RunDSE(initial_estimate)
@@ -109,6 +108,7 @@ class design_optimization(om.ExplicitComponent):
         print('ctrl margin: ', optim_outputs[4])
         print('Front wing:  ', xf)
         print('Rear wing:   ', xr)
+        print('x CG:', internal_inputs[22], internal_inputs[23])
 
         outputs['mass'] = optim_outputs[0]
         outputs['Energy'] = optim_outputs[1]
