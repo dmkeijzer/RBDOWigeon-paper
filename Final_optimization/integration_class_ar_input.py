@@ -232,6 +232,7 @@ class RunDSE:
         S_tot = MTOM * g0 / WS_stall
 
         # Wing areas
+        # print(AR_wing2, S_tot, s2)
         S2 = S_tot*s2
         S1 = S2/Sr_Sf
         s1 = S1/S_tot
@@ -516,12 +517,6 @@ class RunDSE:
         # nE, Tt0, yE, br_bv, cr_cv, ARv, sweepTE
         v_tail = vertical_tail.final_VT_rudder(prop_radius1, prop_radius2, int(n_prop/4), n_prop, D_cr, const.br_bv,
                                                const.cr_cv, const.ARv,  const.sweep_vtail)
-
-
-        # print('clmaxes',T_per_eng_during_stall, V_stall, rho, prop_radius*2, n_prop_1,
-        #     n_prop_2, const.tc_wing, CDs_w, CDs_f, Afus, alpha_wp, de_da)
-        # Controllability limit
-
         # TODO check
         print(x_front, x_aft, x_CG_MTOM)
 
@@ -549,7 +544,10 @@ class RunDSE:
                                                                                      n_prop, m_prop, pos_prop,
                                                                                      const.m_pax,  const.m_cargo_tot,
                                                                                      m_bat, contingency = False)
-        print(x_CG_MTOM, x_CG_MTOM_nc)
+
+
+        print("xcg and xcg nc", x_CG_MTOM, x_CG_MTOM_nc)
+
         # Outputs for optimisation cost function
         optim_outputs = [MTOM, energy, time, CM_a, cg_fwd_lim - x_front, MTOM_nc]
 
@@ -624,7 +622,7 @@ class RunDSE:
         txt = open("final_values.txt", 'w')
         txt.truncate(0)
         for element in lines:
-            txt.write(element[0] + " = "+  str(element[1]) + "\n")
+            txt.write(element[0] + " = " + str(element[1]) + "\n")
         txt.close()
 
         mission_nc = FP.mission(float(MTOM_nc), float(h_cr), float(V_cr), float(CLmax), float(S_tot), float(n_prop * prop_area1), P_max=float(max_power),
