@@ -11,6 +11,14 @@ energy_cont     = 1
 payload_cont    = 1
 mass_cont       = 1
 
+# Rotation mechanism constants
+y_tilt_1 = 0.8865     # [m] position of the tilting wing root
+y_tilt_2 = 0.8865
+
+c_rot_1 = 0.25      # [-] position of the rotating axis in percentage chord
+c_rot_2 = 0.25
+
+
 # General
 mission_range = 300e3       # [m] Mission range  TODO: Maybe add 50 km
 
@@ -18,6 +26,9 @@ n_pax = 5                               # Number of passengers
 m_pax = 88                              # Max per pax
 m_cargo_per_pax = 7                     # [kg] Cargo mass per pax
 m_cargo_tot = m_cargo_per_pax*n_pax     # [kg] Total cargo mass
+x_f_pax = 3.25      # [m] front pax position
+x_r_pax = 4.75      # [m] rear pax position
+x_pil = 1.75        # [m] pilot position
 
 # Fuselage
 w_fuselage = 1.38            # [m]
@@ -25,14 +36,11 @@ h_fuselage = 1.7             # [m]
 l_nosecone = 2.5             # [m]
 l_cylinder = 2.5             # [m]
 l_tailcone = 2.7            # [m]
-#l_fus = l_nosecone + l_cylinder + l_tailcone
-# upsweep = 8.43*np.pi/180     # [Degrees]
-# upsweep = np.arctan(0.4/l_tail)
 
+cg_bat = [0.5, 0, 0.4*h_fuselage]
+cargo_pos = [6.5, 0, 0.3*h_fuselage]       # [m] Cargo position
 
 # Aerodynamics
-# s1 = 0.5                    # Fraction of total wing area for the 1st wing [-]
-# s2 = 1-s1                   # Fraction of total wing area for the 2nd wing [-]
 sweepc41 = 0                # Sweep angle at quarter chord for 1st wing [rad]
 sweepc42 = 0                # Sweep angle at quarter chord for the 2nd wing
 k = 0.634 * 10**(-5)        # Smooth paint from adsee 2 L2  smoothness factor[-]
@@ -96,13 +104,11 @@ ARv = 1.4                       # AR of vertical tail
 sweep_vtail = np.deg2rad(25)    # Put in degrees and convert to rad
 br_bv = 1.00                    # Span of rudder wrt span tail
 cr_cv = 0.24                    # Ratio of the chords
+x_ng    = x_pil            # Nosegear position
+x_tg    = cargo_pos[0]            # Tailgear position
+tw_ng = w_fuselage    # [m] Track width of the fuselage
 
-TW_ratio_control = 1.5
-
-# CGs
-cg_bat = [0.5, 0, 0.4*h_fuselage]
-cargo_pos = [6.5, 0, 0.3*h_fuselage]       # [m] Cargo position
-
+TW_ratio_control = 1.5    # Thrust-to-weight ratio needed for the aircraft to be controllable in hover
 
 # Structures
 n_ult = 3.4 * 1.5           # 3.2 is the max we found, 1.5 is the safety factor
