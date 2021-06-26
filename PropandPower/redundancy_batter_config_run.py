@@ -45,3 +45,5 @@ per_increase = red.increase()[1]
 print("    -", abs_increase, "cells more than needed for energy")
 print("    -", per_increase, "% increase in cells")
 
+print("Single battery:", N_ser, "in series and", int(N_par_new/(n_mot * n_bat_mot)), "cells in parallel")
+

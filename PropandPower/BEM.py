@@ -250,7 +250,6 @@ class BEM:
         F = self.F(stations_r, zeta)
         phis = self.phi(stations_r, zeta)
 
-        # TODO: Check if Cl range is good
         # Probably trial with a different range of Cls
         Cls_trial = np.arange(0.1, 1.2, 0.05)
 
@@ -360,7 +359,7 @@ class BEM:
 
                 # Subtract current Cl from list of Cls
                 # 'Uncorrect' Cl for Mach, since the files do not take Mach into account, only RN
-                # TODO: revise Mach corrections, maybe use W
+                # Mach corrections are done with omega*r and not w
                 airfoil_data_check[:, 1] -= (lift_coef * self.PG(self.M(stations_r[station])))
 
                 # Check what line has min Cl difference, and retrieve index of that column
@@ -391,7 +390,6 @@ class BEM:
             local_eps = optim_vals[3]
             Wc = optim_vals[4]
 
-        # TODO: revise approach
         # Smooth the Cl distribution and recalculate the lift coefficient: Polinomial regression for smooth distribution
         coef_cl = np.polynomial.polynomial.polyfit(stations_r, Cl, 1)
         cl_fun = np.polynomial.polynomial.Polynomial(coef_cl)
@@ -493,7 +491,6 @@ class BEM:
 
             # Subtract current Cl from list of Cls
             # 'Uncorrect' Cl for Mach, since the files do not take Mach into account, only RN
-            # TODO: revise Mach corrections, maybe use W
             airfoil_data_check[:, 1] -= (lift_coef * self.PG(self.M(stations_r[station])))
 
             # Check what line has min Cl difference, and retrieve index of that column
@@ -605,15 +602,9 @@ class BEM:
         design = self.run_BEM(zeta)
         return design
 
-    # TODO: Implement a cycle with eps = 0 to calculate viscous losses
-
     # Advance ratio
     def J(self):
         return self.V / ((self.Omega/(2*np.pi)) * self.D)
-
-    def solidity(self):
-        # TODO: implement solidity equation (based on page 46 of Veldhuis' thesis)
-        return 1
 
 
 # Analyse the propeller in off-design conditions
@@ -1227,7 +1218,7 @@ class Optiblade:
         return zeta, design, V_e, coefs
 
     # Check the max thrust a certain design can produce
-    def max_T_check(self, blade):
+    # def max_T_check(self, blade):
         # # Get the blade design
         # # Out: zeta_new, [cs, betas, alpha, stations_r, E, eff, self.Tc, Pc], Ves, [Cl, Cd]
         # design_blade = blade
@@ -1245,7 +1236,7 @@ class Optiblade:
         # # Return max thrust
         # return blade_hover[0]
 
-        return self.T_h+1
+        # return self.T_h+1
 
     def optimised_blade(self):
         # Multiply design (cruise) drag times factor
