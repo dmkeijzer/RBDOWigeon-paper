@@ -1,6 +1,6 @@
 import numpy as np
 from matplotlib import pyplot as plt
-
+import Final_optimization.constants_final as const
 
 class LandingGearCalc:
     """
@@ -68,7 +68,8 @@ class LandingGearCalc:
         return y_dist * np.tan(phi) - z_tip
 
     def calc_min_h_rotor(self, tw_tg, phi):
-        z_rot = (self.z_wing + self.b / 2 * np.tan(self.gamma) - self.rotor_rad)
+        crit_rad = max(self.rotor_rad, const.h_wt_1)
+        z_rot = (self.z_wing + self.b / 2 * np.tan(self.gamma) - crit_rad)
         y_dist = self.y_max_rotor - tw_tg / 2
         return y_dist * np.tan(phi) - z_rot
 
@@ -116,10 +117,11 @@ class LandingGearCalc:
         min_h_root = self.calc_min_h_root(tw_tg_list, phi)
         min_h_tip = self.calc_min_h_tip(tw_tg_list, phi)
         min_h_rotor = self.calc_min_h_rotor(tw_tg_list, phi)
-        h_list = np.max(min_h_tipback, min_h_root, min_h_tip, min_h_rotor)
+        h_mat = np.array([min_h_tipback, min_h_root, min_h_tip, min_h_rotor])
+        h_list = h_mat.max(axis=0)
         psi_list = self.calc_psi(tw_tg_list, z_cg_max, h_list)
 
-        if np.max(psi_list) > psi:
+        if np.min(psi_list) > psi:
             return None, None
 
         tw_tg = tw_tg_list[np.argmin(np.abs(psi_list - psi))]

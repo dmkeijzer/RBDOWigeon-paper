@@ -9,7 +9,7 @@ rho_0 = 1.225               # [kg/m^3]
 # Contingency
 energy_cont     = 1
 payload_cont    = 1
-mass_cont       = 1
+mass_cont       = 1.1
 
 # Rotation mechanism constants
 y_tilt_1 = 0.8865     # [m] position of the tilting wing root
@@ -37,7 +37,6 @@ l_nosecone = 2.5             # [m]
 l_cylinder = 2.5             # [m]
 l_tailcone = 2.7            # [m]
 
-cg_bat = [0.5, 0, 0.4*h_fuselage]
 cargo_pos = [6.5, 0, 0.3*h_fuselage]       # [m] Cargo position
 
 # Aerodynamics
@@ -92,7 +91,7 @@ fus_back_bottom = [6.5, 0]
 fus_back_top = [7.5, h_fuselage]
 turn_over = np.radians(55)      # Turn-over angle
 pitch_lim = np.radians(20)      # Pitch limit
-lat_lim = np.radians(20)        # lateral ground clearance angle
+lat_lim = np.radians(5)         # lateral ground clearance angle
 min_ng_load = 0.1               # minimum fraction of the total weight to be carried by the nose gear
 b_max       = 11
 elev_fac = 1.2

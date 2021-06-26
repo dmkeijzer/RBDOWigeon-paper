@@ -1,7 +1,6 @@
 import numpy as np
 import Aero_tools as at
 import constants_final as const
-import json
 
 # Aero
 import Preliminary_Lift.Drag as drag_comp
@@ -20,14 +19,13 @@ import stab_and_ctrl.Vertical_tail_sizing as vert_tail
 from stab_and_ctrl.hover_controllabilty import HoverControlCalcTandem
 from stab_and_ctrl.landing_gear_placement import LandingGearCalc
 from stab_and_ctrl.loading_diagram import CgCalculator
-from stab_and_ctrl.xcg_limits import xcg_limits, optimise_wings, Cma, deps_da_empirical, xcg_ctrl
+from stab_and_ctrl.xcg_limits import Cma, deps_da_empirical, xcg_ctrl
 
 # Structures
 import structures.Weight as wei
 
 # --------------------- Fixed parameters and constants ------------------------
 # TODO:
-#   Ask stability and control about engine failures in bug fix
 #   Revise list of parameters to change and double check with departments final values
 #   Agree with Koen on final value for engine sizing, battery sizing
 #   Double check with stability that TW of 1.5 is enough for OEI
@@ -36,6 +34,9 @@ import structures.Weight as wei
 #   Print disk radius and loading
 #   Print different propeller radii and ask Miguel about them, add to Vertical_tail_sizing
 #   Change inputs for VT_controllability
+#   Find vertical tail placement
+#   Find clearance for aft wing
+#   The return value you want is [[[0], [1], [2], [3], [4], [5], [6], ..., [11]]]
 
 # Constants from constants.py
 g0 = const.g
@@ -242,7 +243,6 @@ class RunDSE:
         b2 = np.sqrt(AR_wing2*S2)
 
         # Aero
-        # print("Before wing design")
         wing_design = wingdes.wing_design(AR_wing1, AR_wing2, s1, const.sweepc41, s2, const.sweepc42, M, S_tot,
                                           wing_distance_hor, wing_distance_ver, w_fus, h_wt_1, h_wt_2, const.k_wl,
                                           const.i1)
@@ -255,7 +255,7 @@ class RunDSE:
 
         # Calculate the tailcone length, based on aft wing placement
         l_tc = xr - xmac_to_xle(const.sweepc41, AR_wing1, taper, b1, const.dihedral1)[0] + \
-               (2 * b2 / (AR_wing2 * (1 + taper))) - (const.l_nosecone + const.l_cylinder)
+               (2 * b2 / (AR_wing2 * (1 + taper))) - (const.l_nosecone + const.l_cylinder) + const.wing_clearance_aft
 
         # Fuselage upsweep, based on tailcone length
         fus_upsweep = np.arctan(0.4 / l_tc)
@@ -281,7 +281,6 @@ class RunDSE:
         CDs_f = float(drag.CD0_f)
         CDs_w = CDs - CDs_f
 
-        # CL_max
         alpha_wp = 1    # If we only want CLmax (and not slope) this does not matter
 
         # This part iteratively calculates the CLmax, based on the thrust during stall
@@ -351,12 +350,10 @@ class RunDSE:
         CD_a_f = wing_design.CDa_poststall(const.tc, CDs, CDs_f, Afus, alpha_lst, "fus", drag.CD, de_da)
 
         # Energy sizing
-        # print("Before calling mission")
-        mission = FP.mission(MTOM, h_cr, V_cr, CLmax, S_tot, n_prop * prop_area1, P_max=max_power,
+        mission = FP.mission(MTOM, h_cr, V_cr, CLmax, S_tot, tot_prop_area, P_max=max_power,
                              Cl_alpha_curve=Cl_alpha_curve, CD_a_w=CD_a_w, CD_a_f=CD_a_f, alpha_lst=alpha_lst,
                              Drag=drag, t_loiter=15*60, rotational_rate=5, mission_dist=const.mission_range)
 
-        # print("Before max thrust")
         max_thrust_stall = mission.max_thrust(rho, V_stall)
 
         # Get approximate overall efficiency
@@ -430,11 +427,26 @@ class RunDSE:
         # Hover controllability
         x_f_rotated = xf - xmac_to_xle(const.sweepc41, AR_wing1, taper, b1, const.dihedral1)[0] + 0.45*wing_plan_1[1]
         x_r_rotated = xr - xmac_to_xle(const.sweepc42, AR_wing2, taper, b2, const.dihedral2)[0] + 0.45*wing_plan_2[1]
-        # print("Before hover")
-        HoverControlCalcTandem(MTOM, n_rot_f=n_prop_1, n_rot_r=n_prop_2, x_wf=x_f_rotated, x_wr=x_r_rotated,
-                               rot_y_range_f=[w_fus/2 + const.c_fp + prop_radius1, wing_plan_1[0]],
-                               rot_y_range_r=[w_fus/2 + const.c_fp + prop_radius2, wing_plan_2[0]],
-                               K=max_thrust/n_prop, ku=0.1)
+
+        TW_ratio_control = 1.3
+        check_hover_boolean = False
+        while not check_hover_boolean:
+            control = HoverControlCalcTandem(MTOM, n_rot_f=n_prop_1, n_rot_r=n_prop_2, x_wf=x_f_rotated, x_wr=x_r_rotated,
+                                   rot_y_range_f=[w_fus / 2 + const.c_fp + prop_radius1, wing_plan_1[0]],
+                                   rot_y_range_r=[w_fus / 2 + const.c_fp + prop_radius2, wing_plan_2[0]],
+                                   K=TW_ratio_control * MTOM * g0 / n_prop, ku=0.1)
+
+            # Find engines that are allowed to fail
+            check_hover = control.find_max_allowable_rotor_failures(cg=[x_aft, 0], max_n_failures=1)
+            if len(check_hover) > 0:
+                check_hover = check_hover[0]
+
+            if check_hover == [[0], [1], [2], [3], [4], [5], [6], [7], [8], [9], [10], [11]]:
+                check_hover_boolean = True
+                print(check_hover, "hover check", TW_ratio_control)
+
+            else:
+                TW_ratio_control += 0.1
 
         # Loading
         cg_pax = [[const.x_f_pax, 0.5, h_fus*0.4], [const.x_f_pax, -0.5, h_fus*0.4], [const.x_r_pax, 0.5, h_fus*0.4],
@@ -492,7 +504,7 @@ class RunDSE:
         tw_tg, h_lg = gears.optimum_placement([x_front, x_aft], z_cg_max=Zcg,
                                               theta= const.pitch_lim,
                                               phi=const.lat_lim, psi=const.turn_over,
-                                              min_lf = 0.3) # TODO: Check if this is reasonable
+                                              min_lf = 0.3)  # TODO: Check if this is reasonable
 
         if tw_tg > 2*w_fus:
             print('Check tail gear track width: ', tw_tg)
@@ -500,8 +512,6 @@ class RunDSE:
         max_coeffs = wing_design.CLa_wprop(T_per_eng_during_stall, V_stall, rho, prop_radius1 * 2, n_prop_1,
                                            n_prop_2, const.tc_wing, CDs_w, CDs_f, Afus, alpha_wp, de_da)
         CLmf, CLmr = max_coeffs[4], max_coeffs[5]
-
-        # print('max coeffs', CLmf, CLmr)
 
         CM_a = Cma(Clafwd, Clarear, const.sweepc41, const.sweepc42, taper, taper, CL_cr_1, CL_cr_2, AR_wing1, AR_wing2,
                    const.e_f, const.e_r, xf, xr, zf, zr, Zcg, const.Vr_Vf_2, Sr_Sf, x_aft, S_tot, rho, P_cr/n_prop,
@@ -517,8 +527,6 @@ class RunDSE:
         # nE, Tt0, yE, br_bv, cr_cv, ARv, sweepTE
         v_tail = vertical_tail.final_VT_rudder(prop_radius1, prop_radius2, int(n_prop/4), n_prop, D_cr, const.br_bv,
                                                const.cr_cv, const.ARv,  const.sweep_vtail)
-        # TODO check
-        print(x_front, x_aft, x_CG_MTOM)
 
         cg_fwd_lim = xcg_ctrl(const.sweepc41, const.sweepc42, CLmf*const.elev_fac, CLmr, CD0fwd, CD0rear, AR_wing1,
                               AR_wing2, const.e_f, const.e_r, find_mac(S1, b1, taper), find_mac(S2, b2, taper), xf, xr,
@@ -531,7 +539,7 @@ class RunDSE:
         internal_inputs = [MTOM, S_tot, V_cr, h_cr, C_L_cr, CLmax, prop_radius1, de_da, Sv, V_stall, max_power, AR_wing1,
                            AR_wing2, Sr_Sf, s1, xf, zf, xr, zr, max_thrust_stall]
 
-        # Aerdodynamic moments
+        # Aerodynamic moments
         Cmac1 = airfoil.Cm_ac(const.sweepc41, AR_wing1)[0]
         Cmac2 = airfoil.Cm_ac(const.sweepc42, AR_wing2)[0]
 
@@ -625,20 +633,23 @@ class RunDSE:
             txt.write(element[0] + " = " + str(element[1]) + "\n")
         txt.close()
 
-        mission_nc = FP.mission(float(MTOM_nc), float(h_cr), float(V_cr), float(CLmax), float(S_tot), float(n_prop * prop_area1), P_max=float(max_power),
-                                Cl_alpha_curve=Cl_alpha_curve, CD_a_w=CD_a_w, CD_a_f=CD_a_f, alpha_lst=alpha_lst,
-                                Drag=drag, t_loiter=15 * 60, rotational_rate=5, mission_dist=const.mission_range)
-
-        T_cr_nc, P_cr_nc = mission_nc.power_cruise_config(h_cr, V_cr, MTOM)
-
-        E_tot_nc, t_tot_nc, P_max_nc, T_max_nc, t_hov_nc = mission_nc.total_energy(simplified=True)
+        # mission_nc = FP.mission(float(MTOM_nc), float(h_cr), float(V_cr), float(CLmax), float(S_tot),
+        #                         float(tot_prop_area), P_max=float(max_power),
+        #                         Cl_alpha_curve=Cl_alpha_curve, CD_a_w=CD_a_w, CD_a_f=CD_a_f, alpha_lst=alpha_lst,
+        #                         Drag=drag, t_loiter=15 * 60, rotational_rate=5, mission_dist=const.mission_range)
+        #
+        # T_cr_nc, P_cr_nc = mission_nc.power_cruise_config(h_cr, V_cr, MTOM)
+        #
+        # E_tot_nc, t_tot_nc, P_max_nc, T_max_nc, t_hov_nc = mission_nc.total_energy(simplified=True)
 
         # print(E_tot_nc, t_tot_nc, P_max_nc, T_max_nc, t_hov_nc, T_cr_nc, P_cr_nc)
         #
         # print("MTOM:            ", MTOM)
         # print("     - Battery:  ", m_bat)
-        print("     - Wing fore:", m_wf)
-        print("     - Wing aft: ", m_wr)
+        print('MTOM', MTOM_nc)
+        print("     - Wing fore:", m_wf, AR_wing1)
+        print("     - Wing aft: ", m_wr, AR_wing2)
+        print("Mass battery:", m_bat)
         # print("     - Fuselage: ", m_fus)
         # print("     - pax:      ", const.m_pax * const.n_pax)
         # print("Total based on components:",
@@ -653,7 +664,7 @@ class RunDSE:
         # print("Controllability: ", cg_fwd_lim - x_front)
 
         # Other necessary outputs
-        other_outputs = [track_width, z_mlg]
+        other_outputs = [tw_tg, None]
         # print("end")
         return optim_outputs, internal_inputs, other_outputs
 

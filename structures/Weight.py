@@ -4,7 +4,7 @@ import numpy as np
 
 sys.path.append('Final_optimization/')
 # import constants_final as const
-<<<<<<< Updated upstream
+#<<<<<<< Updated upstream
 from Final_optimization import constants_final as const
 class Vtail:
     def __init__(self, mtom, Sv, Av, rchord, toc, sweep_deg):
@@ -14,9 +14,9 @@ class Vtail:
         self.trv = rchord * toc * 3.28084
         self.sweep = sweep_deg * np.pi/180
         self.mass = ((1.68 * self.mtom_lbs ** 0.567 * self.Sv_ft ** 1.249 * self.Av ** 0.482)/(639.95 * self.trv ** 0.747 * np.cos(self.sweep)**0.882)) * 0.453592
-=======
+# =======
 import constants_final as const
->>>>>>> Stashed changes
+#>>>>>>> Stashed changes
 
 class Wing:
     # Roskam method (not accurate because does not take into account density of material but good enough for comparison
