@@ -226,9 +226,6 @@ class RunDSE:
 
         cg_bat = [bat_pos, 0, 0.4*const.h_fuselage]
 
-        pos_front_wing = [xf, zf]
-        pos_back_wing = [xr, zr]
-
         # Distances (positive if back wing is further aft and higher)
         wing_distance_hor = xr - xf
         wing_distance_ver = zr - zf
@@ -429,6 +426,9 @@ class RunDSE:
         # Should not have a lot of affect, as their weights are relatively low
         pos_lgear = (const.x_ng + const.x_tg)/2
 
+        pos_front_wing = [xf + 0.25 * MAC1, zf]
+        pos_back_wing = [xr + 0.25 * MAC2, zr]
+
         # Calculate some mass and balance related things
         MTOM, m_wf, m_wr, m_fus, m_prop_ct, cg_fus0, cg_gear, cg_props, x_CG_MTOM, m_gear, vtail_mass = mass(MTOM, S1, S2, n_ult, AR_wing1,
                                                                                      AR_wing2, pos_front_wing,
@@ -476,7 +476,7 @@ class RunDSE:
         # print("Before CG from stability")
         cg_calc = CgCalculator(m_wf, m_wr, m_fus, m_bat, const.m_cargo_tot, const.m_pax, const.m_pax,
                                cg_fus=cg_fus, cg_bat=cg_bat, cg_cargo=const.cargo_pos, cg_pax=cg_pax,
-                               cg_pil=cg_pil)
+                               cg_pil=cg_pil, m_vt = vtail_mass, cg_vt = pos_back_wing[0])
 
         # Get the cg range, based on wing placement, the loading order can be changed if needed
         cg_wf = [xf + 0.25*MAC1, zf]
@@ -486,7 +486,8 @@ class RunDSE:
         x_front = float(x_front)
         x_aft = float(x_aft)
         z_top = float(z_top)
-        print('loading diagram cg', x_front, x_aft)
+        x_ld = cg_calc.calc_cg(cg_wf, cg_wr, True, [0,1,2,3], True)[0]
+        print('loading diagram cg', x_front, x_aft, x_ld)
 
         # Some aerodynamic constants
         CD0fwd = drag.Cd_w(0)
@@ -524,8 +525,8 @@ class RunDSE:
                                                       theta= const.pitch_lim,
                                                       phi=const.lat_lim,
                                                       psi=const.turn_over,
-                                                      min_lf = 0.16)  # TODO: Check if this is reasonable
-
+                                                      min_lf = 0.08)  # TODO: Check if this is reasonable
+        print(tw_tg, w_fus, reason)
         if tw_tg > 2*w_fus:
             print('Check tail gear track width: ', tw_tg, 'Reason:', reason)
 
@@ -618,7 +619,7 @@ class RunDSE:
                        ["enginePlacement", pos_eng],  # list(np.linspace(0.1 * b / 2, 0.8 * b / 2, 4)),
                        # engineMass,400 * 9.81 / 8, # See m_prop
                        ["T_max", max_thrust],  # [s] Time in vertical config
-                       ["p_pax", [1.75, 3.75, 3.75, 6, 6]],
+                       ["T_max_ctrl", TW_ratio_control],
                        ["battery_pos", cg_bat[0]],  # [m] Battery x-position
                        ["cargo_m", const.m_cargo_tot],
                        ["cargo_pos", const.cargo_pos[0]],

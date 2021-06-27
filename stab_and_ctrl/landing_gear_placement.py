@@ -118,7 +118,7 @@ class LandingGearCalc:
         if (self.calc_ng_lf(x_cg_range[1]) < min_lf
                 or self.calc_tg_lf(x_cg_range[0]) < min_lf):
             return None, None, "load on one landing gear too small"
-
+        print('fractions', self.calc_ng_lf(x_cg_range[0]), self.calc_ng_lf(x_cg_range[1]))
         reasons = ["tailcone tipback", "rotated wing root clearance",
                    "rotated wing tip clearance",
                    "non-rotated wing rotor clearance"]
@@ -143,7 +143,7 @@ class LandingGearCalc:
         if self.calc_cg_tipback(x_cg_range[1], z_cg_max, h) < theta:
             return None, None, "could not satisfy tipback requirement for CG"
 
-        reason = reasons[np.argmax(h_mat[:, selected_idx])[0]]
+        reason = reasons[np.argmax(h_mat[:, selected_idx])]
 
         return tw_tg, h, reason
 
