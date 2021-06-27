@@ -127,13 +127,13 @@ class Structure:
         print(f"{P = }, {alpha = }")
         for a in range(5, 40):
             for t in range(5, 15):
-                lug = Lug(a, a, 14, t)
+                lug = Lug(a, a, 10, t)
                 N = lug.Fatigue(P, alpha)
                 if N > Nflights * 2:
-                    if lug.mass() < minweight:
+                    if lug.mass(20) < minweight:
                         if P / (2 * lug.c * lug.t) < 469 and P / (lug.d * lug.t) < 469:
                             designs.append(lug)
-                            minweight = lug.mass()
+                            minweight = lug.mass(20)
         print(Nflights, N, designs[-1].Fatigue(P, alpha))
         return designs[-1], minweight
 
