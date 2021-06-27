@@ -66,7 +66,9 @@ blade_cruise = BEM.BEM(B, prop_radius, rpm_cruise, xi_0, rho, dyn_vis, V_cruise,
 
 # Initial estimate: zeta = 0
 
-zeta, design, V_e, coefs = blade_cruise.optimise_blade(0)
+zeta, design, V_e, coefs, solidity = blade_cruise.optimise_blade(0)
+
+print("Average solidity of the propeller", np.average(solidity))
 
 print("############# Blade design #############")
 print("T_cr", T_cr_per_engine, "N")

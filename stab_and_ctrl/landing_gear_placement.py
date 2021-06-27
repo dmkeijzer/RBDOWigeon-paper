@@ -1,6 +1,6 @@
 import numpy as np
 from matplotlib import pyplot as plt
-
+import Final_optimization.constants_final as const
 
 class LandingGearCalc:
     """
@@ -68,7 +68,8 @@ class LandingGearCalc:
         return y_dist * np.tan(phi) - z_tip
 
     def calc_min_h_rotor(self, tw_tg, phi):
-        z_rot = (self.z_wing + self.b / 2 * np.tan(self.gamma) - self.rotor_rad)
+        crit_rad = max(self.rotor_rad, const.h_wt_1)
+        z_rot = (self.z_wing + self.b / 2 * np.tan(self.gamma) - crit_rad)
         y_dist = self.y_max_rotor - tw_tg / 2
         return y_dist * np.tan(phi) - z_rot
 
@@ -86,6 +87,9 @@ class LandingGearCalc:
 
     def calc_tg_lf(self, x_cg):
         return 1 - self.calc_ng_lf(x_cg)
+
+    def calc_cg_tipback(self, x_cg, z_cg, h_lg):
+        return np.arctan((self.x_tg - x_cg) / (h_lg + z_cg))
 
     def optimum_placement(self, x_cg_range: list,
                           z_cg_max: float, theta: float, phi: float,
@@ -110,22 +114,38 @@ class LandingGearCalc:
         main landing gear). (None, None) if no feasible configuration
         was found with the given parameters
         """
+
+        if (self.calc_ng_lf(x_cg_range[1]) < min_lf
+                or self.calc_tg_lf(x_cg_range[0]) < min_lf):
+            return None, None, "load on one landing gear too small"
+
+        reasons = ["tailcone tipback", "rotated wing root clearance",
+                   "rotated wing tip clearance",
+                   "non-rotated wing rotor clearance"]
+
         tw_tg_list = np.linspace(self.tw_ng, tw_tg_max, tw_tg_res)
         min_h_tipback = (np.ones(tw_tg_list.shape)
                          * self.calc_min_h_tipback(theta))
         min_h_root = self.calc_min_h_root(tw_tg_list, phi)
         min_h_tip = self.calc_min_h_tip(tw_tg_list, phi)
         min_h_rotor = self.calc_min_h_rotor(tw_tg_list, phi)
-        h_list = np.max(min_h_tipback, min_h_root, min_h_tip, min_h_rotor)
+        h_mat = np.array([min_h_tipback, min_h_root, min_h_tip, min_h_rotor])
+        h_list = h_mat.max(axis=0)
         psi_list = self.calc_psi(tw_tg_list, z_cg_max, h_list)
 
-        if np.max(psi_list) > psi:
-            return None, None
+        if np.min(psi_list) > psi:
+            return None, None, "could not satisfy turn-over requirement"
 
-        tw_tg = tw_tg_list[np.argmin(np.abs(psi_list - psi))]
-        h = h_list[np.argmin(np.abs(psi_list - psi))]
+        selected_idx = np.argmin(np.abs(psi_list - psi))
+        tw_tg = tw_tg_list[selected_idx]
+        h = h_list[selected_idx]
 
-        return tw_tg, h
+        if self.calc_cg_tipback(x_cg_range[1], z_cg_max, h) < theta:
+            return None, None, "could not satisfy tipback requirement for CG"
+
+        reason = reasons[np.argmax(h_mat[:, selected_idx])[0]]
+
+        return tw_tg, h, reason
 
     def plot_lg(self, x_cg_range: list, z_cg_max: float,
                 x_ng: float, x_tg: float, tw_ng: float, tw_tg: float,
