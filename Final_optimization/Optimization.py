@@ -158,13 +158,13 @@ prob.model.set_input_defaults('Integrated_design.Sv', 1.1)
 prob.model.set_input_defaults('Integrated_design.V_stall', 40.)
 
 # Define constraints TODO: Probably better to define them in a central file, like constants
-prob.model.add_constraint('Integrated_design.CM_alpha', upper=0.1)
+prob.model.add_constraint('Integrated_design.CM_alpha', upper=0.12)
 prob.model.add_constraint('Integrated_design.MTOM', upper=3175.)
 prob.model.add_constraint('Integrated_design.ctrl_mar', upper=-0.2)
 prob.model.add_constraint('Integrated_design.Sr_Sf', lower = 0.01)
 prob.model.add_constraint('Integrated_design.br_bf', lower = 0.7, upper = 1.3)
-prob.model.add_constraint('Integrated_design.b1', lower = 7.5)
-prob.model.add_constraint('Integrated_design.b2', lower = 7.5)
+prob.model.add_constraint('Integrated_design.b1', lower = 7.4)
+prob.model.add_constraint('Integrated_design.b2', lower = 7.4)
 prob.model.add_constraint('Integrated_design.max_dim', upper = 14.)
 
 # Select an appropriate optimizer TODO: Change if better algorithms are found

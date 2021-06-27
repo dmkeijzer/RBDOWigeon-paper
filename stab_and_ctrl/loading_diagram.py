@@ -9,7 +9,8 @@ class CgCalculator:
     """
     def __init__(self, m_wf: float, m_wr: float, m_fus: float, m_bat: float,
                  m_cargo: float, m_pax: float, m_pil: float, cg_fus: list,
-                 cg_bat: list, cg_cargo: list, cg_pax: list, cg_pil: list):
+                 cg_bat: list, cg_cargo: list, cg_pax: list, cg_pil: list,
+                 m_vt: float, cg_vt: float):
         """
         Constructs a CG calculator object for a given aircraft. It takes the
         masses and CG of all components, except for the wings where the CG
@@ -35,12 +36,14 @@ class CgCalculator:
         self.m_cargo = m_cargo
         self.m_pax = m_pax
         self.m_pil = m_pil
+        self.m_vt  = m_vt
 
         self.cg_fus = cg_fus
         self.cg_bat = cg_bat
         self.cg_cargo = cg_cargo
         self.cg_pax = cg_pax
         self.cg_pil = cg_pil
+        self.cg_vt  = cg_vt
 
     def calc_cg(self, cg_wf: list, cg_wr: list, loaded_cargo: bool,
                 seated_pax: list, seated_pil: bool) -> tuple:
@@ -55,12 +58,12 @@ class CgCalculator:
         :return: [x, y, z]-location of the CG of the aircraft
         """
         x = (self.m_wf * cg_wf[0] + self.m_wr * cg_wr[0]
-             + self.m_fus * self.cg_fus[0] + self.m_bat * self.cg_bat[0])
+             + self.m_fus * self.cg_fus[0] + self.m_bat * self.cg_bat[0] + self.m_vt*self.cg_vt)
         # assume that the CGs of the wings are on the symmetry plane
         y = self.m_fus * self.cg_fus[1] + self.m_bat * self.cg_bat[1]
         z = (self.m_wf * cg_wf[1] + self.m_wr * cg_wr[1]
              + self.m_fus * self.cg_fus[2] + self.m_bat * self.cg_bat[2])
-        m = self.m_wf + self.m_wr + self.m_fus + self.m_bat
+        m = self.m_wf + self.m_wr + self.m_fus + self.m_bat + self.m_vt
 
         if loaded_cargo:
             x += self.m_cargo * self.cg_cargo[0]
