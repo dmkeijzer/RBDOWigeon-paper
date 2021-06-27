@@ -81,7 +81,7 @@ class design_optimization(om.ExplicitComponent):
         optimisation_class = int_class.RunDSE(initial_estimate)
 
         # Run the file for # iterations
-        N_iter = 15
+        N_iter = 10
         optim_outputs, internal_inputs, other_outputs = optimisation_class.multirun(N_iter, optim_inputs=[])
 
         S_tot = internal_inputs[1]
@@ -160,7 +160,7 @@ prob.model.set_input_defaults('Integrated_design.V_stall', 40.)
 # Define constraints TODO: Probably better to define them in a central file, like constants
 prob.model.add_constraint('Integrated_design.CM_alpha', upper=0.12)
 prob.model.add_constraint('Integrated_design.MTOM', upper=3175.)
-prob.model.add_constraint('Integrated_design.ctrl_mar', upper=-0.2)
+prob.model.add_constraint('Integrated_design.ctrl_mar', upper=-0.1)
 prob.model.add_constraint('Integrated_design.Sr_Sf', lower = 0.01)
 prob.model.add_constraint('Integrated_design.br_bf', lower = 0.7, upper = 1.3)
 prob.model.add_constraint('Integrated_design.b1', lower = 7.4)

@@ -37,7 +37,7 @@ A_tot = area_prop*12
 
 V_cruise = 72.18676185339652
 
-rpm_cr = 1350
+rpm_cr = 1090
 Omega_cr = rpm_cr * 2 * np.pi / 60
 n_cr = Omega_cr / (2 * np.pi)
 
@@ -58,7 +58,7 @@ Noise_cruise += L1
 Noise_cruise += 20*np.log10(4/B) + 40 * np.log10(15.5/D_ft)
 
 # Correction, use dimensionless distance (0.3030) and tip Mach (0.21)
-correction_tip_Mach = -19
+correction_tip_Mach = -20
 
 Noise_cruise += correction_tip_Mach
 
@@ -72,7 +72,7 @@ Noise_cruise += correction_direction
 Noise_cruise_1m = Noise_cruise - 20*np.log10(1/0.3048 - 1)
 
 # Distance of interest
-r = 100/0.3048  # Approx 100 m
+r = 1000/0.3048  # Approx 100 m
 
 Noise_cruise -= 20*np.log10(r - 1)
 
@@ -87,6 +87,10 @@ def sum_noise(noises):
     tens = np.ones((np.shape(noises))) * 10
     summed_noise = 10 * np.log10(np.sum(np.power(tens, np.array(noises)/10)))
     return summed_noise
+
+
+print("Noise level in cruise at", r*0.3048, "m from the propeller, total:", sum_noise(np.ones((1, 12))[0] * Noise_cruise), "[dB]")
+print("")
 
 """
 Noise midterm
