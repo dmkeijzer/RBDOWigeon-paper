@@ -519,13 +519,15 @@ class RunDSE:
                                 const.dihedral1, b1/2, 0, prop_radius1, l_fus, const.h_fuselage)
 
         # Calculate the track width of the tail gear, and the height of the landing gear
-        tw_tg, h_lg = gears.optimum_placement([x_front, x_aft], z_cg_max=Zcg,
-                                              theta= const.pitch_lim,
-                                              phi=const.lat_lim, psi=const.turn_over,
-                                              min_lf = 0.3)  # TODO: Check if this is reasonable
+        tw_tg, h_lg, reason = gears.optimum_placement([x_front, x_aft],
+                                                      z_cg_max=Zcg,
+                                                      theta= const.pitch_lim,
+                                                      phi=const.lat_lim,
+                                                      psi=const.turn_over,
+                                                      min_lf = 0.16)  # TODO: Check if this is reasonable
 
         if tw_tg > 2*w_fus:
-            print('Check tail gear track width: ', tw_tg)
+            print('Check tail gear track width: ', tw_tg, 'Reason:', reason)
 
         max_coeffs = wing_design.CLa_wprop(T_per_eng_during_stall, V_stall, rho, prop_radius1 * 2, n_prop_1,
                                            n_prop_2, const.tc_wing, CDs_w, CDs_f, Afus, alpha_wp, de_da)
