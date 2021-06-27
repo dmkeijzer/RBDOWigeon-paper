@@ -57,12 +57,16 @@ CL = Cl, CD = Cd, # Aerodynamics
 Vcruise = 72.18676185339652, # Cruise speed [m/s]
 )
 
-state = dict(nStrT=1, nStrB=1,
-            thicknessOfSkin=1e-3, thicknessOfSpar=26.7*1e-3,
+state = dict(nStrT=2, nStrB=1,
+            thicknessOfSkin=1e-3, thicknessOfSpar=18*1e-3,
             thicknessOfStringer=1e-3, ntofit=20, stringerMat = dict(material='Al 7075', Condition='T6'),
                skinMat = dict(material='Al 7075', Condition='T6'))
 
 struct = Structure(**(inputs | state ))
-topStr, botStr, tsk, tstr, wingmass = struct.optimize()
+
+struct.compute_stresses(**state)
+print('Ixx:', struct.loads.wing(0).Ixx())
+print('Lug:', struct.design_lug())
+#topStr, botStr, tsk, tstr, wingmass = struct.optimize()
 
 print(f"{struct.design_lug()}")

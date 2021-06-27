@@ -151,7 +151,7 @@ class Lug:
     
     Ka = lambda self, alpha: alpha * (0.007 * self.c / self.a - 0.008) + 1
     
-    mass = lambda self: 1e-9 * self.t * self.density * (np.pi * ((self.a + self.d / 2) ** 2 - self.d ** 2 / 4) + 50 * (2 * self.c + self.d))
+    mass = lambda self, L: 1e-9 * self.t * self.density * (np.pi * ((self.a + self.d / 2) ** 2 - self.d ** 2 / 4) + L * (2 * self.c + self.d))
     
     Fatigue = lambda self, F, alpha=0: self.SN(self.Kt() * self.Ka(alpha) * self.stress(F))
 
