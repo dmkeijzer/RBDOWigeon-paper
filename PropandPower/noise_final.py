@@ -68,12 +68,25 @@ correction_direction = 4  # +4 dB is the average maximum
 Noise_cruise += correction_direction
 
 # Subtract 20 log (T - l), where r is the distance, in ft, from the center of the propeller.
-r = 1/0.3048  # Approx 100 m
+# First check at 1 m
+Noise_cruise_1m = Noise_cruise - 20*np.log10(1/0.3048 - 1)
+
+# Distance of interest
+r = 100/0.3048  # Approx 100 m
+
 Noise_cruise -= 20*np.log10(r - 1)
 
 
 print("The propeller noise at cruise at", r*0.3048, "m from the propeller is", Noise_cruise, "dB")
+
+print("The propeller noise at cruise at 1 m from the propeller is", Noise_cruise_1m, "dB")
 print("")
+
+# TODO: sum noise of the 12 propellers
+def sum_noise(noises):
+    tens = np.ones((np.shape(noises))) * 10
+    summed_noise = 10 * np.log10(np.sum(np.power(tens, np.array(noises)/10)))
+    return summed_noise
 
 """
 Noise midterm
