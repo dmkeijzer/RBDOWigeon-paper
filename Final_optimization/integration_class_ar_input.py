@@ -486,6 +486,7 @@ class RunDSE:
         x_front = float(x_front)
         x_aft = float(x_aft)
         z_top = float(z_top)
+        print('loading diagram cg', x_front, x_aft)
 
         # Some aerodynamic constants
         CD0fwd = drag.Cd_w(0)
@@ -611,7 +612,6 @@ class RunDSE:
                        ["Mac1", Cmac1],  # aerodynamic moment around AC
                        ["Mac2", Cmac2],
                        ["flighttime", t_tot/3600],  # [hr]
-                       # turnovertime,2,  # we dont actually need this xd
                        ["takeofftime", (t_tot-t_hor)/(2*3600)],
                        ["enginePlacement", pos_eng],  # list(np.linspace(0.1 * b / 2, 0.8 * b / 2, 4)),
                        # engineMass,400 * 9.81 / 8, # See m_prop
