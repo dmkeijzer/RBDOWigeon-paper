@@ -61,7 +61,7 @@ Z = np.ones(np.shape(X))
 # cont = plt.contourf(X, Y, Z, cmap='coolwarm', levels=20)
 # cbar = plt.colorbar(cont, orientation="vertical")
 #
-# cbar.set_label(r'$\eta$ [-]')
+# cbar.set_label(r'$\eta$ [-]', fontsize=14)
 # plt.ylabel("B", fontsize=12)
 # plt.xlabel("Rotational speed [rpm]", fontsize=12)
 #
@@ -100,7 +100,7 @@ Z = np.ones(np.shape(X))
 # cont = plt.contourf(X, Y, Z, cmap='coolwarm', levels=20)
 # cbar = plt.colorbar(cont, orientation="vertical")
 #
-# cbar.set_label(r'$\eta$ [-]')
+# cbar.set_label(r'$\eta$ [-]', fontsize=14)
 # plt.ylabel("V [m/s]", fontsize=12)
 # plt.xlabel("R [m]", fontsize=12)
 #
@@ -184,8 +184,8 @@ plt.show()
 # cont = plt.contourf(X, Y, Z, cmap='coolwarm', levels=20)
 # cbar = plt.colorbar(cont, orientation="vertical")
 #
-# cbar.set_label('Thrust [N]')
-# plt.ylabel(r'$\delta$ [deg]', fontsize=12)
+# cbar.set_label('Thrust [N]', fontsize=12)
+# plt.ylabel(r'$\Delta \beta$ [deg]', fontsize=12)
 # plt.xlabel("Rotational speed [rpm]", fontsize=12)
 #
 # # Save figures
@@ -199,8 +199,8 @@ plt.show()
 # cont = plt.contourf(X, Y, Z2, cmap='coolwarm', levels=20)
 # cbar = plt.colorbar(cont, orientation="vertical")
 #
-# cbar.set_label(r'$\eta$ [-]')
-# plt.ylabel(r'$\delta$ [deg]', fontsize=12)
+# cbar.set_label(r'$\eta$ [-]', fontsize=14)
+# plt.ylabel(r'$\Delta \beta$ [deg]', fontsize=12)
 # plt.xlabel("Rotational speed [rpm]", fontsize=12)
 #
 # # Save figures

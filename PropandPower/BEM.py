@@ -753,7 +753,7 @@ class OffDesignAnalysisBEM:
     # TODO: check exponents of xi and F
     def C_T_prim(self, r, c, Cl, Cd, F, K_prim, phi):
         return (np.pi**3 / 4) * self.solidity_local(c, r) * self.Cy(Cl, Cd, phi) * (r/self.R) * \
-               self.F(r, phi[-1])**3 / ((F + self.solidity_local(c, r)*K_prim) * np.cos(phi))**2
+               self.F(r, phi[-1])**32 / ((F + self.solidity_local(c, r)*K_prim) * np.cos(phi))**2
 
     def C_P_prim(self, r, c, Cl, Cd, F, K_prim, phi):
         return self.C_T_prim(r, c, Cl, Cd, F, K_prim, phi) * np.pi * (r/self.R) * self.Cx(Cl, Cd, phi) / \

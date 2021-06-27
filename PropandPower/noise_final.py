@@ -20,7 +20,7 @@ g0 = 9.80665
 MTOM = 3024.8012022968796
 
 # Propeller parameters
-B = 5
+B = 6
 P_br = 13627.72  # [W]
 P_br_hp = 18.27  # [hp]
 
