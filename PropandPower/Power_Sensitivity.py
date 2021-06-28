@@ -50,11 +50,11 @@ def Sens_V_cell(V_motor, E_tot, per_mot, n_mot, n_bat_mot, C_cell, V_lower, V_up
     plt.show()
 
 
-sen_C = False
-sen_V = True
+sen_C = True
+sen_V = False
 
 if sen_C == True:
-    n_calc = int(1E3)
+    n_calc = 100000
     c_lower = 1
     c_upper = 7
     V_cell = 3.7  # V
