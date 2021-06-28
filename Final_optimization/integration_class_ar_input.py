@@ -369,7 +369,7 @@ class RunDSE:
         max_thrust_stall = mission.max_thrust(rho, V_stall)
 
         # Get approximate overall efficiency
-        energy, t_tot, P_max_eng_mission, max_thrust, t_hor = mission.total_energy(simplified=True)
+        energy, t_tot, P_max_eng_mission, max_thrust, t_hor = mission.total_energy(simplified=False)
 
         # Overall efficiency from battery to engine
         eff_overall = const.eff_bat_eng_cr * (t_hor/t_tot) + const.eff_bat_eng_h * (1-(t_hor/t_tot))

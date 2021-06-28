@@ -174,10 +174,10 @@ print("     Cruise speed:", V_h, "m/s")
 print("     Cruise rpm:", 1100, "rpm")
 print("     Blade pitch change:", 0, "deg")
 print("")
-# print("Cruise efficiency:", hover_performance[0][2], "[-]")
-# print("")
-# print("Necessary cruise power:", 0.001 * hover_performance[1][1] * rho * n_hover**3 * prop_diameter**5, "kW")
-# print("")
+print("Cruise efficiency:", hover_performance[0][2], "[-]")
+print("")
+print("Necessary cruise power:", 0.001 * hover_performance[1][1] * rho * n_hover**3 * prop_diameter**5, "kW")
+print("")
 print("AoA per station:", np.rad2deg(hover_performance[2][0]))
 print("")
 print("Cl per station:", hover_performance[2][1])
@@ -328,7 +328,7 @@ plotter.plot_3D_blade()
 coef_chords = np.polynomial.polynomial.polyfit(design[3], design[0], 5)
 coef_pitchs = np.polynomial.polynomial.polyfit(design[3], design[1], 5)
 
-radial_stations_Koen = np.array([1/10, (1/10 + 1/11*9/10), (1/10 + 2/11*9/10), (1/10 + 3/11*9/10), (1/10 + 4/11*9/10),
+radial_stations_Koen = np.array([(1/10 + 1/11*9/10), (1/10 + 2/11*9/10), (1/10 + 3/11*9/10), (1/10 + 4/11*9/10),
                                  (1/10 + 5/11*9/10), (1/10 + 6/11*9/10), (1/10 + 7/11*9/10), (1/10 + 8/11*9/10),
                                  (1/10 + 9/11*9/10), (1/10 + 10/11*9/10), (1/10 + 11/11*9/10)-0.001])*prop_radius
 
