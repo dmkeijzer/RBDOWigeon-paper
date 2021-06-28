@@ -1,6 +1,6 @@
 import numpy as np
 from matplotlib import pyplot as plt
-
+import Final_optimization.constants_final as const
 
 class LandingGearCalc:
     """
@@ -68,16 +68,17 @@ class LandingGearCalc:
         return y_dist * np.tan(phi) - z_tip
 
     def calc_min_h_rotor(self, tw_tg, phi):
-        z_rot = (self.z_wing + self.b / 2 * np.tan(self.gamma) - self.rotor_rad)
+        crit_rad = max(self.rotor_rad, const.h_wt_1)
+        z_rot = (self.z_wing + self.b / 2 * np.tan(self.gamma) - crit_rad)
         y_dist = self.y_max_rotor - tw_tg / 2
         return y_dist * np.tan(phi) - z_rot
 
     def calc_min_h_tipback(self, theta):
         return np.tan(theta) * (self.l_fus - self.x_tg) - self.h_fus
 
-    def calc_psi(self, tw_tg, z_cg, h_lg):
+    def calc_psi(self, tw_tg, z_cg, h_lg, x_cg):
         alpha = np.arctan((tw_tg - self.tw_ng) / 2 / (self.x_tg - self.x_ng))
-        bn = self.x_tg - self.x_ng + np.tan(alpha) / (self.tw_ng / 2)
+        bn = x_cg - self.x_ng + self.tw_ng / 2 / np.tan(alpha)
         c = bn * np.sin(alpha)
         return np.arctan((z_cg + h_lg) / c)
 
@@ -86,6 +87,9 @@ class LandingGearCalc:
 
     def calc_tg_lf(self, x_cg):
         return 1 - self.calc_ng_lf(x_cg)
+
+    def calc_cg_tipback(self, x_cg, z_cg, h_lg):
+        return np.arctan((self.x_tg - x_cg) / (h_lg + z_cg))
 
     def optimum_placement(self, x_cg_range: list,
                           z_cg_max: float, theta: float, phi: float,
@@ -110,22 +114,55 @@ class LandingGearCalc:
         main landing gear). (None, None) if no feasible configuration
         was found with the given parameters
         """
+
+        if (self.calc_ng_lf(x_cg_range[1]) < min_lf
+                or self.calc_tg_lf(x_cg_range[0]) < min_lf):
+            print(self.x_ng, x_cg_range, self.x_tg)
+            print('fractions', self.calc_ng_lf(x_cg_range[0]),
+                  self.calc_ng_lf(x_cg_range[1]))
+
+            return None, None, "load on one landing gear too small"
+        reasons = ["tailcone tipback", "rotated wing root clearance",
+                   "rotated wing tip clearance",
+                   "non-rotated wing rotor clearance"]
+
         tw_tg_list = np.linspace(self.tw_ng, tw_tg_max, tw_tg_res)
         min_h_tipback = (np.ones(tw_tg_list.shape)
                          * self.calc_min_h_tipback(theta))
         min_h_root = self.calc_min_h_root(tw_tg_list, phi)
         min_h_tip = self.calc_min_h_tip(tw_tg_list, phi)
         min_h_rotor = self.calc_min_h_rotor(tw_tg_list, phi)
-        h_list = np.max(min_h_tipback, min_h_root, min_h_tip, min_h_rotor)
-        psi_list = self.calc_psi(tw_tg_list, z_cg_max, h_list)
+        h_mat = np.array([min_h_tipback, min_h_root, min_h_tip, min_h_rotor])
+        h_list = h_mat.max(axis=0)
+        psi_list = self.calc_psi(tw_tg_list, z_cg_max, h_list, x_cg_range[1])
 
-        if np.max(psi_list) > psi:
-            return None, None
+        if np.nanmin(psi_list) > psi:
+            return None, None, "could not satisfy turn-over requirement"
 
-        tw_tg = tw_tg_list[np.argmin(np.abs(psi_list - psi))]
-        h = h_list[np.argmin(np.abs(psi_list - psi))]
+        selected_idx = np.argmin(np.abs(psi_list[np.logical_not(np.isnan(psi_list))] - psi))
+        tw_tg = tw_tg_list[selected_idx]
+        h = h_list[selected_idx]
 
-        return tw_tg, h
+        plt.subplot(121)
+        plt.title("height")
+        plt.plot(tw_tg_list, min_h_tipback, label="tipback")
+        plt.plot(tw_tg_list, min_h_root, label="root")
+        plt.plot(tw_tg_list, min_h_tip, label="tip")
+        plt.plot(tw_tg_list, min_h_rotor, label="rotor")
+        plt.legend()
+
+        plt.subplot(122)
+        plt.title("psi")
+        plt.plot(tw_tg_list, np.rad2deg(psi_list))
+        plt.axhline(55)
+        plt.show()
+
+        if self.calc_cg_tipback(x_cg_range[1], z_cg_max, h) < theta:
+            return None, None, "could not satisfy tipback requirement for CG"
+
+        reason = reasons[np.argmax(h_mat[:, selected_idx])]
+
+        return tw_tg, h, reason
 
     def plot_lg(self, x_cg_range: list, z_cg_max: float,
                 x_ng: float, x_tg: float, tw_ng: float, tw_tg: float,
@@ -166,3 +203,29 @@ class LandingGearCalc:
                     label="Tail gear")
         plt.legend()
         plt.gca().set_aspect('equal', adjustable='box')
+
+
+if __name__ == "__main__":
+    x_ng = 1.75
+    x_tg = 6.5
+    tw_ng = 1.85
+    tilt_max_rad = 1
+    y_tilt = 0.45
+    tilt_tip_rad = 0.6
+    b = 8.2
+    taper = 0.45
+    z_wing = 0.3
+    gamma = np.deg2rad(-0.5)
+    y_max_rotor = b/2
+    z_offset_rotor = 0
+    rotor_rad = 0.6
+    l_fus = 7.5
+    h_fus = 1.7
+    x_cg_range = [2.54, 2.61]
+    z_cg = 0.4*1.7
+    lgc = LandingGearCalc(x_ng, x_tg, tw_ng, tilt_max_rad, y_tilt, tilt_tip_rad, b, taper, z_wing, gamma, y_max_rotor, z_offset_rotor, rotor_rad, l_fus, h_fus)
+    tw, h, reason = lgc.optimum_placement(x_cg_range, z_cg, np.deg2rad(15), np.deg2rad(5), np.deg2rad(55), 0.08)
+    print("tw_tg:", tw, "h:", h, "reason:", reason)
+    lgc.plot_lg(x_cg_range, z_cg, x_ng, x_tg, tw_ng, tw, h)
+    plt.show()
+

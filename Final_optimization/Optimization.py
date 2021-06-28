@@ -14,6 +14,7 @@ class design_optimization(om.ExplicitComponent):
         self.add_input('AR2')
         self.add_input('Sr_Sf')
         self.add_input('xr')
+        self.add_input('bat_pos')
 
         # Constant inputs
         self.add_input('xf')
@@ -38,6 +39,9 @@ class design_optimization(om.ExplicitComponent):
         self.add_output('MTOM_nc')
         self.add_output('Energy')
         self.add_output('br_bf')
+        self.add_output('b1')
+        self.add_output('b2')
+        self.add_output('max_dim')
 
         self.add_output('Cost_func')
 
@@ -62,6 +66,7 @@ class design_optimization(om.ExplicitComponent):
         xr = inputs['xr'][0]
         zf = inputs['zf'][0]
         zr = inputs['zr'][0]
+        bat_pos = inputs['bat_pos'][0]
 
         AR_wing1 = inputs['AR1'][0]
         AR_wing2 = inputs['AR2'][0]
@@ -70,25 +75,31 @@ class design_optimization(om.ExplicitComponent):
         max_thrust_stall = MTOM*const.g*0.1
 
         initial_estimate = [MTOM, 0, V_cr, h_cr, C_L_cr, CLmax, prop_radius, de_da, Sv, V_stall, max_power, AR_wing1,
-                            AR_wing2, Sr_Sf, s1, xf, zf, xr, zr, max_thrust_stall]
+                            AR_wing2, Sr_Sf, s1, xf, zf, xr, zr, max_thrust_stall, 1, 1.5, 2.4, 2.6, 8, bat_pos]
 
-
-        # print('Trying out optimization',initial_estimate)
         # Optimisation class
         optimisation_class = int_class.RunDSE(initial_estimate)
 
         # Run the file for # iterations
-        N_iter = 15
+        N_iter = 10
         optim_outputs, internal_inputs, other_outputs = optimisation_class.multirun(N_iter, optim_inputs=[])
 
         S_tot = internal_inputs[1]
         S1 = s1*S_tot
         S2 = S1*Sr_Sf
 
+        # Spans
         b1 = np.sqrt(AR_wing1*S1)
         b2 = np.sqrt(AR_wing2*S2)
 
+        # Calculate maximum horizontal dimension
+        l_fus = internal_inputs[24]
+        max_dim = max(max(np.sqrt(l_fus**2 + ((b1+b2)/2)**2), b1), b2) + 2*internal_inputs[6]
+
         outputs['br_bf'] = b2/b1
+        outputs['b1'] = b1
+        outputs['b2'] = b2
+        outputs['max_dim'] = max_dim
 
         print('===== Progress update =====')
         print('MTOM:        ', optim_outputs[0])
@@ -97,6 +108,7 @@ class design_optimization(om.ExplicitComponent):
         print('ctrl margin: ', optim_outputs[4])
         print('Front wing:  ', xf)
         print('Rear wing:   ', xr)
+        print('x CG:', internal_inputs[22], internal_inputs[23])
 
         outputs['mass'] = optim_outputs[0]
         outputs['Energy'] = optim_outputs[1]
@@ -146,17 +158,14 @@ prob.model.set_input_defaults('Integrated_design.Sv', 1.1)
 prob.model.set_input_defaults('Integrated_design.V_stall', 40.)
 
 # Define constraints TODO: Probably better to define them in a central file, like constants
-prob.model.add_constraint('Integrated_design.CM_alpha', upper=0.1)
+prob.model.add_constraint('Integrated_design.CM_alpha', upper=0.12)
 prob.model.add_constraint('Integrated_design.MTOM', upper=3175.)
-prob.model.add_constraint('Integrated_design.ctrl_mar', upper=0.)
+prob.model.add_constraint('Integrated_design.ctrl_mar', upper=-0.1)
 prob.model.add_constraint('Integrated_design.Sr_Sf', lower = 0.01)
 prob.model.add_constraint('Integrated_design.br_bf', lower = 0.7, upper = 1.3)
-prob.model.add_constraint('Integrated_design.xr', upper = 8)
-
-
-
-# Stability constraints
-# TODO: if these bounds are changed in the integrated program, change the references
+prob.model.add_constraint('Integrated_design.b1', lower = 7.4)
+prob.model.add_constraint('Integrated_design.b2', lower = 7.4)
+prob.model.add_constraint('Integrated_design.max_dim', upper = 14.)
 
 # Select an appropriate optimizer TODO: Change if better algorithms are found
 # prob.driver = om.pyOptSparseDriver()
@@ -168,7 +177,8 @@ prob.driver.options['optimizer'] = 'COBYLA'
 prob.model.add_design_var('Integrated_design.AR1', lower = 5, upper = 15)
 prob.model.add_design_var('Integrated_design.AR2', lower = 5, upper = 15)
 prob.model.add_design_var('Integrated_design.Sr_Sf', lower = 0.01)
-prob.model.add_design_var('Integrated_design.xr')
+prob.model.add_design_var('Integrated_design.xr', upper = 8.)
+prob.model.add_design_var('Integrated_design.bat_pos', lower = 0.5, upper = 2.5)
 
 prob.model.add_objective('Integrated_design.Cost_func')
 

@@ -432,18 +432,6 @@ class mission:
                                                                                y_start=self.h_cruise,
                                                                                th_start = np.radians(5), y_tgt=0, vx_tgt=0)
 
-        # E_climb = 0.1*E_cruise
-        # E_desc = 0.05*E_cruise
-        #
-        # t_climb = 200
-        # t_desc = 300
-        #
-        # P_m_to = 1.7e6
-        # P_m_la = 1.5e6
-        #
-        # T_m_to = 34311.7687171136
-        # T_m_la  =30000
-
         # Get the total energy consumption
         E_tot = E_cruise + E_climb + E_desc + E_loiter
 
@@ -475,27 +463,10 @@ class mission:
 class evtol_performance:
     """
     This script calculates different performance characteristics for a tilt-wing evtol.
-
-    TODO:
-        - Integrate final data file (replace self.parameters by datafile.parameters)
-        - Add drag curve in Climb performance
-        - Replace max_thrust by function from propulsion department
-        - Vertical flight CD
-        - Efficiencies
     """
     def __init__(self, cruising_alt, cruise_speed, S, CL_max, mass, battery_capacity, EOM, loiter_time, A_disk, P_max,
                  CL_alpha_curve, CD_a_w, CD_a_f, alpha_lst, Drag):
-        """
-        :param cruising_alt:        [m]
-        :param cruise_speed:        [m/s]
-        :param S:                   [m^2]
-        :param CL_max:              [-]
-        :param mass:                [kg]
-        :param battery_capacity:    [J]
-        :param EOM:                 [kg]
-        :param loiter_time:         [s]
-        :param CD_vertical:         [-]
-        """
+
         # Change this when datafile is final
         self.S      = S
         self.CL_max = CL_max

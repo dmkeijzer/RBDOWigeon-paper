@@ -55,7 +55,7 @@ print("Disk loading:", eng_sizing.disk_loading(), "kg/m^2")
 print("")
 
 # Design parameters
-B = 5
+B = 6
 rpm_cruise = 1350
 T_factor = 2.6
 
@@ -66,7 +66,9 @@ blade_cruise = BEM.BEM(B, prop_radius, rpm_cruise, xi_0, rho, dyn_vis, V_cruise,
 
 # Initial estimate: zeta = 0
 
-zeta, design, V_e, coefs = blade_cruise.optimise_blade(0)
+zeta, design, V_e, coefs, solidity = blade_cruise.optimise_blade(0)
+
+print("Average solidity of the propeller", np.average(solidity))
 
 print("############# Blade design #############")
 print("T_cr", T_cr_per_engine, "N")
@@ -254,10 +256,10 @@ print("     Hover speed:", V_h, "m/s")
 print("     Hover rpm:", rpm_hover, "rpm")
 print("     Blade pitch change:", best_combo[0], "deg")
 print("")
-print("Hover efficiency:", hover_performance[0][2], "[-]")
-print("")
-print("Necessary hover power:", 0.001 * hover_performance[1][1] * rho * n_hover**3 * prop_diameter**5, "kW")
-print("")
+# print("Hover efficiency:", hover_performance[0][2], "[-]")
+# print("")
+# print("Necessary hover power:", 0.001 * hover_performance[1][1] * rho * n_hover**3 * prop_diameter**5, "kW")
+# print("")
 print("AoA per station:", np.rad2deg(hover_performance[2][0]))
 print("")
 print("Cl per station:", hover_performance[2][1])
@@ -306,10 +308,10 @@ print("     Hover speed:", V_h, "m/s")
 print("     Max rpm:", rpm_max, "rpm")
 print("     Blade pitch change:", best_combo[0], "deg")
 print("")
-print("Max T efficiency:", hover_performance[0][2], "[-]")
-print("")
-print("Necessary max T power:", 0.001 * hover_performance[1][1] * rho * n_hover**3 * prop_diameter**5, "kW")
-print("")
+# print("Max T efficiency:", hover_performance[0][2], "[-]")
+# print("")
+# print("Necessary max T power:", 0.001 * hover_performance[1][1] * rho * n_hover**3 * prop_diameter**5, "kW")
+# print("")
 print("AoA per station:", np.rad2deg(hover_performance[2][0]))
 print("")
 print("Cl per station:", hover_performance[2][1])
@@ -326,7 +328,7 @@ plotter.plot_3D_blade()
 coef_chords = np.polynomial.polynomial.polyfit(design[3], design[0], 5)
 coef_pitchs = np.polynomial.polynomial.polyfit(design[3], design[1], 5)
 
-radial_stations_Koen = np.array([1/10, (1/10 + 1/11*9/10), (1/10 + 2/11*9/10), (1/10 + 3/11*9/10), (1/10 + 4/11*9/10),
+radial_stations_Koen = np.array([(1/10 + 1/11*9/10), (1/10 + 2/11*9/10), (1/10 + 3/11*9/10), (1/10 + 4/11*9/10),
                                  (1/10 + 5/11*9/10), (1/10 + 6/11*9/10), (1/10 + 7/11*9/10), (1/10 + 8/11*9/10),
                                  (1/10 + 9/11*9/10), (1/10 + 10/11*9/10), (1/10 + 11/11*9/10)-0.001])*prop_radius
 
