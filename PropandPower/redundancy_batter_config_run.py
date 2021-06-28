@@ -7,7 +7,7 @@ E_tot = 301.1111  # kWh
 per_mot = 0.99
 
 # Cell characteristics
-V_cell = 3.4  # V
+V_cell = 3.7  # V
 C_cell = 5  # Ah
 E_cell = V_cell * C_cell  # Wh
 
@@ -45,5 +45,10 @@ per_increase = red.increase()[1]
 print("    -", abs_increase, "cells more than needed for energy")
 print("    -", per_increase, "% increase in cells")
 
+N_c_new = red.N_cells_new()
+print("The total number of cells than becomes", N_c_new)
+
 print("Single battery:", N_ser, "in series and", int(N_par_new/(n_mot * n_bat_mot)), "cells in parallel")
+
+print("Single battery contains", E_cell,"Wh of energy")
 
