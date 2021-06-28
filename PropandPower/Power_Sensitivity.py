@@ -9,6 +9,7 @@ per_mot = 0.99
 n_mot = 12  # Number of motors in aircraft
 n_bat_mot = 2  # Number of batteries per motor
 
+
 def Sens_C_cell(V_motor, E_tot, per_mot, n_mot, n_bat_mot, V_cell, c_lower, c_upper, n_calc):
     abs_incr_ar = np.zeros(n_calc)
     C_ar = np.linspace(c_lower, c_upper, n_calc)
@@ -19,15 +20,15 @@ def Sens_C_cell(V_motor, E_tot, per_mot, n_mot, n_bat_mot, V_cell, c_lower, c_up
         C_ar[i] = C
         abs_incr_ar[i] = red.increase()[0]
         per_incr_ar[i] = red.increase()[1]
-
+    font = 20
     plt.plot(C_ar, per_incr_ar)
-
-    plt.xlabel('Cell capacity [Ah]')
-    plt.ylabel('Increase in cell count [-]')
-    # plt.grid()
+    plt.xlabel('Cell capacity [Ah]', fontsize=font)
+    plt.ylabel('Increase in cell count [-]', fontsize=font)
+    plt.grid()
     plt.tight_layout(pad=0.05)
-    # plt.savefig(self.path + 'time_sensitivity_altitude' + '.pdf')
+    # plt.savefig('../PropandPower/Power_Sensitivity_Graphs/' + 'Sens_C_cell' + '.pdf')
     plt.show()
+
 
 def Sens_V_cell(V_motor, E_tot, per_mot, n_mot, n_bat_mot, C_cell, V_lower, V_upper, n_calc):
     abs_incr_ar = np.zeros(n_calc)
@@ -39,15 +40,15 @@ def Sens_V_cell(V_motor, E_tot, per_mot, n_mot, n_bat_mot, C_cell, V_lower, V_up
         V_ar[i] = V
         abs_incr_ar[i] = red.increase()[0]
         per_incr_ar[i] = red.increase()[1]
-
+    font = 20
     plt.plot(V_ar, per_incr_ar)
-
-    plt.xlabel('Cell nominal voltage [V]')
-    plt.ylabel('Increase in cell count [-]')
-    # plt.grid()
+    plt.xlabel('Cell nominal voltage [V]', fontsize=font)
+    plt.ylabel('Increase in cell count [-]', fontsize=font)
+    plt.grid()
     plt.tight_layout(pad=0.05)
-    # plt.savefig(self.path + 'time_sensitivity_altitude' + '.pdf')
+    # plt.savefig('../PropandPower/Power_Sensitivity_Graphs/' + 'Sens_V_cell' + '.pdf')
     plt.show()
+
 
 sen_C = False
 sen_V = True
@@ -60,8 +61,8 @@ if sen_C == True:
     Sens_C_cell(V_motor, E_tot, per_mot, n_mot, n_bat_mot, V_cell, c_lower, c_upper, n_calc)
 
 if sen_V == True:
-    n_calc = 10000
-    V_lower = 1.5
-    V_upper = 7
+    n_calc = 100000
+    V_lower = 10
+    V_upper = 20
     C_cell = 5  # Ah
-    Sens_V_cell(V_motor, E_tot, per_mot, n_mot, n_bat_mot, C_cell , V_lower, V_upper, n_calc)
+    Sens_V_cell(V_motor, E_tot, per_mot, n_mot, n_bat_mot, C_cell, V_lower, V_upper, n_calc)

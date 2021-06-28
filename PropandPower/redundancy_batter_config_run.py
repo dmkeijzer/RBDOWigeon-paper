@@ -7,7 +7,7 @@ E_tot = 301.1111  # kWh
 per_mot = 0.99
 
 # Cell characteristics
-V_cell = 3.7  # V
+V_cell = 3.71  # V
 C_cell = 5  # Ah
 E_cell = V_cell * C_cell  # Wh
 
