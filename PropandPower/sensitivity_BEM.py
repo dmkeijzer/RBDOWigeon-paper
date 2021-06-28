@@ -75,40 +75,47 @@ Z = np.ones(np.shape(X))
 B = 5
 rpm = 2500
 
-Vs = np.arange(45, 80)
-rs = np.arange(0.35, 0.7, 0.01)
+Vs = np.arange(55, 85, 2)
+rs = np.arange(0.35, 0.7, 0.02)
 X, Y = np.meshgrid(rs, Vs[::-1])  # Reorder Vs, idk why it is necessary
 
 Z = np.ones(np.shape(X))
 
-# for y in range(len(Vs)):
-#     for x in range(len(rs)):
-#
-#         # Check combinations of number of blades and rpm
-#         V_cruise = Vs[::-1][y]  # Reorder Bs here too
-#         R = rs[x]
-#
-#         # Load the propeller
-#         propeller = BEM.BEM(B, R, rpm, xi_0, rho, dyn_visc, V_cruise, N_stations, a, RN_spacing, T=T_cr_per_eng)
-#
-#         zeta, design, V_e, coefs = propeller.optimise_blade(0)
-#
-#         # The parameter of interest is the propeller efficiency
-#         Z[y][x] = design[5]
-#
-# # Plot sensitivity plot
-# cont = plt.contourf(X, Y, Z, cmap='coolwarm', levels=20)
-# cbar = plt.colorbar(cont, orientation="vertical")
-#
-# cbar.set_label(r'$\eta$ [-]', fontsize=14)
-# plt.ylabel("V [m/s]", fontsize=12)
-# plt.xlabel("R [m]", fontsize=12)
-#
-# # Save figures
-# plt.tight_layout()
-# plt.savefig(path + 'sensitivity_design_BEM_V_R' + '.pdf')
-#
-# plt.show()
+for y in range(len(Vs)):
+    for x in range(len(rs)):
+
+        # Check combinations of number of blades and rpm
+        V_cruise = Vs[::-1][y]  # Reorder Bs here too
+        R = rs[x]
+
+        # Load the propeller
+        propeller = BEM.BEM(B, R, rpm, xi_0, rho, dyn_visc, V_cruise, N_stations, a, RN_spacing, T=T_cr_per_eng)
+
+        zeta, design, V_e, coefs, solidity = propeller.optimise_blade(0)
+
+        # The parameter of interest is the propeller efficiency
+        Z[y][x] = design[5]
+
+# Plot sensitivity plot
+cont = plt.contourf(X, Y, Z, cmap='coolwarm', levels=20)
+cbar = plt.colorbar(cont, orientation="vertical")
+
+cbar.set_label(r'$\eta$ [-]', fontsize=14)
+plt.ylabel("V [m/s]", fontsize=12)
+plt.xlabel("R [m]", fontsize=12)
+
+R = 0.5029
+V_cruise = 72.18676
+
+plt.scatter(R, V_cruise, marker='x', color='k', label='Design point')
+# point = plt.scatter(6, 1.4, color='black', label= 'Wigeon', marker = 'x')
+
+# Save figures
+plt.tight_layout()
+plt.savefig(path + 'sensitivity_design_BEM_V_R' + '.pdf')
+plt.legend()
+
+plt.show()
 
 # Off design analysis
 B = 5
@@ -127,7 +134,7 @@ propeller = BEM.BEM(B, R, rpm, xi_0, rho, dyn_visc, V_cruise, N_stations, a, RN_
 
 # Zeta init
 zeta_init = 0
-zeta, design, V_e, coefs = propeller.optimise_blade(zeta_init)
+zeta, design, V_e, coefs, solidity = propeller.optimise_blade(zeta_init)
 
 
 Omega = rpm * 2 * np.pi / 60

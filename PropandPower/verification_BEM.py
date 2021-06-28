@@ -24,7 +24,7 @@ MTOM = 3000
 
 n_prop = 12
 # B = 20
-rpm = 1500
+rpm = 2500
 R = 0.5029
 xi_0 = 0.1
 
@@ -34,72 +34,72 @@ A_tot = A_prop * n_prop
 DiskLoad = MTOM / A_tot
 
 V_cr = 72
-T_cr_per_eng = 250
+T_cr_per_eng = 400
 
 ActDisk = ADT.ActDisk_verif(V_cr, T_cr_per_eng*n_prop, rho, A_tot)
 
 print("Cruise exit speed (ADT):", ActDisk.v_e_cr())
 
-Bs = []
-Ves = []
-for B in range(3, 26):
-    blade = BEM.BEM(B, R, rpm, xi_0, rho, dyn_visc, V_cr, 100, a, 100000, T=T_cr_per_eng)
-
-    blade_design = blade.optimise_blade(0)
-
-    # Check exit speed
-    Ves.append(blade_design[0]*V_cr + V_cr)
-    Bs.append(B)
-
-# print("Cruise exit speed (BEM)", blade_design[0]*V_cr + V_cr)
+# Bs = []
+# Ves = []
+# for B in range(3, 26):
+#     blade = BEM.BEM(B, R, rpm, xi_0, rho, dyn_visc, V_cr, 100, a, 100000, T=T_cr_per_eng)
 #
-# print("Ratio:", ActDisk.v_e_cr()/(blade_design[0]*V_cr + V_cr))
-# print("")
-
-# Plot the propeller exit speed against the number of blades
-plt.ylim(70, 95)
-plt.plot(Bs, Ves, label='Blade Element Momentum Theory', color='tab:orange')
-plt.hlines(ActDisk.v_e_cr(), Bs[0], Bs[-1], label='Actuator Disk Theory')
-plt.xlabel("B [-]")
-plt.ylabel("Slipstream speed [m/s]")
-plt.legend()
-plt.show()
+#     blade_design = blade.optimise_blade(0)
+#
+#     # Check exit speed
+#     Ves.append(blade_design[0]*V_cr + V_cr)
+#     Bs.append(B)
+#
+# # print("Cruise exit speed (BEM)", blade_design[0]*V_cr + V_cr)
+# #
+# # print("Ratio:", ActDisk.v_e_cr()/(blade_design[0]*V_cr + V_cr))
+# # print("")
+#
+# # Plot the propeller exit speed against the number of blades
+# plt.ylim(70, 95)
+# plt.plot(Bs, Ves, label='Blade Element Momentum Theory', color='tab:orange')
+# plt.hlines(ActDisk.v_e_cr(), Bs[0], Bs[-1], label='Actuator Disk Theory')
+# plt.xlabel("B [-]")
+# plt.ylabel("Slipstream speed [m/s]")
+# plt.legend()
+# plt.show()
 #
 # print("#######################################")
 # print("")
 #
 #
-# """
-# Plot efficiency against J
-#
-# J = V/(nD)
-# """
-#
-# # Fix n and D, change only V
-# D = 2*R
-# n = rpm / 60
-# B = 5
-#
-# Js = []
-# effs = []
-# for V in range(80, 150):
-#     blade = BEM.BEM(B, R, rpm, xi_0, rho, dyn_visc, V, 100, a, 100000, T=T_cr_per_eng)
-#     blade_design = blade.optimise_blade(0)
-#
-#     # Check the advance ratio
-#     J = V/(n*D)
-#     Js.append(J)
-#
-#     # Compute the efficiency
-#     eff = blade_design[1][5]
-#     effs.append(eff)
-#
-# # Plot efficiency against advance ratio
-# plt.plot(Js, effs)
-# plt.xlabel("Advance ratio, J = V/(nD) [-]")
-# plt.ylabel(r'$\eta$ [-]')
-#
-# plt.show()
+"""
+Plot efficiency against J
+
+J = V/(nD)
+"""
+
+# Fix n and D, change only V
+D = 2*R
+n = rpm / 60
+B = 5
+
+Js = []
+effs = []
+for V in range(90, 200, 5):
+    blade = BEM.BEM(B, R, rpm, xi_0, rho, dyn_visc, V, 100, a, 100000, T=T_cr_per_eng)
+    blade_design = blade.optimise_blade(0)
+
+    # Check the advance ratio
+    J = V/(n*D)
+    Js.append(J)
+
+    # Compute the efficiency
+    eff = blade_design[1][5]
+    effs.append(eff)
+
+# Plot efficiency against advance ratio
+plt.plot(Js, effs)
+plt.xlabel("Advance ratio, J = V/(nD) [-]")
+plt.ylabel(r'$\eta$ [-]')
+
+plt.show()
 
 """
 Plot efficiency against thrust for constant speed and rpm
@@ -159,7 +159,7 @@ propeller = BEM.BEM(B, R, rpm, xi_0, rho, dyn_visc, V_cruise, N_stations, a, RN_
 
 # Zeta init
 zeta_init = 0
-zeta, design, V_e, coefs = propeller.optimise_blade(zeta_init)
+zeta, design, V_e, coefs, solidity = propeller.optimise_blade(zeta_init)
 
 # print("Displacement velocity ratio (zeta):", zeta)
 # print("")
@@ -261,7 +261,7 @@ for rpm in range(1000, 5500, 50):
     Js.append(J)
 
     # Compute the efficiency
-    eff = blade_hover_analysis[2]
+    eff = blade_hover_analysis[0][2]
     effs.append(eff)
 
 # Plot efficiency against advance ratio
