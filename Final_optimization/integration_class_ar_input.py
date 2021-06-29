@@ -371,6 +371,8 @@ class RunDSE:
         # Get approximate overall efficiency
         energy, t_tot, P_max_eng_mission, max_thrust, t_hor = mission.total_energy(simplified=False)
 
+        energy_wc = energy
+
         # Overall efficiency from battery to engine
         eff_overall = const.eff_bat_eng_cr * (t_hor/t_tot) + const.eff_bat_eng_h * (1-(t_hor/t_tot))
         energy = energy * 2.77778e-7 * 1000*const.energy_cont / eff_overall  # From [J] to [Wh]
@@ -526,6 +528,7 @@ class RunDSE:
                                                       phi=const.lat_lim,
                                                       psi=const.turn_over,
                                                       min_lf = 0.08)  # TODO: Check if this is reasonable
+
         print(tw_tg, w_fus, reason)
         if tw_tg > 2*w_fus:
             print('Check tail gear track width: ', tw_tg, 'Reason:', reason)
@@ -539,7 +542,6 @@ class RunDSE:
                    MTOM*g0)
 
         # Load vertical tail
-        # print("Before V tail sizing")
         vertical_tail = vert_tail.VT_sizing(MTOM * g0, h_cr, x_CG_MTOM, l_fus, h_fus, w_fus, V_cr, V_stall, CD0,
                                             CL_cr_1, CL_cr_2, Clafwd, Clarear, S1, S2, AR_wing1, AR_wing2,
                                             const.sweepc41, const.sweepc42, wing_plan_1[3], wing_plan_2[3],
@@ -580,6 +582,13 @@ class RunDSE:
 
         # Outputs for optimisation cost function
         optim_outputs = [MTOM, energy, time, CM_a, cg_fwd_lim - x_front, MTOM_nc]
+
+        mission_nc = FP.mission(float(MTOM_nc), float(h_cr), float(V_cr), float(CLmax), float(S_tot),
+                                                        float(tot_prop_area), P_max=float(max_power),
+                                                        Cl_alpha_curve=Cl_alpha_curve, CD_a_w=CD_a_w, CD_a_f=CD_a_f, alpha_lst=alpha_lst,
+                                                        Drag=drag, t_loiter=15 * 60, rotational_rate=5, mission_dist=const.mission_range)
+
+        energy_nc, t_tot_nc, P_max_nc, T_max_nc, t_hov_nc = mission_nc.total_energy(simplified=False)
 
         lines       = [["MAC1", find_mac(S1, b1, taper)],  # Mean Aerodynamic Chord [m]
                        ["MAC2", find_mac(S2, b2, taper)],
@@ -653,7 +662,13 @@ class RunDSE:
                        ["Fuselage_mass", m_fus_nc],
                        ["Landing_gear_mass", m_gear_nc],
                        ["Vertical_tail_mass", vtail_mass],
-                       ["Propulsion_mass", m_prop_nc]]
+                       ["Propulsion_mass", m_prop_nc],
+                       ["Energy_nc", energy_nc],
+                       ["Energy", energy_wc],
+                       ["Cr_vert", root_chord_vtail],
+                       ["m_v_tail", vtail_mass],
+                       ["S_vtail", Sv],
+                       ["b_vtail", v_tail[3]]]
 
         txt = open("final_values.txt", 'w')
         txt.truncate(0)

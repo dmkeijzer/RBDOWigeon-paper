@@ -333,7 +333,7 @@ class mission:
             plt.xlabel("Time [s]")
             plt.ylabel("$v_y$ [m/s]")
             plt.grid()
-            plt.tight_layout(pad=0.05)
+            plt.tight_layout(pad=0.8)
             plt.savefig(self.path + 'transition_' + 'climb' * (y_tgt > 10) + 'descend' * (y_tgt < 10) + '_vy.pdf')
             plt.show()
 

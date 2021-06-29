@@ -20,6 +20,6 @@ print(100*(arr.max() - avg)/avg, 100*(arr.min() - avg)/avg)
 
 print(avg + 2*std)
 plt.hist(arr, range = (avg - 3*std, avg + 3*std), bins = 40)
-plt.xlabel('Total energy consumption [MJ')
+plt.xlabel('Total energy consumption [MJ]')
 plt.tight_layout()
 plt.show()
