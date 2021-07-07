@@ -1,3 +1,8 @@
+"""
+Vertical tail sizing. Class VT_sizing allows for sizing and plotting of the vertical tail.
+
+Author: Michal Cuadrat-Grzybowski
+"""
 import numpy as np
 from scipy.linalg import null_space
 from matplotlib import pyplot as plt
@@ -66,9 +71,7 @@ class VT_sizing:
     def C_L_a(self,A, Lambda_half, eta=0.95):
         """
         Inputs:
-        :param M: Mach number
-        :param b: wing span
-        :param S: wing area
+        :param A: Aspect ratio [-]
         :param Lambda_half: Sweep angle at 0.5*chord
         :param eta: =0.95
         :return: Lift curve slope for tail AND wing using DATCOM method
@@ -83,9 +86,9 @@ class VT_sizing:
         """
         Inputs:
         AIRFOIL USED: 0012
-        :param lv:
-        :param VT:
-        :return:
+        :param VT: VT volume coefficient [-] (optional, if None VT = 0.04)
+        :return: Sv (surface area of VT), ARv (VT aspect ratio) , bv (VT height),
+        C_v (mean aerodynamic chord) ,Sweep_v_c2 (sweep angle at c/2), C_vr (root of the VT), C_vt (tip of the VT)
         """
         lv = self.lfus-self.xcg
         Sv = max(self.bfwd,self.brear)*self.S*VT/lv
@@ -101,13 +104,18 @@ class VT_sizing:
     def tau(self,Cr_Cv):
         """
         Inputs:
-        :param Cr: MAC of rudder [m]
-        :param Cv: MAC vertical tail [m]
+        :param Cr_Cv: MAC of rudder and VT ratio [-]
         :return: rudder effectiveness [-]
         """
         return 1.129*(Cr_Cv)**0.4044 - 0.1772
 
     def xacv(self,ARv,sweepTE):
+        """
+        Inputs
+        :param ARv: Aspect ratio of the VT [-]
+        :param sweepTE: Sweep angle of the VT at the trailing edge [rad]
+        :return: x_ac_v (VT aerodynamic center position from nose) [m]
+        """
         ylemac = self.initial_VT()[2]*2/6*(1+2*self.taper_v)/(1+self.taper_v)
         xlemac = ylemac*np.tan(self.Sweep(ARv,sweepTE,0,100))
         xacv = self.lfus-self.initial_VT()[5] +xlemac+0.25*0.5*(self.initial_VT()[5]+self.initial_VT()[6])
@@ -118,13 +126,16 @@ class VT_sizing:
     def VT_controllability(self,r1,r2,nf, nE,Tt0,br_bv,cr_cv,ARv,sweepTE):
         """
         Inputs:
-        :param r1: Radius of propellers on forward wing
-        :param r2: Radius of propellers on rear wing
+        :param r1: Radius of propellers on forward wing [m]
+        :param r2: Radius of propellers on rear wing [m]
         :param nf: Number of failed engines [-]
         :param nE: Number of engines [-]
         :param Tt0: Take-off thrust [N]
-        :param ARv: Aspect ratio
-        :param sweepTE: Sweep of vertical tail
+        :param ARv: Aspect ratio [-]
+        :param br_bv: Span of rudder over span of VT [-]
+        :param cr_cv: Chord of rudder over chord of VT [-]
+        :param ARv: Aspect ratio of VT [-]
+        :param sweepTE: Sweep of VT [rad]
         :return: Required vertical tail area [m^2] for controllability
         """
         lv = self.xacv(ARv,sweepTE)-self.xcg
@@ -165,8 +176,8 @@ class VT_sizing:
     def VT_stability(self,ARv, sweepTE):
         """
         Inputs
-        :param ARv:
-        :param sweepTE:
+        :param ARv: Aspect ratio of Vt [-]
+        :param sweepTE: Sweep of VT (trailing edge) [rad]
         :return: Sv for stability [m^2]
         """
         # kn = 0.01*(0.27*self.xcg/self.lfus-0.168*np.log(self.lfus/self.wfus)+0.416)-0.0005
@@ -203,8 +214,15 @@ class VT_sizing:
         :param nf: Number of failed engines
         :param nE: Number of propellers
         :param Tt0: Thrust [N]
-        :param yE: Moment arm [m]
-        :return: Final design
+        :param br_bv: Span of rudder over span of VT [-]
+        :param cr_cv: Chord of rudder over chord of VT [-]
+        :param ARv: Aspect ratio of VT [-]
+        :param sweepTE: Sweep of VT [rad]
+        :return: Final design: Sv (surface area of VT), bv (VT height),
+        C_v (mean aerodynamic chord),  C_vr (root of the VT), C_vt (tip of the VT), Sweep_v_c2 (sweep angle at c/2),
+        c_r (MAC of rudder), c_r_root (rudder chord at root), c_r_tip (rudder chord at tip),
+        b_r (rudder span) , ARv (VT aspect ratio)
+        - plotting function: sensitivity analysis and/or VT with rudder
         """
         if isinstance(br_bv,(float,int)) and isinstance(self.ARv,(float,int)) and isinstance(self.sweepTE,(float,int)):
             Sv = max(self.VT_controllability(r1,r2,nf,nE,Tt0,br_bv,cr_cv,ARv,sweepTE),self.VT_stability(ARv,sweepTE))

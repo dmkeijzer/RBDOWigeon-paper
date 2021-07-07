@@ -1,3 +1,9 @@
+"""
+In this file, every python script is runned.
+
+Author: Michal Cuadrat-Grzybowski
+"""
+
 import numpy as np
 # from stab_and_ctrl.Scissor_Plots import Wing_placement_sizing
 from stab_and_ctrl.Vertical_tail_sizing import VT_sizing

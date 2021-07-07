@@ -7,7 +7,7 @@ from stab_and_ctrl.Aileron_Sizing import Control_surface
 from stab_and_ctrl.Vertical_tail_sizing import VT_sizing as vertical_tail
 
 """
-Analytical model to obtain stability derivatives for a tandem wing configuration. 
+Novel analytical model to obtain stability derivatives for a tandem wing configuration. 
 author: Michal Cuadrat-Grzybowski
 """
 
@@ -366,14 +366,36 @@ class Stab_Derivatives:
         return 9.80665*(Re/(Re+h))**2
 
     def get_muc(self):
+        """
+        Computes dimensionless mass for symmetric motion mu_c
+        :return: mu_c
+        """
         rho = self.rho
         return self.W/(rho*self.g(self.h)*self.S*self.c)
 
     def get_mub(self):
+        """
+        Computes dimensionless mass for asymmetric motion mu_b
+        :return: mu_b
+        """
         rho = self.rho
         return self.W/(rho*self.g(self.h)*self.S*self.b)
 
     def asym_stability_req(self, Ixx, Izz, Ixz, Sa_S,b1,b2,cr_cv,br_bv,g1,g2):
+        """
+        Plots lateral stability graph for Dutch Roll and spiral.
+        :param Ixx: Mass Moment of Inertia around xx-axis
+        :param Izz: Mass Moment of Inertia around zz-axis
+        :param Ixz: Mass Moment of Inertia around xz-axis
+        :param Sa_S: Aileron-wing surface ratio [-]
+        :param b1: Inner span position [m]
+        :param b2: Outer span position [m]
+        :param cr_cv: Rudder-VT chord ratio [-]
+        :param br_bv: Rudder-VT span ratio [-]
+        :param g1: Dihedral angle of wing 1
+        :param g2: Dihedral angle of wing 2
+        :return: Plots lateral stability graph
+        """
         mu_b = self.get_mub()
         Kxx2 = Ixx/(self.W/9.80665*self.b**2)
         Kzz2 = Izz/(self.W/9.80665*self.b**2)
