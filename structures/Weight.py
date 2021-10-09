@@ -2,10 +2,10 @@
 import sys
 import numpy as np
 
-sys.path.append('Final_optimization/')
-# import constants_final as const
+sys.path.append('../Final_optimization/')
+import constants_final as const
 
-from Final_optimization import constants_final as const
+# from Final_optimization import constants_final as const
 class Vtail:
     def __init__(self, mtom, Sv, Av, rchord, toc, sweep_deg):
         self.mtom_lbs = 2.20462 * mtom
