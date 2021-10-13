@@ -97,8 +97,8 @@ class WingLoads:
         self.ViMy = My = Vx.integral(self.VMy)
         return Vx, My
     
-    def stressesCruise(self):
-        root = self.wing(0)
+    def stressesCruise(self, point=0):
+        root = self.wing(point)
         # q, tau, o
         coordinates = [[x, root.h/2] for x in np.linspace(-root.b/2, root.b/2, 1000)] + [[root.b/2, y] for y in np.linspace(root.h/2, -root.h/2, 1000)] \
         + [[x, -root.h/2] for x in np.linspace(-root.b/2, root.b/2, 1000)] + [[-root.b/2, y] for y in np.linspace(root.h/2, -root.h/2, 1000)]
@@ -109,8 +109,8 @@ class WingLoads:
         
         return np.array(coordinates), sigma, tau, np.sqrt(3*tau**2 + sigma**2)
 
-    def stressesVTO(self):
-        root = self.wing(0)
+    def stressesVTO(self, point=0):
+        root = self.wing(point)
         # q, tau, o
         coordinates = [[x, root.h/2] for x in np.linspace(-root.b/2, root.b/2, 1000)] + [[root.b/2, y] for y in np.linspace(root.h/2, -root.h/2, 1000)] \
         + [[x, -root.h/2] for x in np.linspace(-root.b/2, root.b/2, 1000)] + [[-root.b/2, y] for y in np.linspace(root.h/2, -root.h/2, 1000)]

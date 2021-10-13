@@ -2,7 +2,7 @@
 import sys
 import numpy as np
 
-sys.path.append('../Final_optimization/')
+sys.path.append('Final_optimization/')
 import constants_final as const
 
 # from Final_optimization import constants_final as const

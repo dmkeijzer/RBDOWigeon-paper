@@ -67,6 +67,6 @@ struct = Structure(**(inputs | state ))
 struct.compute_stresses(**state)
 print('Ixx:', struct.loads.wing(0).Ixx())
 print('Lug:', struct.design_lug())
-#topStr, botStr, tsk, tstr, wingmass = struct.optimize()
+topStr, botStr, tsk, tstr, wingmass = struct.optimize()
 
 print(f"{struct.design_lug()}")
