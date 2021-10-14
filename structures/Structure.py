@@ -44,7 +44,7 @@ class Structure:
 
     __getitem__ = lambda self, key: self.__dict__[key]
         
-    def compute_stresses(self, nStrT, nStrB, thicknessOfSkin, thicknessOfSpar, **kwargs):
+    def compute_stresses(self, nStrT, nStrB, thicknessOfSkin, thicknessOfSpar, point=0, **kwargs):
         args = dict(span=self.span, taper=self.taper, cr=self.rootchord, tsk=thicknessOfSkin,
                     tsp=thicknessOfSpar, toc=self.thicknessChordRatio, nStrT=nStrT, nStrB=nStrB,
                     strType='Hat', strGeo=self.hatGeom, mac=self.MAC, xac=self.xAC,
@@ -70,15 +70,22 @@ class Structure:
         if self.cruise:
             reactionsCruise = self.loads.equilibriumCruise([self.pos, self.dragd], [self.pos, self.liftd],
                                                   [self.pos, [self.Mac / self.span]*len(self.pos)], self.wingWeight)
-            coords, o_cr, tau_cr, Ymcr = self.loads.stressesCruise()
+            coords, o_cr, tau_cr, Ymcr = self.loads.stressesCruise(point)
             (self.omin, self.omax), (self.taumin, self.taumax) = WingLoads.extreme(coords, o_cr), WingLoads.extreme(coords, tau_cr)
             self.Ymin, self.Ymax = WingLoads.extreme(coords, Ymcr)
         else:
             reactionsVTO = self.loads.equilibriumVTO(wingWeight)
             VxVTO, MyVTO = self.loads.internalLoadsVTO(wingWeight)
-            coords, o_VTO, tau_VTO, YmVTO = self.loads.stressesVTO()
+            coords, o_VTO, tau_VTO, YmVTO = self.loads.stressesVTO(point)
             self.Ymin, self.Ymax = WingLoads.extreme(coords, YmVTO)
             (self.omin, self.omax), (self.taumin, self.taumax) = WingLoads.extreme(coords, o_VTO), WingLoads.extreme(coords, tau_VTO)
+        
+        if self.omin[1] > 0:
+            raise StructuralError("Positive Compression Stress Encountered: " + str(omin[1]))
+        if self.Ymax[1] < self.omax[1]:
+            raise StructuralError("Von Mises stress less than normal stress")
+        if self.Ymax[1] < self.taumax[1]:
+            raise StructuralError("Von Mises stress less than shear stress")
 
         return [[self.omin, self.omax], [self.taumin, self.taumax], [self.Ymin, self.Ymax]]
 
@@ -138,9 +145,9 @@ class Structure:
         return designs[-1], minweight
 
 
-    def compute_buckling(self, stringerMat, skinMat):
+    def compute_buckling(self, stringerMat, skinMat, point=0):
 
-        root = self.loads.wing(0)
+        root = self.loads.wing(point)
         EofStringers = self.matstr.E
         vOfStringers = self.matsk.v
         yieldOfStringers = self.matstr.oy
@@ -149,7 +156,7 @@ class Structure:
         self.critbuckling = root.Bstress(EofStringers, vOfStringers, yieldOfStringers, EofSkin, vOfSkin)
         return self.critbuckling
 
-    def optimize(self):
+    def optimize(self, point=0):
         
         nStrT, nStrB, thicknessOfSkin, thicknessOfSpar = \
         [self[k] for k in 'nStrT, nStrB, thicknessOfSkin, thicknessOfSpar'.split(', ')]
@@ -157,17 +164,11 @@ class Structure:
         while True:
             (omin, omax), (taumin, taumax), (Ymin, Ymax) = \
             self.compute_stresses(nStrT, nStrB, thicknessOfSkin, thicknessOfSpar) 
-            root = self.loads.wing(0)
+            root = self.loads.wing(point)
             self.wingmass = self.loads.mass(self.matstr)
             print("Stringer:", root.str[0])
 #             print(f"Mass of wing: {self.loads.mass(self.matsk)} kg")
             print(f"{nStrT, nStrB, 1e3*thicknessOfSkin, 1e3*thicknessOfSpar = }")
-            if omin[1] > 0:
-                raise StructuralError("Positive Compression Stress Encountered: " + str(omin[1]))
-            if Ymax[1] < omax[1]:
-                raise StructuralError("Von Mises stress less than normal stress")
-            if Ymax[1] < taumax[1]:
-                raise StructuralError("Von Mises stress less than shear stress")
             critbuckling = self.compute_buckling(self.matstr, self.matsk)
             cycles = self.compute_fatigue(self.matsk)
             print(f'Fatigue life: {cycles} cycles')
@@ -207,6 +208,9 @@ class Structure:
         
         self.nStrT, self.nStrB, self.thicknessOfSkin, self.thicknessOfSpar = nStrT, nStrB, thicknessOfSkin, thicknessOfSpar
         return nStrT, nStrB, thicknessOfSkin, thicknessOfSpar, self.wingmass
+    
+    def compute_tip(self):
+        return self.optimize(self.span / 2)
 
     plotNVMcruise = lambda self: InternalLoading(0, self.span/2, Vx = self.loads.Vx, Vy = self.loads.Vy,
                                                 Mx = self.loads.Mx, My = self.loads.My, T = self.loads.T)
