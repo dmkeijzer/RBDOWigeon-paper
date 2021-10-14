@@ -51,6 +51,8 @@ def InternalLoading(x0, x1, **Loads):
     fig.update_xaxes(title_text="Spanwise Position [m]", row=len(Loads.keys()), col=1)
     fig.update_layout(
         title="Internal Load (NVM) Diagram",
+        width=1100,
+        height=600,
         template="plotly_dark")
 
     return fig
