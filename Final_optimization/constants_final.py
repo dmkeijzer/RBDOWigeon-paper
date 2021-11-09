@@ -72,7 +72,7 @@ eff_hover = 0.75   # [-] Propeller efficiency during hover
 # eff_eng_bat = 0.7  # [-] Efficiency from batteries to engines (including engine, battery, and electronics efficiencies)
 sp_mass_en = 1/5000     # [kg/W]
 
-n_prop_1 = 6                # number of propellors on the front wing
+n_prop_1 = 6                # number of propellers on the front wing
 n_prop_2 = 6                # number of propellers on the rear wing
 n_prop = n_prop_1+n_prop_2  # Total number of propellers
 
