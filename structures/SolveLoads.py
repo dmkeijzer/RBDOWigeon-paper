@@ -104,8 +104,8 @@ class WingLoads:
         + [[x, -root.h/2] for x in np.linspace(-root.b/2, root.b/2, 1000)] + [[-root.b/2, y] for y in np.linspace(root.h/2, -root.h/2, 1000)]
         
         x, y = np.array(coordinates).T
-        sigma = root.o(x, y, self.Mx(0), self.My(0))
-        tau = np.array([root.tau(ix, iy, self.Vx(0), self.Vy(0), self.T(0)) for ix, iy in coordinates])
+        sigma = root.o(x, y, self.Mx(point), self.My(point))
+        tau = np.array([root.tau(ix, iy, self.Vx(point), self.Vy(point), self.T(point)) for ix, iy in coordinates])
         
         return np.array(coordinates), sigma, tau, np.sqrt(3*tau**2 + sigma**2)
 
@@ -116,8 +116,8 @@ class WingLoads:
         + [[x, -root.h/2] for x in np.linspace(-root.b/2, root.b/2, 1000)] + [[-root.b/2, y] for y in np.linspace(root.h/2, -root.h/2, 1000)]
         
         x, y = np.array(coordinates).T
-        sigma = root.o(x, y, Mx = 0, My = self.ViMy(0))
-        tau = np.array([root.tau(ix, iy, Vx = self.ViVx(0), Vy = 0, T = 0) for ix, iy in coordinates])
+        sigma = root.o(x, y, Mx = 0, My = self.ViMy(point))
+        tau = np.array([root.tau(ix, iy, Vx = self.ViVx(point), Vy = 0, T = 0) for ix, iy in coordinates])
         return np.array(coordinates), sigma, tau, np.sqrt(3*tau**2 + sigma**2)
     
     def LugLoad(self):
