@@ -7,8 +7,8 @@ E_tot = 301.1111  # kWh
 per_mot = 0.99
 
 # Cell characteristics
-V_cell = 3.71  # V
-C_cell = 5  # Ah
+V_cell = 3.7  # V
+C_cell = 10 #5  # Ah
 E_cell = V_cell * C_cell  # Wh
 
 # inputs
@@ -30,10 +30,10 @@ N_ser = red.N_ser()
 print("Number of cells in series for required voltage:", N_ser)
 
 N_par = red.N_par()
-print("Number of modules in parallel when using", N_ser, "cells in series:", N_par)
+print("Number of cells in parallel when using", N_ser, "cells in series:", N_par)
 
 N_par_new = red.N_par_new()
-print("Number of modules for", n_mot * n_bat_mot, "batteries:", N_par_new)
+print("Number of cells for", n_mot * n_bat_mot, "batteries:", N_par_new)
 
 N_cells_mot_new = red.N_cells_mot_new()
 print("New number of cells required for the motors", N_cells_mot_new, "Which is:")

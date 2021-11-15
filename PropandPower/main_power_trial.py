@@ -15,17 +15,17 @@ safety = 1.0
 bat = bat.Battery(sp_en_den, vol_en_den, energy, bat_cost, DoD, P_den, P_max, safety, EOL_C)
 
 
-# print("mass", bat.mass())
-# print()
-# print("volume", bat.volume())
-# print()
-# print("cost", bat.price())
-#
-# print("mass_energy", bat.mass_both()[0])
-# print("mass_power", bat.mass_both()[1])
-#
-# if bat.mass_both()[0] > bat.mass_both()[1]:
-#     print("Energy limiting")
-# else:
-#     print("Power limiting")
+print("mass", bat.mass())
+print()
+print("volume", bat.volume())
+print()
+print("cost", bat.price())
+
+print("mass_energy", bat.mass_both()[0])
+print("mass_power", bat.mass_both()[1])
+
+if bat.mass_both()[0] > bat.mass_both()[1]:
+    print("Energy limiting")
+else:
+    print("Power limiting")
 
