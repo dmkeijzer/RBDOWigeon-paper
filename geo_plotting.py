@@ -1,0 +1,60 @@
+import raw_data_geo as rdg
+import numpy as np
+import geopandas as gpd
+import matplotlib.pyplot as plt
+import matplotlib
+from cartopy import crs as ccrs
+from random import sample
+import pandas as pd
+import os
+
+world = gpd.read_file(gpd.datasets.get_path('naturalearth_lowres'))
+europe = world[world.continent == 'Europe']
+europe = europe.to_crs(epsg=3395)
+plt_data = pd.read_csv(os.path.join(os.path.dirname(__file__), "plotting_df.csv"))
+
+
+#=========================================================================
+# TODO: Fix the spacing between the graphs and the zoom
+#==========================================================================
+
+fig = plt.figure(figsize=(8,4))
+ax1 = plt.subplot(221, projection=ccrs.epsg(3395))
+europe.plot(legend=False, cmap=matplotlib.cm.Greys, ec="black", lw=0.4,alpha=0.8,ax=ax1) 
+plt.xlim([-2.26e6,3.78e6])
+plt.ylim([3.7e6, 1.07e7])
+ax2 = plt.subplot(222, projection=ccrs.epsg(3395)) 
+europe.plot(legend=False, cmap=matplotlib.cm.Greys, ec="black", lw=0.4,alpha=0.8,ax=ax2) 
+plt.xlim([-2.26e6,3.78e6])
+plt.ylim([3.7e6, 1.07e7])
+ax3 = plt.subplot(223, projection=ccrs.epsg(3395)) 
+europe.plot(legend=False, cmap=matplotlib.cm.Greys, ec="black", lw=0.4,alpha=0.8,ax=ax3) 
+plt.xlim([-2.26e6,3.78e6])
+plt.ylim([3.7e6, 1.07e7])
+ax4 = plt.subplot(224, projection=ccrs.epsg(3395))  
+europe.plot(legend=False, cmap=matplotlib.cm.Greys, ec="black", lw=0.4,alpha=0.8,ax=ax4) 
+plt.xlim([-2.26e6,3.78e6])
+plt.ylim([3.7e6, 1.07e7])
+
+print(np.delete(plt_data.to_numpy(), 0 , 1))
+
+alpha = 0.3
+
+for row in np.delete(plt_data.to_numpy(), 0 , 1):
+   if row[3] >= 159.2:
+      ax1.tissot(rad_km=300, lons= row[2], lats=row[1], n_samples=36 , ec= "black",  zorder=10, alpha= alpha, color= sample(["b", "g", "r", "c","m", "y"], 1)[0])
+   if row[3] >= 84.9 and row[3] < 159.2:
+      ax2.tissot(rad_km=300, lons= row[2], lats=row[1], n_samples=36 , ec= "black",  zorder=10, alpha= alpha, color= sample(["b", "g", "r", "c","m", "y"], 1)[0])
+   if row[3] >= 58.8 and row[3] < 84.9:
+      ax3.tissot(rad_km=300, lons= row[2], lats=row[1], n_samples=36 , ec= "black",  zorder=10, alpha= alpha, color= sample(["b", "g", "r", "c","m", "y"], 1)[0])
+   if row[3] < 58.8:
+      ax4.tissot(rad_km=300, lons= row[2], lats=row[1], n_samples=36 , ec= "black",  zorder=10, alpha= alpha, color= sample(["b", "g", "r", "c","m", "y"], 1)[0])
+
+plt.show()
+
+
+
+
+
+
+
