@@ -52,7 +52,7 @@ def iso_cities(lim):
     
     return iso
 
-def two_step_flight(max_range):
+def two_step_flight(max_range, lim):
     """ The following functon will take all trips which are possible in two flights (parent trip) and store them
     as seperate trips (child trips). Each child trip will have the same probability"""
         
@@ -61,7 +61,7 @@ def two_step_flight(max_range):
 
     # Remove isolated cities 
 
-    lst_iso = self.iso_cities(lim)
+    lst_iso = iso_cities(lim)
     loc1 = [] 
     
     for idx, trip in enumerate(df_nondir[:,0]): # for each trip check whether one of the isolated cities is within it
@@ -74,8 +74,9 @@ def two_step_flight(max_range):
 
     # TODO: algorithm which divided up the cities 
 
+if __name__ == "__main__":
 
-plot_hist(800)
+    plot_hist(800)
 
 
 

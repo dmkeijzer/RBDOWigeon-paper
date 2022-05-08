@@ -1,3 +1,4 @@
+from range_analysis import iso_cities
 import raw_data_geo as rdg
 import numpy as np
 import geopandas as gpd
@@ -8,6 +9,11 @@ from random import sample
 import pandas as pd
 import os
 
+
+#=========================================================================
+# Get the required data to plot with
+#=========================================================================
+
 world = gpd.read_file(gpd.datasets.get_path('naturalearth_lowres'))
 europe = world[world.continent == 'Europe']
 europe = europe.to_crs(epsg=3395)
@@ -15,41 +21,54 @@ plt_data = pd.read_csv(os.path.join(os.path.dirname(__file__), "plotting_df.csv"
 
 
 #=========================================================================
-# TODO: Fix the spacing between the graphs and the zoom
-#==========================================================================
+# Here under are all the plotting commands
+#=========================================================================
 
 fig = plt.figure(figsize=(8,4))
 ax1 = plt.subplot(221, projection=ccrs.epsg(3395))
 europe.plot(legend=False, cmap=matplotlib.cm.Greys, ec="black", lw=0.4,alpha=0.8,ax=ax1) 
 plt.xlim([-2.26e6,3.78e6])
 plt.ylim([3.7e6, 1.07e7])
+plt.title(" GDP > 159.2 ")
 ax2 = plt.subplot(222, projection=ccrs.epsg(3395)) 
 europe.plot(legend=False, cmap=matplotlib.cm.Greys, ec="black", lw=0.4,alpha=0.8,ax=ax2) 
 plt.xlim([-2.26e6,3.78e6])
 plt.ylim([3.7e6, 1.07e7])
+plt.title("152.2 > GDP > 84.9")
 ax3 = plt.subplot(223, projection=ccrs.epsg(3395)) 
 europe.plot(legend=False, cmap=matplotlib.cm.Greys, ec="black", lw=0.4,alpha=0.8,ax=ax3) 
 plt.xlim([-2.26e6,3.78e6])
 plt.ylim([3.7e6, 1.07e7])
+plt.title("84.9 > GDP > 58.8 ")
 ax4 = plt.subplot(224, projection=ccrs.epsg(3395))  
 europe.plot(legend=False, cmap=matplotlib.cm.Greys, ec="black", lw=0.4,alpha=0.8,ax=ax4) 
 plt.xlim([-2.26e6,3.78e6])
 plt.ylim([3.7e6, 1.07e7])
+plt.title("58.8 > GDP ")
 
-print(np.delete(plt_data.to_numpy(), 0 , 1))
-
-alpha = 0.3
+lim = 300
+a = 0.5
+iso = iso_cities(lim)
 
 for row in np.delete(plt_data.to_numpy(), 0 , 1):
+   if row[0] in iso:
+      print(f"{row[0]} isolated city")
+      col = "black"
+   else:
+      col = sample(["b", "g", "r", "c","m"],1)[0]
+   
    if row[3] >= 159.2:
-      ax1.tissot(rad_km=300, lons= row[2], lats=row[1], n_samples=36 , ec= "black",  zorder=10, alpha= alpha, color= sample(["b", "g", "r", "c","m", "y"], 1)[0])
+      ax1.tissot(rad_km=lim, lons= row[2], lats=row[1], n_samples=36 , ec= "black",  zorder=10, alpha= a, color= col)
    if row[3] >= 84.9 and row[3] < 159.2:
-      ax2.tissot(rad_km=300, lons= row[2], lats=row[1], n_samples=36 , ec= "black",  zorder=10, alpha= alpha, color= sample(["b", "g", "r", "c","m", "y"], 1)[0])
+      ax2.tissot(rad_km=lim, lons= row[2], lats=row[1], n_samples=36 , ec= "black",  zorder=10, alpha= a, color= col)
    if row[3] >= 58.8 and row[3] < 84.9:
-      ax3.tissot(rad_km=300, lons= row[2], lats=row[1], n_samples=36 , ec= "black",  zorder=10, alpha= alpha, color= sample(["b", "g", "r", "c","m", "y"], 1)[0])
+      ax3.tissot(rad_km=lim, lons= row[2], lats=row[1], n_samples=36 , ec= "black",  zorder=10, alpha= a, color= col)
    if row[3] < 58.8:
-      ax4.tissot(rad_km=300, lons= row[2], lats=row[1], n_samples=36 , ec= "black",  zorder=10, alpha= alpha, color= sample(["b", "g", "r", "c","m", "y"], 1)[0])
+      ax4.tissot(rad_km=lim, lons= row[2], lats=row[1], n_samples=36 , ec= "black",  zorder=10, alpha= a, color= col)
 
+fig.tight_layout()
+fig.subplots_adjust(wspace= -0.73)
+fig.subplots_adjust(hspace= 0.2)
 plt.show()
 
 
