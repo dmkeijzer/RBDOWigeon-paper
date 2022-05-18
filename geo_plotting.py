@@ -1,5 +1,5 @@
 from range_analysis import iso_cities
-import raw_data_geo as rdg
+import file_creation as rdg
 import numpy as np
 import geopandas as gpd
 import matplotlib.pyplot as plt
@@ -16,12 +16,13 @@ import os
 
 world = gpd.read_file(gpd.datasets.get_path('naturalearth_lowres'))
 europe = world[world.continent == 'Europe']
-europe = europe.to_crs(epsg=3395)
+europe = europe.to_crs(epsg=3395) # make the plot of Europe a conformal projection
 plt_data = pd.read_csv(os.path.join(os.path.dirname(__file__), "plotting_df.csv"))
 
 
 #=========================================================================
 # Here under are all the plotting commands
+# epsg(3395) is a conformal projection (lat and lon lines remain adjacent)
 #=========================================================================
 
 fig = plt.figure(figsize=(8,4))
@@ -49,6 +50,13 @@ plt.title("58.8 > GDP ")
 lim = 300
 a = 0.5
 iso = iso_cities(lim)
+
+#-----------------------------------------------------------------------------------
+# This loop plots all the cities and their surrounding circles into their subplots
+# It first checks whether the city is isolated to mark it black.
+# then there some if statements used to put them into the right category of gdp
+# the function .tissot from cartopy is used for the circles
+#---------------------------------------------------------------------------------
 
 for row in np.delete(plt_data.to_numpy(), 0 , 1):
    if row[0] in iso:
