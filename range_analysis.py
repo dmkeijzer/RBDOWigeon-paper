@@ -1,9 +1,13 @@
+from pdffit import *
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import scipy.stats as stat
 import os
-import file_creation as rdg
+
+from sklearn.preprocessing import scale
+import file_creation as fc
+from math import ceil
 
 #----------------------------
 # Get the required data
@@ -18,7 +22,7 @@ class Bin():
     def __init__(self, frequency, edges, flight_df, total_df_gdp):
         self.left_bound =  edges[0]
         self.right_bound = edges[1]
-        self.flights = flight_df[(flight_df[:,1].astype("float64") > self.left_bound) * (flight_df[:,1].astype("float64") < self.right_bound)]
+        self.flights = flight_df[(flight_df[:,1].astype("float64") >= self.left_bound) * (flight_df[:,1].astype("float64") < self.right_bound)]
         self.freq = frequency
         self.df_gdp = total_df_gdp
 
@@ -55,7 +59,7 @@ def iso_cities(lim):
 
     iso = [] # ['Madrid', 'Lisbon', 'Warsaw', 'Bucharest'] result with 400
 
-    for idx_i, city in enumerate(rdg.df_geo[:,0]):
+    for idx_i, city in enumerate(fc.df_geo[:,0]):
         loc = []
         
         for idx_j, trip in enumerate(df_trips[:,0]):
@@ -129,15 +133,14 @@ def plot_hist_two_trip_weightless(lim , n_bins):
     direct_flights = df_trips[df_trips[:,1] < lim]
     two_step_flights = two_trip_analysis(lim)
     total_flights = np.append(direct_flights, two_step_flights, axis= 0) # array - example ['Paris-Dortmund', 470.1237855871516, 'Par-Dor-dir', 910.4]
-    hist_data = total_flights[:,1].astype("float64")
-    plt.hist(hist_data, bins = n_bins, density= True, rwidth= 0.9)
+    hist_data = -total_flights[:,1].astype("float64") + lim
+    plt.hist(hist_data, bins = n_bins, density= True, rwidth= 0.9, color="darkgray")
     plt.ylabel("frequency")
-    plt.xlabel("Range")
-    plt.title("Unweighted distribution with two step flight")
+    plt.xlabel(f"Y = -x + {lim} [km]")
     plt.show()
- 
+# FIXME Add an auto plotter see this library https://github.com/WolfgangFahl/pyProbabilityDistributionFit  
 
-def plot_hist_two_trip_weights(lim, n_bins=9): 
+def plot_hist_two_trip_weights(lim, n_bins=9, targ = True): 
     pass
     corr_bins = [] # corrected bins - initialize which will contain classes
     
@@ -145,8 +148,9 @@ def plot_hist_two_trip_weights(lim, n_bins=9):
     two_step_flights = two_trip_analysis(lim)
     total_flights = np.append(direct_flights, two_step_flights, axis= 0) # array - example ['Paris-Dortmund', 470.1237855871516, 'Par-Dor-dir', 910.4]
     hist_data = total_flights[:,1].astype("float64")
-    df_sum_gdp = np.sum(total_flights[:,3].astype("float64"))
+    df_sum_gdp = np.sum(direct_flights[:,3].astype("float64")) + np.sum(two_step_flights[:,3].flatten().astype("float64")[::2])
     hist_freq, bin_edges = np.histogram(hist_data, bins= n_bins)
+    bin_edges[-1] = lim
     
     for idx, i in enumerate(bin_edges):
         if bin_edges[idx] == bin_edges[-1]:
@@ -156,18 +160,39 @@ def plot_hist_two_trip_weights(lim, n_bins=9):
         state_bin = Bin(state_freq, state_edges, total_flights, df_sum_gdp) # Use created class to do computations on the bins 
         corr_bins.append(state_bin)
     counts = [i.bin_expectation() for i in corr_bins]
-    plt.hist(bin_edges[:-1], bin_edges, weights= counts, density= True, rwidth= 0.9)
-    plt.ylabel("frequency")
-    plt.xlabel("Range")
-    plt.title("Weighted distribution with two step flight")
+    
+    #TODO Change this quick fix in later stage of the project
+    raw_data_expon_fit = [list(np.linspace(i.left_bound, i.right_bound,  ceil(i.bin_expectation()))) for i in corr_bins ]
+    
+    #-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+    # Change of variable y = -x + 400
+    # Necessary to make a decent fit with a distribution
+    #-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+    
+    flat_raw_data_expon = -np.array([item for sublist in raw_data_expon_fit for item in sublist]) + lim 
+    loc, scale = stat.expon.fit(flat_raw_data_expon) #skewnorm best results until now
+    x = np.linspace(0,lim,200)
+    
+    #-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+    # Remove commented lines to see the error by opting for the quick fix you have used. With current seed it is absolutely managable
+    #-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+    # a0= plt.hist(bin_edges[:-1], bin_edges, weights= counts, density= True, rwidth= 0.9)
+    a1 = plt.hist(flat_raw_data_expon, bins= n_bins, color="darkgray", alpha = 1, rwidth = 0.9, density=True)
+    # test = np.abs(a1[0] - np.flip(a0[0]))
+    plt.plot(x, stat.expon.pdf(x, loc, scale) , color= "firebrick" , linewidth= 3 ,  label= f"{str(round(1/scale,4))} * EXP({round(1 / scale,4)} * (Y - {str(round(loc,4))}))" if loc != 0 else \
+        f"{str(round(1/scale,4))} * EXP({round(1 / scale,4)} * Y)" )
+    plt.ylabel("P(Y)")
+    plt.xlabel(f"Y = -x + {lim} [km]")
+    plt.legend()
     plt.show()
  
 
             
-            
 if __name__ == "__main__":
-    plot_hist_two_trip_weightless(500, n_bins=9)
-    plot_hist_two_trip_weights(500, n_bins=9)
+    # plot_hist_two_trip_weightless(300, n_bins=9) #( 400, 9 gives nice results
+    plot_hist_two_trip_weights(300, n_bins=8)
+
 
 
 

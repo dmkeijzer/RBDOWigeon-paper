@@ -1,5 +1,5 @@
 from range_analysis import iso_cities
-import file_creation as rdg
+import file_creation as fc
 import numpy as np
 import geopandas as gpd
 import matplotlib.pyplot as plt
@@ -48,7 +48,7 @@ plt.ylim([3.7e6, 1.07e7])
 plt.title("58.8 > GDP ")
 
 lim = 300
-a = 0.5
+a = 0.38
 iso = iso_cities(lim)
 
 #-----------------------------------------------------------------------------------
@@ -63,7 +63,7 @@ for row in np.delete(plt_data.to_numpy(), 0 , 1):
       print(f"{row[0]} isolated city")
       col = "black"
    else:
-      col = sample(["b", "g", "r", "c","m"],1)[0]
+      col = sample(["b", "g", "r", "gold","peru", "purple"],1)[0]
    
    if row[3] >= 159.2:
       ax1.tissot(rad_km=lim, lons= row[2], lats=row[1], n_samples=36 , ec= "black",  zorder=10, alpha= a, color= col)
