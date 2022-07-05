@@ -1,4 +1,4 @@
-from pdffit import *
+from pdffit import distfit as pf
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -169,29 +169,32 @@ def plot_hist_two_trip_weights(lim, n_bins=9, targ = True):
     # Necessary to make a decent fit with a distribution
     #-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     
-    flat_raw_data_expon = -np.array([item for sublist in raw_data_expon_fit for item in sublist]) + lim 
-    loc, scale = stat.expon.fit(flat_raw_data_expon) #skewnorm best results until now
-    x = np.linspace(0,lim,200)
+    flat_raw_data_expon = np.array([item for sublist in raw_data_expon_fit for item in sublist])
+    bfd = pf.BestFitDistribution(pd.DataFrame(flat_raw_data_expon))
+    bfd.analyze(title="Two trip distribution", x_label="range", y_label='freq', outputFilePrefix= f"distr_fig/two_trip_fit400PDF_", imageFormat="pdf")
+    print(bfd.best_dist)
+    # loc, scale = stat.expon.fit(flat_raw_data_expon) #skewnorm best results until now
+    # x = np.linspace(0,lim,200)
     
     #-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     # Remove commented lines to see the error by opting for the quick fix you have used. With current seed it is absolutely managable
     #-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-    # a0= plt.hist(bin_edges[:-1], bin_edges, weights= counts, density= True, rwidth= 0.9)
-    a1 = plt.hist(flat_raw_data_expon, bins= n_bins, color="darkgray", alpha = 1, rwidth = 0.9, density=True)
-    # test = np.abs(a1[0] - np.flip(a0[0]))
-    plt.plot(x, stat.expon.pdf(x, loc, scale) , color= "firebrick" , linewidth= 3 ,  label= f"{str(round(1/scale,4))} * EXP({round(1 / scale,4)} * (Y - {str(round(loc,4))}))" if loc != 0 else \
-        f"{str(round(1/scale,4))} * EXP({round(1 / scale,4)} * Y)" )
-    plt.ylabel("P(Y)")
-    plt.xlabel(f"Y = -x + {lim} [km]")
-    plt.legend()
-    plt.show()
+    # # a0= plt.hist(bin_edges[:-1], bin_edges, weights= counts, density= True, rwidth= 0.9)
+    # a1 = plt.hist(flat_raw_data_expon, bins= n_bins, color="darkgray", alpha = 1, rwidth = 0.9, density=True)
+    # # test = np.abs(a1[0] - np.flip(a0[0]))
+    # plt.plot(x, stat.expon.pdf(x, loc, scale) , color= "firebrick" , linewidth= 3 ,  label= f"{str(round(1/scale,4))} * EXP({round(1 / scale,4)} * (Y - {str(round(loc,4))}))" if loc != 0 else \
+    #     f"{str(round(1/scale,4))} * EXP({round(1 / scale,4)} * Y)" )
+    # plt.ylabel("P(Y)")
+    # plt.xlabel(f"Y = -x + {lim} [km]")
+    # plt.legend()
+    # plt.show()
  
 
             
 if __name__ == "__main__":
     # plot_hist_two_trip_weightless(300, n_bins=9) #( 400, 9 gives nice results
-    plot_hist_two_trip_weights(300, n_bins=8)
+    plot_hist_two_trip_weights(400, n_bins=8)
 
 
 
