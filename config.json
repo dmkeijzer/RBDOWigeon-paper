@@ -1,0 +1,13 @@
+{
+    "Settings": {
+        "inputconfig": 2
+    },
+    "Preliminary estimations": {
+        "mTO": 1931,
+        "mOE": 1565,
+        "t_TO": 20,
+        "t_land": 20,
+        "cargo_m": 85,
+        "cargo_p": 3
+    }
+}
