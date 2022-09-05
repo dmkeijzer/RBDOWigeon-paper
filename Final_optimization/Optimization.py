@@ -1,8 +1,18 @@
+from cmath import nan
 import openmdao.api as om
+import logging
+import time
+import os
 import numpy as np
 #from stab_and_ctrl.xcg_limits import xf, xr, zf, zr, xcg_range, Arange, bmax, crmaxf, crmaxr
 import constants_final as const
 import integration_class_ar_input as int_class
+
+#Setting up the log configuration
+#====================================================================================
+log_path = os.path.realpath(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "logs",  "_".join(time.asctime().split()).replace(":", ".") + '.log'))
+logging.basicConfig(level= logging.INFO, filename= log_path , filemode='w', format='%(filename)s - %(lineno)s - %(levelname)s - %(message)s')
+#====================================================================================
 
 
 class design_optimization(om.ExplicitComponent):
@@ -78,12 +88,14 @@ class design_optimization(om.ExplicitComponent):
                             AR_wing2, Sr_Sf, s1, xf, zf, xr, zr, max_thrust_stall, 1, 1.5, 2.4, 2.6, 8, bat_pos]
 
         # Optimisation class
+        logging.info("Started computing the initial estimate to perform inner convergence loop on")
         optimisation_class = int_class.RunDSE(initial_estimate)
 
         # Run the file for # iterations
+        logging.info("Performing the inner convergence loop")
         N_iter = 10
         optim_outputs, internal_inputs, other_outputs = optimisation_class.multirun(N_iter, optim_inputs=[])
-
+        logging.info("Inner convergence loop completed")
         S_tot = internal_inputs[1]
         S1 = s1*S_tot
         S2 = S1*Sr_Sf
@@ -143,7 +155,7 @@ prob.model.set_input_defaults('Integrated_design.AR1', 6.8)
 prob.model.set_input_defaults('Integrated_design.AR2', 6.8)
 prob.model.set_input_defaults('Integrated_design.Sr_Sf', 1.)
 prob.model.set_input_defaults('Integrated_design.xr', 6.1)
-prob.model.set_input_defaults('Integrated_design.xf', 0.5)   # Change
+prob.model.set_input_defaults('Integrated_design.xf', 0.5)   # Change ----- original 0.5
 prob.model.set_input_defaults('Integrated_design.zr', 1.7)
 prob.model.set_input_defaults('Integrated_design.zf', 0.3)
 prob.model.set_input_defaults('Integrated_design.max_power', 1.5e6)

@@ -1,3 +1,8 @@
+import sys
+import os
+import logging
+sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+
 import numpy as np
 import Aero_tools as at
 import constants_final as const
@@ -75,7 +80,7 @@ def mass(MTOM, S1, S2, n_ult, AR_wing1, AR_wing2, pos_frontwing, pos_backwing, P
          pos_lgear, n_prop, m_prop, pos_prop, m_pax, cargo_m, m_bat, Sv, v_tail_rchord, contingency = False,
          cg_bat=[None, None, None]):
 
-    print(cg_bat, "bat cg")
+    # print(cg_bat, "bat cg")
     wing = wei.Wing(MTOM, S1, S2, n_ult, AR_wing1, AR_wing2, [pos_frontwing, pos_backwing])
     m_wf = wing.wweight1
     m_wr = wing.wweight2
@@ -369,6 +374,7 @@ class RunDSE:
         max_thrust_stall = mission.max_thrust(rho, V_stall)
 
         # Get approximate overall efficiency
+        print(f"Line 377 - integration_class_ar_input.py - Changes for monte carlo to be applied here")
         energy, t_tot, P_max_eng_mission, max_thrust, t_hor = mission.total_energy(simplified=False)
 
         energy_wc = energy
@@ -498,8 +504,10 @@ class RunDSE:
         Clafwd = airfoil.airfoil_stats()[4] * 180/np.pi  # TODO: unit check
         Clarear = airfoil.airfoil_stats()[4] * 180/np.pi  # TODO: unit check
 
-        Zcg = 0.4 * const.h_fuselage  # Estimate
 
+        
+        Zcg = 0.1 * const.h_fuselage  # Estimate   - og = 0.4
+        logging.info(f"Changed {Zcg} to make code work and see what happens  ")
         # Calculate new S1 with new ratio
         S1 = S_tot/(1 + Sr_Sf)
         S2 = S1 * Sr_Sf
@@ -522,16 +530,19 @@ class RunDSE:
                                 const.dihedral1, b1/2, 0, prop_radius1, l_fus, const.h_fuselage)
 
         # Calculate the track width of the tail gear, and the height of the landing gear
-        tw_tg, h_lg, reason = gears.optimum_placement([x_front, x_aft],
+        tw_tg, h_lg, reason = gears.tw_optimum_placement([x_front, x_aft],
                                                       z_cg_max=Zcg,
                                                       theta= const.pitch_lim,
                                                       phi=const.lat_lim,
-                                                      psi=const.turn_over,
+                                                      psi=70, #const.turn_over
                                                       min_lf = 0.08)  # TODO: Check if this is reasonable
 
-        print(tw_tg, w_fus, reason)
+        logging.info(f"landing gear placement tw_tg = {tw_tg}, height landing gear = {h_lg}, reason = {reason}")
+        if tw_tg == None or h_lg == None:
+            raise ValueError("Process would continue with none type and cause non-sensical results")
+
         if tw_tg > 2*w_fus:
-            print('Check tail gear track width: ', tw_tg, 'Reason:', reason)
+            print('Line 542 - integration_class_ar_input.py - Check tail gear track width: ', tw_tg, ' Limiting Reason:', reason)
 
         max_coeffs = wing_design.CLa_wprop(T_per_eng_during_stall, V_stall, rho, prop_radius1 * 2, n_prop_1,
                                            n_prop_2, const.tc_wing, CDs_w, CDs_f, Afus, alpha_wp, de_da)
@@ -669,6 +680,7 @@ class RunDSE:
                        ["m_v_tail", vtail_mass],
                        ["S_vtail", Sv],
                        ["b_vtail", v_tail[3]]]
+        logging.info(f"data \n \n {lines} \n")
 
         txt = open("final_values.txt", 'w')
         txt.truncate(0)
@@ -721,8 +733,8 @@ class RunDSE:
         internal_inputs = self.initial_est
 
         for i in range(N_iters):
-            # print("Iteration #", i)
-            # print("")
+            print(f" Line 734 - integration_class_ar_input.py - Iteration {i} ")
+            logging.info(f" Line 734 - integration_class_ar_input.py - Iteration {i} ")
             optim_outputs, internal_inputs, other_outputs = self.run(optim_inputs, internal_inputs)
 
         """

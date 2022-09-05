@@ -1,3 +1,9 @@
+
+import sys
+import os
+import logging
+sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+
 import numpy as np
 from matplotlib import pyplot as plt
 import Final_optimization.constants_final as const
@@ -80,7 +86,8 @@ class LandingGearCalc:
         alpha = np.arctan((tw_tg - self.tw_ng) / 2 / (self.x_tg - self.x_ng))
         bn = x_cg - self.x_ng + self.tw_ng / 2 / np.tan(alpha)
         c = bn * np.sin(alpha)
-        return np.arctan((z_cg + h_lg) / c)
+        # logging.info(f"alpha = {alpha} \n  xcg = {x_cg} \n self.x_ng = {self.x_ng} \n zcg = {z_cg} \n h_lg = { h_lg} \n tw_ng = {self.tw_ng} ")
+        return np.arctan((z_cg + h_lg) / c) #FIXME h_lg becomes bigger and bigger until turnover requirement is no longer feasible
 
     def calc_ng_lf(self, x_cg):
         return (self.x_tg - x_cg) / (self.x_tg - self.x_ng)
@@ -91,7 +98,7 @@ class LandingGearCalc:
     def calc_cg_tipback(self, x_cg, z_cg, h_lg):
         return np.arctan((self.x_tg - x_cg) / (h_lg + z_cg))
 
-    def optimum_placement(self, x_cg_range: list,
+    def tw_optimum_placement(self, x_cg_range: list,
                           z_cg_max: float, theta: float, phi: float,
                           psi: float, min_lf: float, tw_tg_max=4.,
                           tw_tg_res=20) -> tuple:
@@ -136,11 +143,17 @@ class LandingGearCalc:
         h_list = h_mat.max(axis=0)
         psi_list = self.calc_psi(tw_tg_list, z_cg_max, h_list, x_cg_range[1])
 
-        if np.nanmin(psi_list) > psi:
-            return None, None, "could not satisfy turn-over requirement"
 
+        # FIXME Does not pass after 2 iterations hence triggering an error, see run 22.08.43
+        if np.nanmin(psi_list) > psi:
+            logging.warning(f"{np.nanmin(psi_list)} and {psi} could not satisfy turn-over requirement")
+            # raise ValueError(f"{psi_list} could not satisfy turn over requirement")
+            return None, None,  "could not satisfy turn-over requirement"
+        
+        
         selected_idx = np.argmin(np.abs(psi_list[np.logical_not(np.isnan(psi_list))] - psi))
         tw_tg = tw_tg_list[selected_idx]
+       
         h = h_list[selected_idx]
 
         plt.subplot(121)
@@ -155,7 +168,7 @@ class LandingGearCalc:
         plt.title("psi")
         plt.plot(tw_tg_list, np.rad2deg(psi_list))
         plt.axhline(55)
-        plt.show()
+        # plt.show()
 
         if self.calc_cg_tipback(x_cg_range[1], z_cg_max, h) < theta:
             return None, None, "could not satisfy tipback requirement for CG"
@@ -224,7 +237,7 @@ if __name__ == "__main__":
     x_cg_range = [2.54, 2.61]
     z_cg = 0.4*1.7
     lgc = LandingGearCalc(x_ng, x_tg, tw_ng, tilt_max_rad, y_tilt, tilt_tip_rad, b, taper, z_wing, gamma, y_max_rotor, z_offset_rotor, rotor_rad, l_fus, h_fus)
-    tw, h, reason = lgc.optimum_placement(x_cg_range, z_cg, np.deg2rad(15), np.deg2rad(5), np.deg2rad(55), 0.08)
+    tw, h, reason = lgc.tw_optimum_placement(x_cg_range, z_cg, np.deg2rad(15), np.deg2rad(5), np.deg2rad(55), 0.08)
     print("tw_tg:", tw, "h:", h, "reason:", reason)
     lgc.plot_lg(x_cg_range, z_cg, x_ng, x_tg, tw_ng, tw, h)
     plt.show()

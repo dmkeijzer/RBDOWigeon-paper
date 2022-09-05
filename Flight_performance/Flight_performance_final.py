@@ -383,6 +383,16 @@ class mission:
         return P, D_cruise
 
     def total_energy(self, simplified = False):
+        """Computes the total energy of the flight in Joules
+
+        :param simplified: If chosen, uses a simplified estimation of the energy, defaults to False
+        :type simplified: bool, optional
+        :return: _description_
+        :rtype: _type_
+        """        
+        
+
+        #TODO copy this function and make a monte carlo version, code seemed fast enough so should be doable
 
         #P_cruise, D_cruise = self.power_cruise_config(self.h_cruise, self.v_cruise, self.m)
 
