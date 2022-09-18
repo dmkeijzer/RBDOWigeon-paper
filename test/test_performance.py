@@ -97,7 +97,7 @@ class testPerformance(unittest.TestCase):
         miss = mission(mass=mass, cruising_alt=h_cr, cruise_speed=v_cr, CL_max=CL_max, wing_surface=S, P_max = P_max,
                        A_disk=A_disk, t_loiter=30 * 60, rotational_rate=5, mission_dist=target_range)
 
-        E_tot, t_tot = miss.total_energy()
+        E_tot, t_tot = miss.total_energy_monte_carlo()
 
         perf = evtol_performance(cruising_alt=h_cr, cruise_speed=v_cr, S=S, CL_max=CL_max, mass=mass,
                                  battery_capacity = E_tot, EOM=mass-m_PL, loiter_time=30 * 60, A_disk=A_disk,

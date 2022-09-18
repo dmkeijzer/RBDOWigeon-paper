@@ -369,13 +369,13 @@ class RunDSE:
         # Energy sizing
         mission = FP.mission(MTOM, h_cr, V_cr, CLmax, S_tot, tot_prop_area, P_max=max_power,
                              Cl_alpha_curve=Cl_alpha_curve, CD_a_w=CD_a_w, CD_a_f=CD_a_f, alpha_lst=alpha_lst,
-                             Drag=drag, t_loiter=15*60, rotational_rate=5, mission_dist=const.mission_range)
+                             Drag=drag, t_loiter=15*60, rotational_rate=5, mission_dist=const.mission_range, plot_monte_carlo=True)
 
         max_thrust_stall = mission.max_thrust(rho, V_stall)
 
         # Get approximate overall efficiency
         print(f"Line 377 - integration_class_ar_input.py - Changes for monte carlo to be applied here")
-        energy, t_tot, P_max_eng_mission, max_thrust, t_hor = mission.total_energy(simplified=False)
+        energy, t_tot, P_max_eng_mission, max_thrust, t_hor = mission.total_energy_monte_carlo(simplified=False)
 
         energy_wc = energy
 
@@ -599,7 +599,7 @@ class RunDSE:
                                                         Cl_alpha_curve=Cl_alpha_curve, CD_a_w=CD_a_w, CD_a_f=CD_a_f, alpha_lst=alpha_lst,
                                                         Drag=drag, t_loiter=15 * 60, rotational_rate=5, mission_dist=const.mission_range)
 
-        energy_nc, t_tot_nc, P_max_nc, T_max_nc, t_hov_nc = mission_nc.total_energy(simplified=False)
+        energy_nc, t_tot_nc, P_max_nc, T_max_nc, t_hov_nc = mission_nc.total_energy_monte_carlo(simplified=False)
 
         lines       = [["MAC1", find_mac(S1, b1, taper)],  # Mean Aerodynamic Chord [m]
                        ["MAC2", find_mac(S2, b2, taper)],

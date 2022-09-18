@@ -29,39 +29,40 @@ class validation:
         var     = 0.05    # [-] +- percentage variation
         N_pts   = 5       # [-] Number of different variations per parameter
 
-    def monte_carlo_sim(self, var, N_sim):
-
-        max_var = 1 + var
-        min_var = 1 - var
-        E = np.zeros(N_sim)
-        t = np.zeros(N_sim)
-
-        for i in range(N_sim):
-
-            print('Progress:', np.round(100*i/N_sim), '%')
-
-            m = mission(mass         = np.random.default_rng().uniform(low = self.mass*min_var, high = self.mass*max_var),
-                        cruising_alt = self.h_cr,
-                        cruise_speed = self.v_cr,
-                        CL_max       = np.random.default_rng().uniform(low = self.CL_max*(1-2*var), high = self.CL_max),
-                        wing_surface = np.random.default_rng().uniform(low = self.S*min_var, high = self.S*max_var),
-                        A_disk       = np.random.default_rng().uniform(low = self.A_disk*min_var, high = self.A_disk*max_var),
-                        P_max        = np.random.default_rng().uniform(low = self.P_max*min_var, high = self.P_max*max_var),
-                        Cl_alpha_curve = Cl_alpha_curve,
-                        CD_a_w = CD_a_w,
-                        CD_a_f = CD_a_f,
-                        alpha_lst = alpha_lst,
-                        Drag = Drag)
-
-            E[i], t[i],_,_,_ = m.total_energy()
+    # def monte_carlo_sim(self, var, N_sim):
 
 
+    #     max_var = 1 + var
+    #     min_var = 1 - var
+    #     E = np.zeros(N_sim)
+    #     t = np.zeros(N_sim)
+
+    #     for i in range(N_sim):
+
+    #         print('Progress:', np.round(100*i/N_sim), '%')
+
+    #         m = mission(mass         = np.random.default_rng().uniform(low = self.mass*min_var, high = self.mass*max_var),
+    #                     cruising_alt = self.h_cr,
+    #                     cruise_speed = self.v_cr,
+    #                     CL_max       = np.random.default_rng().uniform(low = self.CL_max*(1-2*var), high = self.CL_max),
+    #                     wing_surface = np.random.default_rng().uniform(low = self.S*min_var, high = self.S*max_var),
+    #                     A_disk       = np.random.default_rng().uniform(low = self.A_disk*min_var, high = self.A_disk*max_var),
+    #                     P_max        = np.random.default_rng().uniform(low = self.P_max*min_var, high = self.P_max*max_var),
+    #                     Cl_alpha_curve = Cl_alpha_curve,
+    #                     CD_a_w = CD_a_w,
+    #                     CD_a_f = CD_a_f,
+    #                     alpha_lst = alpha_lst,
+    #                     Drag = Drag)
+
+    #         E[i], t[i],_,_,_ = m.total_energy_monte_carlo()
 
 
-        plt.hist(E)
-        plt.show()
-        np.savetxt("../Flight_performance/Saved_data/validation_energy", E)
-        np.savetxt("../Flight_performance/Saved_data/validation_time", t)
+
+
+    #     plt.hist(E)
+    #     plt.show()
+    #     np.savetxt("../Flight_performance/Saved_data/validation_energy", E)
+    #     np.savetxt("../Flight_performance/Saved_data/validation_time", t)
 
     #
     # def energy_bounds_takeoff(self):
