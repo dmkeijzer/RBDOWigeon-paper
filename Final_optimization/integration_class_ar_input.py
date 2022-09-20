@@ -2,8 +2,10 @@ import sys
 import os
 import logging
 import multiprocessing as mp
+
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
+import time as tm
 import numpy as np
 import Aero_tools as at
 import constants_final as const
@@ -388,32 +390,40 @@ class RunDSE:
         
         input_lst = []
         for i in range(np.size(stoch_var_lst[0])):
-            input_lst.append((stoch_var_lst[0][0],stoch_var_lst[1][0],stoch_var_lst[2][0],stoch_var_lst[3][0],stoch_var_lst[4][0]))
-
+            input_lst.append((stoch_var_lst[0][i],stoch_var_lst[1][i],stoch_var_lst[2][i],stoch_var_lst[3][i],stoch_var_lst[4][i]))
+        
 
         
         with mp.Pool(os.cpu_count()) as p:
-
             mission_res = np.array(p.starmap(mission.single_iter_monte_carlo, input_lst))
-        
+
 
         if mission.plotting_monte_carlo:
+            plot_data = []
+
+            energy_tot = 0
+            
+            for counter, energy_iter in enumerate(mission_res[:,0],start=1):
+                energy_tot += energy_iter
+                plot_data.append(energy_tot/(counter*3.6e6))
 
             plt.clf()
-            plt.plot((np.array(mission_res[:,0]) / np.arange(1, np.size(mission_res[:,0]) + 1))/3.6e6 )
+            plt.plot(plot_data)
             plt.ylabel("Energy [kWh]")
             plt.xlabel("Iteration")
-            plt.savefig(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "plotting_figures", "Energy_conver_" + "_".join(time.asctime().split()).replace(":", ".") + ".pdf"))
+            plt.savefig(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "plotting_figures", "Energy_conver_" + "_".join(tm.asctime().split()).replace(":", ".") + ".pdf"))
 
 
-
+        
         energy_wc = np.mean(mission_res[:,0])
         t_tot = np.mean(mission_res[:,1])
         P_max_eng_mission = np.mean(mission_res[:,2])
+        max_thrust = np.mean(mission_res[:,3])
+        t_hor = np.mean(mission_res[:,4])
 
         # Overall efficiency from battery to engine
         eff_overall = const.eff_bat_eng_cr * (t_hor/t_tot) + const.eff_bat_eng_h * (1-(t_hor/t_tot))
-        energy = energy * 2.77778e-7 * 1000*const.energy_cont / eff_overall  # From [J] to [Wh]
+        energy = energy_wc * 2.77778e-7 * 1000*const.energy_cont / eff_overall  # From [J] to [Wh]
 
         # Cruise power
         P_cr, D_cruise = mission.power_cruise_config(h_cr, V_cr, MTOM)
@@ -621,17 +631,17 @@ class RunDSE:
                                                                                     m_bat, Sv, root_chord_vtail,
                                                                                     contingency = False, cg_bat=cg_bat)
 
-        print("xcg and xcg nc", x_CG_MTOM, x_CG_MTOM_nc)
+        # print("xcg and xcg nc", x_CG_MTOM, x_CG_MTOM_nc)
 
-        # Outputs for optimisation cost function
+        # # Outputs for optimisation cost function
         optim_outputs = [MTOM, energy, time, CM_a, cg_fwd_lim - x_front, MTOM_nc]
 
-        mission_nc = FP.mission(float(MTOM_nc), float(h_cr), float(V_cr), float(CLmax), float(S_tot),
-                                                        float(tot_prop_area), P_max=float(max_power),
-                                                        Cl_alpha_curve=Cl_alpha_curve, CD_a_w=CD_a_w, CD_a_f=CD_a_f, alpha_lst=alpha_lst,
-                                                        Drag=drag, t_loiter=15 * 60, rotational_rate=5, mission_dist=const.mission_range)
+        # mission_nc = FP.mission(float(MTOM_nc), float(h_cr), float(V_cr), float(CLmax), float(S_tot),
+        #                                                 float(tot_prop_area), P_max=float(max_power),
+        #                                                 Cl_alpha_curve=Cl_alpha_curve, CD_a_w=CD_a_w, CD_a_f=CD_a_f, alpha_lst=alpha_lst,
+        #                                                 Drag=drag, t_loiter=15 * 60, rotational_rate=5, mission_dist=const.mission_range)
 
-        energy_nc, t_tot_nc, P_max_nc, T_max_nc, t_hov_nc = mission_nc.single_iter_monte_carlo(simplified=False)
+        # energy_nc, t_tot_nc, P_max_nc, T_max_nc, t_hov_nc = mission_nc.single_iter_monte_carlo(simplified=False)
 
         lines       = [["MAC1", find_mac(S1, b1, taper)],  # Mean Aerodynamic Chord [m]
                        ["MAC2", find_mac(S2, b2, taper)],
@@ -640,7 +650,7 @@ class RunDSE:
                        ["rootchord2", 2*b2/(AR_wing2*(1+taper))],
                        ["thicknessChordRatio", const.tc_wing],  # [-]
                        ["xAC", 0.25],  # [-] position of ac with respect to the chord
-                       ["MTOM_nc", MTOM_nc],
+                    #    ["MTOM_nc", MTOM_nc],
                        ["MTOM", MTOM],
                        ["AR1", AR_wing1],
                        ["AR2", AR_wing2],
@@ -694,19 +704,19 @@ class RunDSE:
                        ["CL_cr", C_L_cr],
                        ["P_br_cruise_per_engine", P_cr/n_prop],
                        ["T_cr_per_engine", D_cruise/n_prop],
-                       ["x_cg_MTOM_nc", x_CG_MTOM_nc],
+                    #    ["x_cg_MTOM_nc", x_CG_MTOM_nc],
                        ["Prop_radius_front", prop_radius1],
                        ["Prop_radius_back", prop_radius2],
                        ["Disk_load_front", 0.5*MTOM/(prop_area1*n_prop/2)],
                        ["Disk_load_back", 0.5*MTOM/(prop_area2*n_prop/2)],
                        ["Root chord vertical tail", root_chord_vtail],
-                       ["Front_wing_mass", m_wf_nc],
-                       ["Rear_wing_mass", m_wr_nc],
-                       ["Fuselage_mass", m_fus_nc],
-                       ["Landing_gear_mass", m_gear_nc],
+                    #    ["Front_wing_mass", m_wf_nc],
+                    #    ["Rear_wing_mass", m_wr_nc],
+                    #    ["Fuselage_mass", m_fus_nc],
+                    #    ["Landing_gear_mass", m_gear_nc],
                        ["Vertical_tail_mass", vtail_mass],
-                       ["Propulsion_mass", m_prop_nc],
-                       ["Energy_nc", energy_nc],
+                    #    ["Propulsion_mass", m_prop_nc],
+                    #    ["Energy_nc", energy_nc],
                        ["Energy", energy_wc],
                        ["Cr_vert", root_chord_vtail],
                        ["m_v_tail", vtail_mass],
@@ -733,10 +743,10 @@ class RunDSE:
         #
         # print("MTOM:            ", MTOM)
         # print("     - Battery:  ", m_bat)
-        print('MTOM', MTOM_nc)
-        print("     - Wing fore:", m_wf, AR_wing1)
-        print("     - Wing aft: ", m_wr, AR_wing2)
-        print("Mass battery:", m_bat)
+        # print('MTOM', MTOM_nc)
+        # print("     - Wing fore:", m_wf, AR_wing1)
+        # print("     - Wing aft: ", m_wr, AR_wing2)
+        # print("Mass battery:", m_bat)
         # print("     - Fuselage: ", m_fus)
         # print("     - pax:      ", const.m_pax * const.n_pax)
         # print("Total based on components:",
