@@ -396,7 +396,8 @@ class RunDSE:
         
         with mp.Pool(os.cpu_count()) as p:
             mission_res = np.array(p.starmap(mission.single_iter_monte_carlo, input_lst))
-
+        
+        # mission_res = np.random.rand(300,5)
 
         if mission.plotting_monte_carlo:
             plot_data = []
@@ -548,8 +549,8 @@ class RunDSE:
 
 
         
-        Zcg = 0.1 * const.h_fuselage  # Estimate   - og = 0.4
-        logging.info(f"Changed {Zcg} to make code work and see what happens  ")
+        Zcg = 0.4 * const.h_fuselage  # Estimate   - og = 0.4
+        
         # Calculate new S1 with new ratio
         S1 = S_tot/(1 + Sr_Sf)
         S2 = S1 * Sr_Sf
@@ -579,7 +580,7 @@ class RunDSE:
                                                       psi=70, #const.turn_over
                                                       min_lf = 0.08)  # TODO: Check if this is reasonable
 
-        logging.info(f"landing gear placement tw_tg = {tw_tg}, height landing gear = {h_lg}, reason = {reason}")
+        
         if tw_tg == None or h_lg == None:
             raise ValueError("Process would continue with none type and cause non-sensical results")
 
@@ -722,7 +723,11 @@ class RunDSE:
                        ["m_v_tail", vtail_mass],
                        ["S_vtail", Sv],
                        ["b_vtail", v_tail[3]]]
-         logging.info(f"data \n \n {lines} \n")
+         
+        logging.info(f"\n\n#========================================\n#data\n#========================================\n"
+                      f"\nenergy (with cont) = {energy_wc/3.6e6} [KwH]\n"
+                      f"MTOM (wc) = {MTOM} [Kg]\n"
+                      f"\n#========================================\n")
 
         txt = open("final_values.txt", 'w')
         txt.truncate(0)
@@ -774,9 +779,9 @@ class RunDSE:
         """
         internal_inputs = self.initial_est
 
-        for i in range(N_iters):
+        for i in range(1, N_iters + 1):
             print(f" Line 734 - integration_class_ar_input.py - Iteration {i} ")
-            logging.info(f" Line 734 - integration_class_ar_input.py - Iteration {i} ")
+            logging.info(f"Iteration {i}/10 ")
             optim_outputs, internal_inputs, other_outputs = self.run(optim_inputs, internal_inputs)
 
         """
