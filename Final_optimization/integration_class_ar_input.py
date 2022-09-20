@@ -722,7 +722,7 @@ class RunDSE:
                        ["m_v_tail", vtail_mass],
                        ["S_vtail", Sv],
                        ["b_vtail", v_tail[3]]]
-        logging.info(f"data \n \n {lines} \n")
+         logging.info(f"data \n \n {lines} \n")
 
         txt = open("final_values.txt", 'w')
         txt.truncate(0)
