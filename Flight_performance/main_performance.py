@@ -22,7 +22,7 @@ mission_profile = mission(mass, cruising_alt, cruise_speed, CL_max, wing_surface
                           Cl_alpha_curve, CD_a_w, CD_a_f, alpha_lst, Drag, t_loiter = 15*60,
                           plotting = True)
 
-E_tot, t_tot, max_power, max_thrust,_ = mission_profile.total_energy_monte_carlo()
+E_tot, t_tot, max_power, max_thrust,_ = mission_profile.single_iter_monte_carlo()
 
 print('Total energy', E_tot/1e6, 'MJ')
 print("Total time", t_tot/3600, 'hr')

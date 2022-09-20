@@ -328,7 +328,7 @@ class RunDSE:
                              Drag=drag, t_loiter=30*60, rotational_rate=5, mission_dist=const.mission_range)
 
         # Get approximate overall efficiency
-        energy, t_tot, max_power, max_thrust, t_hor = mission.total_energy_monte_carlo()
+        energy, t_tot, max_power, max_thrust, t_hor = mission.single_iter_monte_carlo()
 
         # Overall efficiency from battery to engine
         eff_overall = const.eff_bat_eng_cr * (t_hor/t_tot) + const.eff_bat_eng_h * (1-(t_hor/t_tot))
@@ -341,7 +341,7 @@ class RunDSE:
         # Engine sizing
 
         # Maximum power [W] and thrust [N] of the engines (total)
-        time, P_max_eng_tot, T_max_tot = mission.total_energy_monte_carlo()[1:4]
+        time, P_max_eng_tot, T_max_tot = mission.single_iter_monte_carlo()[1:4]
         P_max_eng_ind = P_max_eng_tot/n_prop                    # Maximum power [W] of the engines (per engine)
         P_max_bat = P_max_eng_tot/const.eff_bat_eng_h           # Maximum power [W] to be delivered by the battery
 

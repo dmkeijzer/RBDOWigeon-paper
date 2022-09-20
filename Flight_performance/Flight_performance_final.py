@@ -397,7 +397,7 @@ class mission:
 
         return P, D_cruise
 
-    def total_energy_monte_carlo(self, simplified = False):
+    def single_iter_monte_carlo(self, d_total, t_loit_cruise, h_trans, h_loiter_cruise, t_loit_hover, simplified = False):
         """Computes the total energy of the flight in Joules
 
         :param simplified: If chosen, uses a simplified estimation of the energy, defaults to False
@@ -413,131 +413,78 @@ class mission:
         #Initalise Monte carlo simulation
         #------------------------------------------------------------------------------------------------
         
-        std_condition = True
-        i = 0
 
-        energy_lst = []
-        pmax_asc_lst = []
-        pmax_desc_lst = []
-        Tmax_asc_lst = []
-        Tmax_desc_lst = []
-        flight_time_lst = []
-
-        energy_tot,pmax_asc_tot, pmax_desc_tot, Tmax_asc_tot, Tmax_desc_tot, flight_time_tot = 0, 0, 0, 0, 0, 0
-
-
-        #------------------------------------------------------------------------------------------------
-
-        print(f"Line 421 - Flight_performance_final.py - Entered monte carlo")
-
-        
-
-        while std_condition:
-            
-            i += 1
-
-            #Stochastic variables
-            d_total = stat.genextreme.rvs(0.94,loc=309.40,scale=84.96)
-            t_loit_cruise = stat.uniform.rvs(scale=600)
-            h_trans =  stat.halfnorm.rvs(loc=95, scale=50)
-            h_loiter_cruise = 1.2 * h_trans
-            t_loit_hover = 1.4 * h_trans/self.rod * stat.bernoulli.rvs(0.01)
+        #Stochastic variables
+        # d_total = stat.genextreme.rvs(0.94,loc=309.40,scale=84.96)
+        # t_loit_cruise = stat.uniform.rvs(scale=600)
+        # h_trans =  stat.halfnorm.rvs(loc=95, scale=50)
+        # h_loiter_cruise = 1.2 * h_trans
+        # t_loit_hover = 1.4 * h_trans/self.rod * stat.bernoulli.rvs(0.01)
 
 
 
 
-            #Start of estimation 
-            #-----------------------------------------------------------------------------------------------
-            if simplified:
-                d_climb = 13000
-                E_climb = 0.111*(E_cruise + E_loiter)
-                t_climb = 200
-                T_m_to  = 1.5*9.81*self.m
-                P_m_to  = 1.7e6
+        #Start of estimation 
+        #-----------------------------------------------------------------------------------------------
+        if simplified:
+            d_climb = 13000
+            E_climb = 0.111*(E_cruise + E_loiter)
+            t_climb = 200
+            T_m_to  = 1.5*9.81*self.m
+            P_m_to  = 1.7e6
 
-                d_desc  = 20000
-                E_desc = 0.037*(E_cruise + E_loiter)
-                t_desc = 300
-                T_m_la  =1
-                P_m_la = 1
+            d_desc  = 20000
+            E_desc = 0.037*(E_cruise + E_loiter)
+            t_desc = 300
+            T_m_la  =1
+            P_m_la = 1
 
-            else:
+        else:
 
-                print(f"Line 454 - Flight_performance_final.py - Start climb sim")
-                # Get the energy and distance needed to reach cruise
-                d_climb, E_climb, t_climb, P_m_to, T_m_to = self.numerical_simulation(vx_start=0.001, y_start=0,
-                                                                                    th_start=np.pi / 2, y_tgt=self.h_cruise,
-                                                                                    vx_tgt=self.v_cruise, h_trans= h_trans)
-                print(f"Line 459 - Flight_performance_final.py - Start Desc sim")
-                # Get the energy and distance needed to descend
-                d_desc, E_desc, t_desc, P_m_la, T_m_la = self.numerical_simulation(vx_start=self.v_cruise,
-                                                                                y_start=self.h_cruise,
-                                                                                th_start = np.radians(5), y_tgt=0, vx_tgt=0, h_trans= h_trans)
-                print(f"Line 464 - Flight_performance_final.py - Finished sim\n ")
-            # Distance spent in cruise
-            d_cruise = d_total  - d_desc - d_climb
+            print(f"Line 454 - Flight_performance_final.py - Start climb sim")
+            # Get the energy and distance needed to reach cruise
+            d_climb, E_climb, t_climb, P_m_to, T_m_to = self.numerical_simulation(vx_start=0.001, y_start=0,
+                                                                                th_start=np.pi / 2, y_tgt=self.h_cruise,
+                                                                                vx_tgt=self.v_cruise, h_trans= h_trans)
+            print(f"Line 459 - Flight_performance_final.py - Start Desc sim")
+            # Get the energy and distance needed to descend
+            d_desc, E_desc, t_desc, P_m_la, T_m_la = self.numerical_simulation(vx_start=self.v_cruise,
+                                                                            y_start=self.h_cruise,
+                                                                            th_start = np.radians(5), y_tgt=0, vx_tgt=0, h_trans= h_trans)
+            print(f"Line 464 - Flight_performance_final.py - Finished sim\n ")
+        # Distance spent in cruise
+        d_cruise = d_total  - d_desc - d_climb
 
-            # Time spent cruising
-            t_cruise = d_cruise / self.v_cruise
+        # Time spent cruising
+        t_cruise = d_cruise / self.v_cruise
 
-            # Get the brake power used in cruise
-            P_cruise, D_cruise = self.power_cruise_config(self.h_cruise, self.v_cruise, self.m)  # + self.P_systems
+        # Get the brake power used in cruise
+        P_cruise, D_cruise = self.power_cruise_config(self.h_cruise, self.v_cruise, self.m)  # + self.P_systems
 
-            V = speeds(altitude=self.h_cruise, m=self.m, CLmax=self.CL_max, S=self.S, componentdrag_object=self.Drag)
+        V = speeds(altitude=self.h_cruise, m=self.m, CLmax=self.CL_max, S=self.S, componentdrag_object=self.Drag)
 
-            # Loiter power
-            V_loit = V.climb()
-            P_loiter, _ = self.power_cruise_config(altitude= h_loiter_cruise, speed=V_loit, mass=self.m)  # + self.P_systems
+        # Loiter power
+        V_loit = V.climb()
+        P_loiter, _ = self.power_cruise_config(altitude= h_loiter_cruise, speed=V_loit, mass=self.m)  # + self.P_systems
 
-            # Cruise energy
-            E_cruise = P_cruise * t_cruise
+        # Cruise energy
+        E_cruise = P_cruise * t_cruise
 
-            # Loiter energy cruise and hover
-            E_loiter_cruise = P_loiter * t_loit_cruise
-            E_loiter_hover = self.thrust_to_power(self.m*9.81, 0, 1.225)[1] * t_loit_hover
-            E_loiter = E_loiter_cruise + E_loiter_hover
-
-
-            # Get the total energy consumption
-            E_tot = E_cruise + E_climb + E_desc + E_loiter
-
-            # Mission time
-            t_tot = t_climb + t_desc + t_cruise + t_loit_hover + t_loit_cruise
-
-            #appending results
-
-            energy_tot += E_tot
-            pmax_asc_tot += P_m_to
-            pmax_desc_tot += P_m_la
-            Tmax_asc_tot += T_m_to
-            Tmax_desc_tot += T_m_la
-            flight_time_tot += t_tot
-
-            energy_lst.append(energy_tot/i)
-            pmax_asc_lst.append(pmax_asc_tot/i)
-            pmax_desc_lst.append(pmax_asc_tot/i)
-            Tmax_asc_lst.append(Tmax_asc_tot/i)
-            Tmax_desc_lst.append(Tmax_desc_tot/i)
-            flight_time_lst.append(flight_time_tot/i)
-
-            if  i > 300:
-                logging.info(f"std = {np.std(energy_lst[-50:])}")
-                std_condition = False
+        # Loiter energy cruise and hover
+        E_loiter_cruise = P_loiter * t_loit_cruise
+        E_loiter_hover = self.thrust_to_power(self.m*9.81, 0, 1.225)[1] * t_loit_hover
+        E_loiter = E_loiter_cruise + E_loiter_hover
 
 
+        # Get the total energy consumption
+        E_tot = E_cruise + E_climb + E_desc + E_loiter
 
-
-        if self.plotting_monte_carlo:
-
-            plt.clf()
-            plt.plot(np.array(energy_lst)/3.6e6)
-            plt.ylabel("Energy [kWh]")
-            plt.xlabel("Iteration")
-            plt.savefig(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "plotting_figures", "Energy_conver_" + "_".join(time.asctime().split()).replace(":", ".") + ".pdf"))
+        # Mission time
+        t_tot = t_climb + t_desc + t_cruise + t_loit_hover + t_loit_cruise
         
 
 
-        return energy_lst[-1], flight_time_lst[-1], max(pmax_asc_lst[-1], pmax_desc_lst[-1]), max(Tmax_asc_lst[-1], Tmax_desc_lst[-1]), t_cruise + self.t_loiter
+        return E_tot, t_tot, max(P_m_to, P_m_la), max(T_m_to, T_m_la), t_cruise + self.t_loiter
 
 
 class evtol_performance:

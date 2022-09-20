@@ -1,11 +1,14 @@
 import sys
 import os
 import logging
+import multiprocessing as mp
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
 import numpy as np
 import Aero_tools as at
 import constants_final as const
+import scipy.stats as stat
+import matplotlib.pyplot as plt
 
 # Aero
 import Preliminary_Lift.Drag as drag_comp
@@ -373,11 +376,40 @@ class RunDSE:
 
         max_thrust_stall = mission.max_thrust(rho, V_stall)
 
-        # Get approximate overall efficiency
-        print(f"Line 377 - integration_class_ar_input.py - Changes for monte carlo to be applied here")
-        energy, t_tot, P_max_eng_mission, max_thrust, t_hor = mission.total_energy_monte_carlo(simplified=False)
+        # Perform Monte carlo estimation using simulation using non deterministic mission parameters
+        
+        h_trans_stoch = stat.halfnorm.rvs(loc=95, scale=50, size= 300)
+        
+        stoch_var_lst = [ stat.genextreme.rvs(0.94,loc=309.40,scale=84.96, size = 300),
+                stat.uniform.rvs(scale=600, size= 300) ,
+                h_trans_stoch ,
+                1.2 * h_trans_stoch , 
+                1.4 * h_trans_stoch/mission.rod * stat.bernoulli.rvs(0.01, size= 300) ]
+        
+        input_lst = []
+        for i in range(np.size(stoch_var_lst[0])):
+            input_lst.append((stoch_var_lst[0][0],stoch_var_lst[1][0],stoch_var_lst[2][0],stoch_var_lst[3][0],stoch_var_lst[4][0]))
 
-        energy_wc = energy
+
+        
+        with mp.Pool(os.cpu_count()) as p:
+
+            mission_res = np.array(p.starmap(mission.single_iter_monte_carlo, input_lst))
+        
+
+        if mission.plotting_monte_carlo:
+
+            plt.clf()
+            plt.plot((np.array(mission_res[:,0]) / np.arange(1, np.size(mission_res[:,0]) + 1))/3.6e6 )
+            plt.ylabel("Energy [kWh]")
+            plt.xlabel("Iteration")
+            plt.savefig(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "plotting_figures", "Energy_conver_" + "_".join(time.asctime().split()).replace(":", ".") + ".pdf"))
+
+
+
+        energy_wc = np.mean(mission_res[:,0])
+        t_tot = np.mean(mission_res[:,1])
+        P_max_eng_mission = np.mean(mission_res[:,2])
 
         # Overall efficiency from battery to engine
         eff_overall = const.eff_bat_eng_cr * (t_hor/t_tot) + const.eff_bat_eng_h * (1-(t_hor/t_tot))
@@ -599,7 +631,7 @@ class RunDSE:
                                                         Cl_alpha_curve=Cl_alpha_curve, CD_a_w=CD_a_w, CD_a_f=CD_a_f, alpha_lst=alpha_lst,
                                                         Drag=drag, t_loiter=15 * 60, rotational_rate=5, mission_dist=const.mission_range)
 
-        energy_nc, t_tot_nc, P_max_nc, T_max_nc, t_hov_nc = mission_nc.total_energy_monte_carlo(simplified=False)
+        energy_nc, t_tot_nc, P_max_nc, T_max_nc, t_hov_nc = mission_nc.single_iter_monte_carlo(simplified=False)
 
         lines       = [["MAC1", find_mac(S1, b1, taper)],  # Mean Aerodynamic Chord [m]
                        ["MAC2", find_mac(S2, b2, taper)],
