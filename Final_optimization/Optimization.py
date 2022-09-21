@@ -8,6 +8,7 @@ import numpy as np
 import constants_final as const
 import integration_class_ar_input as int_class
 
+
 #Setting up the log configuration
 #====================================================================================
 log_path = os.path.realpath(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "logs",  "_".join(time.asctime().split()).replace(":", ".") + '.log'))
@@ -16,6 +17,7 @@ logging.basicConfig(level= logging.INFO, filename= log_path , filemode='w', form
 
 if __name__ == "__main__":
 
+    
     class design_optimization(om.ExplicitComponent):
 
         def setup(self):
