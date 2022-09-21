@@ -1,3 +1,4 @@
+from lib2to3.pgen2.token import N_TOKENS
 import sys
 import os
 import logging
@@ -11,6 +12,10 @@ import Aero_tools as at
 import constants_final as const
 import scipy.stats as stat
 import matplotlib.pyplot as plt
+
+#Updating safetly limit for maximum amount of cores used
+
+os.environ["NUMEXPR_MAX_THREADS"] = "64"
 
 # Aero
 import Preliminary_Lift.Drag as drag_comp
@@ -379,14 +384,16 @@ class RunDSE:
         max_thrust_stall = mission.max_thrust(rho, V_stall)
 
         # Perform Monte carlo estimation using simulation using non deterministic mission parameters
+
+        n_iterations = 500  #FIXME Use a variable amount of iterations in the future
         
-        h_trans_stoch = stat.halfnorm.rvs(loc=95, scale=50, size= 300)
+        h_trans_stoch = stat.halfnorm.rvs(loc=95, scale=50, size= n_iterations)
         
-        stoch_var_lst = [ stat.genextreme.rvs(0.94,loc=309.40,scale=84.96, size = 300),
-                stat.uniform.rvs(scale=600, size= 300) ,
+        stoch_var_lst = [ stat.genextreme.rvs(0.94,loc=309.40,scale=84.96, size = n_iterations),
+                stat.uniform.rvs(scale=600, size= n_iterations) ,
                 h_trans_stoch ,
                 1.2 * h_trans_stoch , 
-                1.4 * h_trans_stoch/mission.rod * stat.bernoulli.rvs(0.01, size= 300) ]
+                1.4 * h_trans_stoch/mission.rod * stat.bernoulli.rvs(0.01, size= n_iterations) ]
         
         input_lst = []
         for i in range(np.size(stoch_var_lst[0])):
@@ -394,6 +401,7 @@ class RunDSE:
         
 
         
+
         with mp.Pool(os.cpu_count()) as p:
             mission_res = np.array(p.starmap(mission.single_iter_monte_carlo, input_lst))
         
