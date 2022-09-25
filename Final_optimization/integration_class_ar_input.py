@@ -735,6 +735,8 @@ class RunDSE:
         logging.info(f"\n\n#========================================\n#data\n#========================================\n"
                       f"\nenergy (with cont) = {energy_wc/3.6e6} [KwH]\n"
                       f"MTOM (wc) = {MTOM} [Kg]\n"
+                      f"AR1 = {AR_wing1} [-]\n"
+                      f"AR2 = {AR_wing2} [-]\n"
                       f"\n#========================================\n")
 
         txt = open("final_values.txt", 'w')
