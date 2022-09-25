@@ -397,7 +397,7 @@ class mission:
 
         return P, D_cruise
 
-    def single_iter_monte_carlo(self, d_total, t_loit_cruise, h_trans, h_loiter_cruise, t_loit_hover, simplified = False):
+    def single_iter_monte_carlo(self, d_total, t_loit_cruise, h_trans, h_loiter_cruise, t_loit_hover):
         """Computes the total energy of the flight in Joules
 
         :param simplified: If chosen, uses a simplified estimation of the energy, defaults to False
@@ -405,53 +405,16 @@ class mission:
         :return: _description_
         :rtype: _type_
         """        
-        #TODO 
-        #       - optimization of the numerical simulation
+        # Get the energy and distance needed to reach cruise
+        d_climb, E_climb, t_climb, P_m_to, T_m_to = self.numerical_simulation(vx_start=0.001, y_start=0,
+                                                                            th_start=np.pi / 2, y_tgt=self.h_cruise,
+                                                                            vx_tgt=self.v_cruise, h_trans= h_trans)
         
+        # Get the energy and distance needed to descend
+        d_desc, E_desc, t_desc, P_m_la, T_m_la = self.numerical_simulation(vx_start=self.v_cruise,
+                                                                        y_start=self.h_cruise,
+                                                                        th_start = np.radians(5), y_tgt=0, vx_tgt=0, h_trans= h_trans)
         
-        
-        #Initalise Monte carlo simulation
-        #------------------------------------------------------------------------------------------------
-        
-
-        #Stochastic variables
-        # d_total = stat.genextreme.rvs(0.94,loc=309.40,scale=84.96)
-        # t_loit_cruise = stat.uniform.rvs(scale=600)
-        # h_trans =  stat.halfnorm.rvs(loc=95, scale=50)
-        # h_loiter_cruise = 1.2 * h_trans
-        # t_loit_hover = 1.4 * h_trans/self.rod * stat.bernoulli.rvs(0.01)
-
-
-
-
-        #Start of estimation 
-        #-----------------------------------------------------------------------------------------------
-        if simplified:
-            d_climb = 13000
-            E_climb = 0.111*(E_cruise + E_loiter)
-            t_climb = 200
-            T_m_to  = 1.5*9.81*self.m
-            P_m_to  = 1.7e6
-
-            d_desc  = 20000
-            E_desc = 0.037*(E_cruise + E_loiter)
-            t_desc = 300
-            T_m_la  =1
-            P_m_la = 1
-
-        else:
-
-            print(f"Line 454 - Flight_performance_final.py - Start climb sim")
-            # Get the energy and distance needed to reach cruise
-            d_climb, E_climb, t_climb, P_m_to, T_m_to = self.numerical_simulation(vx_start=0.001, y_start=0,
-                                                                                th_start=np.pi / 2, y_tgt=self.h_cruise,
-                                                                                vx_tgt=self.v_cruise, h_trans= h_trans)
-            print(f"Line 459 - Flight_performance_final.py - Start Desc sim")
-            # Get the energy and distance needed to descend
-            d_desc, E_desc, t_desc, P_m_la, T_m_la = self.numerical_simulation(vx_start=self.v_cruise,
-                                                                            y_start=self.h_cruise,
-                                                                            th_start = np.radians(5), y_tgt=0, vx_tgt=0, h_trans= h_trans)
-            print(f"Line 464 - Flight_performance_final.py - Finished sim\n ")
         # Distance spent in cruise
         d_cruise = d_total  - d_desc - d_climb
 
