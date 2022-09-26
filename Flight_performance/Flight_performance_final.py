@@ -444,10 +444,10 @@ class mission:
 
         # Mission time
         t_tot = t_climb + t_desc + t_cruise + t_loit_hover + t_loit_cruise
-        
 
+        energy_dist = np.array([E_cruise, E_climb, E_desc, E_loiter_cruise, E_loiter_hover])
 
-        return E_tot, t_tot, max(P_m_to, P_m_la), max(T_m_to, T_m_la), t_cruise + self.t_loiter
+        return E_tot, t_tot, max(P_m_to, P_m_la), max(T_m_to, T_m_la), t_cruise + self.t_loiter, energy_dist
 
 
 class evtol_performance:

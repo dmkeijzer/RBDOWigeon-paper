@@ -224,11 +224,11 @@ class RunDSE:
         s1 = (1 + Sr_Sf)**-1
         s2 = s1 * Sr_Sf
 
-        # Positions of the wings [horizontally, vertically]
-        xf = internal_inputs[15]
-        zf = internal_inputs[16]
-        xr = internal_inputs[17]
-        zr = internal_inputs[18]
+        # Positions of the wings [horizontally (x-direction), vertically (z - direction)]
+        x_wing_front = internal_inputs[15]
+        z_wing_front = internal_inputs[16]
+        x_wing_rear = internal_inputs[17]
+        z_wing_rear = internal_inputs[18]
         max_thrust_stall = internal_inputs[19]
 
         root_chord_vtail = internal_inputs[20]
@@ -242,8 +242,8 @@ class RunDSE:
         cg_bat = [bat_pos, 0, 0.4*const.h_fuselage]
 
         # Distances (positive if back wing is further aft and higher)
-        wing_distance_hor = xr - xf
-        wing_distance_ver = zr - zf
+        wing_distance_hor = x_wing_rear - x_wing_front
+        wing_distance_ver = z_wing_rear - z_wing_front
 
         # ----------- Get atmospheric values at cruise --------------
         ISA = at.ISA(h_cr)
@@ -279,7 +279,7 @@ class RunDSE:
         taper = wing_plan_1[2] / wing_plan_1[1]
 
         # Calculate the tailcone length, based on aft wing placement
-        l_tc = xr - xmac_to_xle(const.sweepc41, AR_wing1, taper, b1, const.dihedral1)[0] + \
+        l_tc = x_wing_rear - xmac_to_xle(const.sweepc41, AR_wing1, taper, b1, const.dihedral1)[0] + \
                (2 * b2 / (AR_wing2 * (1 + taper))) - (const.l_nosecone + const.l_cylinder) + const.wing_clearance_aft
 
         # Fuselage upsweep, based on tailcone length
@@ -422,6 +422,7 @@ class RunDSE:
             plt.xlabel("Iteration")
             plt.savefig(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "plotting_figures", "Energy_conver_" + "_".join(tm.asctime().split()).replace(":", ".") + ".pdf"))
 
+        logging.debug(f" raw output monte carlo = {mission_res}")
 
         
         energy_wc = np.mean(mission_res[:,0])
@@ -429,6 +430,7 @@ class RunDSE:
         P_max_eng_mission = np.mean(mission_res[:,2])
         max_thrust = np.mean(mission_res[:,3])
         t_hor = np.mean(mission_res[:,4])
+        energy_distr = np.mean(np.stack(mission_res[:,5], axis=0), axis= 0)
 
         # Overall efficiency from battery to engine
         eff_overall = const.eff_bat_eng_cr * (t_hor/t_tot) + const.eff_bat_eng_h * (1-(t_hor/t_tot))
@@ -468,13 +470,13 @@ class RunDSE:
         pos_fus = l_fus*0.4
         MAC1 = find_mac(S1, b1, taper)
         MAC2 = find_mac(S2, b2, taper)
-        pos_prop_front = [(xf - 0.25*MAC1) - 0.2] * n_prop_1
-        pos_prop_back = [(xr - 0.25*MAC2) - 0.2] * n_prop_2
+        pos_prop_front = [(x_wing_front - 0.25*MAC1) - 0.2] * n_prop_1
+        pos_prop_back = [(x_wing_rear - 0.25*MAC2) - 0.2] * n_prop_2
 
         pos_prop = np.hstack((np.array(pos_prop_front), np.array(pos_prop_back)))
 
-        pos_eng_front = [(xf - 0.25 * MAC1)] * n_prop_1
-        pos_eng_back = [(xr - 0.25 * MAC2)] * n_prop_2
+        pos_eng_front = [(x_wing_front - 0.25 * MAC1)] * n_prop_1
+        pos_eng_back = [(x_wing_rear - 0.25 * MAC2)] * n_prop_2
 
         pos_eng = np.hstack((np.array(pos_eng_front), np.array(pos_eng_back)))
 
@@ -485,8 +487,8 @@ class RunDSE:
         # Should not have a lot of affect, as their weights are relatively low
         pos_lgear = (const.x_ng + const.x_tg)/2
 
-        pos_front_wing = [xf + 0.25 * MAC1, zf]
-        pos_back_wing = [xr + 0.25 * MAC2, zr]
+        pos_front_wing = [x_wing_front + 0.25 * MAC1, z_wing_front]
+        pos_back_wing = [x_wing_rear + 0.25 * MAC2, z_wing_rear]
 
         # Calculate some mass and balance related things
         MTOM, m_wf, m_wr, m_fus, m_prop_ct, cg_fus0, cg_gear, cg_props, x_CG_MTOM, m_gear, vtail_mass = mass(MTOM, S1, S2, n_ult, AR_wing1,
@@ -501,8 +503,8 @@ class RunDSE:
         # ----------------- Stability and control -------------------
 
         # Hover controllability
-        x_f_rotated = xf - xmac_to_xle(const.sweepc41, AR_wing1, taper, b1, const.dihedral1)[0] + 0.45*wing_plan_1[1]
-        x_r_rotated = xr - xmac_to_xle(const.sweepc42, AR_wing2, taper, b2, const.dihedral2)[0] + 0.45*wing_plan_2[1]
+        x_f_rotated = x_wing_front - xmac_to_xle(const.sweepc41, AR_wing1, taper, b1, const.dihedral1)[0] + 0.45*wing_plan_1[1]
+        x_r_rotated = x_wing_rear - xmac_to_xle(const.sweepc42, AR_wing2, taper, b2, const.dihedral2)[0] + 0.45*wing_plan_2[1]
 
         TW_ratio_control = 1.3
         check_hover_boolean = False
@@ -538,8 +540,8 @@ class RunDSE:
                                cg_pil=cg_pil, m_vt = vtail_mass, cg_vt = pos_back_wing[0])
 
         # Get the cg range, based on wing placement, the loading order can be changed if needed
-        cg_wf = [xf + 0.25*MAC1, zf]
-        cg_wr = [xr + 0.25*MAC2, zr]
+        cg_wf = [x_wing_front + 0.25*MAC1, z_wing_front]
+        cg_wr = [x_wing_rear + 0.25*MAC2, z_wing_rear]
 
         [x_front, x_aft], _, [_, z_top] = cg_calc.calc_cg_range(cg_wf, cg_wr)
         x_front = float(x_front)
@@ -568,7 +570,7 @@ class RunDSE:
         b2 = np.sqrt(AR_wing2 * S2)
 
         # Downwash
-        de_da = deps_da_empirical(const.sweepc41, b1, xr - xf, zr - zf, AR_wing1, CLafwd, rho, P_cr / n_prop, S1,
+        de_da = deps_da_empirical(const.sweepc41, b1, x_wing_rear - x_wing_front, z_wing_rear - z_wing_front, AR_wing1, CLafwd, rho, P_cr / n_prop, S1,
                                   CL_cr_1, MTOM * g0)
 
         # Some wing parameters needed for gear placement
@@ -577,7 +579,7 @@ class RunDSE:
 
         gears = LandingGearCalc(const.x_ng, const.x_tg, const.tw_ng, Cr_rotating_1*(1-const.c_rot_1), const.y_tilt_1,
                                 taper*Cr1*(1-const.c_rot_1), b1, taper,
-                                zf - xmac_to_xle(const.sweepc41, AR_wing1, taper, b1, const.dihedral1)[1],
+                                z_wing_front - xmac_to_xle(const.sweepc41, AR_wing1, taper, b1, const.dihedral1)[1],
                                 const.dihedral1, b1/2, 0, prop_radius1, l_fus, const.h_fuselage)
 
         # Calculate the track width of the tail gear, and the height of the landing gear
@@ -600,7 +602,7 @@ class RunDSE:
         CLmf, CLmr = max_coeffs[4], max_coeffs[5]
 
         CM_a = Cma(Clafwd, Clarear, const.sweepc41, const.sweepc42, taper, taper, CL_cr_1, CL_cr_2, AR_wing1, AR_wing2,
-                   const.e_f, const.e_r, xf, xr, zf, zr, Zcg, const.Vr_Vf_2, Sr_Sf, x_aft, S_tot, rho, P_cr/n_prop,
+                   const.e_f, const.e_r, x_wing_front, x_wing_rear, z_wing_front, z_wing_rear, Zcg, const.Vr_Vf_2, Sr_Sf, x_aft, S_tot, rho, P_cr/n_prop,
                    MTOM*g0)
 
         # Load vertical tail
@@ -614,15 +616,15 @@ class RunDSE:
                                                const.cr_cv, const.ARv,  const.sweep_vtail)
 
         cg_fwd_lim = xcg_ctrl(const.sweepc41, const.sweepc42, CLmf*const.elev_fac, CLmr, CD0fwd, CD0rear, AR_wing1,
-                              AR_wing2, const.e_f, const.e_r, find_mac(S1, b1, taper), find_mac(S2, b2, taper), xf, xr,
-                              zf, zr, Zcg, const.Vr_Vf_2, Sr_Sf)
+                              AR_wing2, const.e_f, const.e_r, find_mac(S1, b1, taper), find_mac(S2, b2, taper), x_wing_front, x_wing_rear,
+                              z_wing_front, z_wing_rear, Zcg, const.Vr_Vf_2, Sr_Sf)
 
         Sv = v_tail[0]
         root_chord_vtail = v_tail[1]
 
         # Variables that are updated (the 0 is a placeholder, not used)
         internal_inputs = [MTOM, S_tot, V_cr, h_cr, C_L_cr, CLmax, prop_radius1, de_da, Sv, V_stall, P_max_eng_tot, AR_wing1,
-                           AR_wing2, Sr_Sf, s1, xf, zf, xr, zr, max_thrust_stall, root_chord_vtail, TW_ratio_control,
+                           AR_wing2, Sr_Sf, s1, x_wing_front, z_wing_front, x_wing_rear, z_wing_rear, max_thrust_stall, root_chord_vtail, TW_ratio_control,
                            x_front, x_aft, l_fus, bat_pos]
 
         # Aerodynamic moments
@@ -676,10 +678,10 @@ class RunDSE:
                        ["n_pax", const.n_pax],  # number of passengers (pilot included)
                        ["pos_fus", cg_fus0],  # fuselage centre of mass away from the nose
                        ["pos_lgear", cg_gear],  # landing gear position away from the nose
-                       ["pos_frontwing", xf],   # Position of the aerodynamic centre of the wing
-                       ["pos_backwing", xr],
-                       ["zpos_frontwing", zf],  # Position of the aerodynamic centre of the wing
-                       ["zpos_backwing", zr],
+                       ["pos_frontwing", x_wing_front],   # Position of the aerodynamic centre of the wing
+                       ["pos_backwing", x_wing_rear],
+                       ["zpos_frontwing", z_wing_front],  # Position of the aerodynamic centre of the wing
+                       ["zpos_backwing", z_wing_rear],
                        ["m_prop", m_prop],  # list of mass of engines (so 30 kg per engine with nacelle and propeller)
                        ["pos_prop", pos_prop],
                        # 8 on front wing and 8 on back wing
@@ -731,12 +733,27 @@ class RunDSE:
                        ["m_v_tail", vtail_mass],
                        ["S_vtail", Sv],
                        ["b_vtail", v_tail[3]]]
-         
+
         logging.info(f"\n\n#========================================\n#data\n#========================================\n"
                       f"\nenergy (with cont) = {energy_wc/3.6e6} [KwH]\n"
                       f"MTOM (wc) = {MTOM} [Kg]\n"
                       f"AR1 = {AR_wing1} [-]\n"
                       f"AR2 = {AR_wing2} [-]\n"
+                      f"S1 = {S1}\n"
+                      f"S2 = {S2}\n"
+                      f"Surface ratio area rear-front = {Sr_Sf}\n"
+                      f"Flight time = {t_tot/3600}\n"
+                      f"Energy_distribution = {np.array(energy_distr)/3.6e6} [cruise - climb - descent - loiter cruise - loiter hover]\n"
+                      f"battery position = {bat_pos}\n"
+                      f"x_wing_front = { x_wing_front}\n"
+                      f"x_wing_rear= {x_wing_rear}\n"
+                      f"Cm_alpha = {optim_outputs[3]}\n"
+                      f"ctrl margin = {optim_outputs[4]}\n"
+                      f"Span1 = {b1}\n"
+                      f"Span2 = {b2}\n"
+                      f"Taper = {taper}\n"
+                      f"Cd0= {CD0}\n"
+                      f"CLmax= {CLmax}\n"
                       f"\n#========================================\n")
 
         txt = open("final_values.txt", 'w')
