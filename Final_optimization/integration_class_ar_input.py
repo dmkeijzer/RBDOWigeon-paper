@@ -389,7 +389,7 @@ class RunDSE:
         
         h_trans_stoch = stat.halfnorm.rvs(loc=95, scale=50, size= n_iterations)
         
-        stoch_var_lst = [ stat.genextreme.rvs(0.94,loc=309.40,scale=84.96, size = n_iterations),
+        stoch_var_lst = [ np.array(stat.genextreme.rvs(0.94,loc=309.40,scale=84.96, size = n_iterations))*1000,
                 stat.uniform.rvs(scale=600, size= n_iterations) ,
                 h_trans_stoch ,
                 1.2 * h_trans_stoch , 
