@@ -8,6 +8,7 @@ sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
 import time as tm
 import numpy as np
+import pandas as pd
 import Aero_tools as at
 import constants_final as const
 import scipy.stats as stat
@@ -385,7 +386,7 @@ class RunDSE:
 
         # Perform Monte carlo estimation using simulation using non deterministic mission parameters
 
-        n_iterations = 500  #FIXME Use a variable amount of iterations in the future
+        n_iterations = 20 #FIXME Use a variable amount of iterations in the future
         
         h_trans_stoch = stat.halfnorm.rvs(loc=95, scale=50, size= n_iterations)
         
@@ -405,7 +406,12 @@ class RunDSE:
         with mp.Pool(os.cpu_count()) as p:
             mission_res = np.array(p.starmap(mission.single_iter_monte_carlo, input_lst))
         
-        # mission_res = np.random.rand(300,5)
+
+        # mission_res = []
+        # for i in np.random.randint(0,10,500):
+        #     mission_res.append([i,i+1,i+2,i+3,i+4,np.random.randint(0,10,5)])
+        # mission_res = np.array(mission_res)
+        # print(mission_res)
 
         if mission.plotting_monte_carlo:
             plot_data = []
@@ -424,13 +430,22 @@ class RunDSE:
 
         logging.debug(f" raw output monte carlo = {mission_res}")
 
-        
+       #Storing the mean of all the required variables 
         energy_wc = np.mean(mission_res[:,0])
         t_tot = np.mean(mission_res[:,1])
         P_max_eng_mission = np.mean(mission_res[:,2])
         max_thrust = np.mean(mission_res[:,3])
         t_hor = np.mean(mission_res[:,4])
         energy_distr = np.mean(np.stack(mission_res[:,5], axis=0), axis= 0)
+
+        #Storing a five number summary of all iterations for analysis
+        num_summary_energy_wc = pd.Series(mission_res[:,0], dtype="Float64").describe()
+        num_summary_t_tot = pd.Series(mission_res[:,1], dtype="Float64").describe()
+        num_summary_P_max_eng = pd.Series(mission_res[:,2], dtype="Float64").describe()
+        num_summary_max_thrust = pd.Series(mission_res[:,3], dtype="Float64").describe()
+        num_summary_t_hor = pd.Series(mission_res[:,4], dtype="Float64").describe()
+        std_energy_distr = np.std(np.stack(mission_res[:,5], axis=0), axis=0)
+
 
         # Overall efficiency from battery to engine
         eff_overall = const.eff_bat_eng_cr * (t_hor/t_tot) + const.eff_bat_eng_h * (1-(t_hor/t_tot))
@@ -734,8 +749,15 @@ class RunDSE:
                        ["S_vtail", Sv],
                        ["b_vtail", v_tail[3]]]
 
+        #TODO Create an csv file instead since this will be an absolute nightmare to read out!!!
         logging.info(f"\n\n#========================================\n#data\n#========================================\n"
-                      f"\nenergy (with cont) = {energy_wc/3.6e6} [KwH]\n"
+                      f"\nenergy (with cont) = {energy_wc} [KwH]\n"
+                      f"\nSummary energy = \n{num_summary_energy_wc}\n"
+                      f"\nSummary t_tot = \n{num_summary_t_tot}\n"
+                      f"\nSummary pmax = \n{num_summary_P_max_eng}\n"
+                      f"\nSummary max thrust= \n{num_summary_max_thrust}\n"
+                      f"\nSummary T horizontal= \n{num_summary_t_hor}\n"
+                      f"\nSTD energy distr = {std_energy_distr}\n"
                       f"MTOM (wc) = {MTOM} [Kg]\n"
                       f"AR1 = {AR_wing1} [-]\n"
                       f"AR2 = {AR_wing2} [-]\n"
