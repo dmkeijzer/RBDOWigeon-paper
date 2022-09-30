@@ -4,6 +4,7 @@ import logging
 import time
 import os
 import numpy as np
+import pandas as pd
 #from stab_and_ctrl.xcg_limits import xf, xr, zf, zr, xcg_range, Arange, bmax, crmaxf, crmaxr
 import constants_final as const
 import integration_class_ar_input as int_class
@@ -13,6 +14,24 @@ import integration_class_ar_input as int_class
 #====================================================================================
 log_path = os.path.realpath(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "logs",  "_".join(time.asctime().split()).replace(":", ".") + '.log'))
 logging.basicConfig(level= logging.INFO, filename= log_path , filemode='w', format='%(filename)s - %(lineno)s - %(levelname)s - %(message)s')
+
+columns_csv = ['MAC1', 'MAC2', 'taper', 'rootchord1', 'rootchord2', 'thicknessChordRatio',
+ 'xAC', 'MTOM', 'AR1', 'AR2', 'S1', 'S2', 'span1', 'span2', 'nmax', 'Pmax', 'lf',
+ 'm_pax', 'n_prop', 'n_pax', 'pos_fus', 'pos_lgear', 'pos_frontwing',
+ 'pos_backwing', 'zpos_frontwing', 'zpos_backwing', 'm_prop', 'pos_prop_front',
+ 'pos_prop_back', 'Mac1', 'Mac2', 'flighttime', 'takeofftime',
+ 'enginePlacement_front', 'enginePlacement_back', 'T_max', 'T_max_ctrl',
+ 'battery_pos', 'cargo_m', 'cargo_pos', 'battery_m', 'P_max', 'vol_bat',
+ 'price_bat', 'h_winglet_1', 'h_winglet_2', 'V_cruise', 'h_cruise', 'CLmax',
+ 'CD0fwd', 'CD0fwd', 'CD0', 'Clafwd', 'Clarear', 'CL_cr_fwd', 'CL_cr_rear',
+ 'CL_cr', 'P_br_cruise_per_engine', 'T_cr_per_engine', 'Prop_radius_front',
+ 'Prop_radius_back', 'Disk_load_front', 'Disk_load_back',
+ 'Root_chord_vertical_tail', 'Vertical_tail_mass', 'Energy', 'Summary_energy',
+ 'Summary_t_tot', 'Summary_pmax', 'Summary_max_thrust',
+ 'Summary_T_horizontal', 'Energy_dist', 'STD_energy_distr', 'Cr_vert',
+ 'm_v_tail', 'Cm_alpha', 'ctrl_margin', 'S_vtail', 'b_vtail']
+
+pd.DataFrame(columns= columns_csv).to_csv(int_class.csv_path)
 #====================================================================================
 
 if __name__ == "__main__":

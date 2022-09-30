@@ -1,9 +1,9 @@
-from lib2to3.pgen2.token import N_TOKENS
 import sys
 import os
 import logging
 import multiprocessing as mp
 
+csv_path = os.path.realpath(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "logs", "Iteration_data_" + "_".join(time.asctime().split()).replace(":", ".") + '.csv'))
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
 import time as tm
@@ -386,7 +386,7 @@ class RunDSE:
 
         # Perform Monte carlo estimation using simulation using non deterministic mission parameters
 
-        n_iterations = 20 #FIXME Use a variable amount of iterations in the future
+        n_iterations = 500 #FIXME Use a variable amount of iterations in the future
         
         h_trans_stoch = stat.halfnorm.rvs(loc=95, scale=50, size= n_iterations)
         
@@ -438,13 +438,13 @@ class RunDSE:
         t_hor = np.mean(mission_res[:,4])
         energy_distr = np.mean(np.stack(mission_res[:,5], axis=0), axis= 0)
 
-        #Storing a five number summary of all iterations for analysis
-        num_summary_energy_wc = pd.Series(mission_res[:,0], dtype="Float64").describe()
-        num_summary_t_tot = pd.Series(mission_res[:,1], dtype="Float64").describe()
-        num_summary_P_max_eng = pd.Series(mission_res[:,2], dtype="Float64").describe()
-        num_summary_max_thrust = pd.Series(mission_res[:,3], dtype="Float64").describe()
-        num_summary_t_hor = pd.Series(mission_res[:,4], dtype="Float64").describe()
-        std_energy_distr = np.std(np.stack(mission_res[:,5], axis=0), axis=0)
+        #Storing a five number summary of all iterations for analysis     --------   count mean std min 25 50 75 max
+        num_summary_energy_wc = np.array(pd.Series(mission_res[:,0], dtype="Float64").describe() )
+        num_summary_t_tot = np.array(pd.Series(mission_res[:,1], dtype="Float64").describe())
+        num_summary_P_max_eng = np.array(pd.Series(mission_res[:,2], dtype="Float64").describe())
+        num_summary_max_thrust = np.array(pd.Series(mission_res[:,3], dtype="Float64").describe())
+        num_summary_t_hor = np.array(pd.Series(mission_res[:,4], dtype="Float64").describe())
+        std_energy_distr = np.array(np.std(np.stack(mission_res[:,5], axis=0), axis=0))
 
 
         # Overall efficiency from battery to engine
@@ -697,14 +697,16 @@ class RunDSE:
                        ["pos_backwing", x_wing_rear],
                        ["zpos_frontwing", z_wing_front],  # Position of the aerodynamic centre of the wing
                        ["zpos_backwing", z_wing_rear],
-                       ["m_prop", m_prop],  # list of mass of engines (so 30 kg per engine with nacelle and propeller)
-                       ["pos_prop", pos_prop],
+                       ["m_prop", m_prop[0]],  # list of mass of engines (so 30 kg per engine with nacelle and propeller)
+                       ["pos_prop_front", pos_prop_front[0]],
+                       ["pos_prop_back", pos_prop_back[0]],
                        # 8 on front wing and 8 on back wing
                        ["Mac1", Cmac1],  # aerodynamic moment around AC
                        ["Mac2", Cmac2],
                        ["flighttime", t_tot/3600],  # [hr]
                        ["takeofftime", (t_tot-t_hor)/(2*3600)],
-                       ["enginePlacement", pos_eng],  # list(np.linspace(0.1 * b / 2, 0.8 * b / 2, 4)),
+                       ["enginePlacement_front", pos_eng_front[0]],  # list(np.linspace(0.1 * b / 2, 0.8 * b / 2, 4)),
+                       ["enginePlacement_back", pos_eng_back[0]],
                        # engineMass,400 * 9.81 / 8, # See m_prop
                        ["T_max", max_thrust],  # [s] Time in vertical config
                        ["T_max_ctrl", TW_ratio_control],
@@ -744,46 +746,51 @@ class RunDSE:
                     #    ["Propulsion_mass", m_prop_nc],
                     #    ["Energy_nc", energy_nc],
                        ["Energy", energy_wc],
+                       ["Summary energy" , [num_summary_energy_wc]],
+                       ["Summary t_tot" , [num_summary_t_tot]],
+                       ["Summary pmax" , [num_summary_P_max_eng]],
+                       ["Summary max_thrust", [num_summary_max_thrust]],
+                       ["Summary T_horizontal", [num_summary_t_hor]],
+                       ["Energy_dist", [np.array(energy_distr)]],
+                       ["STD energy_distr" , [std_energy_distr]],
                        ["Cr_vert", root_chord_vtail],
                        ["m_v_tail", vtail_mass],
+                       ["Cm_alpha", optim_outputs[3]],
+                       ["ctrl margin", optim_outputs[4]],
                        ["S_vtail", Sv],
                        ["b_vtail", v_tail[3]]]
 
-        #TODO Create an csv file instead since this will be an absolute nightmare to read out!!!
-        logging.info(f"\n\n#========================================\n#data\n#========================================\n"
-                      f"\nenergy (with cont) = {energy_wc} [KwH]\n"
-                      f"\nSummary energy = \n{num_summary_energy_wc}\n"
-                      f"\nSummary t_tot = \n{num_summary_t_tot}\n"
-                      f"\nSummary pmax = \n{num_summary_P_max_eng}\n"
-                      f"\nSummary max thrust= \n{num_summary_max_thrust}\n"
-                      f"\nSummary T horizontal= \n{num_summary_t_hor}\n"
-                      f"\nSTD energy distr = {std_energy_distr}\n"
-                      f"MTOM (wc) = {MTOM} [Kg]\n"
-                      f"AR1 = {AR_wing1} [-]\n"
-                      f"AR2 = {AR_wing2} [-]\n"
-                      f"S1 = {S1}\n"
-                      f"S2 = {S2}\n"
-                      f"Surface ratio area rear-front = {Sr_Sf}\n"
-                      f"Flight time = {t_tot/3600}\n"
-                      f"Energy_distribution = {np.array(energy_distr)/3.6e6} [cruise - climb - descent - loiter cruise - loiter hover]\n"
-                      f"battery position = {bat_pos}\n"
-                      f"x_wing_front = { x_wing_front}\n"
-                      f"x_wing_rear= {x_wing_rear}\n"
-                      f"Cm_alpha = {optim_outputs[3]}\n"
-                      f"ctrl margin = {optim_outputs[4]}\n"
-                      f"Span1 = {b1}\n"
-                      f"Span2 = {b2}\n"
-                      f"Taper = {taper}\n"
-                      f"Cd0= {CD0}\n"
-                      f"CLmax= {CLmax}\n"
-                      f"\n#========================================\n")
+        # logging.info(f"\n\n#========================================\n#data\n#========================================\n"
+        #               f"\nenergy (with cont) = {energy_wc} [KwH]\n"
+        #               f"\nSummary energy = \n{num_summary_energy_wc}\n"
+        #               f"\nSummary t_tot = \n{num_summary_t_tot}\n"
+        #               f"\nSummary pmax = \n{num_summary_P_max_eng}\n"
+        #               f"\nSummary max thrust= \n{num_summary_max_thrust}\n"
+        #               f"\nSummary T horizontal= \n{num_summary_t_hor}\n"
+        #               f"\nSTD energy distr = {std_energy_distr}\n"
+        #               f"MTOM (wc) = {MTOM} [Kg]\n"
+        #               f"AR1 = {AR_wing1} [-]\n"
+        #               f"AR2 = {AR_wing2} [-]\n"
+        #               f"S1 = {S1}\n"
+        #               f"S2 = {S2}\n"
+        #               f"Surface ratio area rear-front = {Sr_Sf}\n"
+        #               f"Flight time = {t_tot/3600}\n"
+        #               f"Energy_distribution = {np.array(energy_distr)/3.6e6} [cruise - climb - descent - loiter cruise - loiter hover]\n"
+        #               f"battery position = {bat_pos}\n"
+        #               f"x_wing_front = { x_wing_front}\n"
+        #               f"x_wing_rear= {x_wing_rear}\n"
+        #               f"Cm_alpha = {optim_outputs[3]}\n"
+        #               f"ctrl margin = {optim_outputs[4]}\n"
+        #               f"Span1 = {b1}\n"
+        #               f"Span2 = {b2}\n"
+        #               f"Taper = {taper}\n"
+        #               f"Cd0= {CD0}\n"
+        #               f"CLmax= {CLmax}\n"
+        #               f"\n#========================================\n")
 
-        txt = open("final_values.txt", 'w')
-        txt.truncate(0)
-        for element in lines:
-            txt.write(element[0] + " = " + str(element[1]) + "\n")
-        txt.close()
-
+        data_lines  = np.array(lines)[:,1].reshape(1,-1) 
+        
+        pd.DataFrame(data_lines).to_csv(csv_path, mode="a", header= False)
         # mission_nc = FP.mission(float(MTOM_nc), float(h_cr), float(V_cr), float(CLmax), float(S_tot),
         #                         float(tot_prop_area), P_max=float(max_power),
         #                         Cl_alpha_curve=Cl_alpha_curve, CD_a_w=CD_a_w, CD_a_f=CD_a_f, alpha_lst=alpha_lst,
