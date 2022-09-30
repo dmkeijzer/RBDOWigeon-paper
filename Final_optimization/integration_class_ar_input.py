@@ -2,6 +2,7 @@ import sys
 import os
 import logging
 import multiprocessing as mp
+import time
 
 csv_path = os.path.realpath(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "logs", "Iteration_data_" + "_".join(time.asctime().split()).replace(":", ".") + '.csv'))
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
@@ -40,19 +41,6 @@ from stab_and_ctrl.xcg_limits import Cma, deps_da_empirical, xcg_ctrl
 # Structures
 import structures.Weight as wei
 
-# --------------------- Fixed parameters and constants ------------------------
-# TODO:
-#   Revise list of parameters to change and double check with departments final values
-#   Agree with Koen on final value for engine sizing, battery sizing
-#   Double check with stability that TW of 1.5 is enough for OEI
-#   Fix array error which will come
-#   Print weight fractions for Nikita
-#   Print disk radius and loading
-#   Print different propeller radii and ask Miguel about them, add to Vertical_tail_sizing
-#   Change inputs for VT_controllability
-#   Find vertical tail placement
-#   Find clearance for aft wing
-#   The return value you want is [[[0], [1], [2], [3], [4], [5], [6], ..., [11]]]
 
 # Constants from constants.py
 g0 = const.g
@@ -83,7 +71,6 @@ n_prop = const.n_prop
 n_ult = const.n_ult
 
 # ------------------ Constants for weight estimation ----------------
-# TODO: revise Pmax
 Pmax_weight = 17  # this is defined as maximum perimeter in Roskam, so I took top down view of the fuselage perimeter
 
 # ------------- Initial mass estimate -------------
@@ -91,7 +78,6 @@ def mass(MTOM, S1, S2, n_ult, AR_wing1, AR_wing2, pos_frontwing, pos_backwing, P
          pos_lgear, n_prop, m_prop, pos_prop, m_pax, cargo_m, m_bat, Sv, v_tail_rchord, contingency = False,
          cg_bat=[None, None, None]):
 
-    # print(cg_bat, "bat cg")
     wing = wei.Wing(MTOM, S1, S2, n_ult, AR_wing1, AR_wing2, [pos_frontwing, pos_backwing])
     m_wf = wing.wweight1
     m_wr = wing.wweight2
@@ -101,7 +87,6 @@ def mass(MTOM, S1, S2, n_ult, AR_wing1, AR_wing2, pos_frontwing, pos_backwing, P
     lgear = wei.LandingGear(MTOM, pos_lgear)
 
     cg_gear = lgear.pos
-    # print(m_prop)
     props = wei.Propulsion(n_prop, m_prop, pos_prop)
     cg_props = props.pos_prop
     m_prop = props.mass
@@ -109,8 +94,6 @@ def mass(MTOM, S1, S2, n_ult, AR_wing1, AR_wing2, pos_frontwing, pos_backwing, P
     # Vertical tail sizing
     vtail = wei.Vtail(MTOM, Sv, const.ARv, v_tail_rchord, const.tc, const.sweep_vtail_c4)
 
-    # class Vtail:
-    #     def __init__(self, mtom, Sv, Av, rchord, toc, sweep_deg):
 
     Mass = wei.Weight(m_pax, wing, fuselage, lgear, props, cargo_m=cargo_m, cargo_pos=const.cargo_pos[0],
                       battery_m=m_bat, battery_pos=cg_bat[0], p_pax=[const.x_pil, const.x_f_pax, const.x_f_pax,
@@ -406,12 +389,14 @@ class RunDSE:
         with mp.Pool(os.cpu_count()) as p:
             mission_res = np.array(p.starmap(mission.single_iter_monte_carlo, input_lst))
         
-
+        # Uncomment block of code for testing script (Comment 2 lines above)
+        #===========================================================
         # mission_res = []
         # for i in np.random.randint(0,10,500):
         #     mission_res.append([i,i+1,i+2,i+3,i+4,np.random.randint(0,10,5)])
         # mission_res = np.array(mission_res)
         # print(mission_res)
+        #===========================================================
 
         if mission.plotting_monte_carlo:
             plot_data = []
@@ -657,17 +642,18 @@ class RunDSE:
                                                                                     m_bat, Sv, root_chord_vtail,
                                                                                     contingency = False, cg_bat=cg_bat)
 
-        # print("xcg and xcg nc", x_CG_MTOM, x_CG_MTOM_nc)
-
         # # Outputs for optimisation cost function
         optim_outputs = [MTOM, energy, time, CM_a, cg_fwd_lim - x_front, MTOM_nc]
 
+        # If no contingency is to be implemented uncomment
+        #=======================================================================================================================
         # mission_nc = FP.mission(float(MTOM_nc), float(h_cr), float(V_cr), float(CLmax), float(S_tot),
         #                                                 float(tot_prop_area), P_max=float(max_power),
         #                                                 Cl_alpha_curve=Cl_alpha_curve, CD_a_w=CD_a_w, CD_a_f=CD_a_f, alpha_lst=alpha_lst,
         #                                                 Drag=drag, t_loiter=15 * 60, rotational_rate=5, mission_dist=const.mission_range)
 
         # energy_nc, t_tot_nc, P_max_nc, T_max_nc, t_hov_nc = mission_nc.single_iter_monte_carlo(simplified=False)
+        #=======================================================================================================================
 
         lines       = [["MAC1", find_mac(S1, b1, taper)],  # Mean Aerodynamic Chord [m]
                        ["MAC2", find_mac(S2, b2, taper)],
@@ -760,70 +746,11 @@ class RunDSE:
                        ["S_vtail", Sv],
                        ["b_vtail", v_tail[3]]]
 
-        # logging.info(f"\n\n#========================================\n#data\n#========================================\n"
-        #               f"\nenergy (with cont) = {energy_wc} [KwH]\n"
-        #               f"\nSummary energy = \n{num_summary_energy_wc}\n"
-        #               f"\nSummary t_tot = \n{num_summary_t_tot}\n"
-        #               f"\nSummary pmax = \n{num_summary_P_max_eng}\n"
-        #               f"\nSummary max thrust= \n{num_summary_max_thrust}\n"
-        #               f"\nSummary T horizontal= \n{num_summary_t_hor}\n"
-        #               f"\nSTD energy distr = {std_energy_distr}\n"
-        #               f"MTOM (wc) = {MTOM} [Kg]\n"
-        #               f"AR1 = {AR_wing1} [-]\n"
-        #               f"AR2 = {AR_wing2} [-]\n"
-        #               f"S1 = {S1}\n"
-        #               f"S2 = {S2}\n"
-        #               f"Surface ratio area rear-front = {Sr_Sf}\n"
-        #               f"Flight time = {t_tot/3600}\n"
-        #               f"Energy_distribution = {np.array(energy_distr)/3.6e6} [cruise - climb - descent - loiter cruise - loiter hover]\n"
-        #               f"battery position = {bat_pos}\n"
-        #               f"x_wing_front = { x_wing_front}\n"
-        #               f"x_wing_rear= {x_wing_rear}\n"
-        #               f"Cm_alpha = {optim_outputs[3]}\n"
-        #               f"ctrl margin = {optim_outputs[4]}\n"
-        #               f"Span1 = {b1}\n"
-        #               f"Span2 = {b2}\n"
-        #               f"Taper = {taper}\n"
-        #               f"Cd0= {CD0}\n"
-        #               f"CLmax= {CLmax}\n"
-        #               f"\n#========================================\n")
-
         data_lines  = np.array(lines)[:,1].reshape(1,-1) 
         
         pd.DataFrame(data_lines).to_csv(csv_path, mode="a", header= False)
-        # mission_nc = FP.mission(float(MTOM_nc), float(h_cr), float(V_cr), float(CLmax), float(S_tot),
-        #                         float(tot_prop_area), P_max=float(max_power),
-        #                         Cl_alpha_curve=Cl_alpha_curve, CD_a_w=CD_a_w, CD_a_f=CD_a_f, alpha_lst=alpha_lst,
-        #                         Drag=drag, t_loiter=15 * 60, rotational_rate=5, mission_dist=const.mission_range)
-        #
-        # T_cr_nc, P_cr_nc = mission_nc.power_cruise_config(h_cr, V_cr, MTOM)
-        #
-        # E_tot_nc, t_tot_nc, P_max_nc, T_max_nc, t_hov_nc = mission_nc.total_energy(simplified=True)
 
-        # print(E_tot_nc, t_tot_nc, P_max_nc, T_max_nc, t_hov_nc, T_cr_nc, P_cr_nc)
-        #
-        # print("MTOM:            ", MTOM)
-        # print("     - Battery:  ", m_bat)
-        # print('MTOM', MTOM_nc)
-        # print("     - Wing fore:", m_wf, AR_wing1)
-        # print("     - Wing aft: ", m_wr, AR_wing2)
-        # print("Mass battery:", m_bat)
-        # print("     - Fuselage: ", m_fus)
-        # print("     - pax:      ", const.m_pax * const.n_pax)
-        # print("Total based on components:",
-        #       m_bat + m_wf + m_wr + m_fus + const.m_pax * const.n_pax + const.m_cargo_tot + m_gear)
-        # print("MTOW w/o contingency:", MTOM_nc)
-        # print("Cruise speed:    ", V_cr)
-        # print("Max power:       ", max_power)
-        # print("Energy used:     ", energy * 3.6e-3)
-        # print("Wing surface:    ", S_tot)
-        # print("Wing spans:      ", b1, b2)
-        # print("CM alpha:        ", CM_a)
-        # print("Controllability: ", cg_fwd_lim - x_front)
-
-        # Other necessary outputs
         other_outputs = [tw_tg, None]
-        # print("end")
         return optim_outputs, internal_inputs, other_outputs
 
     def multirun(self, N_iters, optim_inputs):
@@ -839,21 +766,5 @@ class RunDSE:
             print(f" Line 734 - integration_class_ar_input.py - Iteration {i} ")
             logging.info(f"Iteration {i}/10 ")
             optim_outputs, internal_inputs, other_outputs = self.run(optim_inputs, internal_inputs)
-
-        """
-        Function to iterate until converged
-        """
-        # N_iter = 0
-        # convergence = 1
-        # m_old = 3000        # Initial mass
-        # while (convergence > 0.01) or (N_iter < 10):
-        #     optim_outputs, internal_inputs, other_outputs = self.run(optim_inputs, internal_inputs)
-        #
-        #     N_iter += 1
-        #
-        #     # Check convergence of mass
-        #     m_new = internal_inputs[0]
-        #     convergence = np.abs(m_new - m_old)/m_old
-        #     m_old = m_new
 
         return optim_outputs, internal_inputs, other_outputs
