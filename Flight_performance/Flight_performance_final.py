@@ -418,11 +418,16 @@ class mission:
         # Distance spent in cruise
         d_cruise = d_total  - d_desc - d_climb
 
+        if d_cruise < 0:
+            d_cruise = 0 #Phase does not exist and should probably be performed by different vtol
+            logging.info(f"Encountered a negative cruise distance for a total travel distance of {d_total}")
+
         # Time spent cruising
         t_cruise = d_cruise / self.v_cruise
 
         # Get the brake power used in cruise
         P_cruise, D_cruise = self.power_cruise_config(self.h_cruise, self.v_cruise, self.m)  # + self.P_systems
+
 
         V = speeds(altitude=self.h_cruise, m=self.m, CLmax=self.CL_max, S=self.S, componentdrag_object=self.Drag)
 
