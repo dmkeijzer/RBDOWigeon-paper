@@ -4,7 +4,11 @@ import logging
 import multiprocessing as mp
 import time
 
-csv_path = os.path.realpath(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "logs", "Iteration_data_" + "_".join(time.asctime().split()).replace(":", ".") + '.csv'))
+filename =  time.asctime().split()[1:]
+filename[2] = filename[2][:-3]
+filename =  "_".join(filename).replace(":", ".")
+
+csv_path = os.path.realpath(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "logs", "Monte_carlo_" + filename + '.csv'))
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
 import time as tm
@@ -386,16 +390,16 @@ class RunDSE:
 
         
 
-        with mp.Pool(os.cpu_count()) as p:
-            mission_res = np.array(p.starmap(mission.single_iter_monte_carlo, input_lst))
+        # with mp.Pool(os.cpu_count()) as p:
+        #     mission_res = np.array(p.starmap(mission.single_iter_monte_carlo, input_lst))
         
         # Uncomment block of code for testing script (Comment 2 lines above)
         #===========================================================
-        # mission_res = []
-        # for i in np.random.randint(0,10,500):
-        #     mission_res.append([i,i+1,i+2,i+3,i+4,np.random.randint(0,10,5)])
-        # mission_res = np.array(mission_res)
-        # print(mission_res)
+        mission_res = []
+        for i in np.random.randint(0,10,500):
+            mission_res.append([i,i+1,i+2,i+3,i+4,np.random.randint(0,10,5)])
+        mission_res = np.array(mission_res)
+        print(mission_res)
         #===========================================================
 
         if mission.plotting_monte_carlo:

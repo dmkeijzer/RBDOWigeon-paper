@@ -12,7 +12,10 @@ import integration_class_ar_input as int_class
 
 #Setting up the log configuration
 #====================================================================================
-log_path = os.path.realpath(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "logs",  "_".join(time.asctime().split()).replace(":", ".") + '.log'))
+filename =  time.asctime().split()[1:]
+filename[2] = filename[2][:-3]
+filename =  "_".join(filename).replace(":", ".")
+log_path = os.path.realpath(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "logs", "Monte_carlo_" + filename + '.log'))
 logging.basicConfig(level= logging.INFO, filename= log_path , filemode='w', format='%(filename)s - %(lineno)s - %(levelname)s - %(message)s')
 
 columns_csv = ['MAC1', 'MAC2', 'taper', 'rootchord1', 'rootchord2', 'thicknessChordRatio',
