@@ -5,6 +5,7 @@ import time
 import os
 import numpy as np
 import pandas as pd
+import pathlib as pl
 #from stab_and_ctrl.xcg_limits import xf, xr, zf, zr, xcg_range, Arange, bmax, crmaxf, crmaxr
 import constants_final as const
 import integration_class_ar_input as int_class
@@ -15,7 +16,7 @@ import integration_class_ar_input as int_class
 filename =  time.asctime().split()[1:]
 filename[2] = filename[2][:-3]
 filename =  "_".join(filename).replace(":", ".")
-log_path = os.path.realpath(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "logs", "Monte_carlo_" + filename + '.log'))
+log_path = list(pl.Path(__file__).parents)[2] / "logs" / ("Monte_carlo_" + filename + ".log")
 logging.basicConfig(level= logging.INFO, filename= log_path , filemode='w', format='%(filename)s - %(lineno)s - %(levelname)s - %(message)s')
 
 columns_csv = ['MAC1', 'MAC2', 'taper', 'rootchord1', 'rootchord2', 'thicknessChordRatio',

@@ -3,13 +3,16 @@ import os
 import logging
 import multiprocessing as mp
 import time
+import pathlib as pl
 
 filename =  time.asctime().split()[1:]
 filename[2] = filename[2][:-3]
 filename =  "_".join(filename).replace(":", ".")
 
-csv_path = os.path.realpath(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "logs", "Monte_carlo_" + filename + '.csv'))
-sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+# csv_path = os.path.realpath(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "logs", "Monte_carlo_" + filename + '.csv'))
+csv_path = list(pl.Path(__file__).parents)[2] / "logs" / ("Monte_carlo_" + filename + ".csv")
+# sys.path.append(os.path.realpath(list(pl.Path(__file__).parents)[1]))
+sys.path.append(str(list(pl.Path(__file__).parents)[1]))
 
 import time as tm
 import numpy as np
