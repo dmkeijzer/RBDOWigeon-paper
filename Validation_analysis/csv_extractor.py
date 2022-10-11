@@ -1,15 +1,18 @@
+from time import time_ns
 import pandas as pd
 import numpy as np
 import os
+import matplotlib.pyplot as plt
 import sys
 import pathlib as pl
-import time
-
+import re
 
 class Csv_extractor: #TODO come up with better names lol
     """_summary_
     """
     def __init__(self, version, time_stamp):
+        self.version = version
+        self.time_stamp = time_stamp
         self.ml_path =  list(pl.Path(__file__).parents)[2] / "logs" / "valid_data" / "Monte_Carlo"  #Monte Carlo path
         self.bl_path =  list(pl.Path(__file__).parents)[2] / "logs" / "valid_data" / "Baseline"  #Monte Carlo path
         
@@ -48,7 +51,33 @@ class Csv_extractor: #TODO come up with better names lol
    
         self.df = df_output
             
+    def energy_convergence(self):
+        plot_data = self.df["Energy"].apply(lambda x: x / 3.6e6)
+        plt.plot(plot_data, "k-o", ms= 2)
+        plt.ylabel("Energy [Kwh]")
+        plt.xlabel("Iteration")
+        plt.xticks(np.arange(0,len(plot_data), ))
+        plt.show()
+    
+    def pie_chart(self):
+
+        if self.version[:2].lower() == "mo":
+            plot_data = self.df["Energy_dist"].to_numpy()[-1]
+            plot_data = [float(i) for i in re.findall("[-+]?[.]?[\d]+(?:,\d\d\d)*[\.]?\d*(?:[eE][-+]?\d+)?", plot_data)]
+            phases = ["Cruise", "Climb", "Descend", "Loiter cruise", "Loiter Hover"]
+            plt.pie(plot_data, labels = phases)
+            plt.show()
+        else:
+            dummy = None
+            #TODO make code for baseline, different formatting
+
+    def standard_deviation(self):
+        std = self.df["Summary_energy"].to_numpy()[0][1]
+        print(std)
+        std =  [i for i in re.findall("[-+]?[.]?[\d]+(?:,\d\d\d)*[\.]?\d*(?:[eE][-+]?\d+)?", std)]
+        # print(std)
 
 Analysis_tool = Csv_extractor("mont", "23.47")
-
-print(Analysis_tool.df["Energy"].apply(lambda x: x / 3.6e6))
+Analysis_tool.standard_deviation()
+# print(Analysis_tool.df["Energy"].apply(lambda x: x / 3.6e6))
+# Format is [(<string>, <expected output>), ...]
