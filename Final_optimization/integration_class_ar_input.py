@@ -5,13 +5,11 @@ import multiprocessing as mp
 import time
 import pathlib as pl
 
-filename =  time.asctime().split()[1:]
-filename[2] = filename[2][:-3]
-filename =  "_".join(filename).replace(":", ".")
 
-# csv_path = os.path.realpath(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "logs", "Monte_carlo_" + filename + '.csv'))
-csv_path = list(pl.Path(__file__).parents)[2] / "logs" / ("Monte_carlo_" + filename + ".csv")
-# sys.path.append(os.path.realpath(list(pl.Path(__file__).parents)[1]))
+# filename =  time.asctime().split()[1:]
+# filename[2] = filename[2][:-3]
+# filename =  "_".join(filename).replace(":", ".")
+
 sys.path.append(str(list(pl.Path(__file__).parents)[1]))
 
 import time as tm
@@ -21,7 +19,6 @@ import Aero_tools as at
 import constants_final as const
 import scipy.stats as stat
 import matplotlib.pyplot as plt
-
 #Updating safetly limit for maximum amount of cores used
 
 os.environ["NUMEXPR_MAX_THREADS"] = "64"
@@ -47,7 +44,6 @@ from stab_and_ctrl.xcg_limits import Cma, deps_da_empirical, xcg_ctrl
 
 # Structures
 import structures.Weight as wei
-
 
 # Constants from constants.py
 g0 = const.g
@@ -401,8 +397,8 @@ class RunDSE:
         mission_res = []
         for i in np.random.randint(0,10,500):
             mission_res.append([i,i+1,i+2,i+3,i+4,np.random.randint(0,10,5)])
-        mission_res = np.array(mission_res)
-        print(mission_res)
+        mission_res = np.array(mission_res, dtype= object)
+        # print(mission_res)
         #===========================================================
 
         if mission.plotting_monte_carlo:
@@ -739,25 +735,26 @@ class RunDSE:
                     #    ["Propulsion_mass", m_prop_nc],
                     #    ["Energy_nc", energy_nc],
                        ["Energy", energy_wc],
-                       ["Summary energy" , [num_summary_energy_wc]],
-                       ["Summary t_tot" , [num_summary_t_tot]],
-                       ["Summary pmax" , [num_summary_P_max_eng]],
-                       ["Summary max_thrust", [num_summary_max_thrust]],
-                       ["Summary T_horizontal", [num_summary_t_hor]],
-                       ["Energy_dist", [np.array(energy_distr)]],
+                       ["Summary energy" , num_summary_energy_wc],
+                       ["Summary t_tot" , num_summary_t_tot],
+                       ["Summary pmax" , num_summary_P_max_eng],
+                       ["Summary max_thrust", num_summary_max_thrust],
+                       ["Summary T_horizontal", num_summary_t_hor],
+                       ["Energy_dist", np.array(energy_distr)],
                        ["STD energy_distr" , [std_energy_distr]],
                        ["Cr_vert", root_chord_vtail],
                        ["m_v_tail", vtail_mass],
                        ["Cm_alpha", optim_outputs[3]],
                        ["ctrl margin", optim_outputs[4]],
                        ["S_vtail", Sv],
-                       ["b_vtail", v_tail[3]]]
+                       ["b_vtail", v_tail[3]],
+                       ["Converged_des", False]]
 
-        data_lines  = np.array(lines)[:,1].reshape(1,-1) 
+        single_iter_data = np.array(lines)[:,1].flatten() 
         
-        pd.DataFrame(data_lines).to_csv(csv_path, mode="a", header= False)
 
-        other_outputs = [tw_tg, None]
+
+        other_outputs = [tw_tg, single_iter_data]
         return optim_outputs, internal_inputs, other_outputs
 
     def multirun(self, N_iters, optim_inputs):
@@ -768,10 +765,16 @@ class RunDSE:
         :param N_iters: Number of iterations of the code for each optimisation iteration
         """
         internal_inputs = self.initial_est
-
+        multirun_iter_arr = []
         for i in range(1, N_iters + 1):
             print(f" Line 734 - integration_class_ar_input.py - Iteration {i} ")
             logging.info(f"Iteration {i}/10 ")
             optim_outputs, internal_inputs, other_outputs = self.run(optim_inputs, internal_inputs)
+            if i == N_iters:
+                multirun_iter_datapoint = other_outputs[1]
+                multirun_iter_datapoint[-1] = True
+            else:
+                multirun_iter_datapoint = other_outputs[1]
+            multirun_iter_arr.append(other_outputs[1])
 
-        return optim_outputs, internal_inputs, other_outputs
+        return optim_outputs, internal_inputs, other_outputs, multirun_iter_arr

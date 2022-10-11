@@ -18,30 +18,35 @@ filename[2] = filename[2][:-3]
 filename =  "_".join(filename).replace(":", ".")
 log_path = list(pl.Path(__file__).parents)[2] / "logs" / ("Monte_carlo_" + filename + ".log")
 logging.basicConfig(level= logging.INFO, filename= log_path , filemode='w', format='%(filename)s - %(lineno)s - %(levelname)s - %(message)s')
-
-columns_csv = ['MAC1', 'MAC2', 'taper', 'rootchord1', 'rootchord2', 'thicknessChordRatio',
- 'xAC', 'MTOM', 'AR1', 'AR2', 'S1', 'S2', 'span1', 'span2', 'nmax', 'Pmax', 'lf',
- 'm_pax', 'n_prop', 'n_pax', 'pos_fus', 'pos_lgear', 'pos_frontwing',
- 'pos_backwing', 'zpos_frontwing', 'zpos_backwing', 'm_prop', 'pos_prop_front',
- 'pos_prop_back', 'Mac1', 'Mac2', 'flighttime', 'takeofftime',
- 'enginePlacement_front', 'enginePlacement_back', 'T_max', 'T_max_ctrl',
- 'battery_pos', 'cargo_m', 'cargo_pos', 'battery_m', 'P_max', 'vol_bat',
- 'price_bat', 'h_winglet_1', 'h_winglet_2', 'V_cruise', 'h_cruise', 'CLmax',
- 'CD0fwd', 'CD0fwd', 'CD0', 'Clafwd', 'Clarear', 'CL_cr_fwd', 'CL_cr_rear',
- 'CL_cr', 'P_br_cruise_per_engine', 'T_cr_per_engine', 'Prop_radius_front',
- 'Prop_radius_back', 'Disk_load_front', 'Disk_load_back',
- 'Root_chord_vertical_tail', 'Vertical_tail_mass', 'Energy', 'Summary_energy',
- 'Summary_t_tot', 'Summary_pmax', 'Summary_max_thrust',
- 'Summary_T_horizontal', 'Energy_dist', 'STD_energy_distr', 'Cr_vert',
- 'm_v_tail', 'Cm_alpha', 'ctrl_margin', 'S_vtail', 'b_vtail']
-
-pd.DataFrame(columns= columns_csv).to_csv(int_class.csv_path)
+npz_path = list(pl.Path(__file__).parents)[2] / "logs" / ("Monte_carlo_" + filename + ".npz")
 #====================================================================================
 
 if __name__ == "__main__":
 
-    
+    # Setting up the logging for the numpy array
+    #========================================================================================================================
+    data_logging_arr = [['MAC1', 'MAC2', 'taper', 'rootchord1', 'rootchord2', 'thicknessChordRatio',
+    'xAC', 'MTOM', 'AR1', 'AR2', 'S1', 'S2', 'span1', 'span2', 'nmax', 'Pmax', 'lf',
+    'm_pax', 'n_prop', 'n_pax', 'pos_fus', 'pos_lgear', 'pos_frontwing',
+    'pos_backwing', 'zpos_frontwing', 'zpos_backwing', 'm_prop', 'pos_prop_front',
+    'pos_prop_back', 'Mac1', 'Mac2', 'flighttime', 'takeofftime',
+    'enginePlacement_front', 'enginePlacement_back', 'T_max', 'T_max_ctrl',
+    'battery_pos', 'cargo_m', 'cargo_pos', 'battery_m', 'P_max', 'vol_bat',
+    'price_bat', 'h_winglet_1', 'h_winglet_2', 'V_cruise', 'h_cruise', 'CLmax',
+    'CD0fwd', 'CD0fwd', 'CD0', 'Clafwd', 'Clarear', 'CL_cr_fwd', 'CL_cr_rear',
+    'CL_cr', 'P_br_cruise_per_engine', 'T_cr_per_engine', 'Prop_radius_front',
+    'Prop_radius_back', 'Disk_load_front', 'Disk_load_back',
+    'Root_chord_vertical_tail', 'Vertical_tail_mass', 'Energy', 'Summary_energy',
+    'Summary_t_tot', 'Summary_pmax', 'Summary_max_thrust',
+    'Summary_T_horizontal', 'Energy_dist', 'STD_energy_distr', 'Cr_vert',
+    'm_v_tail', 'Cm_alpha', 'ctrl_margin', 'S_vtail', 'b_vtail',"Converged_des"]]
+    #========================================================================================================================
+
+
     class design_optimization(om.ExplicitComponent):
+        def __init__(self, **kwargs):
+            super().__init__(**kwargs)
+            self.data_logging_arr = data_logging_arr
 
         def setup(self):
 
@@ -120,11 +125,15 @@ if __name__ == "__main__":
             # Run the file for # iterations
             logging.info("Performing the inner convergence loop")
             N_iter = 10
-            optim_outputs, internal_inputs, other_outputs = optimisation_class.multirun(N_iter, optim_inputs=[])
+            optim_outputs, internal_inputs, other_outputs, multi_run_data= optimisation_class.multirun(N_iter, optim_inputs=[])
             logging.info("Inner convergence loop completed")
+            self.data_logging_arr = np.append(self.data_logging_arr, multi_run_data, axis=0)
+            np.savez_compressed(npz_path,array1 = self.data_logging_arr)
+
             S_tot = internal_inputs[1]
             S1 = s1*S_tot
             S2 = S1*Sr_Sf
+
 
             # Spans
             b1 = np.sqrt(AR_wing1*S1)
