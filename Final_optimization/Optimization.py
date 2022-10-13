@@ -39,7 +39,7 @@ if __name__ == "__main__":
     'Root_chord_vertical_tail', 'Vertical_tail_mass', 'Energy', 'Summary_energy',
     'Summary_t_tot', 'Summary_pmax', 'Summary_max_thrust',
     'Summary_T_horizontal', 'Energy_dist', 'STD_energy_distr', 'Cr_vert',
-    'm_v_tail', 'Cm_alpha', 'ctrl_margin', 'S_vtail', 'b_vtail',"Converged_des"]]
+    'm_v_tail', 'Cm_alpha', 'ctrl_margin', 'S_vtail', 'b_vtail', "dist_type", "params_dist", "Converged_des"]]
     #========================================================================================================================
 
 

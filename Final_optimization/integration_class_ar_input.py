@@ -19,6 +19,7 @@ import Aero_tools as at
 import constants_final as const
 import scipy.stats as stat
 import matplotlib.pyplot as plt
+from pdffit import distfit as pf
 #Updating safetly limit for maximum amount of cores used
 
 os.environ["NUMEXPR_MAX_THREADS"] = "64"
@@ -357,7 +358,6 @@ class RunDSE:
         C_L_cr = 2 * L_cr / (rho * V_cr ** 2 * S_tot)
 
         # Aero to pass to mission
-        # print("Before aero thingies to pass into mission")
         alpha_lst = np.arange(-3, 89, 0.1)
         Cl_alpha_curve = wing_design.CLa(const.tc, CDs, CDs_f, Afus, alpha_lst, de_da)[0]
         CD_a_w = wing_design.CDa_poststall(const.tc, CDs, CDs_f, Afus, alpha_lst, "wing", drag.CD, de_da)
@@ -370,9 +370,10 @@ class RunDSE:
 
         max_thrust_stall = mission.max_thrust(rho, V_stall)
 
-        # Perform Monte carlo estimation using simulation using non deterministic mission parameters
 
-        n_iterations = 500 #FIXME Use a variable amount of iterations in the future
+        #-----------------------------Monte carlo energy estimation--------------------------------------
+
+        n_iterations = 1000 #FIXME Use a variable amount of iterations in the future
         
         h_trans_stoch = stat.halfnorm.rvs(loc=95, scale=50, size= n_iterations)
         
@@ -385,46 +386,53 @@ class RunDSE:
         input_lst = []
         for i in range(np.size(stoch_var_lst[0])):
             input_lst.append((stoch_var_lst[0][i],stoch_var_lst[1][i],stoch_var_lst[2][i],stoch_var_lst[3][i],stoch_var_lst[4][i]))
-        
 
-        
-
-        # with mp.Pool(os.cpu_count()) as p:
-        #     mission_res = np.array(p.starmap(mission.single_iter_monte_carlo, input_lst))
+        with mp.Pool(os.cpu_count()) as p:
+            mission_res = np.array(p.starmap(mission.single_iter_monte_carlo, input_lst))
         
         # Uncomment block of code for testing script (Comment 2 lines above)
         #===========================================================
-        mission_res = []
-        for i in np.random.randint(0,10,500):
-            mission_res.append([i,i+1,i+2,i+3,i+4,np.random.randint(0,10,5)])
-        mission_res = np.array(mission_res, dtype= object)
+        # mission_res = []
+        # for i in np.random.randint(0,10,500):
+        #     mission_res.append([i,i+1,i+2,i+3,i+4,np.random.randint(0,10,5)])
+        # mission_res = np.array(mission_res, dtype= object)
         # print(mission_res)
         #===========================================================
 
-        if mission.plotting_monte_carlo:
-            plot_data = []
+        #Create a fitting distribution for energy samples
+        dist_analysis = pf.BestFitDistribution(mission_res[:,0])
+        best_fits = dist_analysis.best_fit_distribution()
+        best_fit, params = best_fits[0][0:2]
+        arg = params[:-2]
+        loc = params[-2]
+        scale = params[-1]
+        energy_arr = np.linspace(0, np.max(mission_res[:,0]), 1000)
 
-            energy_tot = 0
-            
-            for counter, energy_iter in enumerate(mission_res[:,0],start=1):
-                energy_tot += energy_iter
-                plot_data.append(energy_tot/(counter*3.6e6))
+        pdf_best_fit = best_fit.pdf( energy_arr , loc=loc, scale=scale, *arg)
+
+        if mission.plotting_monte_carlo:
+
+            # plot_data = []
+            # energy_tot = 0
+            # for counter, energy_iter in enumerate(mission_res[:,0],start=1):
+            #     energy_tot += energy_iter
+            #     plot_data.append(energy_tot/(counter*3.6e6))
 
             plt.clf()
-            plt.plot(plot_data)
-            plt.ylabel("Energy [kWh]")
-            plt.xlabel("Iteration")
+            plt.plot(energy_arr, pdf_best_fit)
+            plt.ylabel("Density")
+            plt.xlabel("Energy")
             plt.savefig(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "plotting_figures", "Energy_conver_" + "_".join(tm.asctime().split()).replace(":", ".") + ".pdf"))
 
         logging.debug(f" raw output monte carlo = {mission_res}")
 
        #Storing the mean of all the required variables 
-        energy_wc = np.mean(mission_res[:,0])
-        t_tot = np.mean(mission_res[:,1])
-        P_max_eng_mission = np.mean(mission_res[:,2])
-        max_thrust = np.mean(mission_res[:,3])
-        t_hor = np.mean(mission_res[:,4])
-        energy_distr = np.mean(np.stack(mission_res[:,5], axis=0), axis= 0)
+        energy_wc = np.mean(mission_res[:,0], dtype= "float64")
+        t_tot = np.mean(mission_res[:,1], dtype= "float64")
+        P_max_eng_mission = np.mean(mission_res[:,2], dtype= "float64")
+        max_thrust = np.mean(mission_res[:,3], dtype= "float64")
+        t_hor = np.mean(mission_res[:,4], dtype= "float64")
+        energy_distr = np.mean(np.stack(mission_res[:,5], axis=0), axis= 0, dtype= "float64")
 
         #Storing a five number summary of all iterations for analysis     --------   count mean std min 25 50 75 max
         num_summary_energy_wc = np.array(pd.Series(mission_res[:,0], dtype="Float64").describe() )
@@ -432,7 +440,7 @@ class RunDSE:
         num_summary_P_max_eng = np.array(pd.Series(mission_res[:,2], dtype="Float64").describe())
         num_summary_max_thrust = np.array(pd.Series(mission_res[:,3], dtype="Float64").describe())
         num_summary_t_hor = np.array(pd.Series(mission_res[:,4], dtype="Float64").describe())
-        std_energy_distr = np.array(np.std(np.stack(mission_res[:,5], axis=0), axis=0))
+        std_energy_distr = np.array(np.std(np.stack(mission_res[:,5], axis=0), axis=0), dtype= "float64")
 
 
         # Overall efficiency from battery to engine
@@ -503,7 +511,7 @@ class RunDSE:
                                                                                      m_bat, Sv, root_chord_vtail,
                                                                                      contingency = True, cg_bat=cg_bat)
 
-        # ----------------- Stability and control -------------------
+        # ----------------- Stability and control -------------------------------------------------------------------------
 
         # Hover controllability
         x_f_rotated = x_wing_front - xmac_to_xle(const.sweepc41, AR_wing1, taper, b1, const.dihedral1)[0] + 0.45*wing_plan_1[1]
@@ -748,7 +756,9 @@ class RunDSE:
                        ["ctrl margin", optim_outputs[4]],
                        ["S_vtail", Sv],
                        ["b_vtail", v_tail[3]],
-                       ["Converged_des", False]]
+                       ["dist_type", best_fit],
+                       ["params_dist", params],
+                       ["Converged_des", False]] # Standard is false, is being change in multirun function
 
         single_iter_data = np.array(lines)[:,1].flatten() 
         
