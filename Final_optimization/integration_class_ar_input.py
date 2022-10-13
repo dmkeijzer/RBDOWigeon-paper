@@ -398,11 +398,13 @@ class RunDSE:
         # mission_res = np.array(mission_res, dtype= object)
         # print(mission_res)
         #===========================================================
-
+        logging.info(f"\n\nEnergy array values = {mission_res[:,0]}\n\n")
         #Create a fitting distribution for energy samples
         dist_analysis = pf.BestFitDistribution(mission_res[:,0])
         best_fits = dist_analysis.best_fit_distribution()
         best_fit, params = best_fits[0][0:2]
+        logging.info(f"\n best_fit = {best_fit}\n"
+                    f"parameters = {params[0]}\n")
         arg = params[:-2]
         loc = params[-2]
         scale = params[-1]
