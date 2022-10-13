@@ -399,12 +399,17 @@ class RunDSE:
         # print(mission_res)
         #===========================================================
         logging.info(f"\n\nEnergy array values = {mission_res[:,0]}\n\n")
+        logging.info(f"Type energy arr = {type(mission_res[:,0])}")
+
         #Create a fitting distribution for energy samples
         dist_analysis = pf.BestFitDistribution(mission_res[:,0])
-        best_fits = dist_analysis.best_fit_distribution()
-        best_fit, params = best_fits[0][0:2]
+        best_dists = dist_analysis.best_fit_distribution()
+        logging.info(f"ordered list of best distributions = {best_dists}")
+        best_fit, params = best_dists[0][0:2]
+
         logging.info(f"\n best_fit = {best_fit}\n"
                     f"parameters = {params[0]}\n")
+
         arg = params[:-2]
         loc = params[-2]
         scale = params[-1]
