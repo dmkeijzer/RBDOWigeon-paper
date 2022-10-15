@@ -398,24 +398,21 @@ class RunDSE:
         # mission_res = np.array(mission_res, dtype= object)
         # print(mission_res)
         #===========================================================
-        logging.info(f"\n\nEnergy array values = {mission_res[:,0]}\n\n")
-        logging.info(f"Type energy arr = {type(mission_res[:,0])}")
+        logging.debug(f"\n\nEnergy array values = {mission_res[:,0]}\n\n")
+        logging.debug(f"Type energy arr = {type(mission_res[:,0])}")
 
         #Create a fitting distribution for energy samples
-        dist_analysis = pf.BestFitDistribution(mission_res[:,0])
+        dist_analysis = pf.BestFitDistribution(list(mission_res[:,0]/3.6e6))
         best_dists = dist_analysis.best_fit_distribution()
-        logging.info(f"ordered list of best distributions = {best_dists}")
         best_fit, params = best_dists[0][0:2]
 
-        logging.info(f"\n best_fit = {best_fit}\n"
-                    f"parameters = {params[0]}\n")
 
         arg = params[:-2]
         loc = params[-2]
         scale = params[-1]
-        energy_arr = np.linspace(0, np.max(mission_res[:,0]), 1000)
+        pdf_arr = np.linspace(0, np.max(mission_res[:,0]/3.6e6), 1000)
 
-        pdf_best_fit = best_fit.pdf( energy_arr , loc=loc, scale=scale, *arg)
+        pdf_best_fit = best_fit.pdf( pdf_arr , loc=loc, scale=scale, *arg)
 
         if mission.plotting_monte_carlo:
 
@@ -426,7 +423,7 @@ class RunDSE:
             #     plot_data.append(energy_tot/(counter*3.6e6))
 
             plt.clf()
-            plt.plot(energy_arr, pdf_best_fit)
+            plt.plot(pdf_arr, pdf_best_fit)
             plt.ylabel("Density")
             plt.xlabel("Energy")
             plt.savefig(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "plotting_figures", "Energy_conver_" + "_".join(tm.asctime().split()).replace(":", ".") + ".pdf"))
