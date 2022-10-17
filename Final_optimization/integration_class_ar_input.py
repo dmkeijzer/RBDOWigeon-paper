@@ -373,22 +373,35 @@ class RunDSE:
 
         #-----------------------------Monte carlo energy estimation--------------------------------------
 
-        n_iterations = 1000 #FIXME Use a variable amount of iterations in the future
-        
-        h_trans_stoch = stat.halfnorm.rvs(loc=95, scale=50, size= n_iterations)
-        
-        stoch_var_lst = [ np.array(stat.genextreme.rvs(0.94,loc=309.40,scale=84.96, size = n_iterations))*1000,
-                stat.uniform.rvs(scale=600, size= n_iterations) ,
-                h_trans_stoch ,
-                1.2 * h_trans_stoch , 
-                1.4 * h_trans_stoch/mission.rod * stat.bernoulli.rvs(0.01, size= n_iterations) ]
-        
-        input_lst = []
-        for i in range(np.size(stoch_var_lst[0])):
-            input_lst.append((stoch_var_lst[0][i],stoch_var_lst[1][i],stoch_var_lst[2][i],stoch_var_lst[3][i],stoch_var_lst[4][i]))
+        # Initalise
+        mission_res = np.ones(2,6)
+        conv_condition = True
+        conv_metric_lst = []
+        conv_target = 1000
 
-        with mp.Pool(os.cpu_count()) as p:
-            mission_res = np.array(p.starmap(mission.single_iter_monte_carlo, input_lst))
+        # Convergence loop
+        while conv_condition:
+            n_iterations = 40 #FIXME Use a variable amount of iterations in the future
+            h_trans_stoch = stat.halfnorm.rvs(loc=95, scale=50, size= n_iterations)
+            
+            sim_samples = np.column_stack((np.array(stat.genextreme.rvs(0.94,loc=309.40,scale=84.96, size = n_iterations))*1000,
+                                        stat.uniform.rvs(scale=600, size= n_iterations) ,
+                                        h_trans_stoch ,
+                                        1.2 * h_trans_stoch , 
+                                        1.4 * h_trans_stoch/mission.rod * stat.bernoulli.rvs(0.01, size= n_iterations)))
+
+            with mp.Pool(os.cpu_count()) as p:
+                mission_res_chunk = np.array(p.starmap(mission.single_iter_monte_carlo, sim_samples))
+            mission_res = np.append(mission_res, mission_res_chunk)
+            conv_metric_lst.append(np.std(mission_res[:,0]))
+
+            try:
+                if (conv_metric_lst[-2] - conv_metric_lst[-1]) < conv_target:
+                    conv_condition = False
+            except IndexError:
+                pass
+        
+        mission_res = np.delete(mission_res, [0,1], axis= 0)
         
         # Uncomment block of code for testing script (Comment 2 lines above)
         #===========================================================
@@ -789,6 +802,7 @@ class RunDSE:
                 multirun_iter_datapoint[-1] = True
             else:
                 multirun_iter_datapoint = other_outputs[1]
+
             multirun_iter_arr.append(other_outputs[1])
 
         return optim_outputs, internal_inputs, other_outputs, multirun_iter_arr

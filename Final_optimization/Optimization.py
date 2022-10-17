@@ -127,9 +127,12 @@ if __name__ == "__main__":
             N_iter = 10
             optim_outputs, internal_inputs, other_outputs, multi_run_data= optimisation_class.multirun(N_iter, optim_inputs=[])
             logging.info("Inner convergence loop completed")
+
+            # Save data from previous convergence history into numpy array
             self.data_logging_arr = np.append(self.data_logging_arr, multi_run_data, axis=0)
             np.savez_compressed(npz_path,array1 = self.data_logging_arr)
 
+            #Wing surface area
             S_tot = internal_inputs[1]
             S1 = s1*S_tot
             S2 = S1*Sr_Sf
