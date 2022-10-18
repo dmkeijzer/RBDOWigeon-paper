@@ -417,7 +417,7 @@ class RunDSE:
         #===========================================================
 
         #Create a fitting distribution for energy samples
-        dist_analysis = pf.BestFitDistribution(list(mission_res[:,0]/3.6e6))
+        dist_analysis = pf.BestFitDistribution(list(mission_res[:,0]))
         best_dists = dist_analysis.best_fit_distribution()
         best_fit, params = best_dists[0][0:2]
 
@@ -445,13 +445,13 @@ class RunDSE:
             plt.plot(energy_arr/3.6e6, cdf_best_fit, "k-", label= "cdf")
             plt.legend()
             plt.ylabel("CDF")
-            plt.savefig(str(list(pl.Path(__file__).parents)[2] / "plotting_figures" / ("pdf_cdf_energy" + filename + ".pdf")))
+            plt.savefig(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "plotting_figures", "pdf_cdf_energy_" + filename + ".pdf"))
 
 
             plt.clf()
             plt.plot(conv_metric_lst, "v-.k", label= "STD convergence")
             plt.legend()
-            plt.savefig(str(list(pl.Path(__file__).parents)[2] / "plotting_figures" / ("STD_conv_" + filename + ".pdf")))
+            plt.savefig(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "plotting_figures", "STD_conv_" + filename + ".pdf"))
 
 
        #Storing the mean of all the required variables 
