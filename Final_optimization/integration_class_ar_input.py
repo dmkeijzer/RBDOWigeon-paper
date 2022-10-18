@@ -377,11 +377,11 @@ class RunDSE:
         mission_res = np.ones((2,6))
         conv_condition = True
         conv_metric_lst = []
-        conv_target = 100
+        conv_target = 5
 
         # Convergence loop
         while conv_condition:
-            n_iterations = 40 #FIXME Use a variable amount of iterations in the future
+            n_iterations = 50 #FIXME Use a variable amount of iterations in the future
             h_trans_stoch = stat.halfnorm.rvs(loc=95, scale=50, size= n_iterations)
             
             sim_samples = np.column_stack((np.array(stat.genextreme.rvs(0.94,loc=309.40,scale=84.96, size = n_iterations))*1000,
@@ -432,6 +432,10 @@ class RunDSE:
 
         if mission.plotting_monte_carlo:
 
+            filename =  time.asctime().split()[1:]
+            filename[2] = filename[2][:-3]
+            filename =  "_".join(filename).replace(":", ".")
+
             plt.clf()
             plt.plot(energy_arr/3.6e6, pdf_best_fit, "k-.", label= "pdf")
             plt.xlabel("Energy")
@@ -441,14 +445,14 @@ class RunDSE:
             plt.plot(energy_arr/3.6e6, cdf_best_fit, "k-", label= "cdf")
             plt.legend()
             plt.ylabel("CDF")
-            plt.savefig(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "plotting_figures", "pdf_energy" + "_".join(tm.asctime().split()).replace(":", ".") + ".pdf"))
+            plt.savefig(list(pl.Path(__file__).parents)[2] / "plotting_figures" / ("pdf&cdf_energy" + filename + ".pdf"))
+
 
             plt.clf()
             plt.plot(conv_metric_lst, "v-.k", label= "STD convergence")
             plt.legend()
-            plt.savefig(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "plotting_figures", "STD_conv" + "_".join(tm.asctime().split()).replace(":", ".") + ".pdf"))
+            plt.savefig(list(pl.Path(__file__).parents)[2] / "plotting_figures" / ("STD_conv_" + filename + ".pdf"))
 
-        logging.debug(f" raw output monte carlo = {mission_res}")
 
        #Storing the mean of all the required variables 
         energy_wc = np.mean(mission_res[:,0], dtype= "float64")
