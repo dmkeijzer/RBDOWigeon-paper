@@ -17,7 +17,7 @@ filename =  time.asctime().split()[1:]
 filename[2] = filename[2][:-3]
 filename =  "_".join(filename).replace(":", ".")
 log_path = list(pl.Path(__file__).parents)[2] / "logs" / ("Monte_carlo_" + filename + ".log")
-logging.basicConfig(level= logging.INFO, filename= log_path , filemode='w', format='%(filename)s - %(lineno)s - %(levelname)s - %(message)s')
+logging.basicConfig(level= logging.DEBUG, filename= log_path , filemode='w', format='%(filename)s - %(lineno)s - %(levelname)s - %(message)s')
 npz_path = list(pl.Path(__file__).parents)[2] / "logs" / ("Monte_carlo_" + filename + ".npz")
 #====================================================================================
 

@@ -374,10 +374,10 @@ class RunDSE:
         #-----------------------------Monte carlo energy estimation--------------------------------------
 
         # Initalise
-        mission_res = np.ones(2,6)
+        mission_res = np.ones((2,6))
         conv_condition = True
         conv_metric_lst = []
-        conv_target = 1000
+        conv_target = 100
 
         # Convergence loop
         while conv_condition:
@@ -392,16 +392,20 @@ class RunDSE:
 
             with mp.Pool(os.cpu_count()) as p:
                 mission_res_chunk = np.array(p.starmap(mission.single_iter_monte_carlo, sim_samples))
-            mission_res = np.append(mission_res, mission_res_chunk)
+            mission_res = np.append(mission_res, mission_res_chunk, axis=0)
             conv_metric_lst.append(np.std(mission_res[:,0]))
 
+            logging.debug(f"Convergence list = {conv_metric_lst}")
+
             try:
+                logging.debug(f"Delta Q = {conv_metric_lst[-2] - conv_metric_lst[-1]} ")
                 if (conv_metric_lst[-2] - conv_metric_lst[-1]) < conv_target:
                     conv_condition = False
             except IndexError:
                 pass
         
         mission_res = np.delete(mission_res, [0,1], axis= 0)
+        logging.info(f"Amount of samples = {np.shape(mission_res)[0]}")
         
         # Uncomment block of code for testing script (Comment 2 lines above)
         #===========================================================
@@ -411,8 +415,6 @@ class RunDSE:
         # mission_res = np.array(mission_res, dtype= object)
         # print(mission_res)
         #===========================================================
-        logging.debug(f"\n\nEnergy array values = {mission_res[:,0]}\n\n")
-        logging.debug(f"Type energy arr = {type(mission_res[:,0])}")
 
         #Create a fitting distribution for energy samples
         dist_analysis = pf.BestFitDistribution(list(mission_res[:,0]/3.6e6))
@@ -423,23 +425,28 @@ class RunDSE:
         arg = params[:-2]
         loc = params[-2]
         scale = params[-1]
-        pdf_arr = np.linspace(0, np.max(mission_res[:,0]/3.6e6), 1000)
+        energy_arr = np.linspace(0, np.max(mission_res[:,0]/3.6e6), 1000)
 
-        pdf_best_fit = best_fit.pdf( pdf_arr , loc=loc, scale=scale, *arg)
+        pdf_best_fit = best_fit.pdf( energy_arr , loc=loc, scale=scale, *arg) #probability density function 
+        cdf_best_fit = best_fit.cdf( energy_arr , loc=loc, scale=scale, *arg) # cumulative distrbution function
 
         if mission.plotting_monte_carlo:
 
-            # plot_data = []
-            # energy_tot = 0
-            # for counter, energy_iter in enumerate(mission_res[:,0],start=1):
-            #     energy_tot += energy_iter
-            #     plot_data.append(energy_tot/(counter*3.6e6))
+            plt.clf()
+            plt.plot(energy_arr/3.6e6, pdf_best_fit, "k-.", label= "pdf")
+            plt.xlabel("Energy")
+            plt.ylabel("PDF")
+            plt.legend()
+            plt.twinx()
+            plt.plot(energy_arr/3.6e6, cdf_best_fit, "k-", label= "cdf")
+            plt.legend()
+            plt.ylabel("CDF")
+            plt.savefig(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "plotting_figures", "pdf_energy" + "_".join(tm.asctime().split()).replace(":", ".") + ".pdf"))
 
             plt.clf()
-            plt.plot(pdf_arr, pdf_best_fit)
-            plt.ylabel("Density")
-            plt.xlabel("Energy")
-            plt.savefig(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "plotting_figures", "Energy_conver_" + "_".join(tm.asctime().split()).replace(":", ".") + ".pdf"))
+            plt.plot(conv_metric_lst, "v-.k", label= "STD convergence")
+            plt.legend()
+            plt.savefig(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "plotting_figures", "STD_conv" + "_".join(tm.asctime().split()).replace(":", ".") + ".pdf"))
 
         logging.debug(f" raw output monte carlo = {mission_res}")
 
@@ -460,6 +467,8 @@ class RunDSE:
         std_energy_distr = np.array(np.std(np.stack(mission_res[:,5], axis=0), axis=0), dtype= "float64")
 
 
+        #---------------------------------Engine sizing----------------------------------------------------
+
         # Overall efficiency from battery to engine
         eff_overall = const.eff_bat_eng_cr * (t_hor/t_tot) + const.eff_bat_eng_h * (1-(t_hor/t_tot))
         energy = energy_wc * 2.77778e-7 * 1000*const.energy_cont / eff_overall  # From [J] to [Wh]
@@ -467,7 +476,6 @@ class RunDSE:
         # Cruise power
         P_cr, D_cruise = mission.power_cruise_config(h_cr, V_cr, MTOM)
 
-        # Engine sizing
 
         # Maximum power [W] and thrust [N] of the engines (total)
         # time, P_max_eng_mission, T_max_tot = mission.total_energy()[1:4]
