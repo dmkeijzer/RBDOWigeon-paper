@@ -377,7 +377,7 @@ class RunDSE:
         mission_res = np.ones((2,6))
         conv_condition = True
         conv_metric_lst = []
-        conv_target = 5
+        conv_target = 1000
 
         # Convergence loop
         while conv_condition:
@@ -398,8 +398,8 @@ class RunDSE:
             logging.debug(f"Convergence list = {conv_metric_lst}")
 
             try:
-                logging.debug(f"Delta Q = {conv_metric_lst[-2] - conv_metric_lst[-1]} ")
-                if (conv_metric_lst[-2] - conv_metric_lst[-1]) < conv_target:
+                logging.debug(f"Delta Q = {np.absolute(conv_metric_lst[-2] - conv_metric_lst[-1])} ")
+                if np.absolute(conv_metric_lst[-2] - conv_metric_lst[-1]) < conv_target:
                     conv_condition = False
             except IndexError:
                 pass
@@ -445,13 +445,13 @@ class RunDSE:
             plt.plot(energy_arr/3.6e6, cdf_best_fit, "k-", label= "cdf")
             plt.legend()
             plt.ylabel("CDF")
-            plt.savefig(list(pl.Path(__file__).parents)[2] / "plotting_figures" / ("pdf&cdf_energy" + filename + ".pdf"))
+            plt.savefig(str(list(pl.Path(__file__).parents)[2] / "plotting_figures" / ("pdf_cdf_energy" + filename + ".pdf")))
 
 
             plt.clf()
             plt.plot(conv_metric_lst, "v-.k", label= "STD convergence")
             plt.legend()
-            plt.savefig(list(pl.Path(__file__).parents)[2] / "plotting_figures" / ("STD_conv_" + filename + ".pdf"))
+            plt.savefig(str(list(pl.Path(__file__).parents)[2] / "plotting_figures" / ("STD_conv_" + filename + ".pdf")))
 
 
        #Storing the mean of all the required variables 
