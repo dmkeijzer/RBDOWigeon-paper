@@ -379,7 +379,7 @@ class RunDSE:
         conv_target = 9e4
 
         # Convergence loop
-        while False:
+        while conv_condition:
             n_iterations = 50 #FIXME Use a variable amount of iterations in the future
             h_trans_stoch = stat.halfnorm.rvs(loc=95, scale=50, size= n_iterations)
             
@@ -404,7 +404,6 @@ class RunDSE:
                 pass
         
         mission_res = np.delete(mission_res, [0,1], axis= 0)
-        mission_res = np.random.randn(500,6)
         logging.info(f"Amount of samples = {np.shape(mission_res)[0]}")
         
         # Uncomment block of code for testing script (Comment 2 lines above)
@@ -425,7 +424,7 @@ class RunDSE:
         arg = params[:-2]
         loc = params[-2]
         scale = params[-1]
-        energy_arr = np.linspace(0, np.max(mission_res[:,0]/3.6e6), 1000)
+        energy_arr = np.linspace(0, np.max(mission_res[:,0]), 10000)
 
         pdf_best_fit = best_fit.pdf( energy_arr , loc=loc, scale=scale, *arg) #probability density function 
         cdf_best_fit = best_fit.cdf( energy_arr , loc=loc, scale=scale, *arg) # cumulative distrbution function
