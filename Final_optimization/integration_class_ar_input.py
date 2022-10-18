@@ -377,7 +377,7 @@ class RunDSE:
         mission_res = np.ones((2,6))
         conv_condition = True
         conv_metric_lst = []
-        conv_target = 1000
+        conv_target = 9e4
 
         # Convergence loop
         while conv_condition:
