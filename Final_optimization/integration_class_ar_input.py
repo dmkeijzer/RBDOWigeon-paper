@@ -2,7 +2,6 @@ import sys
 import os
 import logging
 import multiprocessing as mp
-import time
 import pathlib as pl
 
 
@@ -380,7 +379,7 @@ class RunDSE:
         conv_target = 9e4
 
         # Convergence loop
-        while conv_condition:
+        while False:
             n_iterations = 50 #FIXME Use a variable amount of iterations in the future
             h_trans_stoch = stat.halfnorm.rvs(loc=95, scale=50, size= n_iterations)
             
@@ -405,6 +404,7 @@ class RunDSE:
                 pass
         
         mission_res = np.delete(mission_res, [0,1], axis= 0)
+        mission_res = np.random.randn(500,6)
         logging.info(f"Amount of samples = {np.shape(mission_res)[0]}")
         
         # Uncomment block of code for testing script (Comment 2 lines above)
@@ -432,7 +432,7 @@ class RunDSE:
 
         if mission.plotting_monte_carlo:
 
-            filename =  time.asctime().split()[1:]
+            filename =  tm.asctime().split()[1:]
             filename[2] = filename[2][:-3]
             filename =  "_".join(filename).replace(":", ".")
 
