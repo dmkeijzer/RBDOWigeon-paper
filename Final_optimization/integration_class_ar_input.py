@@ -420,32 +420,16 @@ class RunDSE:
         best_dists = dist_analysis.best_fit_distribution()
         best_fit, params = best_dists[0][0:2]
 
-
         arg = params[:-2]
         loc = params[-2]
         scale = params[-1]
-        energy_arr = np.linspace(0, np.max(mission_res[:,0]), 10000)
 
-        pdf_best_fit = best_fit.pdf( energy_arr , loc=loc, scale=scale, *arg) #probability density function 
-        cdf_best_fit = best_fit.cdf( energy_arr , loc=loc, scale=scale, *arg) # cumulative distrbution function
 
         if mission.plotting_monte_carlo:
 
             filename =  tm.asctime().split()[1:]
             filename[2] = filename[2][:-3]
             filename =  "_".join(filename).replace(":", ".")
-
-            # plt.clf()
-            # plt.plot(energy_arr/3.6e6, pdf_best_fit, "k-.", label= "pdf")
-            # plt.xlabel("Energy")
-            # plt.ylabel("PDF")
-            # plt.legend()
-            # plt.twinx()
-            # plt.plot(energy_arr/3.6e6, cdf_best_fit, "k-", label= "cdf")
-            # plt.legend()
-            # plt.ylabel("CDF")
-            # plt.savefig(os.path.join(os.pathV.dirname(os.path.dirname(os.path.dirname(__file__))), "plotting_figures", "pdf_cdf_energy_" + filename + ".pdf"))
-
 
             plt.clf()
             plt.plot(conv_metric_lst, "v-.k", label= "STD convergence")
