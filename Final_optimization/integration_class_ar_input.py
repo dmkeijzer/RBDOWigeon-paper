@@ -435,16 +435,16 @@ class RunDSE:
             filename[2] = filename[2][:-3]
             filename =  "_".join(filename).replace(":", ".")
 
-            plt.clf()
-            plt.plot(energy_arr/3.6e6, pdf_best_fit, "k-.", label= "pdf")
-            plt.xlabel("Energy")
-            plt.ylabel("PDF")
-            plt.legend()
-            plt.twinx()
-            plt.plot(energy_arr/3.6e6, cdf_best_fit, "k-", label= "cdf")
-            plt.legend()
-            plt.ylabel("CDF")
-            plt.savefig(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "plotting_figures", "pdf_cdf_energy_" + filename + ".pdf"))
+            # plt.clf()
+            # plt.plot(energy_arr/3.6e6, pdf_best_fit, "k-.", label= "pdf")
+            # plt.xlabel("Energy")
+            # plt.ylabel("PDF")
+            # plt.legend()
+            # plt.twinx()
+            # plt.plot(energy_arr/3.6e6, cdf_best_fit, "k-", label= "cdf")
+            # plt.legend()
+            # plt.ylabel("CDF")
+            # plt.savefig(os.path.join(os.pathV.dirname(os.path.dirname(os.path.dirname(__file__))), "plotting_figures", "pdf_cdf_energy_" + filename + ".pdf"))
 
 
             plt.clf()
@@ -454,12 +454,16 @@ class RunDSE:
 
 
        #Storing the mean of all the required variables 
-        energy_wc = np.mean(mission_res[:,0], dtype= "float64")
-        t_tot = np.mean(mission_res[:,1], dtype= "float64")
-        P_max_eng_mission = np.mean(mission_res[:,2], dtype= "float64")
-        max_thrust = np.mean(mission_res[:,3], dtype= "float64")
-        t_hor = np.mean(mission_res[:,4], dtype= "float64")
-        energy_distr = np.mean(np.stack(mission_res[:,5], axis=0), axis= 0, dtype= "float64")
+        
+        energy_wc = best_fit.ppf(0.9, loc= loc, scale= scale, *arg) #probability point function - get 0.9th quantile
+
+        map_energy_2_var = np.vstack(sorted(mission_res, key= lambda x: x[0]))
+        map_idx = (np.abs(map_energy_2_var[:,0] - energy_wc)).argmin()
+
+        t_tot, P_max_eng_mission, max_thrust, t_hor, energy_distr = map_energy_2_var[map_idx,1:]  
+
+        logging.info(f" energy = {energy_wc}, energy proximity check= {energy_wc - map_energy_2_var[map_idx,0] }")
+        logging.info(f"mapped row = {map_energy_2_var[map_idx,1:] }")
 
         #Storing a five number summary of all iterations for analysis     --------   count mean std min 25 50 75 max
         num_summary_energy_wc = np.array(pd.Series(mission_res[:,0], dtype="Float64").describe() )
@@ -468,7 +472,6 @@ class RunDSE:
         num_summary_max_thrust = np.array(pd.Series(mission_res[:,3], dtype="Float64").describe())
         num_summary_t_hor = np.array(pd.Series(mission_res[:,4], dtype="Float64").describe())
         std_energy_distr = np.array(np.std(np.stack(mission_res[:,5], axis=0), axis=0), dtype= "float64")
-
 
         #---------------------------------Engine sizing----------------------------------------------------
 
