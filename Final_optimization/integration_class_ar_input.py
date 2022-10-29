@@ -376,7 +376,7 @@ class RunDSE:
         mission_res = np.ones((2,6))
         conv_condition = True
         conv_metric_lst = []
-        conv_target = 9e4
+        conv_target = 1 # Percentage difference allowed in std
 
         # Convergence loop
         while conv_condition:
@@ -398,7 +398,7 @@ class RunDSE:
 
             try:
                 logging.debug(f"Delta Q = {np.absolute(conv_metric_lst[-2] - conv_metric_lst[-1])} ")
-                if np.absolute(conv_metric_lst[-2] - conv_metric_lst[-1]) < conv_target:
+                if np.absolute((conv_metric_lst[-2] - conv_metric_lst[-1])/conv_metric_lst[-2]*100 ) < conv_target:
                     conv_condition = False
             except IndexError:
                 pass
@@ -437,19 +437,20 @@ class RunDSE:
             plt.savefig(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "plotting_figures", "STD_conv_" + filename + ".pdf"))
 
 
-       #Storing the mean of all the required variables 
+       # Turning stochastic variables into deterministic values by means of a confidence interval 
         
         energy_wc = best_fit.ppf(0.9, loc= loc, scale= scale, *arg) #probability point function - get 0.9th quantile
 
-        map_energy_2_var = np.vstack(sorted(mission_res, key= lambda x: x[0]))
-        map_idx = (np.abs(map_energy_2_var[:,0] - energy_wc)).argmin()
+        map_energy_2_var = np.vstack(sorted(mission_res, key= lambda x: x[0])) # Sorted version of mission_res
+        map_idx = (np.abs(map_energy_2_var[:,0] - energy_wc)).argmin() # Get index where the energy is nearest to target
 
-        t_tot, P_max_eng_mission, max_thrust, t_hor, energy_distr = map_energy_2_var[map_idx,1:]  
+        t_tot, P_max_eng_mission, max_thrust, t_hor, energy_distr = map_energy_2_var[map_idx,1:] #map the coinciding variables on this index
 
         logging.info(f" energy = {energy_wc}, energy proximity check= {energy_wc - map_energy_2_var[map_idx,0] }")
         logging.info(f"mapped row = {map_energy_2_var[map_idx,1:] }")
 
         #Storing a five number summary of all iterations for analysis     --------   count mean std min 25 50 75 max
+
         num_summary_energy_wc = np.array(pd.Series(mission_res[:,0], dtype="Float64").describe() )
         num_summary_t_tot = np.array(pd.Series(mission_res[:,1], dtype="Float64").describe())
         num_summary_P_max_eng = np.array(pd.Series(mission_res[:,2], dtype="Float64").describe())
