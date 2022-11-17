@@ -81,7 +81,26 @@ class mission:
         self.alpha_lst = alpha_lst
         self.Drag = Drag
 
+        # Interpolate CL, CD vs alpha
+        start = time.time()
+        self.CL_alpha = interpolate.interp1d(alpha_lst, Cl_alpha_curve)
+        self.CD_alpha = interpolate.interp1d(alpha_lst, CD_a_w)
+        self.CD_f = interpolate.interp1d(alpha_lst, CD_a_f)(0)
+        end = time.time()
+        print(f"Interpolation time = {end - start}")
+
+
+    @profile
     def max_thrust(self, rho, V):
+
+        def fprime1(T,V,rho): 
+            eff = eff_hover + V*(eff_prop - eff_hover)/self.v_cruise
+            return (0.4*V + 1.2*(V**2/4 + T/(2*self.A_disk*rho))**0.5 + 0.3*T/(self.A_disk*rho*(V**2/4 + T/(2*self.A_disk*rho))**0.5))/eff
+        
+        def fprime2(T,V,rho):
+            eff = eff_hover + V*(eff_prop - eff_hover)/self.v_cruise
+            return (1.2/(V**2 + 2*T/(self.A_disk*rho))**0.5 - 0.6*T/(self.A_disk*rho*(V**2 + 2*T/(self.A_disk*rho))**1.5))/(self.A_disk*eff*rho)
+
 
         def thrust_to_power_max(T, V, rho):
             return self.thrust_to_power(T, V, rho)[1] - self.P_max
@@ -89,16 +108,16 @@ class mission:
         if isinstance(V, np.ndarray):
             Tlst = []
             for v in V:
-                T_max  = optimize.newton(thrust_to_power_max, x0=20000, args=(v, rho), maxiter=1000)
+                T_max  = optimize.newton(thrust_to_power_max, fprime= fprime1, fprime2= fprime2, x0=20000, args=(v, rho), maxiter=1000)
                 Tlst.append(T_max)
 
             return np.array(Tlst)
         else:
 
-            optimize.newton(thrust_to_power_max, x0=20000, args=(V, rho), maxiter=100000)
+           return optimize.newton(thrust_to_power_max, fprime=fprime1, fprime2= fprime2, x0=20000, args=(V, rho), maxiter=100000)
 
-            return optimize.newton(thrust_to_power_max, x0=20000, args=(V, rho), maxiter=100000)
 
+    @profile
     def aero_coefficients(self, angle_of_attack):
         """
         Calculates the lift and drag coefficients of the aircraft for a given angle of attack.
@@ -112,15 +131,13 @@ class mission:
         alpha = np.maximum(np.minimum(88.8, alpha), 0)
 
         # Interpolate CL, CD vs alpha
-        CL_alpha = interpolate.interp1d(self.alpha_lst, self.Cl_alpha_curve)
-        CD_alpha = interpolate.interp1d(self.alpha_lst, self.CD_a_w)
-        CD_f = interpolate.interp1d(self.alpha_lst, self.CD_a_f)(0)
+      
 
         # Get the CL of the wings at the angle of attack
-        CL = CL_alpha(alpha)
+        CL = self.CL_alpha(alpha)
 
         # Drag, assuming the fuselage is parallel to te incoming flow
-        CD = CD_alpha(alpha) + CD_f
+        CD = self.CD_alpha(alpha) + self.CD_f
 
         return CL, CD
 
@@ -146,7 +163,6 @@ class mission:
 
     def target_accelerations_new(self, vx, vy, y, y_tgt, vx_tgt, max_ax, max_ay, max_vy, h_trans):
 
-        time_step = 0.05
 
         # Limit altitude
         vy_tgt = np.maximum(np.minimum(-0.5 * (y - y_tgt), max_vy), -max_vy)
@@ -156,7 +172,6 @@ class mission:
         # Slow down when approaching 15 m while going too fast in horizontal direction
         if h_trans + (np.abs(vy) / self.ay_target_descend) > y > y_tgt and abs(vx) > 4:
             vy_tgt = 0
-            time_step = 0.2
 
         # Keep horizontal velocity zero when flying low
         if y < h_trans - 80:
@@ -168,8 +183,9 @@ class mission:
         ax_tgt = np.minimum(np.maximum(-0.5 * (vx - vx_tgt_1), -max_ax), max_ax)
         ay_tgt = np.minimum(np.maximum(-0.5 * (vy - vy_tgt), -max_ay), max_ay)
 
-        return ax_tgt, ay_tgt, time_step
+        return ax_tgt, ay_tgt
 
+    @profile
     def numerical_simulation(self, vx_start, y_start, th_start, y_tgt, vx_tgt, h_trans):
         # print('this is still running')
         # Initialization
@@ -180,7 +196,7 @@ class mission:
         y = y_start
         th = th_start
         T = 5000
-        dt = 0.01
+        dt = 0.03
 
         # Check whether the aircraft needs to climb or descend
         if y_start > y_tgt:
@@ -211,7 +227,7 @@ class mission:
         while running:
             
             
-            ax_tgt, ay_tgt, dt = self.target_accelerations_new(vx, vy, y, y_tgt, vx_tgt,
+            ax_tgt, ay_tgt = self.target_accelerations_new(vx, vy, y, y_tgt, vx_tgt,
                                                            max_ax, max_ay, max_vy, h_trans= h_trans)
 
             t += dt
@@ -406,9 +422,11 @@ class mission:
         :rtype: _type_
         """        
         # Get the energy and distance needed to reach cruise
+
         d_climb, E_climb, t_climb, P_m_to, T_m_to = self.numerical_simulation(vx_start=0.001, y_start=0,
                                                                             th_start=np.pi / 2, y_tgt=self.h_cruise,
                                                                             vx_tgt=self.v_cruise, h_trans= h_trans)
+
         
         # Get the energy and distance needed to descend
         d_desc, E_desc, t_desc, P_m_la, T_m_la = self.numerical_simulation(vx_start=self.v_cruise,
