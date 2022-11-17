@@ -90,7 +90,6 @@ class mission:
         print(f"Interpolation time = {end - start}")
 
 
-    @profile
     def max_thrust(self, rho, V):
 
         def fprime1(T,V,rho): 
@@ -117,7 +116,6 @@ class mission:
            return optimize.newton(thrust_to_power_max, fprime=fprime1, fprime2= fprime2, x0=20000, args=(V, rho), maxiter=100000)
 
 
-    @profile
     def aero_coefficients(self, angle_of_attack):
         """
         Calculates the lift and drag coefficients of the aircraft for a given angle of attack.
@@ -185,7 +183,6 @@ class mission:
 
         return ax_tgt, ay_tgt
 
-    @profile
     def numerical_simulation(self, vx_start, y_start, th_start, y_tgt, vx_tgt, h_trans):
         # print('this is still running')
         # Initialization
