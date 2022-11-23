@@ -73,7 +73,7 @@ class npz_tool: #TODO come up with better names lol
         plt.pie(plot_data, labels = phases, autopct = '%1.1f%%', explode= [0.1,0,0,0.2,0.2])
         plt.show()
 
-    def pdf_cdf_plot(self, n= -1):
+    def energy_pdf_cdf_plot(self, n= -1):
 
         dist = self.df["dist_type"][self.conv_lst].to_numpy()[n]
         params = self.df["params_dist"][self.conv_lst].to_numpy()[n]

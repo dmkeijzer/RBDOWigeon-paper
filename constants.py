@@ -30,5 +30,5 @@ tc = 0.12                   # NACA0012 for winglets and Vtail [-]
 xcm = 0.3                   # NACA0012 for winglets and Vtail [-]
 
 # Propulsion
-eff_prop = 0.83     # [-] Propeller efficiency during normal flight
-eff_hover = 0.88    # [-] Propeller efficiency during hover
+eff_prop = 0.83     # [-] Propeller efficiency during normal flight (WATCH OUT if changed also change in cython file, an important was avoided due to performance)
+eff_hover = 0.88    # [-] Propeller efficiency during hover (WATCH OUT if changed also change in cython file, an important was avoided due to performance)

@@ -19,6 +19,7 @@ import constants_final as const
 import scipy.stats as stat
 import matplotlib.pyplot as plt
 from pdffit import distfit as pf
+from rv_handler import RandVar
 #Updating safetly limit for maximum amount of cores used
 
 os.environ["NUMEXPR_MAX_THREADS"] = "64"
@@ -377,13 +378,19 @@ class RunDSE:
         conv_condition = True
         conv_metric_lst = []
         conv_target = 1 # Percentage difference allowed in std
+        n_iterations = 50 #FIXME Use a variable amount of iterations in the future
+        lim = 100
 
         # Convergence loop
         while conv_condition:
-            n_iterations = 50 #FIXME Use a variable amount of iterations in the future
             h_trans_stoch = stat.halfnorm.rvs(loc=95, scale=50, size= n_iterations)
+            dist_samples = np.array(stat.genextreme.rvs(0.94,loc=309.40,scale=84.96, size = n_iterations))
+
+            while np.size(dist_samples[dist_samples < lim]) != 0:
+                n_resample = np.size(dist_samples[dist_samples <lim])
+                dist_samples[dist_samples < lim] = stat.genextreme.rvs(0.94,loc=309.40,scale=84.96, size = n_resample)
             
-            sim_samples = np.column_stack((np.array(stat.genextreme.rvs(0.94,loc=309.40,scale=84.96, size = n_iterations))*1000,
+            sim_samples = np.column_stack((dist_samples*1000,
                                         stat.uniform.rvs(scale=600, size= n_iterations) ,
                                         h_trans_stoch ,
                                         1.2 * h_trans_stoch , 
@@ -391,7 +398,10 @@ class RunDSE:
 
             with mp.Pool(os.cpu_count()) as p:
                 mission_res_chunk = np.array(p.starmap(mission.single_iter_monte_carlo, sim_samples))
-            mission_res = np.append(mission_res, mission_res_chunk, axis=0)
+
+            mission_res = np.append(mission_res, mission_res_chunk, axis=0) # array [[x00, x01, x02, x03, x04, array[y00, y01, y02, y03, y04],
+                #                                                                     x11, x11, x12, x13, x14, array[y10, y11, y12, y13, y14]] etc
+
             conv_metric_lst.append(np.std(mission_res[:,0]))
 
             logging.debug(f"Convergence list = {conv_metric_lst}")
@@ -406,24 +416,14 @@ class RunDSE:
         mission_res = np.delete(mission_res, [0,1], axis= 0)
         logging.info(f"Amount of samples = {np.shape(mission_res)[0]}")
         
-        # Uncomment block of code for testing script (Comment 2 lines above)
-        #===========================================================
-        # mission_res = []
-        # for i in np.random.randint(0,10,500):
-        #     mission_res.append([i,i+1,i+2,i+3,i+4,np.random.randint(0,10,5)])
-        # mission_res = np.array(mission_res, dtype= object)
-        # print(mission_res)
-        #===========================================================
 
-        #Create a fitting distribution for energy samples
-        dist_analysis = pf.BestFitDistribution(list(mission_res[:,0]))
-        best_dists = dist_analysis.best_fit_distribution()
-        best_fit, params = best_dists[0][0:2]
+        #Create a fitting distribution for all stochastic variables
+        with mp.Pool(os.cpu_count()) as p:
+            energy_rv, t_rv, power_rv, thrust_rv, t_cr_rv = p.map(RandVar, np.hsplit(mission_res[:,:-1], 5))
 
-        arg = params[:-2]
-        loc = params[-2]
-        scale = params[-1]
 
+        with mp.Pool(os.cpu_count()) as p:
+                Ecruise_rv, Eclimb_rv, Edesc_rv, Eloit_cr_rv, Eloit_hov_rv = p.map(RandVar, np.hsplit(np.vstack(mission_res[:,-1]), 5))
 
         if mission.plotting_monte_carlo:
 
@@ -438,25 +438,15 @@ class RunDSE:
 
 
        # Turning stochastic variables into deterministic values by means of a confidence interval 
-        
-        energy_wc = best_fit.ppf(0.9, loc= loc, scale= scale, *arg) #probability point function - get 0.9th quantile
 
-        map_energy_2_var = np.vstack(sorted(mission_res, key= lambda x: x[0])) # Sorted version of mission_res
-        map_idx = (np.abs(map_energy_2_var[:,0] - energy_wc)).argmin() # Get index where the energy is nearest to target
+            c_i = 0.9 # confidence interval
 
-        t_tot, P_max_eng_mission, max_thrust, t_hor, energy_distr = map_energy_2_var[map_idx,1:] #map the coinciding variables on this index
-
-        logging.info(f" energy = {energy_wc}, energy proximity check= {energy_wc - map_energy_2_var[map_idx,0] }")
-        logging.info(f"mapped row = {map_energy_2_var[map_idx,1:] }")
-
-        #Storing a five number summary of all iterations for analysis     --------   count mean std min 25 50 75 max
-
-        num_summary_energy_wc = np.array(pd.Series(mission_res[:,0], dtype="Float64").describe() )
-        num_summary_t_tot = np.array(pd.Series(mission_res[:,1], dtype="Float64").describe())
-        num_summary_P_max_eng = np.array(pd.Series(mission_res[:,2], dtype="Float64").describe())
-        num_summary_max_thrust = np.array(pd.Series(mission_res[:,3], dtype="Float64").describe())
-        num_summary_t_hor = np.array(pd.Series(mission_res[:,4], dtype="Float64").describe())
-        std_energy_distr = np.array(np.std(np.stack(mission_res[:,5], axis=0), axis=0), dtype= "float64")
+            energy_wc =  energy_rv.ppf(c_i)
+            t_tot = t_rv(c_i)
+            P_max_eng_mission  = power_rv(c_i)
+            max_thrust = thrust_rv(c_i)
+            t_hor = t_cr_rv.ppf(c_i)
+            energy_pie_chart_distr  = [Ecruise_rv.ppf(c_i), Eclimb_rv.ppf(c_i), Edesc_rv.ppf(c_i), Eloit_cr_rv.ppf(c_i), Eloit_hov_rv.ppf(c_i)]
 
         #---------------------------------Engine sizing----------------------------------------------------
 
@@ -759,21 +749,23 @@ class RunDSE:
                     #    ["Propulsion_mass", m_prop_nc],
                     #    ["Energy_nc", energy_nc],
                        ["Energy", energy_wc],
-                       ["Summary energy" , num_summary_energy_wc],
-                       ["Summary t_tot" , num_summary_t_tot],
-                       ["Summary pmax" , num_summary_P_max_eng],
-                       ["Summary max_thrust", num_summary_max_thrust],
-                       ["Summary T_horizontal", num_summary_t_hor],
-                       ["Energy_dist", np.array(energy_distr)],
-                       ["STD energy_distr" , [std_energy_distr]],
+                       ["Energy_rv", energy_rv], #RandVar class see rv_handler.py
+                       ["time_rv", t_rv],#RandVar class see rv_handler.py
+                       ["power_rv", power_rv],#RandVar class see rv_handler.py
+                       ["thrust_rv", thrust_rv],#RandVar class see rv_handler.py
+                       ["time_cruise_rv", t_cr_rv],#RandVar class see rv_handler.py
+                       ["Ecruise_rv", Ecruise_rv],#RandVar class see rv_handler.py
+                       ["Eclimb_rv", Eclimb_rv],#RandVar class see rv_handler.py
+                       ["Edesc_rv", Edesc_rv],#RandVar class see rv_handler.py
+                       ["Eloit_cr_rv", Eloit_cr_rv],#RandVar class see rv_handler.py
+                       ["Eloit_hov_rv", Eloit_hov_rv],#RandVar class see rv_handler.py
+                       ["Energy_dist", np.array(energy_pie_chart_distr)],
                        ["Cr_vert", root_chord_vtail],
                        ["m_v_tail", vtail_mass],
                        ["Cm_alpha", optim_outputs[3]],
                        ["ctrl margin", optim_outputs[4]],
                        ["S_vtail", Sv],
                        ["b_vtail", v_tail[3]],
-                       ["dist_type", best_fit],
-                       ["params_dist", params],
                        ["Converged_des", False]] # Standard is false, is being change in multirun function
 
         single_iter_data = np.array(lines)[:,1].flatten() 
@@ -791,7 +783,7 @@ class RunDSE:
         :param N_iters: Number of iterations of the code for each optimisation iteration
         """
         internal_inputs = self.initial_est
-        multirun_iter_arr = []
+        weight_loop_data = []
         for i in range(1, N_iters + 1):
             print(f" Line 734 - integration_class_ar_input.py - Iteration {i} ")
             logging.info(f"Iteration {i}/10 ")
@@ -802,6 +794,6 @@ class RunDSE:
             else:
                 multirun_iter_datapoint = other_outputs[1]
 
-            multirun_iter_arr.append(other_outputs[1])
+            weight_loop_data.append(other_outputs[1])
 
-        return optim_outputs, internal_inputs, other_outputs, multirun_iter_arr
+        return optim_outputs, internal_inputs, other_outputs, weight_loop_data

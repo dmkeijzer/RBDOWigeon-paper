@@ -8,6 +8,7 @@ import os
 from constants import g, eff_hover, eff_prop
 import scipy.optimize as optimize
 import scipy.stats as stat
+from math import pi
 
 
 # TODO: Remove this import in the integrated program, make sure aerodynamics is called first and the variables have the
@@ -82,12 +83,7 @@ class mission:
         self.Drag = Drag
 
         # Interpolate CL, CD vs alpha
-        start = time.time()
-        self.CL_alpha = interpolate.interp1d(alpha_lst, Cl_alpha_curve)
-        self.CD_alpha = interpolate.interp1d(alpha_lst, CD_a_w)
         self.CD_f = interpolate.interp1d(alpha_lst, CD_a_f)(0)
-        end = time.time()
-        print(f"Interpolation time = {end - start}")
 
 
     def max_thrust(self, rho, V):
@@ -124,7 +120,7 @@ class mission:
         :return: CL and CD
         """
 
-        alpha = np.degrees(angle_of_attack)
+        alpha = angle_of_attack*180/pi
 
         alpha = np.maximum(np.minimum(88.8, alpha), 0)
 
@@ -132,10 +128,10 @@ class mission:
       
 
         # Get the CL of the wings at the angle of attack
-        CL = self.CL_alpha(alpha)
+        CL = np.interp(alpha, self.alpha_lst, self.Cl_alpha_curve)
 
         # Drag, assuming the fuselage is parallel to te incoming flow
-        CD = self.CD_alpha(alpha) + self.CD_f
+        CD = np.interp(alpha, self.alpha_lst, self.CD_a_w) + self.CD_f
 
         return CL, CD
 
@@ -230,7 +226,7 @@ class mission:
             t += dt
 
 
-            rho = ISA(y).density()
+            rho = 1.225 * ((288.15 + -0.0065*y)/288.15)**(-g/(-0.0065*287))
             V = np.sqrt(vx ** 2 + vy ** 2)
             gamma = np.arctan(vy / vx)
             alpha = th - gamma
@@ -464,10 +460,11 @@ class mission:
 
         # Mission time
         t_tot = t_climb + t_desc + t_cruise + t_loit_hover + t_loit_cruise
+        t_cruise_config = t_cruise + t_loit_cruise
 
         energy_dist = np.array([E_cruise, E_climb, E_desc, E_loiter_cruise, E_loiter_hover])
 
-        return E_tot, t_tot, max(P_m_to, P_m_la), max(T_m_to, T_m_la), t_cruise + self.t_loiter, energy_dist
+        return E_tot, t_tot, max(P_m_to, P_m_la), max(T_m_to, T_m_la), t_cruise_config, energy_dist
 
 
 class evtol_performance:

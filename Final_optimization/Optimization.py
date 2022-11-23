@@ -36,9 +36,8 @@ if __name__ == "__main__":
     'CD0fwd', 'CD0fwd', 'CD0', 'Clafwd', 'Clarear', 'CL_cr_fwd', 'CL_cr_rear',
     'CL_cr', 'P_br_cruise_per_engine', 'T_cr_per_engine', 'Prop_radius_front',
     'Prop_radius_back', 'Disk_load_front', 'Disk_load_back',
-    'Root_chord_vertical_tail', 'Vertical_tail_mass', 'Energy', 'Summary_energy',
-    'Summary_t_tot', 'Summary_pmax', 'Summary_max_thrust',
-    'Summary_T_horizontal', 'Energy_dist', 'STD_energy_distr', 'Cr_vert',
+    'Root_chord_vertical_tail', 'Vertical_tail_mass', 'Energy', 'Energy_rv', 'time_rv', 'power_rv', 'thrust_rv', 'time_cruise_rv', 
+    'Ecruise_rv','Edesc_rv', 'Eloit_cr_rv', 'Eloit_hov_rv',  'Energy_dist',  'Cr_vert',
     'm_v_tail', 'Cm_alpha', 'ctrl_margin', 'S_vtail', 'b_vtail', "dist_type", "params_dist", "Converged_des"]]
     #========================================================================================================================
 
@@ -124,12 +123,12 @@ if __name__ == "__main__":
 
             # Run the file for # iterations
             logging.info("Performing the inner convergence loop")
-            N_iter = 10
-            optim_outputs, internal_inputs, other_outputs, multi_run_data= optimisation_class.multirun(N_iter, optim_inputs=[])
+            N_iter = 12
+            optim_outputs, internal_inputs, other_outputs, weight_loop_data= optimisation_class.multirun(N_iter, optim_inputs=[])
             logging.info("Inner convergence loop completed")
 
             # Save data from previous convergence history into numpy array
-            self.data_logging_arr = np.append(self.data_logging_arr, multi_run_data, axis=0)
+            self.data_logging_arr = np.append(self.data_logging_arr, weight_loop_data, axis=0)
             np.savez_compressed(npz_path,array1 = self.data_logging_arr)
 
             #Wing surface area

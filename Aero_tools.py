@@ -37,21 +37,46 @@ class ISA:
         self.T = self.T_SL + self.a * self.h  # [K] Temperature at altitude h, done here because it is used everywhere
 
     def temperature(self):
+        """Return temperature of set altitude
+
+        :return: Temperature
+        :rtype: Float
+        """        
         return self.T
 
     def pressure(self):
+        """_summary_
+
+        :return: _description_
+        :rtype: _type_
+        """        
         p = self.p_SL * (self.T / self.T_SL) ** (-self.g0 / (self.a * self.R))
         return p
 
     def density(self):
+        """_summary_
+
+        :return: _description_
+        :rtype: _type_
+        """        
         rho = self.rho_SL * (self.T / self.T_SL) ** (-self.g0 / (self.a * self.R) - 1)
         return rho
 
     def soundspeed(self):
+        """_summary_
+
+        :return: _description_
+        :rtype: _type_
+        """        
         a = self.a_SL * np.sqrt(self.T/self.T_SL)
         return a
 
     def viscosity_dyn(self):
+        """_summary_
+
+        :return: _description_
+        :rtype: _type_
+        """        
         mu = self.mu_SL * (self.T / self.T_SL) ** (1.5) * (self.T_SL + 110.4) / (self.T + 110.4)
         # 1.458E-6 * self.T ** 1.5 / (self.T + 110.4) # Sutherland Law, using Sutherland's constant S_mu = 110.4 for air
         return mu
@@ -66,6 +91,19 @@ class speeds:
         - Add aircraft parameters from datafile
     """
     def __init__(self, altitude, m, CLmax, S, componentdrag_object):
+        """_summary_
+
+        :param altitude: _description_
+        :type altitude: _type_
+        :param m: _description_
+        :type m: _type_
+        :param CLmax: _description_
+        :type CLmax: _type_
+        :param S: _description_
+        :type S: _type_
+        :param componentdrag_object: _description_
+        :type componentdrag_object: _type_
+        """        
 
         # To be added from datafile:
         self.CLmax  = CLmax
@@ -83,11 +121,14 @@ class speeds:
         return np.sqrt(2*self.W/(self.rho*self.S*self.CLmax))
 
     def climb(self):
-
-        """"
+        """
         Climb speed, note that this is only a first order estimate, and should not be used when the climb angle is steep
         For steep climb angles, the required CL is less, and the maximum rate-of-climb will be at a different speed.
-        """
+
+        :return: _description_
+        :rtype: _type_
+        """        
+
 
         CL3CD2 = (self.CL**3)/(self.CD**2)
 
@@ -100,6 +141,11 @@ class speeds:
         return V_climb
 
     def cruise(self):
+        """_summary_
+
+        :return: _description_
+        :rtype: _type_
+        """        
 
         CLCD    = self.CL/self.CD
 
