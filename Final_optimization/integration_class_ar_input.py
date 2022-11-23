@@ -417,6 +417,7 @@ class RunDSE:
         logging.info(f"Amount of samples = {np.shape(mission_res)[0]}")
         logging.info(f" shape mission_res = {np.shape(mission_res)}")
         logging.info(f"  mission_res = {mission_res}")
+        print(mission_res)
         
 
         #Create a fitting distribution for all stochastic variables
