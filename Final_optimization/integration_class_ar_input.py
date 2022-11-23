@@ -415,6 +415,8 @@ class RunDSE:
         
         mission_res = np.delete(mission_res, [0,1], axis= 0)
         logging.info(f"Amount of samples = {np.shape(mission_res)[0]}")
+        logging.info(f" shape mission_res = {np.shape(mission_res)}")
+        logging.info(f"  mission_res = {mission_res}")
         
 
         #Create a fitting distribution for all stochastic variables
@@ -439,14 +441,14 @@ class RunDSE:
 
        # Turning stochastic variables into deterministic values by means of a confidence interval 
 
-            c_i = 0.9 # confidence interval
+        c_i = 0.9 # confidence interval
 
-            energy_wc =  energy_rv.ppf(c_i)
-            t_tot = t_rv(c_i)
-            P_max_eng_mission  = power_rv(c_i)
-            max_thrust = thrust_rv(c_i)
-            t_hor = t_cr_rv.ppf(c_i)
-            energy_pie_chart_distr  = [Ecruise_rv.ppf(c_i), Eclimb_rv.ppf(c_i), Edesc_rv.ppf(c_i), Eloit_cr_rv.ppf(c_i), Eloit_hov_rv.ppf(c_i)]
+        energy_wc =  energy_rv.ppf(c_i)
+        t_tot = t_rv(c_i)
+        P_max_eng_mission  = power_rv(c_i)
+        max_thrust = thrust_rv(c_i)
+        t_hor = t_cr_rv.ppf(c_i)
+        energy_pie_chart_distr  = [Ecruise_rv.ppf(c_i), Eclimb_rv.ppf(c_i), Edesc_rv.ppf(c_i), Eloit_cr_rv.ppf(c_i), Eloit_hov_rv.ppf(c_i)]
 
         #---------------------------------Engine sizing----------------------------------------------------
 
