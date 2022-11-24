@@ -11,17 +11,18 @@ import constants_final as const
 import integration_class_ar_input as int_class
 
 
-#Setting up the log configuration
-#====================================================================================
-filename =  time.asctime().split()[1:]
-filename[2] = filename[2][:-3]
-filename =  "_".join(filename).replace(":", ".")
-log_path = list(pl.Path(__file__).parents)[2] / "logs" / ("Monte_carlo_" + filename + ".log")
-logging.basicConfig(level= logging.INFO, filename= log_path , filemode='w', format='%(filename)s - %(lineno)s - %(levelname)s - %(message)s')
-npz_path = list(pl.Path(__file__).parents)[2] / "logs" / ("Monte_carlo_" + filename + ".npz")
-#====================================================================================
 
 if __name__ == "__main__":
+
+    #Setting up the log configuration
+    #====================================================================================
+    filename =  time.asctime().split()[1:]
+    filename[2] = filename[2][:-3]
+    filename =  "_".join(filename).replace(":", ".")
+    log_path = list(pl.Path(__file__).parents)[2] / "logs" / ("Monte_carlo_" + filename + ".log")
+    logging.basicConfig(level= logging.INFO, filename= log_path , filemode='w', format='%(filename)s - %(lineno)s - %(levelname)s - %(message)s')
+    npz_path = list(pl.Path(__file__).parents)[2] / "logs" / ("Monte_carlo_" + filename + ".npz")
+    #====================================================================================
 
     # Setting up the logging for the numpy array
     #========================================================================================================================
@@ -37,7 +38,7 @@ if __name__ == "__main__":
     'CL_cr', 'P_br_cruise_per_engine', 'T_cr_per_engine', 'Prop_radius_front',
     'Prop_radius_back', 'Disk_load_front', 'Disk_load_back',
     'Root_chord_vertical_tail', 'Vertical_tail_mass', 'Energy', 'Energy_rv', 'time_rv', 'power_rv', 'thrust_rv', 'time_cruise_rv', 
-    'Ecruise_rv','Edesc_rv', 'Eloit_cr_rv', 'Eloit_hov_rv',  'Energy_dist',  'Cr_vert',
+    'Ecruise_rv','Eclimb_rv', 'Edesc_rv', 'Eloit_cr_rv', 'Eloit_hov_rv',  'Energy_dist',  'Cr_vert',
     'm_v_tail', 'Cm_alpha', 'ctrl_margin', 'S_vtail', 'b_vtail', "dist_type", "params_dist", "Converged_des"]]
     #========================================================================================================================
 

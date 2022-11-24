@@ -421,12 +421,16 @@ class RunDSE:
         
 
         #Create a fitting distribution for all stochastic variables
-        with mp.Pool(os.cpu_count()) as p:
-            energy_rv, t_rv, power_rv, thrust_rv, t_cr_rv = p.map(RandVar, np.hsplit(mission_res[:,:-1], 5))
-
+        performance_data =  [i.flatten() for i in np.hsplit(mission_res[:,:-1], 5)]
 
         with mp.Pool(os.cpu_count()) as p:
-                Ecruise_rv, Eclimb_rv, Edesc_rv, Eloit_cr_rv, Eloit_hov_rv = p.map(RandVar, np.hsplit(np.vstack(mission_res[:,-1]), 5))
+            energy_rv, t_rv, power_rv, thrust_rv, t_cr_rv = p.map(RandVar, performance_data)
+
+
+        energy_dist_data = [i.flatten() for i in np.hsplit(np.vstack(mission_res[:, -1]), 5)]
+
+        with mp.Pool(os.cpu_count()) as p:
+                Ecruise_rv, Eclimb_rv, Edesc_rv, Eloit_cr_rv, Eloit_hov_rv = p.map(RandVar, energy_dist_data)
 
         if mission.plotting_monte_carlo:
 
@@ -445,9 +449,9 @@ class RunDSE:
         c_i = 0.9 # confidence interval
 
         energy_wc =  energy_rv.ppf(c_i)
-        t_tot = t_rv(c_i)
-        P_max_eng_mission  = power_rv(c_i)
-        max_thrust = thrust_rv(c_i)
+        t_tot = t_rv.ppf(c_i)
+        P_max_eng_mission  = power_rv.ppf(c_i)
+        max_thrust = thrust_rv.ppf(c_i)
         t_hor = t_cr_rv.ppf(c_i)
         energy_pie_chart_distr  = [Ecruise_rv.ppf(c_i), Eclimb_rv.ppf(c_i), Edesc_rv.ppf(c_i), Eloit_cr_rv.ppf(c_i), Eloit_hov_rv.ppf(c_i)]
 
