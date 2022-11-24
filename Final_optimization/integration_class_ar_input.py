@@ -417,7 +417,6 @@ class RunDSE:
         logging.info(f"Amount of samples = {np.shape(mission_res)[0]}")
         logging.info(f" shape mission_res = {np.shape(mission_res)}")
         logging.info(f"  mission_res = {mission_res}")
-        print(mission_res)
         
 
         #Create a fitting distribution for all stochastic variables
@@ -747,7 +746,7 @@ class RunDSE:
                        ["Prop_radius_back", prop_radius2],
                        ["Disk_load_front", 0.5*MTOM/(prop_area1*n_prop/2)],
                        ["Disk_load_back", 0.5*MTOM/(prop_area2*n_prop/2)],
-                       ["Root chord vertical tail", root_chord_vtail],
+                       ["Root_chord_vertical_tail", root_chord_vtail],
                     #    ["Front_wing_mass", m_wf_nc],
                     #    ["Rear_wing_mass", m_wr_nc],
                     #    ["Fuselage_mass", m_fus_nc],
@@ -770,13 +769,12 @@ class RunDSE:
                        ["Cr_vert", root_chord_vtail],
                        ["m_v_tail", vtail_mass],
                        ["Cm_alpha", optim_outputs[3]],
-                       ["ctrl margin", optim_outputs[4]],
+                       ["ctrl_margin", optim_outputs[4]],
                        ["S_vtail", Sv],
                        ["b_vtail", v_tail[3]],
                        ["Converged_des", False]] # Standard is false, is being change in multirun function
 
         single_iter_data = np.array(lines)[:,1].flatten() 
-        
 
 
         other_outputs = [tw_tg, single_iter_data]
@@ -793,7 +791,7 @@ class RunDSE:
         weight_loop_data = []
         for i in range(1, N_iters + 1):
             print(f" Line 734 - integration_class_ar_input.py - Iteration {i} ")
-            logging.info(f"Iteration {i}/10 ")
+            logging.info(f"Iteration {i}/12 ")
             optim_outputs, internal_inputs, other_outputs = self.run(optim_inputs, internal_inputs)
             if i == N_iters:
                 multirun_iter_datapoint = other_outputs[1]

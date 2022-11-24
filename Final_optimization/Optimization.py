@@ -26,7 +26,8 @@ if __name__ == "__main__":
 
     # Setting up the logging for the numpy array
     #========================================================================================================================
-    data_logging_arr = [['MAC1', 'MAC2', 'taper', 'rootchord1', 'rootchord2', 'thicknessChordRatio',
+
+    data_logging_arr =    [['MAC1', 'MAC2', 'taper', 'rootchord1', 'rootchord2', 'thicknessChordRatio',
     'xAC', 'MTOM', 'AR1', 'AR2', 'S1', 'S2', 'span1', 'span2', 'nmax', 'Pmax', 'lf',
     'm_pax', 'n_prop', 'n_pax', 'pos_fus', 'pos_lgear', 'pos_frontwing',
     'pos_backwing', 'zpos_frontwing', 'zpos_backwing', 'm_prop', 'pos_prop_front',
@@ -37,9 +38,12 @@ if __name__ == "__main__":
     'CD0fwd', 'CD0fwd', 'CD0', 'Clafwd', 'Clarear', 'CL_cr_fwd', 'CL_cr_rear',
     'CL_cr', 'P_br_cruise_per_engine', 'T_cr_per_engine', 'Prop_radius_front',
     'Prop_radius_back', 'Disk_load_front', 'Disk_load_back',
-    'Root_chord_vertical_tail', 'Vertical_tail_mass', 'Energy', 'Energy_rv', 'time_rv', 'power_rv', 'thrust_rv', 'time_cruise_rv', 
-    'Ecruise_rv','Eclimb_rv', 'Edesc_rv', 'Eloit_cr_rv', 'Eloit_hov_rv',  'Energy_dist',  'Cr_vert',
-    'm_v_tail', 'Cm_alpha', 'ctrl_margin', 'S_vtail', 'b_vtail', "dist_type", "params_dist", "Converged_des"]]
+    'Root chord_vertical tail', 'Vertical_tail_mass', 'Energy', 'Energy_rv',
+    'time_rv', 'power_rv', 'thrust_rv', 'time_cruise_rv', 'Ecruise_rv',
+    'Eclimb_rv', 'Edesc_rv', 'Eloit_cr_rv', 'Eloit_hov_rv', 'Energy_dist',
+    'Cr_vert', 'm_v_tail', 'Cm_alpha', 'ctrl_margin', 'S_vtail', 'b_vtail',
+    'Converged_des']]
+
     #========================================================================================================================
 
 
