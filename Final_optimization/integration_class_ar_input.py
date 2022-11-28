@@ -420,6 +420,7 @@ class RunDSE:
         
 
         #Create a fitting distribution for all stochastic variables
+
         performance_data =  [i.flatten() for i in np.hsplit(mission_res[:,:-1], 5)]
 
         with mp.Pool(os.cpu_count()) as p:
