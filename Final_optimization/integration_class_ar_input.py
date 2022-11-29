@@ -377,7 +377,7 @@ class RunDSE:
         mission_res = np.ones((2,6))
         conv_condition = True
         conv_metric_lst = []
-        conv_target = 0.4 # Percentage difference allowed in std
+        conv_target = 20 # Percentage difference allowed in std
         n_iterations = 100 #FIXME Use a variable amount of iterations in the future
         lim = 100
 

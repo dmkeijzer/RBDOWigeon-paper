@@ -23,7 +23,7 @@ class npz_tool: #TODO come up with better names lol
         self.final_energy = self.df["Energy"][self.conv_lst].to_numpy()[-1]/3.6e6
 
     def energy_convergence(self, converged= True):
-        energy_data = np.array(self.df["Energy"][self.conv_lst])/3.6e6 if converged else np.array(self.df["Energy"])
+        energy_data = np.array(self.df["Energy"][self.conv_lst])/3.6e6 if converged else np.array(self.df["Energy"])/3.6e6
         plt.plot(energy_data, "vk-.")
         plt.xlabel(r"$n_{th}$ Converged design") if converged else plt.xlabel(r"$n_{th}$ iteration")
         plt.ylabel("Energy [Kwh]")
@@ -57,9 +57,17 @@ class npz_tool: #TODO come up with better names lol
         plt.legend()
         plt.ylabel("CDF")
         plt.show()
+    
+    def analyze_all(self):
+
+        self.energy_convergence(converged=False)
+        self.energy_convergence()
+        self.pie_chart_energy()
+        self.energy_pdf_cdf_plot()
                    
 if __name__ == "__main__":
         
-    Analysis_tool = npz_tool(r"C:\Users\damie\OneDrive\Desktop\Damien\Wigeon_proj\logs\Monte_carlo_Nov_24_14.59_2022.npz")
-    print(Analysis_tool.energy_convergence())
+    Analysis_tool = npz_tool(r"C:\Users\damie\OneDrive\Desktop\Damien\Wigeon_proj\logs\Monte_carlo_Nov_28_18.10_2022.npz")
+    print(Analysis_tool.analyze_all())
+    dummy = None
 
