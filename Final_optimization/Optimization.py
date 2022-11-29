@@ -21,7 +21,7 @@ if __name__ == "__main__":
     filename =  "_".join(filename).replace(":", ".")
     log_path = list(pl.Path(__file__).parents)[2] / "logs" / ("Monte_carlo_" + filename + ".log")
     logging.basicConfig(level= logging.INFO, filename= log_path , filemode='w', format='%(filename)s - %(lineno)s - %(levelname)s - %(message)s')
-    npy_path = list(pl.Path(__file__).parents)[2] / "logs" / ("Monte_carlo_" + filename + ".npy")
+    npz_path = list(pl.Path(__file__).parents)[2] / "logs" / ("Monte_carlo_" + filename + ".npz")
     #====================================================================================
 
     # Setting up the logging for the numpy array
@@ -134,7 +134,7 @@ if __name__ == "__main__":
 
             # Save data from previous convergence history into numpy array
             self.data_logging_arr = np.append(self.data_logging_arr, weight_loop_data, axis=0)
-            np.save(npy_path, self.data_logging_arr)
+            np.savez_compressed(npz_path,array1 = self.data_logging_arr)
 
             #Wing surface area
             S_tot = internal_inputs[1]

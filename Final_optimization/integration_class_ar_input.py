@@ -377,8 +377,8 @@ class RunDSE:
         mission_res = np.ones((2,6))
         conv_condition = True
         conv_metric_lst = []
-        conv_target = 1 # Percentage difference allowed in std
-        n_iterations = 50 #FIXME Use a variable amount of iterations in the future
+        conv_target = 0.85 # Percentage difference allowed in std
+        n_iterations = 100 #FIXME Use a variable amount of iterations in the future
         lim = 100
 
         # Convergence loop
@@ -408,7 +408,7 @@ class RunDSE:
 
             try:
                 logging.debug(f"Delta Q = {np.absolute(conv_metric_lst[-2] - conv_metric_lst[-1])} ")
-                if np.absolute((conv_metric_lst[-2] - conv_metric_lst[-1])/conv_metric_lst[-2]*100 ) < conv_target:
+                if np.absolute((conv_metric_lst[-2] - conv_metric_lst[-1])/conv_metric_lst[-2]*100 ) < conv_target and np.absolute((conv_metric_lst[-2] - conv_metric_lst[-3])/conv_metric_lst[-3]*100 )  < conv_target:
                     conv_condition = False
             except IndexError:
                 pass
