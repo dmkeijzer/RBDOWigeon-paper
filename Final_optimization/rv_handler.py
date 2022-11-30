@@ -6,9 +6,8 @@ import matplotlib.pyplot as plt
 
 class RandVar():
     def __init__(self, data):
-        self.data =  data
-        self.ordered_dists = pf.BestFitDistribution(list(data)).best_fit_distribution() #Ordered list of best fitting dists
-        self.best_fit, self.params  = self.ordered_dists[0][0:2]
+        self.max = np.max(data)
+        self.best_fit, self.params  = pf.BestFitDistribution(list(data)).best_fit_distribution()[0][0:2]
 
         self.arg = self.params[:-2]
         self.loc = self.params[-2]
@@ -19,7 +18,7 @@ class RandVar():
 
     def plot_cdf_pdf(self, xlabel= "Energy [KwH]"):
 
-        x = np.linspace(0, np.max(self.data) ,  100000)
+        x = np.linspace(0, self.max ,  100000)
         pdf = self.best_fit.pdf(x, loc= self.loc, scale= self.scale, *self.arg)
         cdf = self.best_fit.cdf(x, loc= self.loc, scale= self.scale, *self.arg)
 
