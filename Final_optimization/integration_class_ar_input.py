@@ -522,7 +522,7 @@ class RunDSE:
                                                                                      n_prop, m_prop, pos_prop,
                                                                                      const.m_pax,  const.m_cargo_tot,
                                                                                      m_bat, Sv, root_chord_vtail,
-                                                                                     contingency = True, cg_bat=cg_bat)
+                                                                                     contingency = False, cg_bat=cg_bat)
 
         # ----------------- Stability and control -------------------------------------------------------------------------
 
