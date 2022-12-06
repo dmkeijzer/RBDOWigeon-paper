@@ -2,6 +2,7 @@ import numpy as np
 from Preliminary_Lift.Airfoil_analysis import airfoil_stats, airfoil_datapoint
 from scipy.interpolate import interp1d
 from scipy.stats import linregress
+
 def deps_da(Lambda_quarter_chord, b,lh, h_ht, A, CLaw):
     """
     Inputs:

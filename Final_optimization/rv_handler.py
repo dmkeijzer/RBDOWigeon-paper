@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 
 class RandVar():
     def __init__(self, data):
+        self.min = np.min(data)
         self.max = np.max(data)
         self.best_fit, self.params  = pf.BestFitDistribution(list(data)).best_fit_distribution()[0][0:2]
 
@@ -16,22 +17,22 @@ class RandVar():
     def ppf(self, r=0.9):
         return self.best_fit.ppf(r, loc= self.loc, scale = self.scale, *self.arg)
 
-    def plot_cdf_pdf(self, xlabel= "Energy [KwH]"):
-
-        x = np.linspace(0, self.max ,  100000)
+    def plt(self):
+        x = np.linspace(self.min, self.max ,  1000)
         pdf = self.best_fit.pdf(x, loc= self.loc, scale= self.scale, *self.arg)
         cdf = self.best_fit.cdf(x, loc= self.loc, scale= self.scale, *self.arg)
+        return x,pdf, cdf
 
-        plt.clf()
-        plt.plot(x, pdf, "k-.", label= "pdf")
-        plt.xlabel(xlabel)
-        plt.ylabel("PDF")
-        plt.legend()
-        plt.twinx()
-        plt.plot(x, cdf, "k-", label= "cdf")
-        plt.legend()
-        plt.ylabel("CDF")
-        plt.show()
+        # plt.clf()
+        # plt.plot(x, pdf, "k-.", label= "pdf")
+        # plt.xlabel(xlabel)
+        # plt.ylabel("PDF")
+        # plt.legend()
+        # plt.twinx()
+        # plt.plot(x, cdf, "k-", label= "cdf")
+        # plt.legend()
+        # plt.ylabel("CDF")
+        # plt.show()
     
     
 
