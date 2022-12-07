@@ -23,6 +23,7 @@ class npz_tool: #TODO come up with better names lol
         self.final_energy = self.df["Energy"][self.conv_lst].to_numpy()[-1]/3.6e6
 
     def energy_convergence(self, converged= True):
+
         energy_data = np.array(self.df["Energy"][self.conv_lst])/3.6e6 if converged else np.array(self.df["Energy"])/3.6e6
         plt.plot(energy_data, "vk-.")
         plt.xlabel(r"$n_{th}$ Converged design") if converged else plt.xlabel(r"$n_{th}$ iteration")
@@ -66,29 +67,44 @@ class npz_tool: #TODO come up with better names lol
         self.energy_pdf_cdf_plot()
 
     def plot_performance(self):
+
         energy_rv = self.df["Energy_rv"].to_numpy()[-1]
         time_rv = self.df["time_rv"].to_numpy()[-1]
         power_rv = self.df["power_rv"].to_numpy()[-1]
-        thrust_rv = self.df["thrust_rv"].to_numpy()[-1] # mission independent all samples have the same value
+        # thrust_rv = self.df["thrust_rv"].to_numpy()[-1] # mission independent all samples have the same value
         time_cruise_rv = self.df["time_cruise_rv"].to_numpy()[-1]
 
 
         fig, axs = plt.subplots(2,2)
-        x1 = np.linspace(0, np.max(energy_rv.data), 1000)
-        axs[0,0].plot(x1, energy_rv.best_fit.pdf(x1, loc= energy_rv.loc, scale= energy_rv.scale, *energy_rv.arg))
-        axs[0,0].set_title("Energy")
-        x2 = np.linspace(0, np.max(time_rv.data), 1000)
-        axs[0,1].plot(x2, time_rv.best_fit.pdf(x2, loc= time_rv.loc, scale= time_rv.scale, *time_rv.arg))
-        axs[0,1].set_title("Time")
-        x3 = np.linspace(np.min(power_rv.data), np.max(power_rv.data), 1000)
-        axs[1,0].plot(x3, power_rv.best_fit.pdf(x3, loc= power_rv.loc, scale= power_rv.scale, *power_rv.arg))
-        axs[1,0].set_title("Power")
-        # x4 = np.linspace(np.min(thrust_rv.data), np.max(thrust_rv.data), 1000)
-        # axs[1,1].plot(x4, thrust_rv.best_fit.pdf(x4, loc= thrust_rv.loc, scale= thrust_rv.scale, *thrust_rv.arg))
-        # axs[1,1].set_title("Thrust")
-        x5 = np.linspace(0, np.max(time_cruise_rv.data), 1000)
-        axs[1,1].plot(x5, time_cruise_rv.best_fit.pdf(x5, loc= time_cruise_rv.loc, scale= time_cruise_rv.scale, *time_cruise_rv.arg))
-        axs[1,1].set_title("time_cruise")
+        x1, pdf1, cdf1 = energy_rv.plt()  
+        axs[0,0].plot(x1/3.6e6, pdf1, "k-", label = "Energy")
+        axs[0,0].set_ylabel("PDF [-]")
+        axs[0,0].set_xlabel("Energy [Kwh]")
+        axs[0,0].legend()
+
+        x2, pdf2, cdf2 = time_rv.plt()  
+        axs[0,1].plot(x2, pdf2, "k-", label = "Time")
+        axs[0,1].set_ylabel("PDF [-]")
+        axs[0,1].set_xlabel("Time [s]")
+        axs[0,1].legend()
+
+        x3, pdf3, cdf3 = power_rv.plt()
+        axs[1,0].plot(x3/1000, pdf3,"k-", label = "Power")
+        axs[1,0].set_xlabel("Power [Kw]")
+        axs[1,0].set_ylabel("PDF [-]")
+        axs[1,0].legend()
+
+        # x4, pdf4, cdf4 = thrust_rv.plt()
+        # axs[1,1].plot(x4/1000, pdf4,"k-", label = "Thrust")
+        # axs[1,1].set_xlabel("kN")
+        # axs[1,1].set_ylabel("PDF [-]")
+        # axs[1,1].legend()
+
+        x5, pdf5, cdf5 = time_cruise_rv.plt()
+        axs[1,1].plot(x5, pdf5,"k-", label = "Time cruise")
+        axs[1,1].set_xlabel("Time [s]")
+        axs[1,1].set_ylabel("PDF [-]")
+        axs[1,1].legend()
         plt.show()
                    
 
@@ -101,29 +117,29 @@ class npz_tool: #TODO come up with better names lol
 
 
         fig, axs = plt.subplots(3,2)
-        x1 = np.linspace(np.min(Ecruise_rv.data), np.max(Ecruise_rv.data), 1000)
-        axs[0,0].plot(x1/3.6e6, Ecruise_rv.best_fit.pdf(x1, loc= Ecruise_rv.loc, scale= Ecruise_rv.scale, *Ecruise_rv.arg))
+        x1, pdf1, cdf1 = Ecruise_rv.plt()  
+        axs[0,0].plot(x1/3.6e6, pdf1)
         axs[0,0].set_title("Cruise")
-        x2 = np.linspace(np.min(Eclimb_rv.data), np.max(Eclimb_rv.data), 1000)
-        axs[0,1].plot(x2/3.6e6, Eclimb_rv.best_fit.pdf(x2, loc= Eclimb_rv.loc, scale= Eclimb_rv.scale, *Eclimb_rv.arg))
+        x2, pdf2, cdf2 = Eclimb_rv.plt()  
+        axs[0,1].plot(x2/3.6e6, pdf2)
         axs[0,1].set_title("Climb")
-        x3 = np.linspace(np.min(Edesc_rv.data), np.max(Edesc_rv.data), 1000)
-        axs[1,0].plot(x3/3.6e6, Edesc_rv.best_fit.pdf(x3, loc= Edesc_rv.loc, scale= Edesc_rv.scale, *Edesc_rv.arg))
+        x3, pdf3, cdf3 = Edesc_rv.plt()
+        axs[1,0].plot(x3/3.6e6, pdf3)
         axs[1,0].set_title("Descend")
-        x4 = np.linspace(0, np.max(Eloit_cr_rv.data), 1000)
-        axs[1,1].plot(x4/3.6e6, Eloit_cr_rv.best_fit.pdf(x4, loc= Eloit_cr_rv.loc, scale= Eloit_cr_rv.scale, *Eloit_cr_rv.arg))
+        x4, pdf4, cdf4 = Eloit_cr_rv.plt()
+        axs[1,1].plot(x4/3.6e6, pdf4)
         axs[1,1].set_title("Loiter cruise conf")
-        x5 = np.linspace(np.min(Eloit_hov_rv.data), np.max(Eloit_hov_rv.data), 1000)
-        axs[2,0].plot(x5/3.6e6, Eloit_hov_rv.best_fit.pdf(x5, loc= Eloit_hov_rv.loc, scale= Eloit_hov_rv.scale, *Eloit_hov_rv.arg))
+        x5, pdf5, cdf5 = Eloit_hov_rv.plt()
+        axs[2,0].plot(x5/3.6e6, pdf5)
         axs[2,0].set_title("Loiter hover conf")
         plt.show()
 if __name__ == "__main__":
         
-    Analysis_tool = npz_tool(r"C:\Users\damie\OneDrive\Desktop\Damien\Wigeon_proj\logs\Monte_carlo_Nov_29_22.07_2022.npz")
+    Analysis_tool = npz_tool(r"C:\Users\damie\OneDrive\Desktop\Damien\Wigeon_proj\logs\Monte_carlo_Dec_6_13.21_2022.npz")
     print(Analysis_tool.df.columns)
+    print([i.best_fit for i in Analysis_tool.df["power_rv"]])
     # test_tool = npz_tool(r"C:\Users\damie\OneDrive\Desktop\Damien\Wigeon_proj\logs\Monte_carlo_Nov_24_10.23_2022.npz")
     Analysis_tool.energy_convergence()
     Analysis_tool.plot_performance()
-    Analysis_tool.energy_phases()
     dummy = None
 

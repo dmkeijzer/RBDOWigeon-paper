@@ -10,6 +10,7 @@ import pathlib as pl
 # filename =  "_".join(filename).replace(":", ".")
 
 sys.path.append(str(list(pl.Path(__file__).parents)[1]))
+sys.path.append(os.path.join(str(list(pl.Path(__file__).parents)[1]), "Validation_analysis"))
 
 import time as tm
 import numpy as np
