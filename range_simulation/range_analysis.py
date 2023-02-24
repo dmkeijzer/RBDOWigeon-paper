@@ -2,10 +2,10 @@ from pdffit import distfit as pf
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib
 import scipy.stats as stat
 import os
 
-from sklearn.preprocessing import scale
 import trips_file_creation as fc
 from math import ceil
 
@@ -195,14 +195,27 @@ def plot_hist_two_trip_weights(lim, n_bins=9):
     
     flat_raw_data_expon = np.array([item for sublist in raw_data_expon_fit for item in sublist]) # flattening using list comprehensino nparray.flatten() did not work
     bfd = pf.BestFitDistribution(pd.DataFrame(flat_raw_data_expon))
-    bfd.analyze(title="Two trip distribution", x_label="range", y_label='freq', allBins= n_bins, outputFilePrefix= f"../distr_fig/two_trip_fit_" + "range_" + str(lim) + "_bins_" + str(n_bins) , imageFormat="pdf")
-    print(bfd.best_dist)
+    best_fit, params  = bfd.best_fit_distribution()[0][0:2]
+
+    arg = params[:-2]
+    loc = params[-2]
+    scale =  params[-1]
+    x = np.linspace(np.min(flat_raw_data_expon), np.max(flat_raw_data_expon) ,  1000)
+    pdf = best_fit.pdf(x, loc= loc, scale= scale, *arg)
+    cdf = best_fit.cdf(x, loc= loc, scale= scale, *arg)
+    # matplotlib.use('agg')
+    plt.hist(flat_raw_data_expon, bins=n_bins, alpha= 0.4)
+    plt.twinx()
+    plt.plot(x, pdf, "k-.", label= "pdf")
+    plt.xlabel("Kilometers")
+    # plt.show()
+    return best_fit, arg, loc, scale
   
  
 
             
 if __name__ == "__main__":
-    plot_hist_two_trip_weightless(100, n_bins=15) #( 400, 9 gives nice results
+    print(plot_hist_two_trip_weights(300, n_bins=15)) #( 400, 9 gives nice results
 
 
 

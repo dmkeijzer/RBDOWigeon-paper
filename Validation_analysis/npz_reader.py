@@ -4,7 +4,8 @@ import os
 import matplotlib.pyplot as plt
 import sys
 import pathlib as pl
-print(os.path.join(os.path.dirname(os.path.dirname(__file__)), "Final_optimization"))
+from sklearn import linear_model
+
 sys.path.append(os.path.join(os.path.dirname(os.path.dirname(__file__)), "Final_optimization"))
 import rv_handler as rv
 
@@ -12,6 +13,12 @@ class npz_tool: #TODO come up with better names lol
     """_summary_
     """
     def __init__(self, file_path):
+        """This class turns the npz output of the file Optimization.py into a usable datatype which some standard methods and gives easy access to each column by the main data 
+        object into a Pandas.Dataframe. For the standard methods please see further documentation.
+
+        :param file_path: The path (relative or absolute) to the npz output
+        :type file_path: string
+        """        
     
         df_arr = np.load(os.path.realpath(file_path), allow_pickle= True)
         df = pd.DataFrame(df_arr["array1"][1:])
@@ -133,13 +140,46 @@ class npz_tool: #TODO come up with better names lol
         axs[2,0].plot(x5/3.6e6, pdf5)
         axs[2,0].set_title("Loiter hover conf")
         plt.show()
+
 if __name__ == "__main__":
         
-    Analysis_tool = npz_tool(r"C:\Users\damie\OneDrive\Desktop\Damien\Wigeon_proj\logs\Monte_carlo_Dec_6_13.21_2022.npz")
+    Analysis_tool = npz_tool(r"C:\Users\damie\OneDrive\Desktop\Damien\Wigeon_proj\logs\valid_data\Monte_Carlo\run_7_Dec7_14.25\Monte_carlo_Dec_7_14.25_2022.npz")
     print(Analysis_tool.df.columns)
-    print([i.best_fit for i in Analysis_tool.df["power_rv"]])
+    print(Analysis_tool.df["time_rv"].to_numpy()[-1].best_fit)
+    # col_energyclimb_trans = [ i.ppf(0.9) for i in Analysis_tool.df["Eclimb_rv"]]
+    # col_energydescend_trans = [i.ppf(0.9) for i in Analysis_tool.df["Edesc_rv"]]
+    # col_time_trans = np.array([i.ppf(0.9) for i in Analysis_tool.df["time_rv"]]) - np.array([i.ppf(0.9) for i in Analysis_tool.df["time_cruise_rv"]]) 
+    # w_s_arr = (np.array(Analysis_tool.df["MTOM"])*9.81)/(np.array(Analysis_tool.df["S1"]) + np.array(Analysis_tool.df["S2"]))
+    # ar1_arr = np.array(Analysis_tool.df["AR1"])
+    # ar2_arr = np.array(Analysis_tool.df["AR2"])
+
+    # X1 = np.column_stack((w_s_arr, ar1_arr, ar2_arr))
+
+    # reg = linear_model.LinearRegression()
+    # reg.fit(X1, col_time_trans)
+    # test_arr = np.column_stack((np.linspace(1450, 1550, 1000), np.linspace(6.8, 7.8, 1000),np.linspace(6.8, 7.8, 1000) ))
+    # test_out = reg.predict(test_arr)
+
+
+    # output1 = reg.predict(np.array([1450, 7, 7]).reshape(1,-1))
+
+    # X = np.linspace(1450,1550,100)
+    # Y = np.linspace(6.8,7.8,100)
+    # X, Y = np.meshgrid(X,Y)
+    # Z = reg.predict(np.hstack((X.flatten().reshape(-1,1), Y.flatten().reshape(-1,1), Y.flatten().reshape(-1,1))))
+    # Z = Z.reshape(100,100)
+
+    # print(reg.coef_)
+    # print(reg.intercept_)
+
+
+    # fig = plt.figure(figsize=(8, 8))
+    # ax = fig.add_subplot(projection='3d')
+    # ax.plot_surface(X, Y, Z, alpha= 0.4)
+    # ax.set_xlabel(r"$\frac{w}{S}$")
+    # plt.show()
+
     # test_tool = npz_tool(r"C:\Users\damie\OneDrive\Desktop\Damien\Wigeon_proj\logs\Monte_carlo_Nov_24_10.23_2022.npz")
-    Analysis_tool.energy_convergence()
-    Analysis_tool.plot_performance()
-    dummy = None
+    # Analysis_tool.energy_convergence()
+    # Analysis_tool.plot_performance()
 

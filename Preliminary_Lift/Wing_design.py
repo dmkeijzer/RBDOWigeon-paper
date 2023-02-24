@@ -7,8 +7,8 @@ def deps_da(Lambda_quarter_chord, b,lh, h_ht, A, CLaw):
     """
     Inputs:
     :param Lambda_quarter_chord: Sweep Angle at c/4 [RAD]
-    :param lh: distance between ac_w1 with ac_w2 (horizontal)
-    :param h_ht: distance between ac_w1 with ac_w2 (vertical)
+    :param lh: distance between aerodynamic chord wing 1  with aerodynamic chord wing 2(horizontal)
+    :param h_ht: distance between aerodynamic chord wing 1 with aerodynamic chord wing 2  (vertical)
     :param A: Aspect Ratio of wing
     :param CLaw: Wing Lift curve slope
     :return: de/dalpha
@@ -25,18 +25,77 @@ def deps_da(Lambda_quarter_chord, b,lh, h_ht, A, CLaw):
     #print(de_da)
     return de_da*0.5
 
+
 def winglet_dAR(AR, h_wl, b): # Gundmundsson 10.5 Wingtip design
+    """_summary_
+
+    :param AR: Aspect ratio of the wing the winglet is attached to
+    :type AR: float
+    :param h_wl: Height of the winglet
+    :type h_wl: float
+    :param b: Span of the wing the winglet is attached to
+    :type b: float
+    :return: The increment increase of the effective aspect ratio of the wing, thus NOT the new total effective AR, only the increment increase
+    :rtype: float
+    """    
 
     return 1.9*(h_wl/b)*AR
 
 def winglet_factor(h_wl, b, k_wl):  #https://www.fzt.haw-hamburg.de/pers/Scholz/Aero/AERO_PUB_Winglets_IntrinsicEfficiency_CEAS2017.pdf
+    """_summary_
+
+    :param h_wl: Height of the winglet
+    :type h_wl: float
+    :param b: Span of the wing the winglet is attached to
+    :type b: float
+    :param k_wl: The inverse of K_wl is called the "intrinsic aerodynamic efficiency of the winglet", it is penalization factor for the height of the 
+    winglet. i.e the effective span is the base span of the wing + the height of the winglet divided by k_wl
+    :type k_wl: float
+    :return: Returns the ratio between the Oswald factor with winglets and the Oswald factor without winglets ---> e_wl/e
+    :rtype: flaot
+    """    
 
     return (1+(2/k_wl)*(h_wl/b))**2
+
 
 
 class wing_design:
 
     def __init__(self, AR1, AR2, s1, sweepc41, s2, sweepc42, M, S, lh, h_ht, w, h_wl1,h_wl2, k_wl, i1):
+        """This class allows the user to easily compute the planform geometry and also offers some function to compute the lift characteristics of the planform. This class is dependent on Airfoi_analysis for this
+        functionality, so make sure the correct airfoil is selected in that file. This class also offers some function for the proppeller sizing.
+
+        :param AR1: Aspect ratio of the front wing
+        :type AR1: Float
+        :param AR2: Aspect ratio of the back wing
+        :type AR2: Float
+        :param s1: Fraction of front wing area w.r.t total area i.e  Sf/(sf + sr)
+        :type s1: Float
+        :param sweepc41: Quarter chord sweeep angle of the front wing in degrees
+        :type sweepc41: Float
+        :param s2: Fraction of front wing area w.r.t total area i.e Sr/(sf + sr)
+        :type s2: float
+        :param sweepc42: Quarter chord sweep angle of the rear wing in degrees
+        :type sweepc42: Float
+        :param M: Mach number 
+        :type M: float
+        :param S: Total surface area of the front and rear wing in m^1
+        :type S:  float
+        :param lh: The horizontal (x - direction)  distance between the front and rear wing, i.e from nose to tail
+        :type lh: float
+        :param h_ht: The vertical (z - direction)  distance between the front and rear wing, i.e from nose to tail
+        :type h_ht: float
+        :param w:  Width of the fuselage in meters
+        :type w: float
+        :param h_wl1: Height of the front wingtips in meters
+        :type h_wl1: float
+        :param h_wl2: Height of the rear wingtips in meters
+        :type h_wl2: float
+        :param k_wl: Constant for the wingtips defaults to 2.0
+        :type k_wl: float
+        :param i1: Trim angle for the first wing should be
+        :type i1: float
+        """        
         self.AR1 = AR1
         self.AR2 = AR2
         self.s1 = s1
@@ -198,6 +257,23 @@ class wing_design:
         return (ne1+ne2)*self.T/(0.5*self.rho*((V_inf)**2)*self.S)
 
     def CL_T(self,T, V_inf, rho,  alpha_wp, ne1,ne2):
+        """_summary_
+
+        :param T: _description_
+        :type T: _type_
+        :param V_inf: _description_
+        :type V_inf: _type_
+        :param rho: _description_
+        :type rho: _type_
+        :param alpha_wp: _description_
+        :type alpha_wp: _type_
+        :param ne1: _description_
+        :type ne1: _type_
+        :param ne2: _description_
+        :type ne2: _type_
+        :return: _description_
+        :rtype: _type_
+        """        
         self.alphawp = alpha_wp
         return np.sin(self.alphawp*(np.pi/180))*self.C_T(ne1,ne2, T, V_inf, rho)
     def deltaV(self, T, V_inf, rho, D, ne1 , ne2):

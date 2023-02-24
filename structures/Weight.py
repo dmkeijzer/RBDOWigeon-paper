@@ -1,18 +1,35 @@
 """ New weight estimation file """
 import sys
 import numpy as np
+import os
 
-sys.path.append('../Final_optimization/')
+sys.path.append(os.path.join(os.path.dirname(os.path.dirname(__file__)), "Final_optimization"))
+
 import constants_final as const
 
 # from Final_optimization import constants_final as const
 class Vtail:
-    def __init__(self, mtom, Sv, Av, rchord, toc, sweep_deg):
+    def __init__(self, mtom, Sv, Av, rchord, toc, sweep4_deg):
+        """ Class II weight estimatin of the vertical tail, final result can be accessed through the attribute .mass
+
+        :param mtom: maximum take off mass of the eVTOL
+        :type mtom: float
+        :param Sv: Surface area of the vertical tail
+        :type Sv: float
+        :param Av: Aspect ratio of the vertical tail
+        :type Av: float
+        :param rchord: Root chord of the vertical tail
+        :type rchord: float
+        :param toc: Maximum thickness to chord ratio of airfoil
+        :type toc: float
+        :param sweep4_deg: Quarter chord sweep angle of the vertical tail in degrees
+        :type sweep_deg: float
+        """        
         self.mtom_lbs = 2.20462 * mtom
         self.Sv_ft = Sv * 3.28084 ** 2
         self.Av = Av
         self.trv = rchord * toc * 3.28084
-        self.sweep = sweep_deg * np.pi/180
+        self.sweep = sweep4_deg * np.pi/180
         self.mass = ((1.68 * self.mtom_lbs ** 0.567 * self.Sv_ft ** 1.249 * self.Av ** 0.482)/(639.95 * self.trv ** 0.747 * np.cos(self.sweep)**0.882)) * 0.453592
 
 
@@ -93,19 +110,10 @@ class Weight:
 #         print("")
 
         if contingency:
-            # self.mtom = (self.wmass*const.mass_cont + self.pmass*const.mass_cont + self.lmass*const.mass_cont +
-            #              self.fmass*const.mass_cont + self.cmass + self.bmass*const.mass_cont + self.tot_m_pax + self.vmass * const.mass_cont)
-            # self.mtom_cg = (self.moment_w*const.mass_cont + self.moment_f*const.mass_cont + self.moment_l*const.mass_cont +
-            #                 self.moment_p*const.mass_cont + self.moment_pax + self.moment_c + self.moment_b*const.mass_cont + self.moment_v * const.mass_cont) \
-            #                / (self.wmass*const.mass_cont + self.pmass*const.mass_cont + self.lmass*const.mass_cont +
-            #                   self.fmass*const.mass_cont + self.cmass + self.bmass*const.mass_cont + self.tot_m_pax + self.vmass * const.mass_cont)
-
-
             self.mtom = (self.wmass*const.mass_cont + self.pmass*const.mass_cont + self.lmass*const.mass_cont +
                          self.fmass*const.mass_cont + self.cmass + self.bmass*const.mass_cont + self.tot_m_pax + self.vmass*const.mass_cont)
             self.mtom_cg = (self.moment_w*const.mass_cont + self.moment_p*const.mass_cont + self.moment_l*const.mass_cont + self.moment_f*const.mass_cont + self.moment_c + self.moment_b*const.mass_cont +self.moment_pax  +  self.moment_v*const.mass_cont) \
                            /self.mtom #(self.wmass + self.pmass + self.lmass + self.fmass + self.cmass + self.bmass + self.tot_m_pax + self.vmass)
-            print('testing', self.moment_l)#(self.moment_w*const.mass_cont + self.moment_p*const.mass_cont + self.moment_l*const.mass_cont + self.moment_f*const.mass_cont + self.moment_c + self.moment_b*const.mass_cont +self.moment_pax  +  self.moment_v*const.mass_cont))
         else:
             self.mtom = (self.wmass + self.pmass + self.lmass +
                          self.fmass + self.cmass + self.bmass + self.tot_m_pax + self.vmass)

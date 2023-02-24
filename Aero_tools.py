@@ -140,6 +140,14 @@ class speeds:
 
         return V_climb
 
+    def endurance(self):
+        
+        CL_CD_opt = (self.CL**(3/2))/(self.CD)
+        idx = np.argmax(CL_CD_opt)
+        CL_endurance = self.CL[idx]
+        v_endurance= np.sqrt(2*self.W/(self.rho*self.S*CL_endurance))
+        return v_endurance
+
     def cruise(self):
         """_summary_
 

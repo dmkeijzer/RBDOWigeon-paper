@@ -406,7 +406,7 @@ class mission:
 
         return P, D_cruise
 
-    def single_iter_monte_carlo(self, d_total, t_loit_cruise, h_trans, h_loiter_cruise, t_loit_hover):
+    def single_sample_monte_carlo(self, d_total, t_loit_cruise, h_trans, h_loiter_cruise, t_loit_hover):
         """Computes the total energy of the flight in Joules
 
         :param simplified: If chosen, uses a simplified estimation of the energy, defaults to False
@@ -443,7 +443,7 @@ class mission:
         V = speeds(altitude=self.h_cruise, m=self.m, CLmax=self.CL_max, S=self.S, componentdrag_object=self.Drag)
 
         # Loiter power
-        V_loit = V.climb()
+        V_loit = V.endurance()
         P_loiter, _ = self.power_cruise_config(altitude= h_loiter_cruise, speed=V_loit, mass=self.m)  # + self.P_systems
 
         # Cruise energy

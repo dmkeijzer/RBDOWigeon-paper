@@ -39,6 +39,77 @@ def C_L(phase, CDmin, AR, e, C_LforCDmin):
 
 class componentdrag:
     def __init__(self, type, S_ref, l1, l2, l3, d, V_cr, rho, MAC, AR1, AR2, M_cr, k, frac_lam_f, frac_lam_w, mu, tc,xcm,sweepm, sweepLE, u, c_t,h, IF_f, IF_w,IF_v, C_L_minD, Abase, S_v,s1,s2, h_wl1,h_wl2 , k_wl):
+        """_summary_
+
+        :param type: Wing configuration the current options are tandem, box or normal 
+        :type type: string
+        :param S_ref: Total wing area of the VTOl
+        :type S_ref: float
+        :param l1: Length of the nosecone in meters
+        :type l1: float
+        :param l2: Length of the cylinder in the fuselage model in meters
+        :type l2: float
+        :param l3: Length of the tailcone in meters
+        :type l3: float
+        :param d: Width and height of fuselage when modeled as a square in meters
+        :type d:  float
+        :param V_cr: Cruise speed of the VTOL
+        :type V_cr: float
+        :param rho: Air density at cruise altitude
+        :type rho: float
+        :param MAC: Mean aerodynamic chord
+        :type MAC: float
+        :param AR1: Aspect ratio of the front wing
+        :type AR1: float
+        :param AR2: Aspect ratio of the rear wing
+        :type AR2: float
+        :param M_cr: Mach number during cruise
+        :type M_cr: float
+        :param k: Smoothness factor of the paint on the fuselage
+        :type k: float
+        :param frac_lam_f: Factor from ADSEE 2 L2 GA aircraft
+        :type frac_lam_f: float
+        :param frac_lam_w: Factor from ADSEE 2 L2 GA aircraft
+        :type frac_lam_w: float
+        :param mu: dynamic viscosity of air
+        :type mu: float
+        :param tc: Maximum thickness over chord ratio for winglets and vtail (see constants file for values)
+        :type tc: float
+        :param xcm: Maximum thichness over chord ratio location for winglets and vtail as a ratio of the chord
+        :type xcm: float
+        :param sweepm: Half chord sweep angle in degrees
+        :type sweepm: float
+        :param sweepLE: Leading edge sweep angle in degrees
+        :type sweepLE: float
+        :param u: Upsweep of the fuselage in degrees
+        :type u: flaot
+        :param c_t: Tip chord length in meters
+        :type c_t: float
+        :param h: The vertical (z - direction)  distance between the front and rear wing, i.e from nose to tail
+        :type h: float
+        :param IF_f: From ADSEE 2 L2 Interference factor fuselage [-]
+        :type IF_f: float
+        :param IF_w:  From ADSEE 2 L2 Interference factor fuselage [-]
+        :type IF_w:  float
+        :param IF_v: From ADSEE 2 L2 Interference factor fuselage [-]
+        :type IF_v: floaat
+        :param C_L_minD: Minimum lift over drag ratio of the airfoil
+        :type C_L_minD: float
+        :param Abase: Base area of the fuselage in m^2
+        :type Abase: float
+        :param S_v: Wing  area of the vertical tail in m^2
+        :type S_v: float
+        :param s1: Fraction of front wing area w.r.t total area i.e  Sf/(sf + sr)
+        :type s1:  float
+        :param s2: Fraction of front wing area w.r.t total area i.e Sr/(sf + sr)
+        :type s2: flaot
+        :param h_wl1: Height of the front wingtips
+        :type h_wl1: float
+        :param h_wl2: Height of the rear wingtips
+        :type h_wl2: float
+        :param k_wl: Constant for the winglets default to 2
+        :type k_wl: float
+        """        
         self.S_ref = S_ref
         self.l1 = l1
         self.l2 = l2

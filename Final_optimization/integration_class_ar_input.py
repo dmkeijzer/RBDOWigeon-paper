@@ -379,17 +379,17 @@ class RunDSE:
         conv_condition = True
         conv_metric_lst = []
         conv_target = 0.85 # Percentage difference allowed in std
-        n_iterations = 100 #FIXME Use a variable amount of iterations in the future
-        lim = 100
+        n_iterations = 100 
+        min_mission_dist = 100
 
         # Convergence loop
         while conv_condition:
             h_trans_stoch = stat.halfnorm.rvs(loc=95, scale=50, size= n_iterations)
             dist_samples = np.array(stat.genextreme.rvs(0.94,loc=309.40,scale=84.96, size = n_iterations))
 
-            while np.size(dist_samples[dist_samples < lim]) != 0:
-                n_resample = np.size(dist_samples[dist_samples <lim])
-                dist_samples[dist_samples < lim] = stat.genextreme.rvs(0.94,loc=309.40,scale=84.96, size = n_resample)
+            while np.size(dist_samples[dist_samples < min_mission_dist]) != 0:
+                n_resample = np.size(dist_samples[dist_samples <min_mission_dist])
+                dist_samples[dist_samples < min_mission_dist] = stat.genextreme.rvs(0.94,loc=309.40,scale=84.96, size = n_resample)
             
             sim_samples = np.column_stack((dist_samples*1000,
                                         stat.uniform.rvs(scale=600, size= n_iterations) ,
@@ -398,7 +398,7 @@ class RunDSE:
                                         1.4 * h_trans_stoch/mission.rod * stat.bernoulli.rvs(0.01, size= n_iterations)))
 
             with mp.Pool(os.cpu_count()) as p:
-                mission_res_chunk = np.array(p.starmap(mission.single_iter_monte_carlo, sim_samples))
+                mission_res_chunk = np.array(p.starmap(mission.single_sample_monte_carlo, sim_samples))
 
             mission_res = np.append(mission_res, mission_res_chunk, axis=0) # array [[x00, x01, x02, x03, x04, array[y00, y01, y02, y03, y04],
                 #                                                                     x11, x11, x12, x13, x14, array[y10, y11, y12, y13, y14]] etc
@@ -649,36 +649,16 @@ class RunDSE:
 
         # Variables that are updated (the 0 is a placeholder, not used)
         internal_inputs = [MTOM, S_tot, V_cr, h_cr, C_L_cr, CLmax, prop_radius1, de_da, Sv, V_stall, P_max_eng_tot, AR_wing1,
-                           AR_wing2, Sr_Sf, s1, x_wing_front, z_wing_front, x_wing_rear, z_wing_rear, max_thrust_stall, root_chord_vtail, TW_ratio_control,
+                           AR_wing2, Sr_Sf, ellipsis, x_wing_front, z_wing_front, x_wing_rear, z_wing_rear, max_thrust_stall, root_chord_vtail, TW_ratio_control,
                            x_front, x_aft, l_fus, bat_pos]
 
         # Aerodynamic moments
         Cmac1 = airfoil.Cm_ac(const.sweepc41, AR_wing1)[0]
         Cmac2 = airfoil.Cm_ac(const.sweepc42, AR_wing2)[0]
 
-        # Redo the mass calculations, but without contingencies. This is done only to store it
-        MTOM_nc, m_wf_nc, m_wr_nc, m_fus_nc, m_prop_nc, cg_fus0_nc, \
-        cg_gear_nc, cg_props_nc, x_CG_MTOM_nc, m_gear_nc, vtail_mass_nc      = mass(MTOM, S1, S2, n_ult, AR_wing1,
-                                                                                    AR_wing2, pos_front_wing,
-                                                                                    pos_back_wing, Pmax_weight, l_fus,
-                                                                                    const.n_pax, pos_fus, pos_lgear,
-                                                                                    n_prop, m_prop, pos_prop,
-                                                                                    const.m_pax,  const.m_cargo_tot,
-                                                                                    m_bat, Sv, root_chord_vtail,
-                                                                                    contingency = False, cg_bat=cg_bat)
-
         # # Outputs for optimisation cost function
-        optim_outputs = [MTOM, energy, time, CM_a, cg_fwd_lim - x_front, MTOM_nc]
+        optim_outputs = [MTOM, energy, time, CM_a, cg_fwd_lim - x_front, ellipsis]
 
-        # If no contingency is to be implemented uncomment
-        #=======================================================================================================================
-        # mission_nc = FP.mission(float(MTOM_nc), float(h_cr), float(V_cr), float(CLmax), float(S_tot),
-        #                                                 float(tot_prop_area), P_max=float(max_power),
-        #                                                 Cl_alpha_curve=Cl_alpha_curve, CD_a_w=CD_a_w, CD_a_f=CD_a_f, alpha_lst=alpha_lst,
-        #                                                 Drag=drag, t_loiter=15 * 60, rotational_rate=5, mission_dist=const.mission_range)
-
-        # energy_nc, t_tot_nc, P_max_nc, T_max_nc, t_hov_nc = mission_nc.single_iter_monte_carlo(simplified=False)
-        #=======================================================================================================================
 
         lines       = [["MAC1", find_mac(S1, b1, taper)],  # Mean Aerodynamic Chord [m]
                        ["MAC2", find_mac(S2, b2, taper)],
@@ -793,7 +773,7 @@ class RunDSE:
         weight_loop_data = []
         for i in range(1, N_iters + 1):
             print(f" Line 734 - integration_class_ar_input.py - Iteration {i} ")
-            logging.info(f"Iteration {i}/12 ")
+            logging.info(f"Iteration {i}/" + str(N_iters))
             optim_outputs, internal_inputs, other_outputs = self.run(optim_inputs, internal_inputs)
             if i == N_iters:
                 multirun_iter_datapoint = other_outputs[1]

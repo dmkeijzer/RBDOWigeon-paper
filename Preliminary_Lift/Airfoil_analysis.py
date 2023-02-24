@@ -66,3 +66,4 @@ def Cm_ac(sweep, ARw):
 
 #plt.plot(np.arange(0,1.7,0.05), Cd(np.arange(0,1.7,0.05)))
 #plt.show()
+
