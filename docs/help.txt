@@ -1,0 +1,34 @@
+There are third-party tools available that can help automate this process. For example, the sphinx-autobuild package provides a command-line tool that will automatically rebuild your documentation whenever a source file changes, and then serve the updated documentation on a local web server.
+
+To use sphinx-autobuild, you can first install it via pip:
+
+Code block
+=============================================================================================================================================================================================================================================================
+
+pip install sphinx-autobuild
+
+=============================================================================================================================================================================================================================================================
+
+Then, to start the automatic build process, you need to set your directory to docs:
+
+Code block
+=============================================================================================================================================================================================================================================================
+
+cd \docs
+
+sphinx-autobuild source_dir/ build_dir/
+
+=============================================================================================================================================================================================================================================================
+
+This will start the build process and automatically rebuild the documentation whenever a source file changes. The updated documentation will be served on a local web server at http://localhost:8000/ by default.
+
+
+The :members: option tells Sphinx to include documentation for all members of the module, including functions, classes, and variables. The :undoc-members: option tells Sphinx to include members that do not have any documentation. The :show-inheritance: option tells Sphinx to include information about the inheritance hierarchy of classes.
+
+Overall, using the autoomodule directive can be a convenient way to generate documentation for a Python module without having to write a lot of documentation by hand. However, it's still a good idea to add more detailed documentation for each function, class, and variable as needed to provide a clear and complete picture of your module's API.
+
+#---------------------------------- Automation of creating .rst files ----------------------------------
+
+$ sphinx-apidoc --module-first -T  -o ../docs/source/   module_di
+
+

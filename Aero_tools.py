@@ -82,7 +82,9 @@ class ISA:
         return mu
 
 
+
 class speeds:
+    
     """
     Class that contains all the relevant speeds.
 
@@ -91,8 +93,7 @@ class speeds:
         - Add aircraft parameters from datafile
     """
     def __init__(self, altitude, m, CLmax, S, componentdrag_object):
-        """_summary_
-
+        """
         :param altitude: _description_
         :type altitude: _type_
         :param m: _description_
@@ -101,8 +102,8 @@ class speeds:
         :type CLmax: _type_
         :param S: _description_
         :type S: _type_
-        :param componentdrag_object: _description_
-        :type componentdrag_object: _type_
+        :param componentdrag_object: A component drag class object to determine the drag coefficient
+        :type componentdrag_object: componentdrag
         """        
 
         # To be added from datafile:

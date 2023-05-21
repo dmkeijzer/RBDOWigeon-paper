@@ -57,6 +57,7 @@ def iso_cities(lim):
 
     :param lim: Set the range limit on what is not reachable
     :type lim: int
+
     :return: A list of isolated cities in string format
     :rtype: list
     """
@@ -208,14 +209,14 @@ def plot_hist_two_trip_weights(lim, n_bins=9):
     plt.twinx()
     plt.plot(x, pdf, "k-.", label= "pdf")
     plt.xlabel("Kilometers")
-    # plt.show()
+    plt.show()
     return best_fit, arg, loc, scale
   
  
 
             
 if __name__ == "__main__":
-    print(plot_hist_two_trip_weights(300, n_bins=15)) #( 400, 9 gives nice results
+    print(plot_hist_two_trip_weights(400, n_bins=15)) #( 400, 9 gives nice results
 
 
 

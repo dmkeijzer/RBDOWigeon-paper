@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import matplotlib
 from cartopy import crs as ccrs
 from random import sample
+import seaborn as sns
 import pandas as pd
 import os
 
@@ -25,26 +26,30 @@ plt_data = pd.read_csv(os.path.join(os.path.dirname(__file__), "plotting_df.csv"
 # epsg(3395) is a conformal projection (lat and lon lines remain adjacent)
 #=========================================================================
 
-fig = plt.figure(figsize=(8,4))
+fig = plt.figure(figsize=(20,10))
 ax1 = plt.subplot(221, projection=ccrs.epsg(3395))
 europe.plot(legend=False, cmap=matplotlib.cm.Greys, ec="black", lw=0.4,alpha=0.8,ax=ax1) 
 plt.xlim([-2.26e6,3.78e6])
 plt.ylim([3.7e6, 1.07e7])
+# plt.gca().set_aspect('equal', adjustable='box')
 plt.title(" GDP > 159.2 ")
 ax2 = plt.subplot(222, projection=ccrs.epsg(3395)) 
 europe.plot(legend=False, cmap=matplotlib.cm.Greys, ec="black", lw=0.4,alpha=0.8,ax=ax2) 
 plt.xlim([-2.26e6,3.78e6])
 plt.ylim([3.7e6, 1.07e7])
+# plt.gca().set_aspect('equal', adjustable='box')
 plt.title("152.2 > GDP > 84.9")
 ax3 = plt.subplot(223, projection=ccrs.epsg(3395)) 
 europe.plot(legend=False, cmap=matplotlib.cm.Greys, ec="black", lw=0.4,alpha=0.8,ax=ax3) 
 plt.xlim([-2.26e6,3.78e6])
 plt.ylim([3.7e6, 1.07e7])
+# plt.gca().set_aspect('equal', adjustable='box')
 plt.title("84.9 > GDP > 58.8 ")
 ax4 = plt.subplot(224, projection=ccrs.epsg(3395))  
 europe.plot(legend=False, cmap=matplotlib.cm.Greys, ec="black", lw=0.4,alpha=0.8,ax=ax4) 
 plt.xlim([-2.26e6,3.78e6])
 plt.ylim([3.7e6, 1.07e7])
+# plt.gca().set_aspect('equal', adjustable='box')
 plt.title("58.8 > GDP ")
 
 lim = 300
@@ -58,21 +63,53 @@ iso = iso_cities(lim)
 # the function .tissot from cartopy is used for the circles
 #---------------------------------------------------------------------------------
 
+col_count1 = 0
+col_count2 = 0
+col_count3 = 0
+col_count4 = 0
+
 for row in np.delete(plt_data.to_numpy(), 0 , 1):
    if row[0] in iso:
-      print(f"{row[0]} isolated city")
-      col = "black"
+      col = [0,0,0, a]
+      edgecol = [0,0,0, 0.9]
    else:
-      col = sample(["b", "g", "r", "gold","peru", "purple"],1)[0]
+      if row[3] >= 159.2:
+         col_count = col_count1
+         col_count1 += 1
+      if row[3] >= 84.9 and row[3] < 159.2:
+         col_count = col_count2
+         col_count2 += 1
+      if row[3] >= 58.8 and row[3] < 84.9:
+         col_count = col_count3
+         col_count3 += 1
+      if row[3] < 58.8:
+         col_count = col_count4
+         col_count4 += 1
+      col = list(sns.color_palette("tab10", 13 )[col_count])
+      edgecol = list(col)
+      col.append(a)
+      edgecol.append(0.8)
    
    if row[3] >= 159.2:
-      ax1.tissot(rad_km=lim, lons= row[2], lats=row[1], n_samples=36 , ec= "black",  zorder=10, alpha= a, color= col)
+      ax1.tissot(rad_km=lim, lons= row[2], lats=row[1], n_samples=36 , facecolor= col,   zorder=10,  edgecolor= edgecol, lw= 1.5)
+      edgecol[-1] = 1
+      ax1.tissot(rad_km=20, lons= row[2], lats=row[1], n_samples=36 , facecolor= edgecol,   zorder=10)
+      ax1.text(row[2] , row[1] - 1, row[0], fontsize=8, color='black',horizontalalignment='right', transform=ccrs.PlateCarree())
    if row[3] >= 84.9 and row[3] < 159.2:
-      ax2.tissot(rad_km=lim, lons= row[2], lats=row[1], n_samples=36 , ec= "black",  zorder=10, alpha= a, color= col)
+      ax2.tissot(rad_km=lim, lons= row[2], lats=row[1], n_samples=36 , facecolor= col,   zorder=10,  edgecolor= edgecol, lw= 1.5)
+      edgecol[-1] = 1
+      ax2.tissot(rad_km=20, lons= row[2], lats=row[1], n_samples=36 , facecolor= edgecol,   zorder=10)
+      ax2.text(row[2] , row[1] - 1, row[0], fontsize=8, color='black',horizontalalignment='right', transform=ccrs.PlateCarree())
    if row[3] >= 58.8 and row[3] < 84.9:
-      ax3.tissot(rad_km=lim, lons= row[2], lats=row[1], n_samples=36 , ec= "black",  zorder=10, alpha= a, color= col)
+      ax3.tissot(rad_km=lim, lons= row[2], lats=row[1], n_samples=36 , facecolor= col,   zorder=10,  edgecolor= edgecol, lw= 1.5)
+      edgecol[-1] = 1
+      ax3.tissot(rad_km=20, lons= row[2], lats=row[1], n_samples=36 , facecolor= edgecol,   zorder=10)
+      ax3.text(row[2] , row[1] - 1, row[0], fontsize=8, color='black',horizontalalignment='right', transform=ccrs.PlateCarree())
    if row[3] < 58.8:
-      ax4.tissot(rad_km=lim, lons= row[2], lats=row[1], n_samples=36 , ec= "black",  zorder=10, alpha= a, color= col)
+      ax4.tissot(rad_km=lim, lons= row[2], lats=row[1], n_samples=36 , facecolor= col,   zorder=10,  edgecolor= edgecol, lw= 1.5)
+      edgecol[-1] = 1
+      ax4.tissot(rad_km=20, lons= row[2], lats=row[1], n_samples=36 , facecolor= edgecol,   zorder=10)
+      ax4.text(row[2] , row[1] - 1, row[0], fontsize=8, color='black',horizontalalignment='right', transform=ccrs.PlateCarree())
 
 fig.tight_layout()
 fig.subplots_adjust(wspace= -0.73)

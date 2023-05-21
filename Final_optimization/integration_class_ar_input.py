@@ -82,6 +82,7 @@ Pmax_weight = 17  # this is defined as maximum perimeter in Roskam, so I took to
 def mass(MTOM, S1, S2, n_ult, AR_wing1, AR_wing2, pos_frontwing, pos_backwing, Pmax, l_fus, n_pax, pos_fus,
          pos_lgear, n_prop, m_prop, pos_prop, m_pax, cargo_m, m_bat, Sv, v_tail_rchord, contingency = False,
          cg_bat=[None, None, None]):
+         
 
     wing = wei.Wing(MTOM, S1, S2, n_ult, AR_wing1, AR_wing2, [pos_frontwing, pos_backwing])
     m_wf = wing.wweight1
@@ -110,13 +111,17 @@ def mass(MTOM, S1, S2, n_ult, AR_wing1, AR_wing2, pos_frontwing, pos_backwing, P
 
 
 def find_mac(S, b, taper):
-    """
-    Calculate mean aerodynamic chord of a wing
-    :param S: Wing surface area
-    :param b: Wingspan
+    """ Computes the mean aerodynamic chord
+
+    :param S: Wing surface area [m^2]
+    :type S: float
+    :param b: Wingspan [m]
+    :type b: float
     :param taper: Wing taper
-    :return: Mean aerodynamic chord
-    """
+    :type taper: float
+    :return: Mean Aerodynamic chord
+    :rtype: float
+    """    
     cavg = S / b
     cr = 2 / (1 + taper) * cavg
     mac = 2/3 * cr * (1 + taper + taper ** 2) / (1 + taper)
