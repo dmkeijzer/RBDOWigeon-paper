@@ -1,4 +1,3 @@
-from cmath import nan
 import openmdao.api as om
 import logging
 import time
