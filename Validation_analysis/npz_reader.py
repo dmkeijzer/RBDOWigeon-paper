@@ -11,7 +11,7 @@ import rv_handler as rv
 class npz_tool: #TODO come up with better names lol
     """_summary_
     """
-    def __init__(self, file_path):
+    def __init__(self, file_path, save_bool):
         """This class turns the npz output of the file Optimization.py into a usable datatype which some standard methods and gives easy access to each column by the main data 
         object into a Pandas.Dataframe. For the standard methods please see further documentation.
 
@@ -25,10 +25,16 @@ class npz_tool: #TODO come up with better names lol
     
    
         self.df = df
+        self.save_bool = save_bool
+        self.file_path = file_path
         self.conv_lst = df["Converged_des"]
         self.final_energy = self.df["Energy"][self.conv_lst].to_numpy()[-1]/3.6e6
-        match = re.search(r'(\w{3}_\d{1,2}_\d{2}\.\d{2})_(\d{4})', os.path.split(file_path)[-1])
-        self.id = "Run ID: " + (match.group(1) + ' ' + match.group(2)).replace("_", " ").replace(".",":" )
+        # match = re.search(r'(\w{3}_\d{1,2}_\d{2}\.\d{2})_(\d{4})', os.path.split(file_path)[-1])
+        self.id =  os.path.split(self.file_path)[-1][:-4]
+        self.title = "MCS Based"
+        self.download_path = os.path.join(os.path.expanduser("~"), "Downloads")
+
+
 
     def energy_convergence(self, converged= True):
 
@@ -36,15 +42,21 @@ class npz_tool: #TODO come up with better names lol
         plt.plot(energy_data, "vk-.")
         plt.xlabel(r"$n_{th}$ Converged design") if converged else plt.xlabel(r"$n_{th}$ iteration")
         plt.ylabel("Energy [Kwh]")
-        plt.suptitle(self.id)
-        plt.show()
+        plt.suptitle(self.title)
+        if self.save_bool:
+            plt.savefig(os.path.join(self.download_path, self.id) + "_EnergyConv_" +  ".pdf", bbox_inches= "tight")
+        else:
+            plt.show()
     
     def pie_chart_energy(self):
         plot_data = np.array(self.df["Energy_dist"][self.conv_lst])[-1]
         phases = ["Cruise", "Climb", "Descend", "Loiter cruise", "Loiter Hover"]
         plt.pie(plot_data, labels = phases, autopct = '%1.1f%%', explode= [0.1,0,0,0.2,0.2])
-        plt.suptitle(self.id)
-        plt.show()
+        plt.suptitle(self.title)
+        if self.save_bool:
+            plt.savefig(os.path.join(self.download_path, self.id) + "_PieChart_" +  ".pdf", bbox_inches= "tight")
+        else:
+            plt.show()
 
     def energy_pdf_cdf_plot(self, n= -1):
 
@@ -60,8 +72,11 @@ class npz_tool: #TODO come up with better names lol
         plt.plot(x/3.6e6, cdf, "k-", label= "cdf")
         plt.legend()
         plt.ylabel("CDF")
-        plt.suptitle(self.id)
-        plt.show()
+        plt.suptitle(self.title)
+        if self.save_bool:
+            plt.savefig(os.path.join(self.download_path, self.id) + "_PdfCdf_" +  ".pdf", bbox_inches= "tight")
+        else:
+            plt.show()
     
 
     def plot_performance(self):
@@ -98,9 +113,12 @@ class npz_tool: #TODO come up with better names lol
         axs[1,1].set_ylabel("PDF [-]")
         axs[1,1].legend()
 
-        fig.suptitle(self.id)
-        plt.show()
+        fig.suptitle(self.title)
                    
+        if self.save_bool:
+            plt.savefig(os.path.join(self.download_path, self.id) + "_Perf_" +  ".pdf", bbox_inches= "tight")
+        else:
+            plt.show()
 
     def energy_phases(self):
         energy_rv = self.df["Energy_rv"].to_numpy()[-1]
@@ -161,9 +179,12 @@ class npz_tool: #TODO come up with better names lol
         axs[2,1].grid(lw=0.8, alpha=0.8)
         axs[2,1].legend()
 
-        fig.suptitle(self.id)
+        fig.suptitle(self.title)
         fig.tight_layout()
-        plt.show()
+        if self.save_bool:
+            plt.savefig(os.path.join(self.download_path, self.id) + "_EnergyPhases_" +  ".pdf", bbox_inches= "tight")
+        else:
+            plt.show()
     
     def design_parameter(self):
         """TODO
@@ -175,7 +196,9 @@ class npz_tool: #TODO come up with better names lol
         - total wing area key= S1 S2
 
         """        
-        fig, axs = plt.subplots(3,3)
+        fig, axs = plt.subplots(2,3)
+        fig.set_figheight(8)
+        fig.set_figwidth(15)
 
         #MTOM
         y1 = self.df["MTOM"][self.conv_lst].to_numpy()
@@ -183,6 +206,7 @@ class npz_tool: #TODO come up with better names lol
         axs[0, 0].legend()
         axs[0, 0].set_xlabel(r"$n_{th}$ Converged design")
         axs[0, 0].set_ylabel('MTOM [kg]')
+        axs[0, 0].grid()
 
         # Aspect ratio's
         y2 = self.df["AR1"][self.conv_lst].to_numpy()
@@ -192,13 +216,15 @@ class npz_tool: #TODO come up with better names lol
         axs[0, 1].set_xlabel(r"$n_{th}$ Converged design")
         axs[0, 1].set_ylabel("AR [-]")
         axs[0, 1].legend()
+        axs[0, 1].grid()
 
         # Cm alpha
-        y4 = self.df["Cm_alpha"][self.conv_lst].to_numpy()
-        axs[0, 2].plot(y4, label=r'$C_{m_{\alpha}}$' )
+        y4 = self.df["Energy"][self.conv_lst].to_numpy()
+        axs[0, 2].plot(y4/3.6e6, label=r'Energy' )
         axs[0, 2].set_xlabel(r"$n_{th}$ Converged design")
-        axs[0, 2].set_ylabel(r'$C_{m_{\alpha}}$')
+        axs[0, 2].set_ylabel(r'Energy [kWh]')
         axs[0, 2].legend()
+        axs[0, 2].grid()
 
         # CLmax
         y5 = self.df["CLmax"][self.conv_lst].to_numpy()
@@ -206,6 +232,7 @@ class npz_tool: #TODO come up with better names lol
         axs[1, 0].set_xlabel(r"$n_{th}$ Converged design")
         axs[1, 0].set_ylabel(r'$C_{Lmax}$ [-]')
         axs[1, 0].legend()
+        axs[1, 0].grid()
 
         # Control margin
         y6 = self.df["ctrl_margin"][self.conv_lst].to_numpy()
@@ -213,6 +240,7 @@ class npz_tool: #TODO come up with better names lol
         axs[1, 1].set_xlabel(r"$n_{th}$ Converged design")
         axs[1, 1].set_ylabel(r'$x_{marg}$ [m]')
         axs[1, 1].legend()
+        axs[1, 1].grid()
 
         # S total
         y7 = self.df["S1"][self.conv_lst].to_numpy()  
@@ -222,6 +250,7 @@ class npz_tool: #TODO come up with better names lol
         axs[1, 2].set_xlabel(r"$n_{th}$ Converged design")
         axs[1, 2].set_ylabel(r'S [$m^2$]')
         axs[1, 2].legend()
+        axs[1, 2].grid()
 
         # y8 = self.df["S1"][self.conv_lst].to_numpy()  + self.df["S2"][self.conv_lst].to_numpy()
         # axs[2, 0].plot(y8)
@@ -237,9 +266,12 @@ class npz_tool: #TODO come up with better names lol
         # axs[2, 2].set_xlabel('X Label 9')
         # axs[2, 2].set_ylabel('Y Label 9')
 
-        fig.suptitle(self.id)
+        fig.suptitle(self.title)
         fig.tight_layout()
-        plt.show()
+        if self.save_bool:
+            plt.savefig(os.path.join(self.download_path, self.id) + "_DesignParams_" +  ".pdf", bbox_inches= "tight")
+        else:
+            plt.show()
 
 
         pass
@@ -268,6 +300,6 @@ if __name__ == "__main__":
 
         
     print(f"file = {npz_lst[-1]}")
-    Analysis_tool = npz_tool(npz_lst[-1])
+    Analysis_tool = npz_tool(npz_lst[-1], True)
     Analysis_tool.analyze_all()
     print(Analysis_tool.df.columns)
