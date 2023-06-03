@@ -31,7 +31,7 @@ class npz_tool: #TODO come up with better names lol
         self.final_energy = self.df["Energy"][self.conv_lst].to_numpy()[-1]/3.6e6
         # match = re.search(r'(\w{3}_\d{1,2}_\d{2}\.\d{2})_(\d{4})', os.path.split(file_path)[-1])
         self.id =  os.path.split(self.file_path)[-1][:-4]
-        self.title = "MCS Based"
+        self.title = "MCS Based Mission"
         self.download_path = os.path.join(os.path.expanduser("~"), "Downloads")
 
 
@@ -129,6 +129,9 @@ class npz_tool: #TODO come up with better names lol
         Eloit_hov_rv = self.df["Eloit_hov_rv"].to_numpy()[-1]
 
         fig, axs = plt.subplots(3,2)
+        fig.suptitle(self.title)
+        fig.set_figheight(8)
+        fig.set_figwidth(15)
 
         x1, pdf1, cdf1 = Ecruise_rv.plt()  
         axs[0,0].plot(x1/3.6e6, pdf1*3.6e6, color="k")
@@ -187,15 +190,7 @@ class npz_tool: #TODO come up with better names lol
             plt.show()
     
     def design_parameter(self):
-        """TODO
-        - MTOM key= MTOM
-        - Aspect ratio's key= AR1 AR2
-        -CM_alpha key=  Cm_alpha
-        - Clmax key= CLmax
-        -cg lim key= ctrl_margin
-        - total wing area key= S1 S2
 
-        """        
         fig, axs = plt.subplots(2,3)
         fig.set_figheight(8)
         fig.set_figwidth(15)
@@ -218,7 +213,7 @@ class npz_tool: #TODO come up with better names lol
         axs[0, 1].legend()
         axs[0, 1].grid()
 
-        # Cm alpha
+        # Energy
         y4 = self.df["Energy"][self.conv_lst].to_numpy()
         axs[0, 2].plot(y4/3.6e6, label=r'Energy' )
         axs[0, 2].set_xlabel(r"$n_{th}$ Converged design")
@@ -227,19 +222,37 @@ class npz_tool: #TODO come up with better names lol
         axs[0, 2].grid()
 
         # CLmax
-        y5 = self.df["CLmax"][self.conv_lst].to_numpy()
-        axs[1, 0].plot(y5, label=r'$C_{Lmax}$ [-]')
+        # y5 = self.df["CLmax"][self.conv_lst].to_numpy()
+        # axs[1, 0].plot(y5, label=r'$C_{Lmax}$ [-]')
+        # axs[1, 0].set_xlabel(r"$n_{th}$ Converged design")
+        # axs[1, 0].set_ylabel(r'$C_{Lmax}$ [-]')
+        # axs[1, 0].legend()
+        # axs[1, 0].grid()
+
+        # Spans
+        y2 = self.df["span1"][self.conv_lst].to_numpy()
+        y3 = self.df["span2"][self.conv_lst].to_numpy()
+        axs[1, 0].plot(y2, label= "Span front")
+        axs[1, 0].plot(y3, label= "Span rear")
         axs[1, 0].set_xlabel(r"$n_{th}$ Converged design")
-        axs[1, 0].set_ylabel(r'$C_{Lmax}$ [-]')
+        axs[1, 0].set_ylabel("Span [m]")
         axs[1, 0].legend()
         axs[1, 0].grid()
 
         # Control margin
-        y6 = self.df["ctrl_margin"][self.conv_lst].to_numpy()
-        axs[1, 1].plot(y6,label=r'$x_{marg}$')
+        # y6 = self.df["Cm_alpha"][self.conv_lst].to_numpy()
+        # axs[1, 1].plot(y6,label=r'$c_{m_{\alpha}}$')
+        # axs[1, 1].set_xlabel(r"$n_{th}$ Converged design")
+        # axs[1, 1].set_ylabel(r'$c_{m_{\alpha}}$ [-]')
+        # axs[1, 1].legend()
+        # axs[1, 1].grid()
+
+        # Wing ratio
+        y6 = self.df["S2"][self.conv_lst].to_numpy()/self.df["S1"][self.conv_lst].to_numpy()
+        axs[1, 1].plot(y6,label=r'$\frac{S_{rear}}{S_{front}}$')
         axs[1, 1].set_xlabel(r"$n_{th}$ Converged design")
-        axs[1, 1].set_ylabel(r'$x_{marg}$ [m]')
-        axs[1, 1].legend()
+        axs[1, 1].set_ylabel(r'$\frac{S_{rear}}{S_{front}}$[-]', fontsize = 14, alpha = 0.8)
+        axs[1, 1].legend(fontsize = 14)
         axs[1, 1].grid()
 
         # S total
@@ -251,20 +264,6 @@ class npz_tool: #TODO come up with better names lol
         axs[1, 2].set_ylabel(r'S [$m^2$]')
         axs[1, 2].legend()
         axs[1, 2].grid()
-
-        # y8 = self.df["S1"][self.conv_lst].to_numpy()  + self.df["S2"][self.conv_lst].to_numpy()
-        # axs[2, 0].plot(y8)
-        # axs[2, 0].set_xlabel('X Label 7')
-        # axs[2, 0].set_ylabel('Y Label 7')
-
-        # y8 = self.df["S1"][self.conv_lst].to_numpy()  + self.df["S2"][self.conv_lst].to_numpy()
-        # axs[2, 1].plot(y8)
-        # axs[2, 1].set_xlabel('X Label 8')
-        # axs[2, 1].set_ylabel('Y Label 8')
-
-        # axs[2, 2].plot(y9)
-        # axs[2, 2].set_xlabel('X Label 9')
-        # axs[2, 2].set_ylabel('Y Label 9')
 
         fig.suptitle(self.title)
         fig.tight_layout()
