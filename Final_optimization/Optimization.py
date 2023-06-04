@@ -37,7 +37,7 @@ if __name__ == "__main__":
     'CD0fwd', 'CD0fwd', 'CD0', 'Clafwd', 'Clarear', 'CL_cr_fwd', 'CL_cr_rear',
     'CL_cr', 'P_br_cruise_per_engine', 'T_cr_per_engine', 'Prop_radius_front',
     'Prop_radius_back', 'Disk_load_front', 'Disk_load_back',
-    'Root chord_vertical tail', 'Vertical_tail_mass', 'Energy', 'Energy_rv',
+    'Root chord_vertical tail', 'Vertical_tail_mass', 'Energy', 'EnergyOptimizer', 'Energy_rv',
     'time_rv', 'power_rv', 'thrust_rv', 'time_cruise_rv', 'Ecruise_rv',
     'Eclimb_rv', 'Edesc_rv', 'Eloit_cr_rv', 'Eloit_hov_rv', 'Energy_dist',
     'Cr_vert', 'm_v_tail', 'Cm_alpha', 'ctrl_margin', 'S_vtail', 'b_vtail',
