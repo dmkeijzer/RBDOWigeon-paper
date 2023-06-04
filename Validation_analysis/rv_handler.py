@@ -3,7 +3,7 @@ from pdffit import distfit as pf
 import multiprocessing as mp
 import os
 import matplotlib.pyplot as plt
-import scipy
+import scipy as sp
 
 class RandVar():
     def __init__(self, data):
@@ -21,10 +21,28 @@ class RandVar():
             self.data = np.histogram(data, bins= "auto")
     
     def ppf(self, r=0.9):
-        return self.best_fit.ppf(r, loc= self.loc, scale = self.scale, *self.arg)
+        """Function is a bit wonky, I think it was bc of the negative arg that messed up the ppf
+
+        :param r: _description_, defaults to 0.9
+        :type r: float, optional
+        :return: _description_
+        :rtype: _type_
+        """        
+        # Required due to bug in code, put out an issue on scipy. This makes backwards compatibility is possible
+
+        if sp.stats._continuous_distns.pearson3_gen == type(self.best_fit):
+            res1 = self.best_fit.ppf(r, loc= self.loc, scale = self.scale, *self.arg)
+            res2 = self.best_fit.ppf(1 - r, loc= self.loc, scale = self.scale, *self.arg)
+            if  res2 > res1:
+                return res2
+            else:
+                return res1
+
+        res1 = self.best_fit.ppf(r, loc= self.loc, scale = self.scale, *self.arg)
+        return res1
 
     def get_expectation(self):
-        return self.best_fit.expect(args= self.arg, loc= self.loc, scale= self.scale)
+        return self.best_fit.expect(args= self.arg, loc= self.loc, scale= self.scale, lb= self.min, ub=self.max)
     
     def get_std(self):
         return self.best_fit.std(*self.arg, loc= self.loc, scale= self.scale)

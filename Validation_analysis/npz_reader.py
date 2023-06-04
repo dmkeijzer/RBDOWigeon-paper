@@ -56,7 +56,6 @@ class npz_tool: #TODO come up with better names lol
         plt.clf()
         plt.figure(figsize=(10,10))
         sizes = np.array(self.df["Energy_dist"][self.conv_lst])[-1]
-        labels= ["Cruise", "Climb", "Descend", "Loiter cruise", "Loiter Hover"]
 
         # Retrieving required data and creating annotations
         Ecruise_rv = self.df["Ecruise_rv"].to_numpy()[-1]
@@ -64,21 +63,27 @@ class npz_tool: #TODO come up with better names lol
         Edesc_rv = self.df["Edesc_rv"].to_numpy()[-1]
         Eloit_cr_rv = self.df["Eloit_cr_rv"].to_numpy()[-1] # mission independent all samples have the same value
         Eloit_hov_rv = self.df["Eloit_hov_rv"].to_numpy()[-1]
+        lst = [Ecruise_rv, Eclimb_rv, Edesc_rv, Eloit_cr_rv, Eloit_hov_rv]
 
+        sizes =  [i.get_expectation() for i in lst ]
+        labels= ["Cruise", "Climb", "Descend", "Loiter cruise", "Loiter Hover"]
         annotations = []
-        for i,phase in enumerate((Ecruise_rv, Eclimb_rv, Edesc_rv, Eloit_cr_rv, Eloit_hov_rv)):
+        for i,phase in enumerate(lst):
             std = phase.best_fit.std(*phase.arg, loc= phase.loc, scale= phase.scale)
-            annotations.append(f"{labels[i]} STD ={np.round(std/3.6e6,2)} [kWh]\n{labels[i]} 90th percentile ={np.round(phase.ppf(0.9)/3.6e6,2)} [kWh]")
+            if i != 4:
+                annotations.append(f"{labels[i]} STD ={np.round(std/3.6e6,2)} [kWh]\n{labels[i]} Expectation ={np.round(sizes[i]/3.6e6,2)} [kWh]")
+            else:
+                annotations.append(f"Loiter Hover\nSee energy phase plots")
 
         # Plotting actual data
-        plt.pie(sizes, labels =labels, autopct = '%1.1f%%', explode= [0.1,0.1,0.1,0.2,0.2], startangle= 90)
+        plt.pie(sizes, autopct = '%1.1f%%', explode= [0.1,0.1,0.1,0.2,0.05], startangle= 90)
 
         # Add annotations to the data
         radii = [1.3, 1.4, 1.36, 1.37, 1.22]
-        deltax = [-0.19, 0.1, 0.1, 0.4, -0.40]
-        deltay = [-0.95, 0.1, -0.1, -0.15, 0]
+        deltax = [-0.19, 0.2, 0.1, 0.2, -0.1]
+        deltay = [-0.05, -0.2, -0.1, -0.05, -0.1]
         for i, radius, annotation, dx, dy  in zip(list(range(len(radii))), radii,annotations, deltax, deltay):
-            angle = 90 + sum(sizes[:i])/sum(sizes)*360 + (sizes[i])/(sum(sizes))*360*1/3
+            angle = 90 + sum(sizes[:i])/sum(sizes)*360 + (sizes[i])/(sum(sizes))*360*1/2
             x = radius*np.cos(np.radians(angle)) + dx
             y = radius*np.sin(np.radians(angle)) + dy
             # plt.annotate(annotation, (x, y), ha='center', va='center')
