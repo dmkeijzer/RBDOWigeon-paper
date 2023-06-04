@@ -23,6 +23,13 @@ class RandVar():
     def ppf(self, r=0.9):
         return self.best_fit.ppf(r, loc= self.loc, scale = self.scale, *self.arg)
 
+    def get_expectation(self):
+        return self.best_fit.expect(args= self.arg, loc= self.loc, scale= self.scale)
+    
+    def get_std(self):
+        return self.best_fit.std(*self.arg, loc= self.loc, scale= self.scale)
+
+
     def plt(self):
         x = np.linspace(self.min, self.max ,  1000)
         pdf = self.best_fit.pdf(x, loc= self.loc, scale= self.scale, *self.arg)
@@ -43,21 +50,21 @@ class RandVar():
     
 
 if __name__ == "__main__":
-    # test_arr = np.random.randn(1000)
-    # test_instance = StochVar(test_arr)
-    # print(test_instance.best_fit)
-    # print(test_instance.params)
-    # print(test_instance.ppf())
+    test_arr = np.random.randn(10000)
+    test_instance = RandVar(test_arr)
+    print(test_instance.best_fit)
+    print(test_instance.params)
+    print(test_instance.ppf())
 
     # test_arr = np.hsplit(np.random.randn(300,5), 5)
     # with mp.Pool(os.cpu_count()) as p:
     #     energy_stochvar, t_stochvar, power_stochvar, thrust_stochvar, t_cr_stochvar = p.map(StochVar, test_arr)
     
-    test_arr2 = np.array([np.array([i, 2*i, 3* i, np.array([i, i+ 1, i + 2])]) for i in range(100)])
+    # test_arr2 = np.array([np.array([i, 2*i, 3* i, np.array([i, i+ 1, i + 2])]) for i in range(100)])
 
-    print(test_arr2)
-    print(np.vstack(test_arr2[:,-1]))
-    print(np.hsplit(np.vstack(test_arr2[:,-1]), 3))
+    # print(test_arr2)
+    # print(np.vstack(test_arr2[:,-1]))
+    # print(np.hsplit(np.vstack(test_arr2[:,-1]), 3))
 
 
 

@@ -455,6 +455,7 @@ class RunDSE:
         c_i = 0.9 # confidence interval
 
         energy_wc =  energy_rv.ppf(c_i)
+        energy_optimizer = energy_rv.get_expectation() + energy_rv.get_std()
         t_tot = t_rv.ppf(c_i)
         P_max_eng_mission  = power_rv.ppf(c_i)
         max_thrust = thrust_rv.ppf(c_i)
@@ -662,7 +663,7 @@ class RunDSE:
         Cmac2 = airfoil.Cm_ac(const.sweepc42, AR_wing2)[0]
 
         # # Outputs for optimisation cost function
-        optim_outputs = [MTOM, energy, time, CM_a, cg_fwd_lim - x_front, ellipsis]
+        optim_outputs = [MTOM, energy_optimizer, time, CM_a, cg_fwd_lim - x_front, ellipsis]
 
 
         lines       = [["MAC1", find_mac(S1, b1, taper)],  # Mean Aerodynamic Chord [m]
