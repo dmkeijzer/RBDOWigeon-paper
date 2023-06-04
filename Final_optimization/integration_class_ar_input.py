@@ -743,6 +743,7 @@ class RunDSE:
                     #    ["Propulsion_mass", m_prop_nc],
                     #    ["Energy_nc", energy_nc],
                        ["Energy", energy_wc],
+                       ["EnergyOptimizer", energy_optimizer],
                        ["Energy_rv", energy_rv], #RandVar class see rv_handler.py
                        ["time_rv", t_rv],#RandVar class see rv_handler.py
                        ["power_rv", power_rv],#RandVar class see rv_handler.py
