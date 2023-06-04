@@ -655,7 +655,7 @@ class RunDSE:
 
         # Variables that are updated (the 0 is a placeholder, not used)
         internal_inputs = [MTOM, S_tot, V_cr, h_cr, C_L_cr, CLmax, prop_radius1, de_da, Sv, V_stall, P_max_eng_tot, AR_wing1,
-                           AR_wing2, Sr_Sf, ellipsis, x_wing_front, z_wing_front, x_wing_rear, z_wing_rear, max_thrust_stall, root_chord_vtail, TW_ratio_control,
+                           AR_wing2, Sr_Sf, Ellipsis , x_wing_front, z_wing_front, x_wing_rear, z_wing_rear, max_thrust_stall, root_chord_vtail, TW_ratio_control,
                            x_front, x_aft, l_fus, bat_pos]
 
         # Aerodynamic moments
@@ -663,7 +663,7 @@ class RunDSE:
         Cmac2 = airfoil.Cm_ac(const.sweepc42, AR_wing2)[0]
 
         # # Outputs for optimisation cost function
-        optim_outputs = [MTOM, energy_optimizer, time, CM_a, cg_fwd_lim - x_front, ellipsis]
+        optim_outputs = [MTOM, energy_optimizer, time, CM_a, cg_fwd_lim - x_front, Ellipsis]
 
 
         lines       = [["MAC1", find_mac(S1, b1, taper)],  # Mean Aerodynamic Chord [m]

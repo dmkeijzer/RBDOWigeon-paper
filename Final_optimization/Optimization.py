@@ -168,7 +168,7 @@ if __name__ == "__main__":
             outputs['time'] = optim_outputs[2]
             outputs['CM_alpha'] = optim_outputs[3]
             outputs['ctrl_mar'] = optim_outputs[4]
-            outputs['MTOM_nc'] = optim_outputs[5]
+            # outputs['MTOM_nc'] = optim_outputs[5]
 
             outputs['Cost_func'] = optim_outputs[1]
 

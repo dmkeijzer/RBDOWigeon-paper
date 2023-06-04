@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import re
 import sys
 import pathlib as pl
+import seaborn as sns
 sys.path.append(os.path.join(os.path.dirname(os.path.dirname(__file__)), "Final_optimization"))
 import rv_handler as rv
 
@@ -32,16 +33,19 @@ class npz_tool: #TODO come up with better names lol
         # match = re.search(r'(\w{3}_\d{1,2}_\d{2}\.\d{2})_(\d{4})', os.path.split(file_path)[-1])
         self.id =  os.path.split(self.file_path)[-1][:-4]
         self.title = "MCS Based Mission"
+        # self.title = ""
         self.download_path = os.path.join(os.path.expanduser("~"), "Downloads")
+        sns.set(style="white")
 
 
 
     def energy_convergence(self, converged= True):
 
         energy_data = np.array(self.df["Energy"][self.conv_lst])/3.6e6 if converged else np.array(self.df["Energy"])/3.6e6
-        plt.plot(energy_data, "vk-.")
+        plt.plot(energy_data, "v-.")
         plt.xlabel(r"$n_{th}$ Converged design") if converged else plt.xlabel(r"$n_{th}$ iteration")
         plt.ylabel("Energy [Kwh]")
+        plt.grid(lw=0.8, alpha=0.8)
         plt.suptitle(self.title)
         if self.save_bool:
             plt.savefig(os.path.join(self.download_path, self.id) + "_EnergyConv_" +  ".pdf", bbox_inches= "tight")
@@ -49,9 +53,30 @@ class npz_tool: #TODO come up with better names lol
             plt.show()
     
     def pie_chart_energy(self):
-        plot_data = np.array(self.df["Energy_dist"][self.conv_lst])[-1]
-        phases = ["Cruise", "Climb", "Descend", "Loiter cruise", "Loiter Hover"]
-        plt.pie(plot_data, labels = phases, autopct = '%1.1f%%', explode= [0.1,0,0,0.2,0.2])
+        plt.clf()
+        sizes = np.array(self.df["Energy_dist"][self.conv_lst])[-1]
+        labels= ["Cruise", "Climb", "Descend", "Loiter cruise", "Loiter Hover"]
+
+        # Retrieving required data and creating annotations
+        Ecruise_rv = self.df["Ecruise_rv"].to_numpy()[-1]
+        Eclimb_rv = self.df["Eclimb_rv"].to_numpy()[-1]
+        Edesc_rv = self.df["Edesc_rv"].to_numpy()[-1]
+        Eloit_cr_rv = self.df["Eloit_cr_rv"].to_numpy()[-1] # mission independent all samples have the same value
+        Eloit_hov_rv = self.df["Eloit_hov_rv"].to_numpy()[-1]
+
+        
+
+
+
+        plt.pie(sizes, labels =labels, autopct = '%1.1f%%', explode= [0.1,0.1,0.1,0.2,0.2], startangle= 90)
+
+        # Add annotations
+        for i, label in enumerate(labels):
+            angle = 90 + sum(sizes[:i])/sum(sizes)*360 + (sizes[i]*2)/(3*sum(sizes))*360
+            x = 1.2 * np.cos(np.radians(angle))
+            y = 1.2 * np.sin(np.radians(angle))
+            plt.annotate(label, (x, y), ha='center', va='center')
+
         plt.suptitle(self.title)
         if self.save_bool:
             plt.savefig(os.path.join(self.download_path, self.id) + "_PieChart_" +  ".pdf", bbox_inches= "tight")
@@ -64,15 +89,23 @@ class npz_tool: #TODO come up with better names lol
         x, pdf, cdf = dist.plt()
 
         plt.clf()
-        plt.plot(x/3.6e6, pdf*3.6e6, "k-.", label= "pdf")
+        plt.figure(figsize=(10,6))
+        plt.plot(x/3.6e6, pdf*3.6e6, "-.", label= "pdf")
         plt.xlabel("Energy [KwH]")
         plt.ylabel("PDF")
-        plt.legend()
+        handles1, labels1 = plt.gca().get_legend_handles_labels()
+        plt.grid(lw=0.8, alpha=0.8)
         plt.twinx()
-        plt.plot(x/3.6e6, cdf, "k-", label= "cdf")
-        plt.legend()
+        plt.plot(x/3.6e6, cdf, "-", color="C1", label= "cdf")
         plt.ylabel("CDF")
+        handles2, labels2 = plt.gca().get_legend_handles_labels()
+        handles = handles1 + handles2
+        labels = labels1 + labels2
+
+        # Create the legend and title
+        plt.legend(handles, labels)
         plt.suptitle(self.title)
+
         if self.save_bool:
             plt.savefig(os.path.join(self.download_path, self.id) + "_PdfCdf_" +  ".pdf", bbox_inches= "tight")
         else:
@@ -93,6 +126,7 @@ class npz_tool: #TODO come up with better names lol
         axs[0,0].plot(x1/3.6e6, pdf1*3.6e6, "k-", label = "Total energy")
         axs[0,0].set_ylabel("PDF [-]")
         axs[0,0].set_xlabel("Energy [Kwh]")
+        axs[0,0].grid(lw=0.8, alpha=0.8)
         axs[0,0].legend()
 
         x2, pdf2, cdf2 = time_rv.plt()  
@@ -100,18 +134,21 @@ class npz_tool: #TODO come up with better names lol
         axs[0,1].set_ylabel("PDF [-]")
         axs[0,1].set_xlabel("Time [s]")
         axs[0,1].legend()
+        axs[0,1].grid(lw=0.8, alpha=0.8)
 
         x3, pdf3, cdf3 = power_rv.plt()
         axs[1,0].plot(x3/1000, pdf3*1000,"k-", label = "Power")
         axs[1,0].set_xlabel("Power [Kw]")
         axs[1,0].set_ylabel("PDF [-]")
         axs[1,0].legend()
+        axs[1,0].grid(lw=0.8, alpha=0.8)
 
         x5, pdf5, cdf5 = time_cruise_rv.plt()
         axs[1,1].plot(x5, pdf5,"k-", label = "Time cruise")
         axs[1,1].set_xlabel("Time [s]")
         axs[1,1].set_ylabel("PDF [-]")
         axs[1,1].legend()
+        axs[1,1].grid(lw=0.8, alpha=0.8)
 
         fig.suptitle(self.title)
                    
@@ -277,7 +314,6 @@ class npz_tool: #TODO come up with better names lol
 
     def analyze_all(self):
 
-        self.energy_convergence(converged=False)
         self.energy_convergence()
         self.design_parameter()
         self.pie_chart_energy()
@@ -300,5 +336,6 @@ if __name__ == "__main__":
         
     print(f"file = {npz_lst[-1]}")
     Analysis_tool = npz_tool(npz_lst[-1], True)
+    # Analysis_tool.analyze_all()
     Analysis_tool.analyze_all()
     print(Analysis_tool.df.columns)
