@@ -28,18 +28,7 @@ class RandVar():
         :return: _description_
         :rtype: _type_
         """        
-        # Required due to bug in code, put out an issue on scipy. This makes backwards compatibility is possible
-
-        if sp.stats._continuous_distns.pearson3_gen == type(self.best_fit):
-            res1 = self.best_fit.ppf(r, loc= self.loc, scale = self.scale, *self.arg)
-            res2 = self.best_fit.ppf(1 - r, loc= self.loc, scale = self.scale, *self.arg)
-            if  res2 > res1:
-                return res2
-            else:
-                return res1
-
-        res1 = self.best_fit.ppf(r, loc= self.loc, scale = self.scale, *self.arg)
-        return res1
+        return self.best_fit.ppf(r, loc= self.loc, scale = self.scale, *self.arg)
 
     def get_expectation(self):
         return self.best_fit.expect(args= self.arg, loc= self.loc, scale= self.scale, lb= self.min, ub=self.max)
