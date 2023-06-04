@@ -54,6 +54,7 @@ class npz_tool: #TODO come up with better names lol
     
     def pie_chart_energy(self):
         plt.clf()
+        plt.figure(figsize=(10,10))
         sizes = np.array(self.df["Energy_dist"][self.conv_lst])[-1]
         labels= ["Cruise", "Climb", "Descend", "Loiter cruise", "Loiter Hover"]
 
@@ -64,20 +65,26 @@ class npz_tool: #TODO come up with better names lol
         Eloit_cr_rv = self.df["Eloit_cr_rv"].to_numpy()[-1] # mission independent all samples have the same value
         Eloit_hov_rv = self.df["Eloit_hov_rv"].to_numpy()[-1]
 
-        
+        annotations = []
+        for i,phase in enumerate((Ecruise_rv, Eclimb_rv, Edesc_rv, Eloit_cr_rv, Eloit_hov_rv)):
+            std = phase.best_fit.std(*phase.arg, loc= phase.loc, scale= phase.scale)
+            annotations.append(f"{labels[i]} STD ={np.round(std/3.6e6,2)} [kWh]\n{labels[i]} 90th percentile ={np.round(phase.ppf(0.9)/3.6e6,2)} [kWh]")
 
-
-
+        # Plotting actual data
         plt.pie(sizes, labels =labels, autopct = '%1.1f%%', explode= [0.1,0.1,0.1,0.2,0.2], startangle= 90)
 
-        # Add annotations
-        for i, label in enumerate(labels):
-            angle = 90 + sum(sizes[:i])/sum(sizes)*360 + (sizes[i]*2)/(3*sum(sizes))*360
-            x = 1.2 * np.cos(np.radians(angle))
-            y = 1.2 * np.sin(np.radians(angle))
-            plt.annotate(label, (x, y), ha='center', va='center')
+        # Add annotations to the data
+        radii = [1.3, 1.4, 1.36, 1.37, 1.22]
+        deltax = [-0.19, 0.1, 0.1, 0.4, -0.40]
+        deltay = [-0.95, 0.1, -0.1, -0.15, 0]
+        for i, radius, annotation, dx, dy  in zip(list(range(len(radii))), radii,annotations, deltax, deltay):
+            angle = 90 + sum(sizes[:i])/sum(sizes)*360 + (sizes[i])/(sum(sizes))*360*1/3
+            x = radius*np.cos(np.radians(angle)) + dx
+            y = radius*np.sin(np.radians(angle)) + dy
+            # plt.annotate(annotation, (x, y), ha='center', va='center')
+            plt.text(x, y, annotation,   ha='center', va='center')
 
-        plt.suptitle(self.title)
+        # plt.suptitle(self.title)
         if self.save_bool:
             plt.savefig(os.path.join(self.download_path, self.id) + "_PieChart_" +  ".pdf", bbox_inches= "tight")
         else:
@@ -122,35 +129,38 @@ class npz_tool: #TODO come up with better names lol
 
 
         fig, axs = plt.subplots(2,2)
+        fig.set_figheight(8)
+        fig.set_figwidth(15)
         x1, pdf1, cdf1 = energy_rv.plt()  
-        axs[0,0].plot(x1/3.6e6, pdf1*3.6e6, "k-", label = "Total energy")
+        axs[0,0].plot(x1/3.6e6, pdf1*3.6e6, "-", label = "Total energy")
         axs[0,0].set_ylabel("PDF [-]")
         axs[0,0].set_xlabel("Energy [Kwh]")
         axs[0,0].grid(lw=0.8, alpha=0.8)
         axs[0,0].legend()
 
         x2, pdf2, cdf2 = time_rv.plt()  
-        axs[0,1].plot(x2, pdf2, "k-", label = "Time")
+        axs[0,1].plot(x2, pdf2, "-", label = "Time")
         axs[0,1].set_ylabel("PDF [-]")
         axs[0,1].set_xlabel("Time [s]")
         axs[0,1].legend()
         axs[0,1].grid(lw=0.8, alpha=0.8)
 
         x3, pdf3, cdf3 = power_rv.plt()
-        axs[1,0].plot(x3/1000, pdf3*1000,"k-", label = "Power")
+        axs[1,0].plot(x3/1000, pdf3*1000,"-", label = "Power")
         axs[1,0].set_xlabel("Power [Kw]")
         axs[1,0].set_ylabel("PDF [-]")
         axs[1,0].legend()
         axs[1,0].grid(lw=0.8, alpha=0.8)
 
         x5, pdf5, cdf5 = time_cruise_rv.plt()
-        axs[1,1].plot(x5, pdf5,"k-", label = "Time cruise")
+        axs[1,1].plot(x5, pdf5,"-", label = "Time cruise")
         axs[1,1].set_xlabel("Time [s]")
         axs[1,1].set_ylabel("PDF [-]")
         axs[1,1].legend()
         axs[1,1].grid(lw=0.8, alpha=0.8)
 
         fig.suptitle(self.title)
+        fig.tight_layout()
                    
         if self.save_bool:
             plt.savefig(os.path.join(self.download_path, self.id) + "_Perf_" +  ".pdf", bbox_inches= "tight")
@@ -171,21 +181,21 @@ class npz_tool: #TODO come up with better names lol
         fig.set_figwidth(15)
 
         x1, pdf1, cdf1 = Ecruise_rv.plt()  
-        axs[0,0].plot(x1/3.6e6, pdf1*3.6e6, color="k")
+        axs[0,0].plot(x1/3.6e6, pdf1*3.6e6)
         axs[0,0].set_title("Cruise")
         axs[0,0].set_xlabel("Energy [KwH]")
         axs[0,0].set_ylabel("PDF [-]")
         axs[0,0].grid(lw=0.8, alpha=0.8)
 
         x2, pdf2, cdf2 = Eclimb_rv.plt()  
-        axs[0,1].plot(x2/3.6e6, pdf2*3.6e6, color="k")
+        axs[0,1].plot(x2/3.6e6, pdf2*3.6e6)
         axs[0,1].set_title("Climb")
         axs[0,1].set_xlabel("Energy [KwH]")
         axs[0,1].set_ylabel("PDF [-]")
         axs[0,1].grid(lw=0.8, alpha=0.8)
 
         x3, pdf3, cdf3 = Edesc_rv.plt()
-        axs[1,0].plot(x3/3.6e6, pdf3*3.6e6, color="k")
+        axs[1,0].plot(x3/3.6e6, pdf3*3.6e6)
         axs[1,0].set_title("Descend")
         axs[1,0].set_xlabel("Energy [KwH]")
         axs[1,0].set_ylabel("PDF [-]")
@@ -199,13 +209,13 @@ class npz_tool: #TODO come up with better names lol
             raise Exception("The density computation of the histogram has failed")
 
         # axs[1,1].vlines(bin_edges[:-1], np.zeros(np.size(bin_edges) - 1), hist, "k")
-        axs[1,1].stairs(hist, bin_edges/3.6e6, fill= True, color= "lightgray", edgecolor ="k", lw= 2)
+        axs[1,1].stairs(hist, bin_edges, fill= True, color="lightsteelblue", edgecolor ="k", lw= 2)
         axs[1,1].set_title("Loiter cruise conf")
         axs[1,1].set_xlabel("Energy [KwH]")
         axs[1,1].set_ylabel("[-]")
         axs[1,1].grid(lw=0.8, alpha=0.8)
 
-        hist, edges, patches = axs[2,0].hist(Eloit_hov_rv.data/3.6e6, density= True, lw= 2, rwidth = 0.85, color= "lightgray", edgecolor="k")
+        hist, edges, patches = axs[2,0].hist(Eloit_hov_rv.data/3.6e6, density= True, lw= 2, rwidth = 0.85, color="lightsteelblue",  edgecolor="k")
         axs[2,0].set_ylim([0,1.1*np.max(hist[1:])])
         axs[2,0].set_title("Loiter hover conf")
         axs[2,0].set_xlabel("Energy [KwH]")
@@ -213,7 +223,7 @@ class npz_tool: #TODO come up with better names lol
         axs[2,0].grid(lw=0.8, alpha=0.8)
 
         x4, pdf4, cdf4 = energy_rv.plt()  
-        axs[2,1].plot(x1/3.6e6, pdf1*3.6e6, "k-", label = "Total energy")
+        axs[2,1].plot(x1/3.6e6, pdf1*3.6e6, "-", label = "Total energy")
         axs[2,1].set_ylabel("PDF [-]")
         axs[2,1].set_xlabel("Energy [Kwh]")
         axs[2,1].grid(lw=0.8, alpha=0.8)
