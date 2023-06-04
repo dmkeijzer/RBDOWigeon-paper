@@ -127,7 +127,7 @@ if __name__ == "__main__":
 
             # Run the file for # iterations
             logging.info("Performing the inner convergence loop")
-            N_iter = 12
+            N_iter = 10
             optim_outputs, internal_inputs, other_outputs, weight_loop_data= optimisation_class.multirun(N_iter, optim_inputs=[])
             logging.info("Inner convergence loop completed")
 
