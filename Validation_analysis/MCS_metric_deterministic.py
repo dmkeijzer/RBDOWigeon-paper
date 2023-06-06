@@ -4,6 +4,7 @@ import sys
 import pathlib as pl
 import os 
 import multiprocessing as mp
+import pickle
 
 sys.path.append(str(list(pl.Path(__file__).parents)[1]))
 
@@ -14,9 +15,9 @@ from Validation_analysis.rv_handler import RandVar
 
 file_baseline = r"C:\Users\damie\OneDrive\Desktop\Damien\Wigeon_proj\logs\valid_data\Baseline\Deterministic_Jun__1_22.00_hist.csv"
         
-mission = FP.mission(MTOM, h_cr, V_cr, CLmax, S_tot, tot_prop_area, P_max=max_power,
-                        Cl_alpha_curve=Cl_alpha_curve, CD_a_w=CD_a_w, CD_a_f=CD_a_f, alpha_lst=alpha_lst,
-                        Drag=drag, t_loiter=15*60, rotational_rate=5, mission_dist=const.mission_range, plot_monte_carlo=True)
+with open(r"C:\Users\damie\OneDrive\Desktop\Damien\Wigeon_proj\logs\Mission_class.pkl", "rb") as f:
+    mission = pickle.load(f)
+
 
 #-----------------------------Monte carlo energy estimation--------------------------------------
 
