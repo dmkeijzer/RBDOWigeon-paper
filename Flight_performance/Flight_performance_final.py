@@ -415,6 +415,7 @@ class mission:
         :rtype: _type_
         """        
         # Get the energy and distance needed to reach cruise
+        print("Opened agent")
 
         d_climb, E_climb, t_climb, P_m_to, T_m_to = self.numerical_simulation(vx_start=0.001, y_start=0,
                                                                             th_start=np.pi / 2, y_tgt=self.h_cruise,
