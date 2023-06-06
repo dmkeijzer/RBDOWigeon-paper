@@ -267,7 +267,9 @@ class npz_tool: #TODO come up with better names lol
 
         # Energy
         y4 = self.df["Energy"][self.conv_lst].to_numpy()
-        axs[0, 2].plot(y4/3.6e6, label=r'Energy' )
+        y5 = self.df["EnergyOptimizer"][self.conv_lst].to_numpy()
+        axs[0, 2].plot(y4/3.6e6, label=r'Energy $90^{th}$ percentile' )
+        axs[0, 2].plot(y5/3.6e6, linestyle="--",  label=r'E[Energy] + $\sigma$[Energy]' )
         axs[0, 2].set_xlabel(r"$n_{th}$ Converged design")
         axs[0, 2].set_ylabel(r'Energy [kWh]')
         axs[0, 2].legend()
@@ -338,19 +340,21 @@ class npz_tool: #TODO come up with better names lol
 
 if __name__ == "__main__":
 
-    runs = os.listdir(r"C:\Users\damie\OneDrive\Desktop\Damien\Wigeon_proj\logs\valid_data\Monte_Carlo")
+    # runs = os.listdir(r"C:\Users\damie\OneDrive\Desktop\Damien\Wigeon_proj\logs\valid_data\Monte_Carlo")
 
-    npz_lst = []
+    # npz_lst = []
 
-    for i in runs:
-        path = os.path.join(r"C:\Users\damie\OneDrive\Desktop\Damien\Wigeon_proj\logs\valid_data\Monte_Carlo", i)
-        for file in os.listdir(path):
-            if "npz" in file:
-                npz_lst.append(os.path.join(path, file))
+    # for i in runs:
+    #     path = os.path.join(r"C:\Users\damie\OneDrive\Desktop\Damien\Wigeon_proj\logs\valid_data\Monte_Carlo", i)
+    #     for file in os.listdir(path):
+    #         if "npz" in file:
+    #             npz_lst.append(os.path.join(path, file))
+
+    path = r"C:\Users\damie\OneDrive\Desktop\Damien\Wigeon_proj\logs\Monte_carlo_Jun_4_19.15_2023.npz"
 
         
-    print(f"file = {npz_lst[-1]}")
-    Analysis_tool = npz_tool(npz_lst[-1], True)
-    # Analysis_tool.analyze_all()
+    # print(f"file = {npz_lst[-1]}")
+    Analysis_tool = npz_tool(path ,True)
     Analysis_tool.analyze_all()
+    # Analysis_tool.analyze_all()
     print(Analysis_tool.df.columns)
