@@ -19,7 +19,7 @@ if __name__ == "__main__":
 
     file_baseline = r"C:\Users\damie\OneDrive\Desktop\Damien\Wigeon_proj\logs\valid_data\Baseline\Deterministic_Jun__1_22.00_hist.csv"
             
-    with open(r"C:\Users\damie\OneDrive\Desktop\Damien\Wigeon_proj\logs\Mission_class.pkl", "rb") as f:
+    with open(r"C:\Users\damie\OneDrive\Desktop\Damien\Wigeon_proj\logs\Mission_class_server.pkl", "rb") as f:
         mission_baseline = pickle.load(f)
 
     MTOM = mission_baseline.m
@@ -46,7 +46,7 @@ if __name__ == "__main__":
     conv_condition = True
     conv_metric_lst = []
     conv_target = 0.85 # Percentage difference allowed in std
-    n_iterations = 10 
+    n_iterations = 100 
     min_mission_dist = 100
 
     print("Entering convergence loop")
@@ -67,7 +67,7 @@ if __name__ == "__main__":
                                     1.4 * h_trans_stoch/mission.rod * stat.bernoulli.rvs(0.01, size= n_iterations)))
 
         with mp.Pool(os.cpu_count()) as p:
-            mission_res_chunk = p.starmap(mission.single_sample_monte_carlo, sim_samples)
+            mission_res_chunk = np.array(p.starmap(mission.single_sample_monte_carlo, sim_samples), dtype= object)
 
         mission_res = np.append(mission_res, mission_res_chunk, axis=0) # array [[x00, x01, x02, x03, x04, array[y00, y01, y02, y03, y04],
             #                                                                     x11, x11, x12, x13, x14, array[y10, y11, y12, y13, y14]] etc

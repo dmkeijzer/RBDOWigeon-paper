@@ -403,7 +403,7 @@ class RunDSE:
                                         1.4 * h_trans_stoch/mission.rod * stat.bernoulli.rvs(0.01, size= n_iterations)))
 
             with mp.Pool(os.cpu_count()) as p:
-                mission_res_chunk = np.array(p.starmap(mission.single_sample_monte_carlo, sim_samples))
+                mission_res_chunk = np.array(p.starmap(mission.single_sample_monte_carlo, sim_samples), dtype= object)
 
             mission_res = np.append(mission_res, mission_res_chunk, axis=0) # array [[x00, x01, x02, x03, x04, array[y00, y01, y02, y03, y04],
                 #                                                                     x11, x11, x12, x13, x14, array[y10, y11, y12, y13, y14]] etc
