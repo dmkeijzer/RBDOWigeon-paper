@@ -20,7 +20,7 @@ c_rot_2 = 0.25
 
 
 # General
-mission_range = 300e3       # [m] Mission range  TODO: Maybe add 50 km
+mission_range = 400e3       # [m] Mission range  TODO: Maybe add 50 km
 
 n_pax = 5                               # Number of passengers
 m_pax = 88                              # Max per pax

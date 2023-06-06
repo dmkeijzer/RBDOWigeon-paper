@@ -11,13 +11,30 @@ sys.path.append(str(list(pl.Path(__file__).parents)[1]))
 
 import Flight_performance.Flight_performance_final as FP
 from Validation_analysis.rv_handler import RandVar
+import Final_optimization.constants_final as const
 
 
 file_baseline = r"C:\Users\damie\OneDrive\Desktop\Damien\Wigeon_proj\logs\valid_data\Baseline\Deterministic_Jun__1_22.00_hist.csv"
         
 with open(r"C:\Users\damie\OneDrive\Desktop\Damien\Wigeon_proj\logs\Mission_class.pkl", "rb") as f:
-    mission = pickle.load(f)
+    mission_baseline = pickle.load(f)
 
+MTOM = mission_baseline.m
+h_cr = mission_baseline.h_cruise
+V_cr = mission_baseline.v_cruise
+CLmax= mission_baseline.CL_max
+S_tot = mission_baseline.S
+tot_prop_area = mission_baseline.A_disk
+max_power = mission_baseline.P_max
+Cl_alpha_curve = mission_baseline.Cl_alpha_curve
+CD_a_w = mission_baseline.CD_a_w
+CD_a_f = mission_baseline.CD_a_f
+alpha_lst = mission_baseline.alpha_lst
+drag = mission_baseline.Drag    
+
+mission = FP.mission(MTOM, h_cr, V_cr, CLmax, S_tot, tot_prop_area, P_max=max_power,
+                        Cl_alpha_curve=Cl_alpha_curve, CD_a_w=CD_a_w, CD_a_f=CD_a_f, alpha_lst=alpha_lst,
+                        Drag=drag, t_loiter=15*60, rotational_rate=5, mission_dist=const.mission_range, plot_monte_carlo=False)
 
 #-----------------------------Monte carlo energy estimation--------------------------------------
 
