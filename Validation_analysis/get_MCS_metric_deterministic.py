@@ -19,7 +19,7 @@ if __name__ == "__main__":
 
     file_baseline = r"C:\Users\damie\OneDrive\Desktop\Damien\Wigeon_proj\logs\valid_data\Baseline\Deterministic_Jun__1_22.00_hist.csv"
             
-    with open(r"C:\Users\damie\OneDrive\Desktop\Damien\Wigeon_proj\logs\Mission_class_server.pkl", "rb") as f:
+    with open(r"C:\Users\damie\OneDrive\Desktop\Damien\Wigeon_proj\logs\valid_data\Baseline\run_3_Jun7_00.55\Mission_class_07_June_00.55.pkl", "rb") as f:
         mission_baseline = pickle.load(f)
 
     MTOM = mission_baseline.m
@@ -40,6 +40,13 @@ if __name__ == "__main__":
                             Drag=drag, t_loiter=15*60, rotational_rate=5, mission_dist=const.mission_range, plot_monte_carlo=False)
 
     #-----------------------------Monte carlo energy estimation--------------------------------------
+
+    file_dir = os.path.join(os.path.dirname(__file__), "deterministic_mcs_metric_storage")
+    file_name = r"deterministic_mcs_metric.npy"
+
+    if not os.path.exists(file_dir):
+        raise Exception("Could not find the directory to write the file to")
+
 
     # Initalise
     mission_res = np.ones((2,6))
@@ -83,6 +90,8 @@ if __name__ == "__main__":
             pass
 
     mission_res = np.delete(mission_res, [0,1], axis= 0)
+    np.save(os.path.join(file_dir, file_name), mission_res)
+    print("Saved the results of the mission analysis successfully")
 
 
     #Create a fitting distribution for all stochastic variables
@@ -97,21 +106,13 @@ if __name__ == "__main__":
 
     with mp.Pool(os.cpu_count()) as p:
             Ecruise_rv, Eclimb_rv, Edesc_rv, Eloit_cr_rv, Eloit_hov_rv = p.map(RandVar, energy_dist_data)
+        
+    str_lst = ["energy_rv", "t_rv", "power_rv", "thrust_rv", "t_cr_rv", "Ecruise_rv", "Eclimb_rv", "Edesc_rv", "Eloit_cr_cv", "Eloit_hov_rv"]
+    obj_lst = [energy_rv, t_rv, power_rv, thrust_rv, t_cr_rv, Ecruise_rv, Eclimb_rv, Edesc_rv, Eloit_cr_rv, Eloit_hov_rv]
 
+    for name, obj in zip(str_lst, obj_lst):
+        with open(os.path.join(file_dir, name + ".pkl" ), "wb") as f:
+            pickle.dump(obj, f)
+        print(f"Saved the results {name} successfully")
+        
 
-    # Turning stochastic variables into deterministic values by means of a confidence interval 
-
-    x, pdf, cdf = energy_rv.plt()
-
-    plt.plot(x/3.6e6,pdf)
-    plt.show()
-
-    # c_i = 0.9 # confidence interval
-
-    # energy_wc =  energy_rv.ppf(c_i)
-    # energy_optimizer = energy_rv.get_expectation() + energy_rv.get_std()
-    # t_tot = t_rv.ppf(c_i)
-    # P_max_eng_mission  = power_rv.ppf(c_i)
-    # max_thrust = thrust_rv.ppf(c_i)
-    # t_hor = t_cr_rv.ppf(c_i)
-    # energy_pie_chart_distr  = [Ecruise_rv.ppf(c_i), Eclimb_rv.ppf(c_i), Edesc_rv.ppf(c_i), Eloit_cr_rv.ppf(c_i), Eloit_hov_rv.ppf(c_i)]
