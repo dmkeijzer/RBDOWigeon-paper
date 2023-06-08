@@ -45,5 +45,3 @@ def determinisic_energy_pdf_cdf_plot(save_bool, return_data = False):
     else:
         plt.show()
 
-
-determinisic_energy_pdf_cdf_plot(True)
