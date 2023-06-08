@@ -2,9 +2,10 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 import os
+import seaborn as sns
 
 
-file_path = r"C:\Users\damie\OneDrive\Desktop\Damien\Wigeon_proj\logs\valid_data\Baseline\Deterministic_Jun__1_22.00_hist.csv"
+file_path = r"C:\Users\damie\OneDrive\Desktop\Damien\Wigeon_proj\logs\valid_data\Baseline\run_3_Jun7_00.55\Deterministic_Jun__7_00.55_hist.csv"
 download_path = os.path.join(os.path.expanduser("~"), "Downloads")
 
 
@@ -145,5 +146,45 @@ def plot_energy_phases(save_bool):
     else:
         plt.show()
 
+def plot_pie_chart_energy(save_bool):
+    plt.clf()
+    plt.figure(figsize=(10,10))
+    sns.set(style="white")
+
+    # Retrieving required data and creating annotations
+    Ecruise = data_csv["E_cruise"].to_numpy()[-1]
+    Eclimb = data_csv["E_climb"].to_numpy()[-1]
+    Edesc = data_csv["E_desc"].to_numpy()[-1]
+    Eloit_cr = data_csv["E_loiter"].to_numpy()[-1] # mission independent all samples have the same value
+
+    energy_lst = [Ecruise, Eclimb, Edesc, Eloit_cr]
+
+    labels= ["Cruise", "Climb", "Descend", "Loiter cruise"]
+    annotations = []
+    for i, energy in enumerate(energy_lst):
+        annotations.append(f"{labels[i]} Energy ={np.round(energy/3.6e6,2)} [kWh]")
+
+    # Plotting actual data
+    plt.pie(energy_lst, autopct = '%1.1f%%', explode= [0.1,0.1,0.1,0.2], startangle= 90)
+
+    # Add annotations to the data
+    radii = [1.3, 1.4, 1.36, 1.37]
+    deltax = [-0.19, 0.2, 0.1, 0.21]
+    deltay = [-0.05, -0.2, -0.1, -0.05]
+    for i, radius, annotation, dx, dy  in zip(list(range(len(radii))), radii,annotations, deltax, deltay):
+        angle = 90 + sum(energy_lst[:i])/sum(energy_lst)*360 + (energy_lst[i])/(sum(energy_lst))*360*1/2
+        x = radius*np.cos(np.radians(angle)) + dx
+        y = radius*np.sin(np.radians(angle)) + dy
+        # plt.annotate(annotation, (x, y), ha='center', va='center')
+        plt.text(x, y, annotation,   ha='center', va='center')
+
+    # plt.suptitle(title)
+    if save_bool:
+        plt.savefig(os.path.join(download_path, "Deterministic") + "_PieChart_" +  ".pdf", bbox_inches= "tight")
+    else:
+        plt.show()
+
 plot_design_params(True)
 plot_energy_phases(True)
+plot_pie_chart_energy(True)
+

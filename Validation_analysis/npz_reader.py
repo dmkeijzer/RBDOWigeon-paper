@@ -35,6 +35,13 @@ class npz_tool: #TODO come up with better names lol
         self.title = "MCS Based Mission"
         # self.title = ""
         self.download_path = os.path.join(os.path.expanduser("~"), "Downloads")
+        self.robust =  True
+
+        try: 
+            df["EnergyOptimizer"]
+        except KeyError:
+            self.robust = False
+
         sns.set(style="white")
 
 
@@ -95,10 +102,14 @@ class npz_tool: #TODO come up with better names lol
         else:
             plt.show()
 
-    def energy_pdf_cdf_plot(self, n= -1):
+    def energy_pdf_cdf_plot(self, n= -1, return_data= False):
 
         dist = self.df["Energy_rv"][self.conv_lst].to_numpy()[n]
         x, pdf, cdf = dist.plt()
+
+        if return_data:
+            return x, pdf, cdf, dist
+
 
         plt.clf()
         plt.figure(figsize=(10,6))
@@ -267,9 +278,12 @@ class npz_tool: #TODO come up with better names lol
 
         # Energy
         y4 = self.df["Energy"][self.conv_lst].to_numpy()
-        y5 = self.df["EnergyOptimizer"][self.conv_lst].to_numpy()
+
+        if self.robust:
+            y5 = self.df["EnergyOptimizer"][self.conv_lst].to_numpy()
+            axs[0, 2].plot(y5/3.6e6, linestyle="--",  label=r'E[Energy] + $\sigma$[Energy]' )
+
         axs[0, 2].plot(y4/3.6e6, label=r'Energy $90^{th}$ percentile' )
-        axs[0, 2].plot(y5/3.6e6, linestyle="--",  label=r'E[Energy] + $\sigma$[Energy]' )
         axs[0, 2].set_xlabel(r"$n_{th}$ Converged design")
         axs[0, 2].set_ylabel(r'Energy [kWh]')
         axs[0, 2].legend()
