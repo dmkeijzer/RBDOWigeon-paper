@@ -65,11 +65,11 @@ class npz_tool: #TODO come up with better names lol
         sizes = np.array(self.df["Energy_dist"][self.conv_lst])[-1]
 
         # Retrieving required data and creating annotations
-        Ecruise_rv = self.df["Ecruise_rv"].to_numpy()[-1]
-        Eclimb_rv = self.df["Eclimb_rv"].to_numpy()[-1]
-        Edesc_rv = self.df["Edesc_rv"].to_numpy()[-1]
-        Eloit_cr_rv = self.df["Eloit_cr_rv"].to_numpy()[-1] # mission independent all samples have the same value
-        Eloit_hov_rv = self.df["Eloit_hov_rv"].to_numpy()[-1]
+        Ecruise_rv = self.df["Ecruise_rv"][self.conv_lst].to_numpy()[-1]
+        Eclimb_rv = self.df["Eclimb_rv"][self.conv_lst].to_numpy()[-1]
+        Edesc_rv = self.df["Edesc_rv"][self.conv_lst].to_numpy()[-1]
+        Eloit_cr_rv = self.df["Eloit_cr_rv"][self.conv_lst].to_numpy()[-1] # mission independent all samples have the same value
+        Eloit_hov_rv = self.df["Eloit_hov_rv"][self.conv_lst].to_numpy()[-1]
         lst = [Ecruise_rv, Eclimb_rv, Edesc_rv, Eloit_cr_rv, Eloit_hov_rv]
 
         sizes =  [i.get_expectation() for i in lst ]
@@ -365,6 +365,7 @@ if __name__ == "__main__":
     #             npz_lst.append(os.path.join(path, file))
 
     path = r"C:\Users\damie\OneDrive\Desktop\Damien\Wigeon_proj\logs\Monte_carlo_Jun_4_19.15_2023.npz"
+    path2 = r"C:\Users\damie\OneDrive\Desktop\Damien\Wigeon_proj\logs\valid_data\Monte_Carlo\run_8_Mar_15_16.17\Monte_carlo_Mar_15_16.17_2023.npz"
 
         
     # print(f"file = {npz_lst[-1]}")

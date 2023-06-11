@@ -18,6 +18,7 @@ import Final_optimization.constants_final as const
 if __name__ == "__main__":
 
     pickle_path = os.path.join(os.path.dirname(__file__), "Mission_class_07_June_00.55.pkl")
+    pickle_path = r"C:\Users\damie\OneDrive\Desktop\Damien\Wigeon_proj\logs\valid_data\Baseline\run_3_Jun7_00.55\Mission_class_07_June_00.55.pkl"
 
     if not os.path.exists(pickle_path):
         raise Exception("Could not find pickle path")
