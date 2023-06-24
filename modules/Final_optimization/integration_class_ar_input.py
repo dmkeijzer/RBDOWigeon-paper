@@ -682,7 +682,10 @@ class RunDSE:
                        ["span1", b1],
                        ["span2", b2],
                        ["nmax", 3.2],  # maximum load factor
-                       ["Pmax", Pmax_weight],
+                    #    ["Pmax", Pmax_weight],
+# with open(r"output/structures/wingbox_output.pkl", "wb") as f:
+#     pickle.dump(res, f)
+#     print("Succesfully loaded data structure into wingbox_output.pkl")
                        # this is defined as maximum perimeter in Roskam, so i took top down view of the fuselage perimeter
                        ["lf", l_fus],  # length of fuselage
                        ["m_pax", const.m_pax],  # average mass of a passenger according to Google

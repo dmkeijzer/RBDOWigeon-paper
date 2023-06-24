@@ -43,7 +43,7 @@ def plot_pdf_cdf():
     plt.ylabel("PDF [-]")
     plt.grid(lw= 0.8, alpha= 0.8)
     plt.legend()
-    plt.suptitle("MCS vs Deterministic")
+    # plt.suptitle("MCS vs Deterministic")
 
     plt.savefig(os.path.join(download_path, file_name) + "_Pdf_" +  ".pdf", bbox_inches= "tight")
 
@@ -63,7 +63,8 @@ def plot_pdf_cdf():
 
 
 def compare_weights():
-    robust_path = r"C:\Users\damie\OneDrive\Desktop\Damien\Wigeon_proj\logs\Monte_carlo_Jun_4_19.15_2023.npz"
+    # robust_path = r"C:\Users\damie\OneDrive\Desktop\Damien\Wigeon_proj\logs\Monte_carlo_Jun_4_19.15_2023.npz"
+    robust_path = r"C:\Users\damie\OneDrive\Desktop\Damien\Wigeon_proj\logs\valid_data\Monte_Carlo\run_8_Mar_15_16.17\Monte_carlo_Mar_15_16.17_2023.npz"
     deter_path= r"C:\Users\damie\OneDrive\Desktop\Damien\Wigeon_proj\logs\valid_data\Baseline\run_3_Jun7_00.55\Deterministic_Jun__7_00.55_hist.csv"
     download_path = os.path.join(os.path.expanduser("~"), "Downloads")
 
@@ -116,6 +117,33 @@ def compare_weights():
     #Make list of componetns
     comp_deter= [wing_deter.wweight1, wing_deter.wweight2, vtail_deter, m_bat_deter, fuse_deter.mass, powertrain_deter]
     comp_robust = [wing_robust.wweight1, wing_robust.wweight2, vtail_robust, m_bat_robust, fuse_robust.mass, powertrain_robust]
+    str_lst = ["Wing 1", "Wing 2", r"$V_{tail}$", "Battery", "Fuselage", "Powertrain"]
+
+        # Create subplots with 1 row and 2 columns
+    fig, axes = plt.subplots(1, 2)
+    fig.set_figheight(8)
+    fig.set_figwidth(8)
+
+    # Plot the first pie chart on the first subplot
+    axes[0].pie(comp_deter, labels=str_lst, autopct='%1.1f%%', startangle=90)
+    axes[0].set_title('Deterministic Design Weight Distribution')
+
+    # Plot the second pie chart on the second subplot
+    axes[1].pie(comp_robust, labels=str_lst, autopct='%1.1f%%', startangle=90)
+    axes[1].set_title('RBDO Design Weight Distribution')
+
+    # Adjust the spacing between subplots
+    plt.subplots_adjust(wspace=0.4)
+
+    # Display the figure
+    download_path = os.path.join(os.path.expanduser("~"), "Downloads")
+    fig.tight_layout()
+    plt.savefig(os.path.join(download_path,  "weight_pie_chart.pdf") , bbox_inches= "tight")
+    # plt.show()
 
 
-compare_weights()
+    return comp_deter, comp_robust
+
+
+print(compare_weights())
+# plot_pdf_cdf()

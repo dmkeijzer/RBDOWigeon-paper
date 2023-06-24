@@ -10,4 +10,4 @@ def fus_drag(Re, M, S_n, S_c, S_t, S):
     return (K_n*S_n + K_c*S_c + K_t*S_t)*CDfp*(1/S)
 
 
-print(fus_drag(50507738, 0.208, 6.43974,24.8657, 9.2226, 17))
+# print(fus_drag(50507738, 0.208, 6.43974,24.8657, 9.2226, 17))
