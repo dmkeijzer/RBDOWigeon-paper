@@ -1,12 +1,15 @@
 
+import logging
+import pathlib as pl
 import sys
 import os
-import logging
-sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+
+sys.path.append(str(list(pl.Path(__file__).parents)[1]))
+os.chdir(str(list(pl.Path(__file__).parents)[1]))
 
 import numpy as np
 from matplotlib import pyplot as plt
-import Final_optimization.constants_final as const
+import input.constants_final as const
 
 class LandingGearCalc:
     """

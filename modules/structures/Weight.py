@@ -1,11 +1,13 @@
 """ New weight estimation file """
-import sys
 import numpy as np
+import pathlib as pl
+import sys
 import os
 
-sys.path.append(os.path.join(os.path.dirname(os.path.dirname(__file__)), "Final_optimization"))
+sys.path.append(str(list(pl.Path(__file__).parents)[1]))
+os.chdir(str(list(pl.Path(__file__).parents)[1]))
 
-import constants_final as const
+import input.constants_final as const
 
 # from Final_optimization import constants_final as const
 class Vtail:

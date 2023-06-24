@@ -1,7 +1,14 @@
 import numpy as np
 from math import *
-from Preliminary_Lift.Airfoil_analysis import Cd
-from Preliminary_Lift.Wing_design import winglet_dAR, winglet_factor
+import pathlib as pl
+import sys
+import os
+
+sys.path.append(str(list(pl.Path(__file__).parents)[1]))
+os.chdir(str(list(pl.Path(__file__).parents)[1]))
+
+from modules.Preliminary_Lift.Airfoil_analysis import Cd
+from modules.Preliminary_Lift.Wing_design import winglet_dAR, winglet_factor
 import matplotlib.pyplot as plt
 from scipy.interpolate import interp1d
 #

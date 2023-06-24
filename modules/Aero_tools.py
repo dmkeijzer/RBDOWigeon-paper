@@ -1,7 +1,14 @@
 import numpy as np
-from constants import*
+import pathlib as pl
+import sys
+import os
+
+sys.path.append(str(list(pl.Path(__file__).parents)[1]))
+os.chdir(str(list(pl.Path(__file__).parents)[1]))
+
+from input.constants import*
 import warnings
-import Preliminary_Lift.Drag
+import modules.Preliminary_Lift.Drag
 
 class ISA:
     """

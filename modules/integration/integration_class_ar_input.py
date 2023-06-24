@@ -5,22 +5,18 @@ import multiprocessing as mp
 import pathlib as pl
 
 
-# filename =  time.asctime().split()[1:]
-# filename[2] = filename[2][:-3]
-# filename =  "_".join(filename).replace(":", ".")
-
 sys.path.append(str(list(pl.Path(__file__).parents)[1]))
-sys.path.append(os.path.join(str(list(pl.Path(__file__).parents)[1]), "Validation_analysis"))
+os.chdir(str(list(pl.Path(__file__).parents)[1]))
 
 import time as tm
 import numpy as np
 import pandas as pd
 import Aero_tools as at
-import constants_final as const
+import input.constants_final as const
 import scipy.stats as stat
 import matplotlib.pyplot as plt
 from pdffit import distfit as pf
-from rv_handler import RandVar
+from modules.MCS.rv_handler import RandVar
 #Updating safetly limit for maximum amount of cores used
 
 os.environ["NUMEXPR_MAX_THREADS"] = "64"

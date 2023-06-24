@@ -10,13 +10,20 @@ Beihang Universty, Beijing, China
 """
 
 import numpy as np
+import pathlib as pl
+import sys
+import os
+
+sys.path.append(str(list(pl.Path(__file__).parents)[1]))
+os.chdir(str(list(pl.Path(__file__).parents)[1]))
+
 from scipy.linalg import null_space
 from matplotlib import pyplot as plt
 from matplotlib import colors as mc
 import colorsys
 from dataclasses import dataclass
 from itertools import combinations
-import constants as consts
+import input.constants as consts
 
 # numbers of states and control variables
 # Hard-coded because they would not make sense as arguments

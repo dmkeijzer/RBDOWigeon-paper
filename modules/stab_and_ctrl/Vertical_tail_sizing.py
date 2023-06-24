@@ -4,11 +4,19 @@ Vertical tail sizing. Class VT_sizing allows for sizing and plotting of the vert
 Author: Michal Cuadrat-Grzybowski
 """
 import numpy as np
+import pathlib as pl
+import sys
+import os
+
+sys.path.append(str(list(pl.Path(__file__).parents)[1]))
+os.chdir(str(list(pl.Path(__file__).parents)[1]))
+
 from scipy.linalg import null_space
 from matplotlib import pyplot as plt
 from matplotlib import colors as mc
 from Aero_tools import ISA
-from Final_optimization import constants_final as const
+import input.constants_final as const
+
 class VT_sizing:
     def __init__(self,W,h,xcg,lfus,hfus,wfus,V0,Vstall,CD0,CLfwd,CLrear,
                  CLafwd,CLarear,Sfwd,Srear,Afwd,Arear,Lambda_c4_fwd,Lambda_c4_rear,cfwd,crear,bfwd,brear,taper,ARv,sweepTE):

@@ -5,12 +5,20 @@ import os
 import numpy as np
 import pandas as pd
 import pathlib as pl
+import sys
+import os
+
+sys.path.append(str(list(pl.Path(__file__).parents)[1]))
+os.chdir(str(list(pl.Path(__file__).parents)[1]))
+
 #from stab_and_ctrl.xcg_limits import xf, xr, zf, zr, xcg_range, Arange, bmax, crmaxf, crmaxr
-import constants_final as const
-import integration_class_ar_input as int_class
+
+import modules.integration.integration_class_ar_input as int_class
+import input.constants_final as const
 
 
 
+# Required to protect it from being run by the the multiprocessing pool agents
 if __name__ == "__main__":
 
     #Setting up the log configuration

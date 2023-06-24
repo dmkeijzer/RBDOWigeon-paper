@@ -1,12 +1,18 @@
 import logging
 import numpy as np
 import matplotlib.pyplot as plt
-from Aero_tools import ISA, speeds
 import scipy.interpolate as interpolate
 import time
 import os
-from constants import g, eff_hover, eff_prop
+import sys
+import pathlib as pl
+
+sys.path.append(str(list(pl.Path(__file__).parents)[2]))
+os.chdir(str(list(pl.Path(__file__).parents)[2]))
+
+from input.constants import g, eff_hover, eff_prop
 import scipy.optimize as optimize
+from modules.Aero_tools import ISA, speeds
 import scipy.stats as stat
 from math import pi
 
