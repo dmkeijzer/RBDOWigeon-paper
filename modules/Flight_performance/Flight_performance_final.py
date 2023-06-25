@@ -17,30 +17,11 @@ import scipy.stats as stat
 from math import pi
 
 
-# TODO: Remove this import in the integrated program, make sure aerodynamics is called first and the variables have the
-# same names
-#from Preliminary_Lift.main_aero import Cl_alpha_curve, CD_a_w, CD_a_f, alpha_lst, Drag
-# plt.rcParams["figure.figsize"] = (5, 4)
 
 class mission:
-    """
-    This class simulates the take-off and landing af a tilt-wing eVTOL. Hover, transition and horizontal flight are
-    all considered together, no distinction is made between the phases up to and after cruise.
-
-    !!!!! THIS FILE STILL CONTAINS PLACEHOLDER VALUES TO TEST ITS FUNCTIONALITY. REMOVE BEFORE OPTIMIZING DESIGNS !!!!!
-    TODO:
-        - Add energy estimation
-        - Add aerodynamic data  (Lift and drag curves)
-        - Add propulsion data   (Thrust-to-power, max thrust)
-        - Cruise performance
-        - Descend performance
-        - Add optimum speeds part
-        - Efficiencies
-    """
-
     def __init__(self, mass, cruising_alt, cruise_speed, CL_max, wing_surface, A_disk, P_max,
                  Cl_alpha_curve, CD_a_w, CD_a_f, alpha_lst, Drag,
-                 t_loiter=15 * 60, rotational_rate=5, roc=5, rod=4, mission_dist=300e3, plotting=False, plot_monte_carlo= False):
+                 t_loiter=15 * 60, rotational_rate=5, roc=5, rod=4, plotting=False, plot_monte_carlo= False):
 
         """
         :param mass:            [kg]    Aircraft mass
@@ -55,7 +36,6 @@ class mission:
         """
 
         # Temporary placeholders, REMOVE BEFORE RUNNING OPTIMIZATION
-        self.mission_dist = mission_dist
         self.m = mass
         self.S = wing_surface
         self.max_rot = np.radians(rotational_rate)

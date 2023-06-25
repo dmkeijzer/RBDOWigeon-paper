@@ -22,6 +22,10 @@ c_rot_2 = 0.25
 # General
 mission_range = 400e3       # [m] Mission range  TODO: Maybe add 50 km
 
+# MCS
+minimum_dist = 100e3
+confidence_interval = 0.9
+
 n_pax = 5                               # Number of passengers
 m_pax = 88                              # Max per pax
 m_cargo_per_pax = 7                     # [kg] Cargo mass per pax
@@ -62,6 +66,11 @@ dihedral1 = np.deg2rad(-0.5)    # Dihedral front wing. Old 5
 dihedral2 = np.deg2rad(-4)      # Dihedral back wing. Old 0
 i1 = 0                          # Trim angle of the front wing TODO if used deg or rad?
 
+
+# Peformance
+rod = 4
+roc = 5
+
 # Propulsion
 xi_0 = 0.1         # Dimensionless radius of the hub (r_hub/R)
 c_fp = 0.3         # [m] Horizontal clearance between the widest part of the fuselage and the radius of the inboard prop
@@ -74,7 +83,7 @@ sp_mass_en = 1/5000     # [kg/W]
 
 n_prop_1 = 6                # number of propellers on the front wing
 n_prop_2 = 6                # number of propellers on the rear wing
-n_prop = n_prop_1+n_prop_2  # Total number of propellers
+n_prop = n_prop_1 + n_prop_2  # Total number of propellers
 
 # Power
 sp_en_den = 500          # [Wh/kg] Specific energy density
