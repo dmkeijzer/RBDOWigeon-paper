@@ -4,6 +4,7 @@ import sys
 import os
 import pathlib as pl
 import multiprocessing as mp
+import pdb
 
 sys.path.append(str(list(pl.Path(__file__).parents)[2]))
 os.chdir(str(list(pl.Path(__file__).parents)[2]))
@@ -28,7 +29,7 @@ def sample_mission_data(chunksize):
     return sim_samples
 
 
-def get_mcs_results(MissionClass, conv_target, chunksize= 100):
+def get_mcs_results(MissionClass, conv_target, chunksize= 100, test= False):
 
     # Initalise
     mission_res = []
@@ -43,12 +44,14 @@ def get_mcs_results(MissionClass, conv_target, chunksize= 100):
         sample_history.append(sim_samples)
 
         with mp.Pool(os.cpu_count()) as p:
-            mission_res_chunk = np.array(p.starmap(MissionClass.single_sample_monte_carlo, sim_samples), dtype= object)
+            mission_res_chunk = p.starmap(MissionClass.single_sample_monte_carlo, sim_samples)
 
         mission_res.append(mission_res_chunk)  # array [[x00, x01, x02, x03, x04, array[y00, y01, y02, y03, y04],
             #                                                                     x11, x11, x12, x13, x14, array[y10, y11, y12, y13, y14]] etc
-        conv_metric_lst.append(np.std(mission_res[:,0]))
+        conv_metric_lst.append(np.std([i[0] for i in mission_res_chunk]))
 
+        if test:
+            conv_condition = False
         try:
             print(f"Delta Q = {np.absolute(conv_metric_lst[-2] - conv_metric_lst[-1])} ")
             if np.absolute((conv_metric_lst[-2] - conv_metric_lst[-1])/conv_metric_lst[-2]*100 ) < conv_target and np.absolute((conv_metric_lst[-2] - conv_metric_lst[-3])/conv_metric_lst[-3]*100 )  < conv_target:
@@ -56,10 +59,10 @@ def get_mcs_results(MissionClass, conv_target, chunksize= 100):
         except IndexError:
             pass
 
-    mission_res = np.vstack(mission_res)
-    sample_history = np.vstack(sample_history)
+    mission_res = np.reshape(np.array(mission_res, dtype= object), (12,6))
+    sample_history = np.reshape(np.array(sample_history, dtype  = object), (12,5))
 
-    return mission_res, sample_history
+    return mission_res, sample_history, conv_metric_lst
 
 def get_performance_data(mission_res):
     data = [i.flatten() for i in np.hsplit(mission_res[:,:-1], 5)]
@@ -69,11 +72,13 @@ def get_performance_data(mission_res):
 
     return energy_rv, t_rv, power_rv, thrust_rv, t_cr_rv
 
-def get_energy_distr():
-    data = [i.flatten() for i in np.hsplit(np.vstack(mission_res[:, -1]), 5)]
+def get_energy_distr(mission_res):
 
+    data = [i.flatten() for i in np.hsplit(np.vstack(mission_res[:, -1]), 5)]
     with mp.Pool(os.cpu_count()) as p:
             Ecruise_rv, Eclimb_rv, Edesc_rv, Eloit_cr_rv, Eloit_hov_rv = p.map(RandVar, data)
+        
+    return  Ecruise_rv, Eclimb_rv, Edesc_rv, Eloit_cr_rv, Eloit_hov_rv
 
 
 
