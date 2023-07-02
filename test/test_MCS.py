@@ -31,10 +31,12 @@ def test_sampling():
     samples = mcs.sample_mission_data(400)
     print(samples)
 
-    assert samples.shape == (400,5)
+    assert samples.shape == (400,6)
     assert (samples[:,0] > const.minimum_dist).all()
     assert (samples[:,0] < const.mission_range*1.1).all() 
     assert (samples[:,4] != 0).any()
+    assert (samples[:,5] > 300).all()
+    assert (samples[:,5] < 1000).all()
 
 def test_get_mcs_results():
 
@@ -42,7 +44,6 @@ def test_get_mcs_results():
         MissionClass = pickle.load(f)
 
     MTOM = MissionClass.m
-    h_cr = MissionClass.h_cruise
     V_cr = MissionClass.v_cruise
     CLmax= MissionClass.CL_max
     S_tot = MissionClass.S
@@ -54,13 +55,17 @@ def test_get_mcs_results():
     alpha_lst = MissionClass.alpha_lst
     drag = MissionClass.Drag    
 
-    mission_test = mission(MTOM, h_cr, V_cr, CLmax, S_tot, tot_prop_area, P_max=max_power,
+    mission_test = mission(MTOM, V_cr, CLmax, S_tot, tot_prop_area, P_max=max_power,
                             Cl_alpha_curve=Cl_alpha_curve, CD_a_w=CD_a_w, CD_a_f=CD_a_f, alpha_lst=alpha_lst,
                             Drag=drag, t_loiter=15*60, rotational_rate=5, plot_monte_carlo=False)
 
     results, sample_history, conver_hist = mcs.get_mcs_results(mission_test, 0.7, chunksize=12, test= True)
     assert results.shape == (12, 6)
-    assert sample_history.shape == (12, 5)
+    assert (results[:,0]/3.6e6 > 50).all()
+    assert (results[:,0]/3.6e6 < 200).all()
+    assert sample_history.shape == (12, 6)
+    assert (sample_history[:,-1] > 300).all()
+    assert (sample_history[:,-1] < 1000).all()
     assert len(conver_hist) != 0 
     print(results)
 

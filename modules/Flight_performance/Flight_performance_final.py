@@ -19,7 +19,7 @@ from math import pi
 
 
 class mission:
-    def __init__(self, mass, cruising_alt, cruise_speed, CL_max, wing_surface, A_disk, P_max,
+    def __init__(self, mass, cruise_speed, CL_max, wing_surface, A_disk, P_max,
                  Cl_alpha_curve, CD_a_w, CD_a_f, alpha_lst, Drag,
                  t_loiter=15 * 60, rotational_rate=5, roc=5, rod=4, plotting=False, plot_monte_carlo= False):
 
@@ -54,7 +54,6 @@ class mission:
         self.roc = roc
         self.rod = rod
 
-        self.h_cruise = cruising_alt
         self.v_cruise = cruise_speed
         self.t_loiter = t_loiter
 
@@ -392,11 +391,22 @@ class mission:
 
         return P, D_cruise
 
-    def single_sample_monte_carlo(self, d_total, t_loit_cruise, h_trans, h_loiter_cruise, t_loit_hover):
-        """Computes the total energy of the flight in Joules
+    def single_sample_monte_carlo(self, d_total, t_loit_cruise, h_trans, h_loiter_cruise, t_loit_hover, h_cruise):
+        """ Processes a single mission samples which consists out of cruise distance, loitering time in both cruise
+        and hovering configuration, transition height, loitering altitude, time spent in loitering and lastly cruise altitude
 
-        :param simplified: If chosen, uses a simplified estimation of the energy, defaults to False
-        :type simplified: bool, optional
+        :param d_total: Total distance traveled
+        :type d_total: float
+        :param t_loit_cruise: _description_
+        :type t_loit_cruise: _type_
+        :param h_trans: _description_
+        :type h_trans: _type_
+        :param h_loiter_cruise: _description_
+        :type h_loiter_cruise: _type_
+        :param t_loit_hover: _description_
+        :type t_loit_hover: _type_
+        :param h_cruise: _description_
+        :type h_cruise: _type_
         :return: _description_
         :rtype: _type_
         """        
@@ -404,13 +414,13 @@ class mission:
         print("Opened agent")
 
         d_climb, E_climb, t_climb, P_m_to, T_m_to = self.numerical_simulation(vx_start=0.001, y_start=0,
-                                                                            th_start=np.pi / 2, y_tgt=self.h_cruise,
+                                                                            th_start=np.pi / 2, y_tgt= h_cruise,
                                                                             vx_tgt=self.v_cruise, h_trans= h_trans)
 
         
         # Get the energy and distance needed to descend
         d_desc, E_desc, t_desc, P_m_la, T_m_la = self.numerical_simulation(vx_start=self.v_cruise,
-                                                                        y_start=self.h_cruise,
+                                                                        y_start=h_cruise,
                                                                         th_start = np.radians(5), y_tgt=0, vx_tgt=0, h_trans= h_trans)
         
         # Distance spent in cruise
@@ -424,10 +434,10 @@ class mission:
         t_cruise = d_cruise / self.v_cruise
 
         # Get the brake power used in cruise
-        P_cruise, D_cruise = self.power_cruise_config(self.h_cruise, self.v_cruise, self.m)  # + self.P_systems
+        P_cruise, D_cruise = self.power_cruise_config(h_cruise, self.v_cruise, self.m)  # + self.P_systems
 
 
-        V = speeds(altitude=self.h_cruise, m=self.m, CLmax=self.CL_max, S=self.S, componentdrag_object=self.Drag)
+        V = speeds(altitude=h_cruise, m=self.m, CLmax=self.CL_max, S=self.S, componentdrag_object=self.Drag)
 
         # Loiter power
         V_loit = V.endurance()

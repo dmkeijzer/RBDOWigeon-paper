@@ -25,7 +25,9 @@ def sample_mission_data(chunksize):
                                 stat.uniform.rvs(scale=600, size= chunksize) ,
                                 h_trans_stoch ,
                                 1.2 * h_trans_stoch , 
-                                1.4 * h_trans_stoch/const.rod * stat.bernoulli.rvs(0.01, size= chunksize)))
+                                1.4 * h_trans_stoch/const.rod * stat.bernoulli.rvs(0.01, size= chunksize),
+                                stat.uniform.rvs(loc= 300, scale=700, size= chunksize) 
+                                ))
     return sim_samples
 
 
@@ -60,7 +62,7 @@ def get_mcs_results(MissionClass, conv_target, chunksize= 100, test= False):
             pass
 
     mission_res = np.reshape(np.array(mission_res, dtype= object), (12,6))
-    sample_history = np.reshape(np.array(sample_history, dtype  = object), (12,5))
+    sample_history = np.reshape(np.array(sample_history, dtype  = object), (12,6))
 
     return mission_res, sample_history, conv_metric_lst
 

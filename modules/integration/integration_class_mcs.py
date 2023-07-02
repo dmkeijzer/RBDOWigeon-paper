@@ -43,6 +43,9 @@ from stab_and_ctrl.xcg_limits import Cma, deps_da_empirical, xcg_ctrl
 # Structures
 import structures.Weight as wei
 
+# MCS
+import modules.MCS.mcs_handling as mcs
+
 # Constants from constants.py
 g0 = const.g
 rho0 = const.rho_0
@@ -375,64 +378,9 @@ class RunDSE:
 
         #-----------------------------Monte carlo energy estimation--------------------------------------
 
-        # Initalise
-        mission_res = np.ones((2,6))
-        conv_condition = True
-        conv_metric_lst = []
-        conv_target = 0.85 # Percentage difference allowed in std
-        n_iterations = 100 
-        min_mission_dist = 100
-
-        # Convergence loop
-        while conv_condition:
-            h_trans_stoch = stat.halfnorm.rvs(loc=95, scale=50, size= n_iterations)
-            dist_samples = np.array(stat.genextreme.rvs(0.94,loc=309.40,scale=84.96, size = n_iterations))
-
-            while np.size(dist_samples[dist_samples < min_mission_dist]) != 0:
-                n_resample = np.size(dist_samples[dist_samples <min_mission_dist])
-                dist_samples[dist_samples < min_mission_dist] = stat.genextreme.rvs(0.94,loc=309.40,scale=84.96, size = n_resample)
-            
-            sim_samples = np.column_stack((dist_samples*1000,
-                                        stat.uniform.rvs(scale=600, size= n_iterations) ,
-                                        h_trans_stoch ,
-                                        1.2 * h_trans_stoch , 
-                                        1.4 * h_trans_stoch/mission.rod * stat.bernoulli.rvs(0.01, size= n_iterations)))
-
-            with mp.Pool(os.cpu_count()) as p:
-                mission_res_chunk = np.array(p.starmap(mission.single_sample_monte_carlo, sim_samples), dtype= object)
-
-            mission_res = np.append(mission_res, mission_res_chunk, axis=0) # array [[x00, x01, x02, x03, x04, array[y00, y01, y02, y03, y04],
-                #                                                                     x11, x11, x12, x13, x14, array[y10, y11, y12, y13, y14]] etc
-
-            conv_metric_lst.append(np.std(mission_res[:,0]))
-
-            logging.debug(f"Convergence list = {conv_metric_lst}")
-
-            try:
-                logging.debug(f"Delta Q = {np.absolute(conv_metric_lst[-2] - conv_metric_lst[-1])} ")
-                if np.absolute((conv_metric_lst[-2] - conv_metric_lst[-1])/conv_metric_lst[-2]*100 ) < conv_target and np.absolute((conv_metric_lst[-2] - conv_metric_lst[-3])/conv_metric_lst[-3]*100 )  < conv_target:
-                    conv_condition = False
-            except IndexError:
-                pass
-        
-        mission_res = np.delete(mission_res, [0,1], axis= 0)
-        logging.info(f"Amount of samples = {np.shape(mission_res)[0]}")
-        logging.info(f" shape mission_res = {np.shape(mission_res)}")
-        logging.info(f"  mission_res = {mission_res}")
-        
-
-        #Create a fitting distribution for all stochastic variables
-
-        performance_data =  [i.flatten() for i in np.hsplit(mission_res[:,:-1], 5)]
-
-        with mp.Pool(os.cpu_count()) as p:
-            energy_rv, t_rv, power_rv, thrust_rv, t_cr_rv = p.map(RandVar, performance_data)
-
-
-        energy_dist_data = [i.flatten() for i in np.hsplit(np.vstack(mission_res[:, -1]), 5)]
-
-        with mp.Pool(os.cpu_count()) as p:
-                Ecruise_rv, Eclimb_rv, Edesc_rv, Eloit_cr_rv, Eloit_hov_rv = p.map(RandVar, energy_dist_data)
+        mission_res, sample_hist, conv_metric_lst =  mcs.get_mcs_results(mission, const.convergence_targ , chunksize= const.chunksize)
+        energy_rv, t_rv, power_rv, thrust_rv, t_cr_rv =  mcs.get_performance_data(mission_res)
+        Ecruise_rv, Eclimb_rv, Edesc_rv, Eloit_cr_rv, Eloit_hov_rv = mcs.get_energy_distr(mission_res)
 
         if mission.plotting_monte_carlo:
 
@@ -448,9 +396,7 @@ class RunDSE:
 
        # Turning stochastic variables into deterministic values by means of a confidence interval 
 
-
         energy_wc =  energy_rv.ppf(const.confidence_interval)
-        energy_optimizer = energy_rv.get_expectation() + energy_rv.get_std()
         t_tot = t_rv.ppf(const.confidence_interval)
         P_max_eng_mission  = power_rv.ppf(const.confidence_interval)
         max_thrust = thrust_rv.ppf(const.confidence_interval)
@@ -658,7 +604,7 @@ class RunDSE:
         Cmac2 = airfoil.Cm_ac(const.sweepc42, AR_wing2)[0]
 
         # # Outputs for optimisation cost function
-        optim_outputs = [MTOM, energy_optimizer, time, CM_a, cg_fwd_lim - x_front, Ellipsis]
+        optim_outputs = [MTOM, energy,  time, CM_a, cg_fwd_lim - x_front, Ellipsis]
 
 
         lines       = [["MAC1", find_mac(S1, b1, taper)],  # Mean Aerodynamic Chord [m]
@@ -741,7 +687,6 @@ class RunDSE:
                     #    ["Propulsion_mass", m_prop_nc],
                     #    ["Energy_nc", energy_nc],
                        ["Energy", energy_wc],
-                       ["EnergyOptimizer", energy_optimizer],
                        ["Energy_rv", energy_rv], #RandVar class see rv_handler.py
                        ["time_rv", t_rv],#RandVar class see rv_handler.py
                        ["power_rv", power_rv],#RandVar class see rv_handler.py

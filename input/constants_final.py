@@ -25,6 +25,8 @@ mission_range = 400e3       # [m] Mission range  TODO: Maybe add 50 km
 # MCS
 minimum_dist = 100e3
 confidence_interval = 0.9
+convergence_targ = 0.85
+chunksize = 100
 
 n_pax = 5                               # Number of passengers
 m_pax = 88                              # Max per pax
