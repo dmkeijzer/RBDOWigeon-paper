@@ -369,16 +369,17 @@ class RunDSE:
         CD_a_f = wing_design.CDa_poststall(const.tc, CDs, CDs_f, Afus, alpha_lst, "fus", drag.CD, de_da)
 
         # Energy sizing
-        mission = FP.mission(MTOM, h_cr, V_cr, CLmax, S_tot, tot_prop_area, P_max=max_power,
+        mission = FP.mission(MTOM, V_cr, CLmax, S_tot, tot_prop_area, P_max=max_power,
                              Cl_alpha_curve=Cl_alpha_curve, CD_a_w=CD_a_w, CD_a_f=CD_a_f, alpha_lst=alpha_lst,
-                             Drag=drag, t_loiter=15*60, rotational_rate=5, mission_dist=const.mission_range, plot_monte_carlo=True)
+                             Drag=drag, t_loiter=15*60, rotational_rate=5, plot_monte_carlo= False)
 
         max_thrust_stall = mission.max_thrust(rho, V_stall)
 
 
         #-----------------------------Monte carlo energy estimation--------------------------------------
 
-        mission_res, sample_hist, conv_metric_lst =  mcs.get_mcs_results(mission, const.convergence_targ , chunksize= const.chunksize)
+        # mission_res, sample_hist, conv_metric_lst =  mcs.get_mcs_results(mission, const.convergence_targ , chunksize= const.chunksize)
+        mission_res, sample_hist, conv_metric_lst =  mcs.get_mcs_results(mission, 40, chunksize= 12)
         energy_rv, t_rv, power_rv, thrust_rv, t_cr_rv =  mcs.get_performance_data(mission_res)
         Ecruise_rv, Eclimb_rv, Edesc_rv, Eloit_cr_rv, Eloit_hov_rv = mcs.get_energy_distr(mission_res)
 
@@ -623,11 +624,7 @@ class RunDSE:
                        ["span1", b1],
                        ["span2", b2],
                        ["nmax", 3.2],  # maximum load factor
-                    #    ["Pmax", Pmax_weight],
-# with open(r"output/structures/wingbox_output.pkl", "wb") as f:
-#     pickle.dump(res, f)
-#     print("Succesfully loaded data structure into wingbox_output.pkl")
-                       # this is defined as maximum perimeter in Roskam, so i took top down view of the fuselage perimeter
+                       ["Pmax", Pmax_weight],  # this is defined as maximum perimeter in Roskam, so i took top down view of the fuselage perimeter
                        ["lf", l_fus],  # length of fuselage
                        ["m_pax", const.m_pax],  # average mass of a passenger according to Google
                        ["n_prop", const.n_prop],  # number of engines
@@ -706,10 +703,18 @@ class RunDSE:
                        ["b_vtail", v_tail[3]],
                        ["Converged_des", False]] # Standard is false, is being change in multirun function
 
-        single_iter_data = np.array(lines)[:,1].flatten() 
+        single_iter_data = np.array(lines, dtype= object)[:,1].flatten() 
 
 
-        other_outputs = [tw_tg, single_iter_data]
+        # other_outputs = [tw_tg, single_iter_data]
+        other_outputs = {
+            "lines": single_iter_data,
+            "mission_results": mission_res,
+            "sample_history": sample_hist,
+            "convergence_history": conv_metric_lst,
+            "MissionClass": mission,
+            "DragClass": drag,
+        }
         return optim_outputs, internal_inputs, other_outputs
 
     def multirun(self, N_iters, optim_inputs):
@@ -726,11 +731,11 @@ class RunDSE:
             logging.info(f"Iteration {i}/" + str(N_iters))
             optim_outputs, internal_inputs, other_outputs = self.run(optim_inputs, internal_inputs)
             if i == N_iters:
-                multirun_iter_datapoint = other_outputs[1]
+                multirun_iter_datapoint = other_outputs["lines"]
                 multirun_iter_datapoint[-1] = True
             else:
-                multirun_iter_datapoint = other_outputs[1]
+                multirun_iter_datapoint = other_outputs["lines"]
 
-            weight_loop_data.append(other_outputs[1])
+            weight_loop_data.append(other_outputs["lines"])
 
         return optim_outputs, internal_inputs, other_outputs, weight_loop_data

@@ -71,7 +71,7 @@ def get_mcs_results(MissionClass, conv_target= 0.85, chunksize= 100, test= False
 
         mission_res.append(mission_res_chunk)  # array [[x00, x01, x02, x03, x04, array[y00, y01, y02, y03, y04],
             #                                                                     x11, x11, x12, x13, x14, array[y10, y11, y12, y13, y14]] etc
-        conv_metric_lst.append(np.std([i[0] for i in mission_res_chunk]))
+        conv_metric_lst.append(np.std([i[0] for i in mission_res[0]]))
 
         if test:
             conv_condition = False
@@ -82,8 +82,8 @@ def get_mcs_results(MissionClass, conv_target= 0.85, chunksize= 100, test= False
         except IndexError:
             pass
 
-    mission_res = np.reshape(np.array(mission_res, dtype= object), (12,6))
-    sample_history = np.reshape(np.array(sample_history, dtype  = object), (12,6))
+    mission_res = np.vstack(np.array(mission_res, dtype= object))
+    sample_history = np.vstack(np.array(sample_history, dtype  = object))
 
     return mission_res, sample_history, conv_metric_lst
 

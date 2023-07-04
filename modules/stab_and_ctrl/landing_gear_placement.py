@@ -159,18 +159,18 @@ class LandingGearCalc:
        
         h = h_list[selected_idx]
 
-        plt.subplot(121)
-        plt.title("height")
-        plt.plot(tw_tg_list, min_h_tipback, label="tipback")
-        plt.plot(tw_tg_list, min_h_root, label="root")
-        plt.plot(tw_tg_list, min_h_tip, label="tip")
-        plt.plot(tw_tg_list, min_h_rotor, label="rotor")
-        plt.legend()
+        # plt.subplot(121)
+        # plt.title("height")
+        # plt.plot(tw_tg_list, min_h_tipback, label="tipback")
+        # plt.plot(tw_tg_list, min_h_root, label="root")
+        # plt.plot(tw_tg_list, min_h_tip, label="tip")
+        # plt.plot(tw_tg_list, min_h_rotor, label="rotor")
+        # plt.legend()
 
-        plt.subplot(122)
-        plt.title("psi")
-        plt.plot(tw_tg_list, np.rad2deg(psi_list))
-        plt.axhline(55)
+        # plt.subplot(122)
+        # plt.title("psi")
+        # plt.plot(tw_tg_list, np.rad2deg(psi_list))
+        # plt.axhline(55)
         # plt.show()
 
         if self.calc_cg_tipback(x_cg_range[1], z_cg_max, h) < theta:

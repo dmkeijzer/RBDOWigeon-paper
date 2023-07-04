@@ -7,6 +7,7 @@ import pandas as pd
 import pathlib as pl
 import sys
 import os
+import pickle
 
 sys.path.append(str(list(pl.Path(__file__).parents)[1]))
 os.chdir(str(list(pl.Path(__file__).parents)[1]))
@@ -49,7 +50,6 @@ if __name__ == "__main__":
     'Cr_vert', 'm_v_tail', 'Cm_alpha', 'ctrl_margin', 'S_vtail', 'b_vtail',
     'Converged_des']]
 
-    os.mkdir
 
     #========================================================================================================================
 
@@ -135,7 +135,7 @@ if __name__ == "__main__":
 
             # Run the file for # iterations
             logging.info("Performing the inner convergence loop")
-            N_iter = 10
+            N_iter = 2
             optim_outputs, internal_inputs, other_outputs, weight_loop_data= optimisation_class.multirun(N_iter, optim_inputs=[])
             logging.info("Inner convergence loop completed")
 
@@ -143,6 +143,20 @@ if __name__ == "__main__":
             self.data_logging_arr = np.append(self.data_logging_arr, weight_loop_data, axis=0)
             np.savez_compressed(npz_path,array1 = self.data_logging_arr)
 
+            #------------------- Storing other important data which has to accessed later perharps------------------------------
+
+            with open(os.path.join(path_directory, "Mission_class_" + label + ".pkl" ), "wb") as f:
+                pickle.dump(other_outputs["MissionClass"], f)
+                print("Succesfully loaded data structure into Mission_class.pkl")
+
+            with open(os.path.join(path_directory, "Drag_class_" +  label +  ".pkl" ), "wb") as f:
+                pickle.dump(other_outputs["DragClass"], f)
+                print("Succesfully loaded data structure into Mission_class.pkl")
+
+            np.save(os.path.join(path_directory, "mission_results_" + label + ".npy"), other_outputs["mission_res"])
+            np.save(os.path.join(path_directory, "sample_history_" + label + ".npy"), other_outputs["sample_history"])
+            np.save(os.path.join(path_directory, "mcs_convergence_" + label + ".npy"), other_outputs["convergence_history"])
+            #----------------------------------------------------------------------------------------------------------------------
             #Wing surface area
             S_tot = internal_inputs[1]
             S1 = s1*S_tot
