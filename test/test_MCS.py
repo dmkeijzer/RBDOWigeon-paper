@@ -39,7 +39,7 @@ def test_sampling():
     assert (samples[:,5] < 1000).all()
 
 def test_get_mcs_results():
-
+    os.chdir(str(list(pl.Path(__file__).parents)[1]))
     with open(r"test\setup\mission_class_test.pkl", "rb") as f:
         MissionClass = pickle.load(f)
 

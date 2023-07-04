@@ -1,6 +1,7 @@
 #output directory
 
 output/* 
+reports/*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
