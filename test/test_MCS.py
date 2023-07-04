@@ -8,7 +8,7 @@ sys.path.append(str(list(pl.Path(__file__).parents)[1]))
 os.chdir(str(list(pl.Path(__file__).parents)[1]))
 
 from modules.MCS.rv_handler import RandVar
-from modules.Flight_performance.Flight_performance_final import mission
+from modules.Flight_performance.flight_performance_mcs import mission
 import modules.MCS.mcs_handling as mcs
 import input.constants_final as const
 

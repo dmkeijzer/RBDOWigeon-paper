@@ -21,14 +21,12 @@ import input.constants_final as const
 # Required to protect it from being run by the the multiprocessing pool agents
 if __name__ == "__main__":
 
-    #Setting up the log configuration
+    #Setting up the data handling
     #====================================================================================
-    filename =  time.asctime().split()[1:]
-    filename[2] = filename[2][:-3]
-    filename =  "_".join(filename).replace(":", ".")
-    log_path = list(pl.Path(__file__).parents)[2] / "logs" / ("Monte_carlo_" + filename + ".log")
-    logging.basicConfig(level= logging.INFO, filename= log_path , filemode='w', format='%(filename)s - %(lineno)s - %(levelname)s - %(message)s')
-    npz_path = list(pl.Path(__file__).parents)[2] / "logs" / ("Monte_carlo_" + filename + ".npz")
+    label  = ("_".join(time.asctime().split(" ")[1:-1])).replace(":",".")[:-3]
+    path_directory = os.path.join(os.path.join(str(list(pl.Path(__file__).parents)[1]), "output", "mcs"), "run_" + label)
+    os.mkdir(path_directory)
+    npz_path = list(pl.Path(__file__).parents)[2] / "logs" / ("Monte_carlo_" + label + ".npz")
     #====================================================================================
 
     # Setting up the logging for the numpy array
@@ -50,6 +48,8 @@ if __name__ == "__main__":
     'Eclimb_rv', 'Edesc_rv', 'Eloit_cr_rv', 'Eloit_hov_rv', 'Energy_dist',
     'Cr_vert', 'm_v_tail', 'Cm_alpha', 'ctrl_margin', 'S_vtail', 'b_vtail',
     'Converged_des']]
+
+    os.mkdir
 
     #========================================================================================================================
 
