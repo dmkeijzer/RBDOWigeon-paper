@@ -5,7 +5,7 @@ on: [push, pull_request]  # Trigger the workflow on push and pull requests
 jobs:
   pytest_job:
     name: Run Pytest
-    runs-on: ubuntu-latest  # Use the latest version of Ubuntu as the runner
+    runs-on: windows-latest  # Use the latest version of Ubuntu as the runner
 
     steps:
       - name: Checkout code
