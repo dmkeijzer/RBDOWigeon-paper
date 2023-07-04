@@ -7,6 +7,7 @@ import pandas as pd
 import pathlib as pl
 import sys
 import os
+import pickle
 
 sys.path.append(str(list(pl.Path(__file__).parents)[1]))
 os.chdir(str(list(pl.Path(__file__).parents)[1]))
@@ -101,18 +102,18 @@ class design_optimization(om.ExplicitComponent):
         N_iter = 10
         optim_outputs, internal_inputs, other_outputs, conv_hist = optimisation_class.multirun(N_iter, optim_inputs=[])
 
-        if os.path.exists(os.path.join(output_dir, "Deterministic" + "_" + label + "_hist.csv")):
-            pd.DataFrame(conv_hist).to_csv(os.path.join(output_dir, "Deterministic" + "_" + label + "_hist.csv") , mode="a", header=False, index= False)
+        if os.path.exists(os.path.join(path_directory, "Deterministic" + "_" + label + "_hist.csv")):
+            pd.DataFrame(conv_hist).to_csv(os.path.join(path_directory, "Deterministic" + "_" + label + "_hist.csv") , mode="a", header=False, index= False)
         else: 
-            pd.DataFrame(conv_hist).to_csv(os.path.join(output_dir, "Deterministic" + "_" + label + "_hist.csv"), header= other_outputs["lines"][:,0].flatten(), index=False)
+            pd.DataFrame(conv_hist).to_csv(os.path.join(path_directory, "Deterministic" + "_" + label + "_hist.csv"), header= other_outputs["lines"][:,0].flatten(), index=False)
                     # Read the output from the subprocess
 
-        with open(os.path.join(pkl_path, "Mission_class.pkl" ), "wb") as f:
-            pickle.dump(MissionClass, f)
+        with open(os.path.join(path_directory, "Mission_class.pkl" ), "wb") as f:
+            pickle.dump(other_outputs["MissionClass"], f)
             print("Succesfully loaded data structure into Mission_class.pkl")
  
-        with open(os.path.join(pkl_path, "Drag_class.pkl" ), "wb") as f:
-            pickle.dump(DragClass, f)
+        with open(os.path.join(path_directory, "Drag_class.pkl" ), "wb") as f:
+            pickle.dump(other_outputs["DragClass"], f)
             print("Succesfully loaded data structure into Mission_class.pkl")
 
         S_tot = internal_inputs[1]

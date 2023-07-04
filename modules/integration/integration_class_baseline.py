@@ -577,13 +577,6 @@ class RunDSE:
 
         # # Outputs for optimisation cost function
         optim_outputs = [MTOM, energy, time, CM_a, cg_fwd_lim - x_front]
-        with open(os.path.join(pkl_path, "Mission_class.pkl" ), "wb") as f:
-            pickle.dump(MissionClass, f)
-            print("Succesfully loaded data structure into Mission_class.pkl")
- 
-        with open(os.path.join(pkl_path, "Drag_class.pkl" ), "wb") as f:
-            pickle.dump(DragClass, f)
-            print("Succesfully loaded data structure into Mission_class.pkl")
 
         lines       = [["MAC1", find_mac(S1, b1, taper)],  # Mean Aerodynamic Chord [m]
                        ["MAC2", find_mac(S2, b2, taper)],
@@ -664,11 +657,11 @@ class RunDSE:
 
 
         # Other necessary outputs
-        other_outputs = [tw_tg, np.array(lines)]
 
         other_outputs = {
             "lines": np.array(lines),
             "MissionClass": MissionClass,
+            "DragClass": DragClass,
 
         }
         return optim_outputs, internal_inputs, other_outputs

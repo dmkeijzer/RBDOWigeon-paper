@@ -51,7 +51,7 @@ input = list(initial_estimate.values())
 
 def test_integration_baseline():
     optimizer_out, internal_input, other_output =  int_class_baseline.RunDSE(input).run(input)
-    print(other_output[1])
+    print(other_output["lines"])
 
+    assert other_output["lines"][7][1] != initial_estimate["mtom"]
 
-    pass
