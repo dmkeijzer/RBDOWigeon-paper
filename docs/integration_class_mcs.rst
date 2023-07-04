@@ -1,4 +1,4 @@
-integration\_class\_mcs module
+Integrating RBDO sized VTOL
 ==============================
 
 .. automodule:: integration_class_mcs

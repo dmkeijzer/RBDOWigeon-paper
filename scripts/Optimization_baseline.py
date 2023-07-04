@@ -108,11 +108,11 @@ class design_optimization(om.ExplicitComponent):
             pd.DataFrame(conv_hist).to_csv(os.path.join(path_directory, "Deterministic" + "_" + label + "_hist.csv"), header= other_outputs["lines"][:,0].flatten(), index=False)
                     # Read the output from the subprocess
 
-        with open(os.path.join(path_directory, "Mission_class.pkl" ), "wb") as f:
+        with open(os.path.join(path_directory, "Mission_class_" + label + ".pkl" ), "wb") as f:
             pickle.dump(other_outputs["MissionClass"], f)
             print("Succesfully loaded data structure into Mission_class.pkl")
  
-        with open(os.path.join(path_directory, "Drag_class.pkl" ), "wb") as f:
+        with open(os.path.join(path_directory, "Drag_class_" +  label +  ".pkl" ), "wb") as f:
             pickle.dump(other_outputs["DragClass"], f)
             print("Succesfully loaded data structure into Mission_class.pkl")
 

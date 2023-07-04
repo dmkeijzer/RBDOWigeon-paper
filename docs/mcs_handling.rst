@@ -1,4 +1,4 @@
-mcs\_handling module
+Monte Carlo Simulation of Mission Envelope Module
 ====================
 
 .. automodule:: mcs_handling

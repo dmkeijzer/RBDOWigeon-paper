@@ -1,4 +1,4 @@
-rv\_handler module
+Random Variable Handling
 ==================
 
 .. automodule:: rv_handler
