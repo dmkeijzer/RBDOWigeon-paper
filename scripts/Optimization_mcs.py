@@ -135,7 +135,7 @@ if __name__ == "__main__":
 
             # Run the file for # iterations
             logging.info("Performing the inner convergence loop")
-            N_iter = 2
+            N_iter = 8
             optim_outputs, internal_inputs, other_outputs, weight_loop_data= optimisation_class.multirun(N_iter, optim_inputs=[])
             logging.info("Inner convergence loop completed")
 
@@ -153,7 +153,7 @@ if __name__ == "__main__":
                 pickle.dump(other_outputs["DragClass"], f)
                 print("Succesfully loaded data structure into Mission_class.pkl")
 
-            np.save(os.path.join(path_directory, "mission_results_" + label + ".npy"), other_outputs["mission_res"])
+            np.save(os.path.join(path_directory, "mission_results_" + label + ".npy"), other_outputs["mission_results"])
             np.save(os.path.join(path_directory, "sample_history_" + label + ".npy"), other_outputs["sample_history"])
             np.save(os.path.join(path_directory, "mcs_convergence_" + label + ".npy"), other_outputs["convergence_history"])
             #----------------------------------------------------------------------------------------------------------------------
@@ -214,8 +214,8 @@ if __name__ == "__main__":
                                                                                         # 'V_stall'])
 
     # Initial values for the optimization TODO: Improve initial values
-    prob.model.set_input_defaults('Integrated_design.AR1', 6.8)
-    prob.model.set_input_defaults('Integrated_design.AR2', 6.8)
+    prob.model.set_input_defaults('Integrated_design.AR1', 10)
+    prob.model.set_input_defaults('Integrated_design.AR2', 11)
     prob.model.set_input_defaults('Integrated_design.Sr_Sf', 1.)
     prob.model.set_input_defaults('Integrated_design.xr', 6.1)
     prob.model.set_input_defaults('Integrated_design.xf', 0.5)   # Change ----- original 0.5

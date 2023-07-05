@@ -145,7 +145,7 @@ def xmac_to_xle(sweep_25, A, taper, b, dihedral):
 
 
 class RunDSE:
-    def __init__(self, initial_estimates: np.array):
+    def __init__(self, initial_estimates: np.array, test= False):
         """
         This class integrates all the code and runs the optimisation
 
@@ -186,6 +186,7 @@ class RunDSE:
         """
         # self.fixed_inps = fixed_inputs
         self.initial_est = initial_estimates
+        self.test = test
 
     def run(self, optim_inputs, internal_inputs):
         """
@@ -378,8 +379,11 @@ class RunDSE:
 
         #-----------------------------Monte carlo energy estimation--------------------------------------
 
-        # mission_res, sample_hist, conv_metric_lst =  mcs.get_mcs_results(mission, const.convergence_targ , chunksize= const.chunksize)
-        mission_res, sample_hist, conv_metric_lst =  mcs.get_mcs_results(mission, 40, chunksize= 12)
+        if self.test:
+            mission_res, sample_hist, conv_metric_lst =  mcs.get_mcs_results(mission, 40, chunksize= 12)
+        else:
+            mission_res, sample_hist, conv_metric_lst =  mcs.get_mcs_results(mission, const.convergence_targ , chunksize= const.chunksize)
+
         energy_rv, t_rv, power_rv, thrust_rv, t_cr_rv =  mcs.get_performance_data(mission_res)
         Ecruise_rv, Eclimb_rv, Edesc_rv, Eloit_cr_rv, Eloit_hov_rv = mcs.get_energy_distr(mission_res)
 
