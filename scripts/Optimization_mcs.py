@@ -27,7 +27,8 @@ if __name__ == "__main__":
     label  = ("_".join(time.asctime().split(" ")[1:-1])).replace(":",".")[:-3]
     path_directory = os.path.join(os.path.join(str(list(pl.Path(__file__).parents)[1]), "output", "mcs"), "run_" + label)
     os.mkdir(path_directory)
-    npz_path = list(pl.Path(__file__).parents)[2] / "logs" / ("Monte_carlo_" + label + ".npz")
+    # npz_path = list(pl.Path(__file__).parents)[2] / "logs" / ("Monte_carlo_" + label + ".npz")
+    npz_path = os.path.join(path_directory, "monte_carlo_results_" + label + ".npz" )
     #====================================================================================
 
     # Setting up the logging for the numpy array

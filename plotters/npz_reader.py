@@ -6,8 +6,11 @@ import re
 import sys
 import pathlib as pl
 import seaborn as sns
-sys.path.append(os.path.join(os.path.dirname(os.path.dirname(__file__)), "Final_optimization"))
-import rv_handler as rv
+
+sys.path.append(str(list(pl.Path(__file__).parents)[1]))
+os.chdir(str(list(pl.Path(__file__).parents)[1]))
+
+import modules.MCS.rv_handler as rv
 
 class npz_tool: #TODO come up with better names lol
     """_summary_
@@ -364,8 +367,7 @@ if __name__ == "__main__":
     #         if "npz" in file:
     #             npz_lst.append(os.path.join(path, file))
 
-    path = r"C:\Users\damie\OneDrive\Desktop\Damien\Wigeon_proj\logs\Monte_carlo_Jun_4_19.15_2023.npz"
-    path2 = r"C:\Users\damie\OneDrive\Desktop\Damien\Wigeon_proj\logs\valid_data\Monte_Carlo\run_8_Mar_15_16.17\Monte_carlo_Mar_15_16.17_2023.npz"
+    path = r"C:\Users\damie\OneDrive\Desktop\Damien\Wigeon_proj\HonoursRepo\output\mcs\run_Jul__5_12.41\Monte_carlo_Jul__5_12.41.npz"
 
         
     # print(f"file = {npz_lst[-1]}")
