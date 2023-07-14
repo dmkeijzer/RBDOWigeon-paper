@@ -3,15 +3,24 @@ import matplotlib.pyplot as plt
 import numpy as np
 import os
 import seaborn as sns
+import yaml
 
+with open(os.path.realpath(r'input\environment_variables_plotting.yml'), 'r') as yamlfile:
+    data = yaml.safe_load(yamlfile)
 
-file_path = r"C:\Users\damie\OneDrive\Desktop\Damien\Wigeon_proj\logs\valid_data\Baseline\run_3_Jun7_00.55\Deterministic_Jun__7_00.55_hist.csv"
-download_path = os.path.join(os.path.expanduser("~"), "Downloads")
+dir_path = data["baseline"]["dir"]
+label =  os.path.split(dir_path)[-1][3:]
 
-
-data_csv = pd.read_csv(file_path)
-print(data_csv.columns)
+data_csv = pd.read_csv(os.path.join(dir_path, "Deterministic" + label + "_hist.csv"))
 conv_lst = np.array(np.round(data_csv["converged"],0), dtype= bool)
+
+# Create storage location for data from mcs metrci
+if os.path.exists(os.path.join(dir_path, "plots")):
+    pass
+else:
+    os.mkdir(os.path.join(dir_path, 'plots'))
+
+dump_path = os.path.join(dir_path, "plots")
 
 
 def plot_design_params(save_bool):
@@ -92,7 +101,7 @@ def plot_design_params(save_bool):
 
     fig.tight_layout()
     if save_bool:
-        plt.savefig(os.path.join(download_path, os.path.split(file_path)[-1][:-4]) + "_DesignParam_" +  ".pdf", bbox_inches= "tight")
+        plt.savefig(os.path.join(dump_path, label) + "_DesignParam_" +  ".pdf", bbox_inches= "tight")
     else:
         plt.show()
 
@@ -142,7 +151,7 @@ def plot_energy_phases(save_bool):
     fig.suptitle("Determinstic Mission")
     fig.tight_layout()
     if save_bool:
-        plt.savefig(os.path.join(download_path, os.path.split(file_path)[-1][:-4]) + "_EnergyPhases_" +  ".pdf", bbox_inches= "tight")
+        plt.savefig(os.path.join(dump_path, label) + "_EnergyPhases_" +  ".pdf", bbox_inches= "tight")
     else:
         plt.show()
 
@@ -180,7 +189,7 @@ def plot_pie_chart_energy(save_bool):
 
     # plt.suptitle(title)
     if save_bool:
-        plt.savefig(os.path.join(download_path, "Deterministic") + "_PieChart_" +  ".pdf", bbox_inches= "tight")
+        plt.savefig(os.path.join(dump_path, label) + "_PieChart_" +  ".pdf", bbox_inches= "tight")
     else:
         plt.show()
 

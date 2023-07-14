@@ -23,7 +23,7 @@ if __name__ == "__main__": #Required due to the multiprocessing involved
 
     #USER INPUT FROM INPUT
     #==========================================================================================================
-    with open(r'input\environment_variables_plotting.yml', 'r') as yamlfile:
+    with open(os.path.realpath(r'input\environment_variables_plotting.yml'), 'r') as yamlfile:
         data = yaml.safe_load(yamlfile)
 
     dir_path = data["baseline"]["dir"]

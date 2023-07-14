@@ -6,6 +6,7 @@ import re
 import sys
 import pathlib as pl
 import seaborn as sns
+import yaml
 
 sys.path.append(str(list(pl.Path(__file__).parents)[1]))
 os.chdir(str(list(pl.Path(__file__).parents)[1]))
@@ -15,7 +16,7 @@ import modules.MCS.rv_handler as rv
 class npz_tool: #TODO come up with better names lol
     """_summary_
     """
-    def __init__(self, file_path, save_bool):
+    def __init__(self, save_bool):
         """This class turns the npz output of the file Optimization.py into a usable datatype which some standard methods and gives easy access to each column by the main data 
         object into a Pandas.Dataframe. For the standard methods please see further documentation.
 
@@ -23,21 +24,35 @@ class npz_tool: #TODO come up with better names lol
         :type file_path: string
         """        
     
-        df_arr = np.load(os.path.realpath(file_path), allow_pickle= True)
+        #--------------------------------------------- Path handling---------------------------------------------
+        with open(os.path.realpath(r'input\environment_variables_plotting.yml'), 'r') as yamlfile:
+            data = yaml.safe_load(yamlfile)
+
+        self.dir_path = data["mcs"]["dir"]
+        self.label =  os.path.split(self.dir_path)[-1][3:]
+
+        # Create storage location for data from mcs metrci
+        if os.path.exists(os.path.join(self.dir_path, "plots")):
+            pass
+        else:
+            os.mkdir(os.path.join(self.dir_path, 'plots'))
+
+        self.dump_path = os.path.join(self.dir_path, "plots")
+        #---------------------------------------------------------------------------------------------------------
+
+        # Get actual data from npz path
+        df_arr = np.load(os.path.realpath(os.path.join(self.dir_path, "monte_carlo_results" + self.label + ".npz" )), allow_pickle= True)
         df = pd.DataFrame(df_arr["array1"][1:])
         df.columns = df_arr["array1"][0,:]
     
    
         self.df = df
         self.save_bool = save_bool
-        self.file_path = file_path
         self.conv_lst = df["Converged_des"]
         self.final_energy = self.df["Energy"][self.conv_lst].to_numpy()[-1]/3.6e6
         # match = re.search(r'(\w{3}_\d{1,2}_\d{2}\.\d{2})_(\d{4})', os.path.split(file_path)[-1])
-        self.id =  os.path.split(self.file_path)[-1][:-4]
         self.title = "MCS Based Mission"
         # self.title = ""
-        self.download_path = os.path.join(os.path.expanduser("~"), "Downloads")
         self.robust =  True
 
         try: 
@@ -58,7 +73,7 @@ class npz_tool: #TODO come up with better names lol
         plt.grid(lw=0.8, alpha=0.8)
         plt.suptitle(self.title)
         if self.save_bool:
-            plt.savefig(os.path.join(self.download_path, self.id) + "_EnergyConv_" +  ".pdf", bbox_inches= "tight")
+            plt.savefig(os.path.join(self.dump_path, self.label) + "_EnergyConv_" +  ".pdf", bbox_inches= "tight")
         else:
             plt.show()
     
@@ -101,7 +116,7 @@ class npz_tool: #TODO come up with better names lol
 
         # plt.suptitle(self.title)
         if self.save_bool:
-            plt.savefig(os.path.join(self.download_path, self.id) + "_PieChart_" +  ".pdf", bbox_inches= "tight")
+            plt.savefig(os.path.join(self.dump_path, self.label) + "_PieChart_" +  ".pdf", bbox_inches= "tight")
         else:
             plt.show()
 
@@ -133,7 +148,7 @@ class npz_tool: #TODO come up with better names lol
         plt.suptitle(self.title)
 
         if self.save_bool:
-            plt.savefig(os.path.join(self.download_path, self.id) + "_PdfCdf_" +  ".pdf", bbox_inches= "tight")
+            plt.savefig(os.path.join(self.dump_path, self.label) + "_PdfCdf_" +  ".pdf", bbox_inches= "tight")
         else:
             plt.show()
     
@@ -182,7 +197,7 @@ class npz_tool: #TODO come up with better names lol
         fig.tight_layout()
                    
         if self.save_bool:
-            plt.savefig(os.path.join(self.download_path, self.id) + "_Perf_" +  ".pdf", bbox_inches= "tight")
+            plt.savefig(os.path.join(self.dump_path, self.label) + "_Perf_" +  ".pdf", bbox_inches= "tight")
         else:
             plt.show()
 
@@ -251,7 +266,7 @@ class npz_tool: #TODO come up with better names lol
         fig.suptitle(self.title)
         fig.tight_layout()
         if self.save_bool:
-            plt.savefig(os.path.join(self.download_path, self.id) + "_EnergyPhases_" +  ".pdf", bbox_inches= "tight")
+            plt.savefig(os.path.join(self.dump_path, self.label) + "_EnergyPhases_" +  ".pdf", bbox_inches= "tight")
         else:
             plt.show()
     
@@ -339,7 +354,7 @@ class npz_tool: #TODO come up with better names lol
         fig.suptitle(self.title)
         fig.tight_layout()
         if self.save_bool:
-            plt.savefig(os.path.join(self.download_path, self.id) + "_DesignParams_" +  ".pdf", bbox_inches= "tight")
+            plt.savefig(os.path.join(self.dump_path, self.label) + "_DesignParams_" +  ".pdf", bbox_inches= "tight")
         else:
             plt.show()
 
@@ -357,21 +372,5 @@ class npz_tool: #TODO come up with better names lol
 
 if __name__ == "__main__":
 
-    # runs = os.listdir(r"C:\Users\damie\OneDrive\Desktop\Damien\Wigeon_proj\logs\valid_data\Monte_Carlo")
-
-    # npz_lst = []
-
-    # for i in runs:
-    #     path = os.path.join(r"C:\Users\damie\OneDrive\Desktop\Damien\Wigeon_proj\logs\valid_data\Monte_Carlo", i)
-    #     for file in os.listdir(path):
-    #         if "npz" in file:
-    #             npz_lst.append(os.path.join(path, file))
-
-    path = r"C:\Users\damie\OneDrive\Desktop\Damien\Wigeon_proj\HonoursRepo\output\mcs\run_Jul__5_12.41\Monte_carlo_Jul__5_12.41.npz"
-
-        
-    # print(f"file = {npz_lst[-1]}")
-    Analysis_tool = npz_tool(path ,True)
+    Analysis_tool = npz_tool(True)
     Analysis_tool.analyze_all()
-    # Analysis_tool.analyze_all()
-    print(Analysis_tool.df.columns)
