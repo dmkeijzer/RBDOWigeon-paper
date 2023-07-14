@@ -40,7 +40,7 @@ class mission:
 
     def __init__(self, mass, cruising_alt, cruise_speed, CL_max, wing_surface, A_disk, P_max,
                  Cl_alpha_curve, CD_a_w, CD_a_f, alpha_lst, Drag,
-                 t_loiter=15 * 60, rotational_rate=5, roc=5, rod=4, mission_dist=300e3, plotting=False):
+                 t_loiter=5 * 60, rotational_rate=5, roc=5, rod=4, mission_dist=300e3, plotting=False):
 
         """
         :param mass:            [kg]    Aircraft mass

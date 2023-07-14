@@ -19,8 +19,9 @@ c_rot_1 = 0.25      # [-] position of the rotating axis in percentage chord
 c_rot_2 = 0.25
 
 
-# General
-mission_range = 400e3       # [m] Mission range  TODO: Maybe add 50 km
+# General baseline
+mission_range = 400e3       # [m] Mission range  
+loiter_time_baseline = 5*60
 
 # MCS
 minimum_dist = 100e3
