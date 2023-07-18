@@ -216,7 +216,7 @@ if __name__ == "__main__":
 
     # Initial values for the optimization TODO: Improve initial values
     prob.model.set_input_defaults('Integrated_design.AR1', 10)
-    prob.model.set_input_defaults('Integrated_design.AR2', 11)
+    prob.model.set_input_defaults('Integrated_design.AR2', 13.5)
     prob.model.set_input_defaults('Integrated_design.Sr_Sf', 1.)
     prob.model.set_input_defaults('Integrated_design.xr', 6.1)
     prob.model.set_input_defaults('Integrated_design.xf', 0.5)   # Change ----- original 0.5
