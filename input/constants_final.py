@@ -21,6 +21,7 @@ c_rot_2 = 0.25
 
 # General baseline
 mission_range = 400e3       # [m] Mission range  
+mission_range_baseline = 300e3       # [m] Mission range  
 loiter_time_baseline = 5*60
 
 # MCS
