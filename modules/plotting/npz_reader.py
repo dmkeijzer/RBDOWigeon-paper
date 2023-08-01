@@ -64,6 +64,13 @@ class npz_tool: #TODO come up with better names lol
 
 
 
+    def write_all_parameters(self):
+        converged_designs = self.df.loc[self.df["Converged_des"] == True]
+        final_series = converged_designs.loc[converged_designs.index[-1]]
+
+        with open(os.path.join(self.dir_path, "final_parameters.txt"), "w") as f:
+            f.write(final_series.to_string())
+
     def energy_convergence(self, converged= True):
 
         energy_data = np.array(self.df["Energy"][self.conv_lst])/3.6e6 if converged else np.array(self.df["Energy"])/3.6e6
@@ -272,7 +279,7 @@ class npz_tool: #TODO come up with better names lol
     
     def design_parameter(self):
 
-        fig, axs = plt.subplots(2,3)
+        fig, axs = plt.subplots(3,3)
         fig.set_figheight(8)
         fig.set_figwidth(15)
 
@@ -316,12 +323,12 @@ class npz_tool: #TODO come up with better names lol
         # axs[1, 0].grid()
 
         # Spans
-        y2 = self.df["span1"][self.conv_lst].to_numpy()
-        y3 = self.df["span2"][self.conv_lst].to_numpy()
-        axs[1, 0].plot(y2, label= "Span front")
-        axs[1, 0].plot(y3, label= "Span rear")
+        y2 = self.df["pos_backwing"][self.conv_lst].to_numpy()
+        # y3 = self.df["span2"][self.conv_lst].to_numpy()
+        axs[1, 0].plot(y2, label= "Position rear wign")
+        # axs[1, 0].plot(y3, label= "Span rear")
         axs[1, 0].set_xlabel(r"$n_{th}$ Converged design")
-        axs[1, 0].set_ylabel("Span [m]")
+        axs[1, 0].set_ylabel("Location from nose [m]")
         axs[1, 0].legend()
         axs[1, 0].grid()
 
@@ -351,7 +358,23 @@ class npz_tool: #TODO come up with better names lol
         axs[1, 2].legend()
         axs[1, 2].grid()
 
-        fig.suptitle(self.title)
+        y2 = self.df["span1"][self.conv_lst].to_numpy()
+        y3 = self.df["span2"][self.conv_lst].to_numpy()
+        axs[2, 0].plot(y2, label= "Span front")
+        axs[2, 0].plot(y3, label= "Span rear")
+        axs[2, 0].set_xlabel(r"$n_{th}$ Converged design")
+        axs[2, 0].set_ylabel("span [m]")
+        axs[2, 0].legend()
+        axs[2, 0].grid()
+
+        # battery position
+        y6 = self.df["battery_pos"][self.conv_lst].to_numpy()
+        axs[2, 1].plot(y6,label=r'Battery position')
+        axs[2, 1].set_xlabel(r"$n_{th}$ Converged design")
+        axs[2, 1].set_ylabel(r'Battery position [m]')
+        axs[2, 1].legend()
+        axs[2, 1].grid()
+
         fig.tight_layout()
         if self.save_bool:
             plt.savefig(os.path.join(self.dump_path, self.label) + "_DesignParams_" +  ".pdf", bbox_inches= "tight")
@@ -370,7 +393,7 @@ class npz_tool: #TODO come up with better names lol
         self.plot_performance()
         self.energy_phases()
 
-if __name__ == "__main__":
+# if __name__ == "__main__":
 
-    Analysis_tool = npz_tool(True)
-    Analysis_tool.analyze_all()
+#     Analysis_tool = npz_tool(True)
+#     Analysis_tool.analyze_all()

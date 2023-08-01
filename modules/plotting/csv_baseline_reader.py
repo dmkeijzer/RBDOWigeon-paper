@@ -4,6 +4,11 @@ import numpy as np
 import os
 import seaborn as sns
 import yaml
+import sys
+import pathlib as pl
+
+sys.path.append(str(list(pl.Path(__file__).parents)[2]))
+os.chdir(str(list(pl.Path(__file__).parents)[2]))
 
 with open(os.path.realpath(r'input\environment_variables_plotting.yml'), 'r') as yamlfile:
     data = yaml.safe_load(yamlfile)
@@ -22,11 +27,17 @@ else:
 
 dump_path = os.path.join(dir_path, "plots")
 
+def write_all_parameters():
+    converged_designs = data_csv.loc[data_csv["converged"] == 1]
+    final_series = converged_designs.loc[converged_designs.index[-1]]
+
+    with open(os.path.join(dir_path, "final_parameters.txt"), "w") as f:
+        f.write(final_series.to_string())
 
 def plot_design_params(save_bool):
 
 
-    fig, axs = plt.subplots(2,3)
+    fig, axs = plt.subplots(3,3)
     fig.suptitle("Deterministic Mission")
     fig.set_figheight(8)
     fig.set_figwidth(15)
@@ -193,7 +204,4 @@ def plot_pie_chart_energy(save_bool):
     else:
         plt.show()
 
-plot_design_params(True)
-plot_energy_phases(True)
-plot_pie_chart_energy(True)
 

@@ -60,13 +60,14 @@ def test_get_mcs_results():
                             Drag=drag, t_loiter=15*60, rotational_rate=5, plot_monte_carlo=False)
 
     results, sample_history, conver_hist = mcs.get_mcs_results(mission_test, 0.7, chunksize=12, test= True)
-    assert results.shape == (12, 6)
+    assert results.shape == (36, 6)
     assert (results[:,0]/3.6e6 > 50).all()
     assert (results[:,0]/3.6e6 < 200).all()
-    assert sample_history.shape == (12, 6)
+    assert sample_history.shape == (36, 6)
     assert (sample_history[:,-1] > 300).all()
     assert (sample_history[:,-1] < 1000).all()
     assert len(conver_hist) != 0 
+    assert conver_hist[0] != conver_hist[1] != conver_hist[2]
     print(results)
 
 

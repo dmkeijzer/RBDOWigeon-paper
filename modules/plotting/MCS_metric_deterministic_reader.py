@@ -4,14 +4,25 @@ import matplotlib.pyplot as plt
 import pickle
 import numpy as np
 import pathlib as pl
+import yaml
 
 sys.path.append(str(list(pl.Path(__file__).parents)[1]))
+os.chdir(str(list(pl.Path(__file__).parents)[1]))
 
 
 def determinisic_energy_pdf_cdf_plot(save_bool, return_data = False):
 
-    metric_path = os.path.join(os.path.dirname(__file__), "deterministic_mcs_metric_storage")
-    download_path = os.path.join(os.path.expanduser("~"), "Downloads")
+    with open(os.path.realpath(r'input\environment_variables_plotting.yml'), 'r') as yamlfile:
+        data = yaml.safe_load(yamlfile)
+
+
+    metric_path = os.path.join(data["baseline"]["dir"], "mcs_metric")
+    # download_path = os.path.join(os.path.expanduser("~"), "Downloads")
+
+    if not os.path.exists(metric_path):
+        raise Exception("mcs_metric has not yet been computed for this run")
+    else: 
+        pass
 
     for file in os.listdir(metric_path):
         if "energy_rv" in file:
@@ -41,8 +52,14 @@ def determinisic_energy_pdf_cdf_plot(save_bool, return_data = False):
     plt.legend(handles, labels)
     plt.suptitle("Deterministic design")
 
+    # Create storage location for data from mcs metrci
+    if os.path.exists(os.path.join(data["baseline"], "plots")):
+        pass
+    else:
+        os.mkdir(os.path.join(data["baseline"], 'plots'))
+
     if save_bool:
-        plt.savefig(os.path.join(download_path, "deterministic_MCS") + "_PdfCdf_" +  ".pdf", bbox_inches= "tight")
+        plt.savefig(os.path.join(data["baseline"], "plots") + "_PdfCdf_" +  ".pdf", bbox_inches= "tight")
     else:
         plt.show()
 
@@ -51,19 +68,30 @@ def pie_chart_energy():
     plt.clf()
     plt.figure(figsize=(10,10))
     # sizes = np.array(self.df["Energy_dist"][self.conv_lst])[-1]
+    with open(os.path.realpath(r'input\environment_variables_plotting.yml'), 'r') as yamlfile:
+        data = yaml.safe_load(yamlfile)
 
-    metric_path = os.path.join(os.path.dirname(__file__), "deterministic_mcs_metric_storage")
-    download_path = os.path.join(os.path.expanduser("~"), "Downloads")
 
-    with open(os.path.join(metric_path, "Ecruise_rv.pkl"), "rb") as f:
+    metric_path = os.path.join(data["baseline"]["dir"], "mcs_metric")
+    label =  os.path.split(data["baseline"]["dir"])[-1][3:]
+
+    if not os.path.exists(metric_path):
+        raise Exception("mcs_metric has not yet been computed for this run")
+    else: 
+        pass
+    
+    dump_path = os.path.join(data["baseline"]["dir"], "plots")
+
+
+    with open(os.path.join(metric_path, "Ecruise_rv" + label + ".pkl"), "rb") as f:
         Ecruise_rv = pickle.load(f)
-    with open(os.path.join(metric_path, "Eclimb_rv.pkl"), "rb") as f:
+    with open(os.path.join(metric_path, "Eclimb_rv" + label + ".pkl"), "rb") as f:
         Eclimb_rv = pickle.load(f)
-    with open(os.path.join(metric_path, "Edesc_rv.pkl"), "rb") as f:
+    with open(os.path.join(metric_path, "Edesc_rv" + label + ".pkl"), "rb") as f:
         Edesc_rv = pickle.load(f)
-    with open(os.path.join(metric_path, "Eloit_cr_cv.pkl"), "rb") as f:
+    with open(os.path.join(metric_path, "Eloit_cr_cv" + label + ".pkl"), "rb") as f:
         Eloit_cr_rv = pickle.load(f)
-    with open(os.path.join(metric_path, "Eloit_hov_rv.pkl"), "rb") as f:
+    with open(os.path.join(metric_path, "Eloit_hov_rv" + label + ".pkl"), "rb") as f:
         Eloit_hov_rv = pickle.load(f)
 
     lst = [Ecruise_rv, Eclimb_rv, Edesc_rv, Eloit_cr_rv, Eloit_hov_rv]
@@ -93,7 +121,7 @@ def pie_chart_energy():
         plt.text(x, y, annotation,   ha='center', va='center')
 
     # plt.suptitle(self.title)
-    plt.savefig(os.path.join(download_path, "deterministic_MCS_metric") + "_PieChart_" +  ".pdf", bbox_inches= "tight")
+    plt.savefig(os.path.join(dump_path, "pie_chart_mcs") + ".pdf", bbox_inches= "tight")
 
 
 def hover_loiter_energy():

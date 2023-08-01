@@ -6,27 +6,38 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import pathlib as pl
 import numpy as np
+import yaml 
 
-sys.path.append(str(list(pl.Path(__file__).parents)[0]))
+sys.path.append(str(list(pl.Path(__file__).parents)[2]))
 
 
-from MCS_metric_deterministic_reader import determinisic_energy_pdf_cdf_plot
-from npz_reader import npz_tool
-from weight_computation import Wing, Fuselage, LandingGear
+from modules.plotting.MCS_metric_deterministic_reader import determinisic_energy_pdf_cdf_plot
+from modules.plotting.npz_reader import npz_tool
+from modules.plotting.weight_computation import Wing, Fuselage, LandingGear
+
+os.chdir(str(list(pl.Path(__file__).parents)[2]))
 
 def plot_pdf_cdf():
 
-    npz_path_robust = r"C:\Users\damie\OneDrive\Desktop\Damien\Wigeon_proj\logs\Monte_carlo_Jun_4_19.15_2023.npz"
-    # npz_path_non_robust = r"C:\Users\damie\OneDrive\Desktop\Damien\Wigeon_proj\logs\valid_data\Monte_Carlo\run_8_Mar_15_16.17\Monte_carlo_Mar_15_16.17_2023.npz"
-    npz_path_non_robust = r"C:\Users\damie\OneDrive\Desktop\Damien\Wigeon_proj\logs\valid_data\Monte_Carlo\run_8_Mar_15_16.17\Monte_carlo_Mar_15_16.17_2023.npz"
-    file_name = "comparison_robust_non_optimizer"
-    download_path = os.path.join(os.path.expanduser("~"), "Downloads")
+    with open(os.path.realpath(r'input\environment_variables_plotting.yml'), 'r') as yamlfile:
+        data = yaml.safe_load(yamlfile)
 
-
-    if "non" in file_name:
-        npz_reader = npz_tool(npz_path_non_robust, save_bool= False)
+    dir_path = data["baseline"]["dir"]
+    label_mcs = os.path.split(data["mcs"]["dir"])[-1][3:]
+    label_deter = os.path.split(data["baseline"]["dir"])[-1][3:]
+    
+    # Create storage location for data from mcs metrci
+    if os.path.exists(os.path.join(dir_path, "plots")):
+        pass
     else:
-        npz_reader = npz_tool(npz_path_robust, save_bool= False)
+        os.mkdir(os.path.join(dir_path, 'plots'))
+
+    dump_path = os.path.join(os.path.join(dir_path , "plots", "compare_baseline_mcs" + label_mcs))
+
+
+    npz_reader = npz_tool( save_bool= False)
+    data_csv = pd.read_csv(os.path.join(dir_path, "Deterministic" + label_deter + "_hist.csv"))
+    conv_lst = np.array(np.round(data_csv["converged"],0), dtype= bool)
 
     x_deter, pdf_deter, cdf_deter = determinisic_energy_pdf_cdf_plot(False, return_data= True)
     x_mcs, pdf_mcs, cdf_mcs, dist= npz_reader.energy_pdf_cdf_plot(return_data=True)
@@ -36,8 +47,10 @@ def plot_pdf_cdf():
     plt.clf()
     plt.figure(figsize=(10,6))
     plt.plot(x_deter/3.6e6, pdf_deter, "-.", label= "PDF Deterministic Design")
+    plt.vlines([data_csv["Energy"][conv_lst].to_numpy()[-1]/3.6e6], 0, pdf_deter[np.argmin(np.abs(x_deter - data_csv["Energy"][conv_lst].to_numpy()[-1]))], color="red", alpha=0.3)
+    plt.fill_between(x_deter/3.6e6, pdf_deter, np.zeros(np.size(x_deter)), where= (x_deter > data_csv["Energy"][conv_lst].to_numpy()[-1]), color='red', alpha=0.3)
     plt.plot(x_mcs/3.6e6, pdf_mcs, "-", color="C1", label= "PDF MCS Design ")
-    plt.vlines([dist.ppf(0.9)/3.6e6], 0, pdf_mcs[np.where(np.abs(x_mcs - dist.ppf(0.9)) < 100000)[0]], color="red", alpha=0.3)
+    plt.vlines([dist.ppf(0.9)/3.6e6], 0, pdf_mcs[np.argmin(np.abs(x_mcs - dist.ppf(0.9)))], color="red", alpha=0.3)
     plt.fill_between(x_mcs/3.6e6, pdf_mcs, np.zeros(np.size(x_mcs)), where= (x_mcs > dist.ppf(0.9)), color='red', alpha=0.3)
     plt.xlabel("Energy [KwH]")
     plt.ylabel("PDF [-]")
@@ -45,13 +58,15 @@ def plot_pdf_cdf():
     plt.legend()
     # plt.suptitle("MCS vs Deterministic")
 
-    plt.savefig(os.path.join(download_path, file_name) + "_Pdf_" +  ".pdf", bbox_inches= "tight")
+    plt.savefig(dump_path + "_Pdf_" +  ".pdf", bbox_inches= "tight")
 
     plt.clf()
     plt.figure(figsize=(10,6))
     plt.plot(x_deter/3.6e6, cdf_deter, "-.", label= "CDF Deterministic Design")
+    plt.vlines([data_csv["Energy"][conv_lst].to_numpy()[-1]/3.6e6], 0, cdf_deter[np.argmin(np.abs(x_deter - data_csv["Energy"][conv_lst].to_numpy()[-1]))], color="red", alpha=0.3)
+    plt.fill_between(x_deter/3.6e6, cdf_deter, np.zeros(np.size(x_deter)), where= (x_deter > data_csv["Energy"][conv_lst].to_numpy()[-1]), color='red', alpha=0.3)
     plt.plot(x_mcs/3.6e6, cdf_mcs, "-", color="C1", label= "CDF MCS Design ")
-    plt.vlines([dist.ppf(0.9)/3.6e6], 0, pdf_mcs[np.where(np.abs(x_mcs - dist.ppf(0.9)) < 100000)[0]], color="red", alpha=0.3)
+    plt.vlines([dist.ppf(0.9)/3.6e6], 0, cdf_mcs[np.argmin(np.abs(x_mcs - dist.ppf(0.9)))], color="red", alpha=0.3)
     plt.fill_between(x_mcs/3.6e6, cdf_mcs, np.zeros(np.size(x_mcs)), where= (cdf_mcs > 0.9), color='red', alpha=0.3)
     plt.xlabel("Energy [KwH]")
     plt.ylabel("CDF [-]")
@@ -59,18 +74,28 @@ def plot_pdf_cdf():
     plt.legend()
     plt.suptitle("MCS vs Deterministic")
 
-    plt.savefig(os.path.join(download_path, file_name) + "_cdf_" +  ".pdf", bbox_inches= "tight")
+    plt.savefig(dump_path + "_cdf_" +  ".pdf", bbox_inches= "tight")
 
 
 def compare_weights():
-    # robust_path = r"C:\Users\damie\OneDrive\Desktop\Damien\Wigeon_proj\logs\Monte_carlo_Jun_4_19.15_2023.npz"
-    robust_path = r"C:\Users\damie\OneDrive\Desktop\Damien\Wigeon_proj\logs\valid_data\Monte_Carlo\run_8_Mar_15_16.17\Monte_carlo_Mar_15_16.17_2023.npz"
-    deter_path= r"C:\Users\damie\OneDrive\Desktop\Damien\Wigeon_proj\logs\valid_data\Baseline\run_3_Jun7_00.55\Deterministic_Jun__7_00.55_hist.csv"
-    download_path = os.path.join(os.path.expanduser("~"), "Downloads")
+
+    with open(os.path.realpath(r'input\environment_variables_plotting.yml'), 'r') as yamlfile:
+        data = yaml.safe_load(yamlfile)
+
+    mcs_run_path = data["mcs"]["dir"]
+    label_mcs = os.path.split(data["mcs"]["dir"])[-1][3:]
+
+    deter_run_path = data["baseline"]["dir"]
+    label_deter = os.path.split(data["baseline"]["dir"])[-1][3:]
+
+    mcs_path =  os.path.join(mcs_run_path, "monte_carlo_results" + label_mcs + ".npz")
+    deter_path= os.path.join(deter_run_path, "Deterministic" + label_deter + "_hist.csv")
+
+    dump_path = os.path.join(deter_run_path, "plots")
 
 
     data_deter = pd.read_csv(deter_path)
-    data_robust = npz_tool(robust_path, False)
+    data_robust = npz_tool(True)
     n_ult = 3.2
     Pmax = 17 # maximum perimeter of fuselage
 
@@ -136,14 +161,12 @@ def compare_weights():
     plt.subplots_adjust(wspace=0.4)
 
     # Display the figure
-    download_path = os.path.join(os.path.expanduser("~"), "Downloads")
     fig.tight_layout()
-    plt.savefig(os.path.join(download_path,  "weight_pie_chart.pdf") , bbox_inches= "tight")
+    plt.savefig(os.path.join(dump_path,  "weight_pie_chart_comparison.pdf") , bbox_inches= "tight")
     # plt.show()
 
 
     return comp_deter, comp_robust
 
 
-print(compare_weights())
 # plot_pdf_cdf()

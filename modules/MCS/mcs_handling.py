@@ -60,6 +60,7 @@ def get_mcs_results(MissionClass, conv_target= 0.85, chunksize= 100, test= False
     conv_condition = True
     conv_metric_lst = []
     
+    i = 0
 
     # Convergence loop
     while conv_condition:
@@ -71,9 +72,10 @@ def get_mcs_results(MissionClass, conv_target= 0.85, chunksize= 100, test= False
 
         mission_res.append(mission_res_chunk)  # array [[x00, x01, x02, x03, x04, array[y00, y01, y02, y03, y04],
             #                                                                     x11, x11, x12, x13, x14, array[y10, y11, y12, y13, y14]] etc
-        conv_metric_lst.append(np.std([i[0] for i in mission_res[0]]))
+        conv_metric_lst.append(np.std(np.vstack(np.array(mission_res, dtype= object))[:,0]))
+        i += 1
 
-        if test:
+        if test and i == 3:
             conv_condition = False
         try:
             print(f"Delta Q = {np.absolute(conv_metric_lst[-2] - conv_metric_lst[-1])} ")
