@@ -11,6 +11,7 @@ sys.path.append(str(list(pl.Path(__file__).parents)[2]))
 os.chdir(str(list(pl.Path(__file__).parents)[2]))
 
 from input.constants import g, eff_hover, eff_prop
+import input.constants_final as const
 import scipy.optimize as optimize
 from modules.Aero_tools import ISA, speeds
 import scipy.stats as stat
@@ -21,7 +22,7 @@ from math import pi
 class mission:
     def __init__(self, mass, cruise_speed, CL_max, wing_surface, A_disk, P_max,
                  Cl_alpha_curve, CD_a_w, CD_a_f, alpha_lst, Drag,
-                 t_loiter=15 * 60, rotational_rate=5, roc=5, rod=4, plotting=False, plot_monte_carlo= False):
+                  rotational_rate=5, plotting=False, plot_monte_carlo= False):
 
         """
         :param mass:            [kg]    Aircraft mass
@@ -38,7 +39,7 @@ class mission:
         # Temporary placeholders, REMOVE BEFORE RUNNING OPTIMIZATION
         self.m = mass
         self.S = wing_surface
-        self.max_rot = np.radians(rotational_rate)
+        self.max_rot = np.radians(const.max_rotation)
         self.CL_max = CL_max
         self.A_disk = A_disk
         self.P_max = P_max
@@ -51,11 +52,10 @@ class mission:
         self.ax_target_descend = 0.5 * g
         self.ay_target_descend = 0.2 * g
 
-        self.roc = roc
-        self.rod = rod
+        self.roc = const.roc
+        self.rod = const.rod
 
         self.v_cruise = cruise_speed
-        self.t_loiter = t_loiter
 
         plt.rcParams.update({'font.size': 16})
         self.path = "../../plotting_figures" 
@@ -149,7 +149,7 @@ class mission:
 
         
         # Slow down when approaching 15 m while going too fast in horizontal direction
-        if h_trans + (np.abs(vy) / self.ay_target_descend) > y > y_tgt and abs(vx) > 4:
+        if h_trans + (np.abs(vy) / self.ay_target_descend) > y > y_tgt and abs(vx) > 0.25:
             vy_tgt = 0
 
         # Keep horizontal velocity zero when flying low
@@ -174,7 +174,7 @@ class mission:
         y = y_start
         th = th_start
         T = 5000
-        dt = 0.03
+        dt = 0.01
 
         # Check whether the aircraft needs to climb or descend
         if y_start > y_tgt:
@@ -205,6 +205,7 @@ class mission:
         while running:
             
             
+            # Get the target accelerations
             ax_tgt, ay_tgt = self.target_accelerations_new(vx, vy, y, y_tgt, vx_tgt,
                                                            max_ax, max_ay, max_vy, h_trans= h_trans)
 
@@ -223,7 +224,6 @@ class mission:
             L = 0.5 * rho * V * V * self.S * CL
             D = 0.5 * rho * V * V * self.S * CD
 
-            # Get the target accelerations
             
             
 
@@ -759,6 +759,7 @@ class evtol_performance:
         plt.plot(V, P_br - D*V)
         plt.grid()
         plt.show()
+
 
 
 

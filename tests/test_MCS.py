@@ -9,6 +9,7 @@ os.chdir(str(list(pl.Path(__file__).parents)[1]))
 
 from modules.MCS.rv_handler import RandVar
 from modules.Flight_performance.flight_performance_mcs import mission
+from tests.setup.fixtures import mission_class_baseline, mission_class_mcs
 import modules.MCS.mcs_handling as mcs
 import input.constants_final as const
 
@@ -33,33 +34,14 @@ def test_sampling():
 
     assert samples.shape == (400,6)
     assert (samples[:,0] > const.minimum_dist).all()
-    assert (samples[:,0] < const.mission_range*1.1).all() 
+    assert (samples[:,0] < const.mission_range_baseline*1.1).all() 
     assert (samples[:,4] != 0).any()
     assert (samples[:,5] > 300).all()
     assert (samples[:,5] < 1000).all()
 
-def test_get_mcs_results():
-    os.chdir(str(list(pl.Path(__file__).parents)[1]))
-    with open(r"test\setup\mission_class_test.pkl", "rb") as f:
-        MissionClass = pickle.load(f)
+def test_get_mcs_results(mission_class_mcs):
 
-    MTOM = MissionClass.m
-    V_cr = MissionClass.v_cruise
-    CLmax= MissionClass.CL_max
-    S_tot = MissionClass.S
-    tot_prop_area = MissionClass.A_disk
-    max_power = MissionClass.P_max
-    Cl_alpha_curve = MissionClass.Cl_alpha_curve
-    CD_a_w = MissionClass.CD_a_w
-    CD_a_f = MissionClass.CD_a_f
-    alpha_lst = MissionClass.alpha_lst
-    drag = MissionClass.Drag    
-
-    mission_test = mission(MTOM, V_cr, CLmax, S_tot, tot_prop_area, P_max=max_power,
-                            Cl_alpha_curve=Cl_alpha_curve, CD_a_w=CD_a_w, CD_a_f=CD_a_f, alpha_lst=alpha_lst,
-                            Drag=drag, t_loiter=15*60, rotational_rate=5, plot_monte_carlo=False)
-
-    results, sample_history, conver_hist = mcs.get_mcs_results(mission_test, 0.7, chunksize=12, test= True)
+    results, sample_history, conver_hist = mcs.get_mcs_results(mission_class_mcs, 0.7, chunksize=12, test= True)
     assert results.shape == (36, 6)
     assert (results[:,0]/3.6e6 > 50).all()
     assert (results[:,0]/3.6e6 < 200).all()

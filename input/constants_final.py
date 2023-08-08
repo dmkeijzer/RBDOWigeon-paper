@@ -19,16 +19,23 @@ c_rot_1 = 0.25      # [-] position of the rotating axis in percentage chord
 c_rot_2 = 0.25
 
 
-# General baseline
-mission_range = 400e3       # [m] Mission range  
-mission_range_baseline = 300e3       # [m] Mission range  
-loiter_time_baseline = 5*60
+# baseline mission parameters
+mission_range_baseline = 400e3       # [m] Mission range  
+loiter_time_baseline = 10*60
+transition_height_baseline = 180 
+h_cruise = 1000 # Cruise height
 
-# MCS
+# MCS msison parameters
 minimum_dist = 100e3
 confidence_interval = 0.9
 convergence_targ = 0.85
 chunksize = 100
+
+# General mision/peformance parameters
+rod = 4
+roc = 5
+max_rotation = 5 # degrees
+
 
 n_pax = 5                               # Number of passengers
 m_pax = 88                              # Max per pax
@@ -71,9 +78,6 @@ dihedral2 = np.deg2rad(-4)      # Dihedral back wing. Old 0
 i1 = 0                          # Trim angle of the front wing TODO if used deg or rad?
 
 
-# Peformance
-rod = 4
-roc = 5
 
 # Propulsion
 xi_0 = 0.1         # Dimensionless radius of the hub (r_hub/R)

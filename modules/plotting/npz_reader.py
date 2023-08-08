@@ -37,7 +37,14 @@ class npz_tool: #TODO come up with better names lol
         else:
             os.mkdir(os.path.join(self.dir_path, 'plots'))
 
-        self.dump_path = os.path.join(self.dir_path, "plots")
+        # Create storage location for tables
+        if os.path.exists(os.path.join(self.dir_path, "tables")):
+            pass
+        else:
+            os.mkdir(os.path.join(self.dir_path, 'tables'))
+
+        self.dump_path_plots = os.path.join(self.dir_path, "plots")
+        self.dump_path_tables = os.path.join(self.dir_path, "tables")
         #---------------------------------------------------------------------------------------------------------
 
         # Get actual data from npz path
@@ -65,10 +72,11 @@ class npz_tool: #TODO come up with better names lol
 
 
     def write_all_parameters(self):
+
         converged_designs = self.df.loc[self.df["Converged_des"] == True]
         final_series = converged_designs.loc[converged_designs.index[-1]]
 
-        with open(os.path.join(self.dir_path, "final_parameters.txt"), "w") as f:
+        with open(os.path.join(self.dump_path_tables, "final_parameters.txt"), "w") as f:
             f.write(final_series.to_string())
 
     def energy_convergence(self, converged= True):
@@ -80,7 +88,7 @@ class npz_tool: #TODO come up with better names lol
         plt.grid(lw=0.8, alpha=0.8)
         plt.suptitle(self.title)
         if self.save_bool:
-            plt.savefig(os.path.join(self.dump_path, self.label) + "_EnergyConv_" +  ".pdf", bbox_inches= "tight")
+            plt.savefig(os.path.join(self.dump_path_plots, self.label) + "_EnergyConv_" +  ".pdf", bbox_inches= "tight")
         else:
             plt.show()
     
@@ -123,7 +131,7 @@ class npz_tool: #TODO come up with better names lol
 
         # plt.suptitle(self.title)
         if self.save_bool:
-            plt.savefig(os.path.join(self.dump_path, self.label) + "_PieChart_" +  ".pdf", bbox_inches= "tight")
+            plt.savefig(os.path.join(self.dump_path_plots, self.label) + "_PieChart_" +  ".pdf", bbox_inches= "tight")
         else:
             plt.show()
 
@@ -155,7 +163,7 @@ class npz_tool: #TODO come up with better names lol
         plt.suptitle(self.title)
 
         if self.save_bool:
-            plt.savefig(os.path.join(self.dump_path, self.label) + "_PdfCdf_" +  ".pdf", bbox_inches= "tight")
+            plt.savefig(os.path.join(self.dump_path_plots, self.label) + "_PdfCdf_" +  ".pdf", bbox_inches= "tight")
         else:
             plt.show()
     
@@ -204,7 +212,7 @@ class npz_tool: #TODO come up with better names lol
         fig.tight_layout()
                    
         if self.save_bool:
-            plt.savefig(os.path.join(self.dump_path, self.label) + "_Perf_" +  ".pdf", bbox_inches= "tight")
+            plt.savefig(os.path.join(self.dump_path_plots, self.label) + "_Perf_" +  ".pdf", bbox_inches= "tight")
         else:
             plt.show()
 
@@ -273,7 +281,7 @@ class npz_tool: #TODO come up with better names lol
         fig.suptitle(self.title)
         fig.tight_layout()
         if self.save_bool:
-            plt.savefig(os.path.join(self.dump_path, self.label) + "_EnergyPhases_" +  ".pdf", bbox_inches= "tight")
+            plt.savefig(os.path.join(self.dump_path_plots, self.label) + "_EnergyPhases_" +  ".pdf", bbox_inches= "tight")
         else:
             plt.show()
     
@@ -377,7 +385,7 @@ class npz_tool: #TODO come up with better names lol
 
         fig.tight_layout()
         if self.save_bool:
-            plt.savefig(os.path.join(self.dump_path, self.label) + "_DesignParams_" +  ".pdf", bbox_inches= "tight")
+            plt.savefig(os.path.join(self.dump_path_plots, self.label) + "_DesignParams_" +  ".pdf", bbox_inches= "tight")
         else:
             plt.show()
 
@@ -386,6 +394,7 @@ class npz_tool: #TODO come up with better names lol
 
     def analyze_all(self):
 
+        self.write_all_parameters()
         self.energy_convergence()
         self.design_parameter()
         self.pie_chart_energy()

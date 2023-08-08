@@ -169,8 +169,8 @@ prob.model.add_subsystem('Integrated_design', design_optimization())#, promotes_
                                                                                       # 'V_stall'])
 
 # Initial values for the optimization TODO: Improve initial values
-prob.model.set_input_defaults('Integrated_design.AR1', 6.8)
-prob.model.set_input_defaults('Integrated_design.AR2', 6.8)
+prob.model.set_input_defaults('Integrated_design.AR1', 8)
+prob.model.set_input_defaults('Integrated_design.AR2', 10)
 prob.model.set_input_defaults('Integrated_design.Sr_Sf', 1.)
 prob.model.set_input_defaults('Integrated_design.xr', 6.1)
 prob.model.set_input_defaults('Integrated_design.xf', 0.5)   # Change
@@ -179,7 +179,7 @@ prob.model.set_input_defaults('Integrated_design.zf', 0.3)
 prob.model.set_input_defaults('Integrated_design.max_power', 1.5e6)
 prob.model.set_input_defaults('Integrated_design.MTOM', 2800.)
 prob.model.set_input_defaults('Integrated_design.V_cr', 66.)
-prob.model.set_input_defaults('Integrated_design.h_cr', 1000)
+prob.model.set_input_defaults('Integrated_design.h_cr', const.h_cruise)
 prob.model.set_input_defaults('Integrated_design.C_L_cr', 0.8)
 prob.model.set_input_defaults('Integrated_design.CLmax', 1.68)
 prob.model.set_input_defaults('Integrated_design.prop_radius', 0.55)

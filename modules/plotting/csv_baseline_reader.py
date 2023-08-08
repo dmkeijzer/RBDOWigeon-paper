@@ -25,13 +25,20 @@ if os.path.exists(os.path.join(dir_path, "plots")):
 else:
     os.mkdir(os.path.join(dir_path, 'plots'))
 
-dump_path = os.path.join(dir_path, "plots")
+# Create storage location for tables
+if os.path.exists(os.path.join(dir_path, "tables")):
+    pass
+else:
+    os.mkdir(os.path.join(dir_path, 'tables'))
+
+dump_path_plots = os.path.join(dir_path, "plots")
+dump_path_tables = os.path.join(dir_path, "tables")
 
 def write_all_parameters():
     converged_designs = data_csv.loc[data_csv["converged"] == 1]
     final_series = converged_designs.loc[converged_designs.index[-1]]
 
-    with open(os.path.join(dir_path, "final_parameters.txt"), "w") as f:
+    with open(os.path.join(dump_path_tables, "final_parameters.txt"), "w") as f:
         f.write(final_series.to_string())
 
 def plot_design_params(save_bool):
@@ -112,7 +119,7 @@ def plot_design_params(save_bool):
 
     fig.tight_layout()
     if save_bool:
-        plt.savefig(os.path.join(dump_path, label) + "_DesignParam_" +  ".pdf", bbox_inches= "tight")
+        plt.savefig(os.path.join(dump_path_plots, label) + "_DesignParam_" +  ".pdf", bbox_inches= "tight")
     else:
         plt.show()
 
@@ -162,7 +169,7 @@ def plot_energy_phases(save_bool):
     fig.suptitle("Determinstic Mission")
     fig.tight_layout()
     if save_bool:
-        plt.savefig(os.path.join(dump_path, label) + "_EnergyPhases_" +  ".pdf", bbox_inches= "tight")
+        plt.savefig(os.path.join(dump_path_plots, label) + "_EnergyPhases_" +  ".pdf", bbox_inches= "tight")
     else:
         plt.show()
 
@@ -200,7 +207,7 @@ def plot_pie_chart_energy(save_bool):
 
     # plt.suptitle(title)
     if save_bool:
-        plt.savefig(os.path.join(dump_path, label) + "_PieChart_" +  ".pdf", bbox_inches= "tight")
+        plt.savefig(os.path.join(dump_path_plots, label) + "_PieChart_" +  ".pdf", bbox_inches= "tight")
     else:
         plt.show()
 

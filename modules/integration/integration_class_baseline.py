@@ -370,8 +370,7 @@ class RunDSE:
 
         # Energy sizing
         MissionClass = FP.mission(MTOM, h_cr, V_cr, CLmax, S_tot, tot_prop_area, P_max=max_power,
-                             Cl_alpha_curve=Cl_alpha_curve, CD_a_w=CD_a_w, CD_a_f=CD_a_f, alpha_lst=alpha_lst,
-                             Drag=DragClass, t_loiter= const.loiter_time_baseline, rotational_rate=5, mission_dist=const.mission_range_baseline)
+                             Cl_alpha_curve=Cl_alpha_curve, CD_a_w=CD_a_w, CD_a_f=CD_a_f, alpha_lst=alpha_lst, Drag=DragClass)
 
         max_thrust_stall = MissionClass.max_thrust(rho, V_stall)
 

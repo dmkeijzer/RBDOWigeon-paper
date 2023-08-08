@@ -53,7 +53,7 @@ if __name__ == "__main__": #Required due to the multiprocessing involved
 
     mission = FP.mission(MTOM, V_cr, CLmax, S_tot, tot_prop_area, P_max=max_power,
                             Cl_alpha_curve=Cl_alpha_curve, CD_a_w=CD_a_w, CD_a_f=CD_a_f, alpha_lst=alpha_lst,
-                            Drag=drag, t_loiter=15*60, rotational_rate=5, plot_monte_carlo=False)
+                            Drag=drag, plot_monte_carlo=False)
 
     #-----------------------------Monte carlo energy estimation--------------------------------------
     mission_res, sample_hist, conv_metric_lst =  mcs.get_mcs_results(mission, const.convergence_targ, chunksize= const.chunksize)

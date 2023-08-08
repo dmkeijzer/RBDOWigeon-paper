@@ -16,6 +16,7 @@ from Aero_tools import ISA, speeds
 import scipy.interpolate as interpolate
 import sys
 from input.constants import g, eff_hover, eff_prop
+import input.constants_final as const
 import scipy.optimize as optimize
 # TODO: Remove this import in the integrated program, make sure aerodynamics is called first and the variables have the
 # same names
@@ -39,8 +40,7 @@ class mission:
     """
 
     def __init__(self, mass, cruising_alt, cruise_speed, CL_max, wing_surface, A_disk, P_max,
-                 Cl_alpha_curve, CD_a_w, CD_a_f, alpha_lst, Drag,
-                 t_loiter=5 * 60, rotational_rate=5, roc=5, rod=4, mission_dist=300e3, plotting=False):
+                 Cl_alpha_curve, CD_a_w, CD_a_f, alpha_lst, Drag,  plotting=False):
 
         """
         :param mass:            [kg]    Aircraft mass
@@ -55,10 +55,11 @@ class mission:
         """
 
         # Temporary placeholders, REMOVE BEFORE RUNNING OPTIMIZATION
-        self.mission_dist = mission_dist
+        self.mission_dist = const.mission_range_baseline
+        self.t_loiter = const.loiter_time_baseline
         self.m = mass
         self.S = wing_surface
-        self.max_rot = np.radians(rotational_rate)
+        self.max_rot = np.radians(const.max_rotation)
         self.CL_max = CL_max
         self.A_disk = A_disk
         self.P_max = P_max
@@ -70,12 +71,11 @@ class mission:
         self.ax_target_descend = 0.5 * g
         self.ay_target_descend = 0.2 * g
 
-        self.roc = roc
-        self.rod = rod
+        self.roc = const.roc
+        self.rod = const.rod
 
         self.h_cruise = cruising_alt
         self.v_cruise = cruise_speed
-        self.t_loiter = t_loiter
 
         plt.rcParams.update({'font.size': 16})
         self.path = '../Flight_performance/Figures/'
@@ -168,11 +168,11 @@ class mission:
         vy_tgt = np.maximum(np.minimum(-0.5 * (y - y_tgt), max_vy), -max_vy)
 
         # Slow down when approaching 15 m while going too fast in horizontal direction
-        if 15 + (np.abs(vy) / self.ay_target_descend) > y > y_tgt and abs(vx) > 0.25:
+        if const.transition_height_baseline + (np.abs(vy) / self.ay_target_descend) > y > y_tgt and abs(vx) > 0.25:
             vy_tgt = 0
 
         # Keep horizontal velocity zero when flying low
-        if y < 10:
+        if y < const.transition_height_baseline - 80:
             vx_tgt_1 = 0
         else:
             vx_tgt_1 = vx_tgt
@@ -331,7 +331,7 @@ class mission:
             ax1.grid()
             fig.legend(loc = 'upper right', bbox_to_anchor=(1,1), bbox_transform=ax1.transAxes)#loc = 'upper center')
             fig.tight_layout(pad=0.05)
-            plt.savefig(self.path + 'inputs_' + 'climb' * (y_tgt > 10) + 'descend' * (y_tgt < 10) + '.pdf')
+            # plt.savefig(self.path + 'inputs_' + 'climb' * (y_tgt > 10) + 'descend' * (y_tgt < 10) + '.pdf')
             plt.show()
 
             #plt.subplot(221)
@@ -340,7 +340,7 @@ class mission:
             plt.ylabel("Speed [m/s]")
             plt.grid()
             plt.tight_layout(pad=0.05)
-            plt.savefig(self.path + 'transition_' + 'climb' * (y_tgt > 10) + 'descend' * (y_tgt < 10) + '_V.pdf')
+            # plt.savefig(self.path + 'transition_' + 'climb' * (y_tgt > 10) + 'descend' * (y_tgt < 10) + '_V.pdf')
             plt.show()
 
             #plt.subplot(222)
@@ -349,7 +349,7 @@ class mission:
             plt.ylabel("Altitude [m]")
             plt.grid()
             plt.tight_layout(pad=0.05)
-            plt.savefig(self.path + 'transition_' + 'climb' * (y_tgt > 10) + 'descend' * (y_tgt < 10) + '_profile.pdf')
+            # plt.savefig(self.path + 'transition_' + 'climb' * (y_tgt > 10) + 'descend' * (y_tgt < 10) + '_profile.pdf')
             plt.show()
 
             #plt.subplot(223)
@@ -358,7 +358,7 @@ class mission:
             plt.ylabel("$v_y$ [m/s]")
             plt.grid()
             plt.tight_layout(pad=0.8)
-            plt.savefig(self.path + 'transition_' + 'climb' * (y_tgt > 10) + 'descend' * (y_tgt < 10) + '_vy.pdf')
+            # plt.savefig(self.path + 'transition_' + 'climb' * (y_tgt > 10) + 'descend' * (y_tgt < 10) + '_vy.pdf')
             plt.show()
 
             plt.plot(t_arr, P_tot/1e3)
@@ -366,7 +366,7 @@ class mission:
             plt.ylabel("Power [kW]")
             plt.grid()
             plt.tight_layout(pad=0.05)
-            plt.savefig(self.path + 'transition_' + 'climb' * (y_tgt > 10) + 'descend' * (y_tgt < 10) + '_P.pdf')
+            # plt.savefig(self.path + 'transition_' + 'climb' * (y_tgt > 10) + 'descend' * (y_tgt < 10) + '_P.pdf')
             plt.show()
 
             #plt.subplot(224)
@@ -376,7 +376,7 @@ class mission:
             plt.grid()
 
             plt.tight_layout(pad=0.05)
-            plt.savefig(self.path + 'transition_' + 'climb' * (y_tgt > 10) + 'descend' * (y_tgt < 10) + '_g.pdf')
+            # plt.savefig(self.path + 'transition_' + 'climb' * (y_tgt > 10) + 'descend' * (y_tgt < 10) + '_g.pdf')
             plt.show()
 
         distance = x_lst[-1]
@@ -456,13 +456,13 @@ class mission:
 
             plt.pie(Energy, labels=labels, autopct='%1.1f%%')
             plt.tight_layout(pad=0.05)
-            plt.savefig(self.path + 'energy_breakdown.pdf')
+            # plt.savefig(self.path + 'energy_breakdown.pdf')
             plt.show()
 
 
             plt.pie(Time, labels=labels, autopct='%1.1f%%')
             plt.tight_layout(pad=0.05)
-            plt.savefig(self.path + 'time_breakdown.pdf')
+            # plt.savefig(self.path + 'time_breakdown.pdf')
 
             plt.show()
 
