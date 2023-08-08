@@ -414,13 +414,13 @@ class mission:
         print("Opened agent")
 
         d_climb, E_climb, t_climb, P_m_to, T_m_to = self.numerical_simulation(vx_start=0.001, y_start=0,
-                                                                            th_start=np.pi / 2, y_tgt= h_cruise,
+                                                                            th_start=np.pi / 2, y_tgt= const.h_cruise,
                                                                             vx_tgt=self.v_cruise, h_trans= h_trans)
 
         
         # Get the energy and distance needed to descend
         d_desc, E_desc, t_desc, P_m_la, T_m_la = self.numerical_simulation(vx_start=self.v_cruise,
-                                                                        y_start=h_cruise,
+                                                                        y_start=const.h_cruise,
                                                                         th_start = np.radians(5), y_tgt=0, vx_tgt=0, h_trans= h_trans)
         
         # Distance spent in cruise
@@ -434,10 +434,10 @@ class mission:
         t_cruise = d_cruise / self.v_cruise
 
         # Get the brake power used in cruise
-        P_cruise, D_cruise = self.power_cruise_config(h_cruise, self.v_cruise, self.m)  # + self.P_systems
+        P_cruise, D_cruise = self.power_cruise_config(const.h_cruise, self.v_cruise, self.m)  # + self.P_systems
 
 
-        V = speeds(altitude=h_cruise, m=self.m, CLmax=self.CL_max, S=self.S, componentdrag_object=self.Drag)
+        V = speeds(altitude=const.h_cruise, m=self.m, CLmax=self.CL_max, S=self.S, componentdrag_object=self.Drag)
 
         # Loiter power
         V_loit = V.endurance()
