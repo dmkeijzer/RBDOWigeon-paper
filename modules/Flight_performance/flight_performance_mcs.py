@@ -174,7 +174,7 @@ class mission:
         y = y_start
         th = th_start
         T = 5000
-        dt = 0.01
+        dt = const.time_step 
 
         # Check whether the aircraft needs to climb or descend
         if y_start > y_tgt:
@@ -434,7 +434,7 @@ class mission:
         t_cruise = d_cruise / self.v_cruise
 
         # Get the brake power used in cruise
-        P_cruise, D_cruise = self.power_cruise_config(const.h_cruise, self.v_cruise, self.m)  # + self.P_systems
+        P_cruise, D_cruise = self.power_cruise_config(h_cruise, self.v_cruise, self.m)  # + self.P_systems
 
 
         V = speeds(altitude=const.h_cruise, m=self.m, CLmax=self.CL_max, S=self.S, componentdrag_object=self.Drag)

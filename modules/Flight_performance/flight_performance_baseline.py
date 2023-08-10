@@ -193,7 +193,7 @@ class mission:
         y = y_start
         th = th_start
         T = 5000
-        dt = 0.01
+        dt = const.time_step
 
         # Check whether the aircraft needs to climb or descend
         if y_start > y_tgt:

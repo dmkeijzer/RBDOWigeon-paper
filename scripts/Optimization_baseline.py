@@ -99,7 +99,7 @@ class design_optimization(om.ExplicitComponent):
         optimisation_class = int_class.RunDSE(initial_estimate)
 
         # Run the file for # iterations
-        N_iter = 10
+        N_iter = const.n_iters
         optim_outputs, internal_inputs, other_outputs, conv_hist = optimisation_class.multirun(N_iter, optim_inputs=[])
 
         if os.path.exists(os.path.join(path_directory, "Deterministic" + "_" + label + "_hist.csv")):
@@ -169,8 +169,8 @@ prob.model.add_subsystem('Integrated_design', design_optimization())#, promotes_
                                                                                       # 'V_stall'])
 
 # Initial values for the optimization TODO: Improve initial values
-prob.model.set_input_defaults('Integrated_design.AR1', 8)
-prob.model.set_input_defaults('Integrated_design.AR2', 10)
+prob.model.set_input_defaults('Integrated_design.AR1', const.init_ar1)
+prob.model.set_input_defaults('Integrated_design.AR2', const.init_ar2)
 prob.model.set_input_defaults('Integrated_design.Sr_Sf', 1.)
 prob.model.set_input_defaults('Integrated_design.xr', 6.1)
 prob.model.set_input_defaults('Integrated_design.xf', 0.5)   # Change

@@ -17,7 +17,7 @@ import input.constants_final as const
 
 
 def test_flight_performance_baseline(mission_class_baseline):
-    mission_class_baseline.plotting = True
+    # mission_class_baseline.plotting = True
     Etot, t_tot, P_mac, T_max, t_hor, energy_dist = mission_class_baseline.total_energy()
 
     print(f"Energy = {Etot}")
@@ -28,8 +28,8 @@ def test_flight_performance_baseline(mission_class_baseline):
 
 
 def test_flight_performance_mcs(mission_class_mcs):
-    mission_class_mcs.plotting = True
-    Etot, t_tot, P_mac, T_max, t_hor, energy_dist = mission_class_mcs.single_sample_monte_carlo(const.mission_range_baseline, const.loiter_time_baseline, const.transition_height_baseline, const.h_cruise , 0, const.h_cruise )
+    # mission_class_mcs.plotting = True
+    Etot, t_tot, P_mac, T_max, t_hor, energy_dist = mission_class_mcs.single_sample_monte_carlo(const.mission_range_baseline, const.loiter_time_baseline,const.transition_height_baseline, const.h_cruise , 0, const.h_cruise )
 
     print(f"Energy = {Etot}")
     print(f"Time = {t_tot}")
@@ -39,30 +39,29 @@ def test_flight_performance_mcs(mission_class_mcs):
 
 
 def test_equality_mission_class(mission_class_baseline, mission_class_mcs):
-    Etot, t_tot, P_mac, T_max, t_hor, energy_dist = mission_class_mcs.single_sample_monte_carlo(393.2e3, 592 , 203.7, 244, 0, 690)
+    Etot, t_tot, P_mac, T_max, t_hor, energy_dist = mission_class_mcs.single_sample_monte_carlo(const.mission_range_baseline, const.loiter_time_baseline,const.transition_height_baseline, const.h_cruise , 0, const.h_cruise )
     Etot_base, t_tot_base, P_mac_base, T_max_base, t_hor_base, energy_dist_base = mission_class_baseline.total_energy()
 
     print(f"Energy mcs = {Etot/3.6e6}")
     print(f"Energy baseline = {Etot_base/3.6e6}")
     
 
-    assert True
-    # assert np.isclose(Etot_base/3.6e6,  Etot/3.6e6, atol= 3)
+    assert np.isclose(Etot_base/3.6e6,  Etot/3.6e6, atol= 0.1)
 
 
-def test_cruising_alt_sensitivity(mission_class_mcs):
+# def test_cruising_alt_sensitivity(mission_class_mcs):
 
-    energies = []
-    x = np.linspace(300,1000,30)
-    for i in x:
-        Etot, t_tot, P_mac, T_max, t_hor, energy_dist = mission_class_mcs.single_sample_monte_carlo(393.2e3, 592 , 100, 120, 0, i)
-        energies.append(Etot/3.6e6)
+#     energies = []
+#     x = np.linspace(300,1000,30)
+#     for i in x:
+#         Etot, t_tot, P_mac, T_max, t_hor, energy_dist = mission_class_mcs.single_sample_monte_carlo(393.2e3, 592 , 100, 120, 0, i)
+#         energies.append(Etot/3.6e6)
 
-    print(f" x = {x}")
-    print(f" energies = {energies}")
+#     print(f" x = {x}")
+#     print(f" energies = {energies}")
 
-    plt.plot(x, energies)
-    plt.xlabel("Cruising altitude")
-    plt.ylabel("Energy consumed")
-    plt.grid()
-    plt.show()
+#     plt.plot(x, energies)
+#     plt.xlabel("Cruising altitude")
+#     plt.ylabel("Energy consumed")
+#     plt.grid()
+#     plt.show()

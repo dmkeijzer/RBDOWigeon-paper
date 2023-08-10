@@ -18,6 +18,18 @@ y_tilt_2 = 0.8865
 c_rot_1 = 0.25      # [-] position of the rotating axis in percentage chord
 c_rot_2 = 0.25
 
+#MADO parameters
+n_iters = 8
+
+init_ar1 = 8
+init_ar2 = 9
+
+#constraints
+
+# constr_cm_alpha = 0.12
+# constr_mtom = 3175
+# constr_ctrl_marg = -0.1
+# constr_
 
 # baseline mission parameters
 mission_range_baseline = 400e3       # [m] Mission range  
@@ -28,13 +40,14 @@ h_cruise = 1000 # Cruise height
 # MCS msison parameters
 minimum_dist = 100e3
 confidence_interval = 0.9
-convergence_targ = 0.85
+convergence_targ = 0.45
 chunksize = 100
 
 # General mision/peformance parameters
 rod = 4
 roc = 5
 max_rotation = 5 # degrees
+time_step = 0.015
 
 
 n_pax = 5                               # Number of passengers
@@ -59,6 +72,7 @@ sweepc41 = 0                # Sweep angle at quarter chord for 1st wing [rad]
 sweepc42 = 0                # Sweep angle at quarter chord for the 2nd wing
 k = 0.634 * 10**(-5)        # Smooth paint from adsee 2 L2  smoothness factor[-]
 flamf = 0.1                 # From ADSEE 2 L2 GA aircraft [-]
+
 IF_f = 1                    # From ADSEE 2 L2 Interference factor fuselage [-]
 IF_w = 1.1                  # From ADSEE 2 L2 Interference factor wing [-]
 IF_v = 1.04                 # From ADSEE 2 L2 Interference factor vertical tail [-]
