@@ -26,33 +26,36 @@ plt_data = pd.read_csv(os.path.join(os.path.dirname(__file__), "plotting_df.csv"
 # epsg(3395) is a conformal projection (lat and lon lines remain adjacent)
 #=========================================================================
 
+map_limits_x = [-13.85e5,2.9e6] 
+map_limits_y = [4.0e6, 8.67e6]
+
 fig = plt.figure(figsize=(20,10))
 ax1 = plt.subplot(221, projection=ccrs.epsg(3395))
 europe.plot(legend=False, cmap=matplotlib.cm.Greys, ec="black", lw=0.4,alpha=0.8,ax=ax1) 
-plt.xlim([-2.26e6,3.78e6])
-plt.ylim([3.7e6, 1.07e7])
+plt.xlim(map_limits_x)
+plt.ylim(map_limits_y)
 # plt.gca().set_aspect('equal', adjustable='box')
 plt.title(" GDP > 159.2 ")
 ax2 = plt.subplot(222, projection=ccrs.epsg(3395)) 
 europe.plot(legend=False, cmap=matplotlib.cm.Greys, ec="black", lw=0.4,alpha=0.8,ax=ax2) 
-plt.xlim([-2.26e6,3.78e6])
-plt.ylim([3.7e6, 1.07e7])
+plt.xlim(map_limits_x)
+plt.ylim(map_limits_y)
 # plt.gca().set_aspect('equal', adjustable='box')
 plt.title("152.2 > GDP > 84.9")
 ax3 = plt.subplot(223, projection=ccrs.epsg(3395)) 
 europe.plot(legend=False, cmap=matplotlib.cm.Greys, ec="black", lw=0.4,alpha=0.8,ax=ax3) 
-plt.xlim([-2.26e6,3.78e6])
-plt.ylim([3.7e6, 1.07e7])
+plt.xlim(map_limits_x)
+plt.ylim(map_limits_y)
 # plt.gca().set_aspect('equal', adjustable='box')
 plt.title("84.9 > GDP > 58.8 ")
 ax4 = plt.subplot(224, projection=ccrs.epsg(3395))  
 europe.plot(legend=False, cmap=matplotlib.cm.Greys, ec="black", lw=0.4,alpha=0.8,ax=ax4) 
-plt.xlim([-2.26e6,3.78e6])
-plt.ylim([3.7e6, 1.07e7])
+plt.xlim(map_limits_x)
+plt.ylim(map_limits_y)
 # plt.gca().set_aspect('equal', adjustable='box')
 plt.title("58.8 > GDP ")
 
-lim = 300
+lim = 400
 a = 0.38
 iso = iso_cities(lim)
 
@@ -112,9 +115,10 @@ for row in np.delete(plt_data.to_numpy(), 0 , 1):
       ax4.text(row[2] , row[1] - 1, row[0], fontsize=8, color='black',horizontalalignment='right', transform=ccrs.PlateCarree())
 
 fig.tight_layout()
-fig.subplots_adjust(wspace= -0.73)
-fig.subplots_adjust(hspace= 0.2)
-plt.show()
+fig.subplots_adjust(wspace= -0.70)
+fig.subplots_adjust(hspace= 0.06)
+# plt.show()
+plt.savefig(os.path.join(os.path.expanduser("~"), "Downloads", "cities_by_gmp_europe.pdf"), bbox_inches= "tight" )
 
 
 

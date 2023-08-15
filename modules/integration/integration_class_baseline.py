@@ -165,7 +165,6 @@ class RunDSE:
         Stall speed
         Energy consumption
         Peak power
-        Maximum take-off mass
         Wing mass
         Landing gear placement
         Battery mass
@@ -445,7 +444,7 @@ class RunDSE:
                                                                                      n_prop, m_prop, pos_prop,
                                                                                      const.m_pax,  const.m_cargo_tot,
                                                                                      m_bat, Sv, root_chord_vtail,
-                                                                                     contingency = False, cg_bat=cg_bat)
+                                                                                     contingency = const.baseline_contingency, cg_bat=cg_bat)
 
         # ----------------- Stability and control -------------------
 
@@ -681,7 +680,7 @@ class RunDSE:
             # print("")
             optim_outputs, internal_inputs, other_outputs = self.run(internal_inputs)
             hist_single_iter = other_outputs["lines"][:,1].astype("float64")
-            if i == 10:
+            if i == N_iters:
                 hist_single_iter[-1] = 1.
             hist.append(hist_single_iter)
         

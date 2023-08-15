@@ -47,8 +47,8 @@ def plot_pdf_cdf():
     plt.clf()
     plt.figure(figsize=(10,6))
     plt.plot(x_deter/3.6e6, pdf_deter, "-.", label= "PDF Deterministic Design")
-    plt.vlines([data_csv["Energy"][conv_lst].to_numpy()[-1]/3.6e6], 0, pdf_deter[np.argmin(np.abs(x_deter - data_csv["Energy"][conv_lst].to_numpy()[-1]))], color="red", alpha=0.3)
-    plt.fill_between(x_deter/3.6e6, pdf_deter, np.zeros(np.size(x_deter)), where= (x_deter > data_csv["Energy"][conv_lst].to_numpy()[-1]), color='red', alpha=0.3)
+    # plt.vlines([data_csv["Energy"][conv_lst].to_numpy()[-1]/3.6e6], 0, pdf_deter[np.argmin(np.abs(x_deter - data_csv["Energy"][conv_lst].to_numpy()[-1]))], color="red", alpha=0.3)
+    # plt.fill_between(x_deter/3.6e6, pdf_deter, np.zeros(np.size(x_deter)), where= (x_deter > data_csv["Energy"][conv_lst].to_numpy()[-1]), color='red', alpha=0.3)
     plt.plot(x_mcs/3.6e6, pdf_mcs, "-", color="C1", label= "PDF MCS Design ")
     plt.vlines([dist.ppf(0.9)/3.6e6], 0, pdf_mcs[np.argmin(np.abs(x_mcs - dist.ppf(0.9)))], color="red", alpha=0.3)
     plt.fill_between(x_mcs/3.6e6, pdf_mcs, np.zeros(np.size(x_mcs)), where= (x_mcs > dist.ppf(0.9)), color='red', alpha=0.3)
@@ -62,8 +62,8 @@ def plot_pdf_cdf():
 
     plt.clf()
     plt.figure(figsize=(10,6))
-    plt.plot(x_deter/3.6e6, cdf_deter, "-.", label= "CDF Deterministic Design")
-    plt.vlines([data_csv["Energy"][conv_lst].to_numpy()[-1]/3.6e6], 0, cdf_deter[np.argmin(np.abs(x_deter - data_csv["Energy"][conv_lst].to_numpy()[-1]))], color="red", alpha=0.3)
+    # plt.plot(x_deter/3.6e6, cdf_deter, "-.", label= "CDF Deterministic Design")
+    # plt.vlines([data_csv["Energy"][conv_lst].to_numpy()[-1]/3.6e6], 0, cdf_deter[np.argmin(np.abs(x_deter - data_csv["Energy"][conv_lst].to_numpy()[-1]))], color="red", alpha=0.3)
     plt.fill_between(x_deter/3.6e6, cdf_deter, np.zeros(np.size(x_deter)), where= (x_deter > data_csv["Energy"][conv_lst].to_numpy()[-1]), color='red', alpha=0.3)
     plt.plot(x_mcs/3.6e6, cdf_mcs, "-", color="C1", label= "CDF MCS Design ")
     plt.vlines([dist.ppf(0.9)/3.6e6], 0, cdf_mcs[np.argmin(np.abs(x_mcs - dist.ppf(0.9)))], color="red", alpha=0.3)
@@ -72,7 +72,6 @@ def plot_pdf_cdf():
     plt.ylabel("CDF [-]")
     plt.grid(lw= 0.8, alpha= 0.8)
     plt.legend()
-    plt.suptitle("MCS vs Deterministic")
 
     plt.savefig(dump_path + "_cdf_" +  ".pdf", bbox_inches= "tight")
 
@@ -150,11 +149,11 @@ def compare_weights():
     fig.set_figwidth(8)
 
     # Plot the first pie chart on the first subplot
-    axes[0].pie(comp_deter, labels=str_lst, autopct='%1.1f%%', startangle=90)
+    axes[0].pie(comp_deter, labels=str_lst, explode= np.ones(len(comp_robust))*0., autopct='%1.1f%%', startangle=90, textprops={'fontsize': 13})
     axes[0].set_title('Deterministic Design Weight Distribution')
 
     # Plot the second pie chart on the second subplot
-    axes[1].pie(comp_robust, labels=str_lst, autopct='%1.1f%%', startangle=90)
+    axes[1].pie(comp_robust, labels=str_lst,explode= np.ones(len(comp_robust))*0. ,autopct='%1.1f%%', startangle=90, textprops={'fontsize': 13})
     axes[1].set_title('RBDO Design Weight Distribution')
 
     # Adjust the spacing between subplots
@@ -162,7 +161,7 @@ def compare_weights():
 
     # Display the figure
     fig.tight_layout()
-    plt.savefig(os.path.join(dump_path,  "weight_pie_chart_comparison.pdf") , bbox_inches= "tight")
+    plt.savefig(os.path.join(dump_path,  "weight_pie_chart_comparison"   + label_mcs +  ".pdf") , bbox_inches= "tight")
     # plt.show()
 
 

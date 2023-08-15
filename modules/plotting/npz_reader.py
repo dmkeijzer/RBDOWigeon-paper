@@ -106,28 +106,29 @@ class npz_tool: #TODO come up with better names lol
         lst = [Ecruise_rv, Eclimb_rv, Edesc_rv, Eloit_cr_rv, Eloit_hov_rv]
 
         sizes =  [i.get_expectation() for i in lst ]
-        labels= ["Cruise", "Climb", "Descend", "Loiter cruise", "Loiter Hover"]
+        labels= ["Cruise", "Climb", "Descend", "Loiter cruise", ""]
         annotations = []
         for i,phase in enumerate(lst):
             std = phase.best_fit.std(*phase.arg, loc= phase.loc, scale= phase.scale)
             if i != 4:
-                annotations.append(f"{labels[i]} STD ={np.round(std/3.6e6,2)} [kWh]\n{labels[i]} Expectation ={np.round(sizes[i]/3.6e6,2)} [kWh]")
+                annotations.append(f" STD ={np.round(std/3.6e6,2)} [kWh]\n E[Var] ={np.round(sizes[i]/3.6e6,2)} [kWh]")
             else:
-                annotations.append(f"Loiter Hover\nSee energy phase plots")
+                pass
 
         # Plotting actual data
-        plt.pie(sizes, autopct = '%1.1f%%', explode= [0.1,0.1,0.1,0.2,0.05], startangle= 90)
+        plt.pie(sizes, labels= labels, autopct = '%1.1f%%', explode= [0.1,0.1,0.1,0.2,0.05], startangle= 90,  textprops={'fontsize': 26})
+        plt.legend(fontsize=26, loc="lower right")
 
         # Add annotations to the data
         radii = [1.3, 1.4, 1.36, 1.37, 1.22]
-        deltax = [-0.19, 0.2, 0.1, 0.2, -0.1]
-        deltay = [-0.05, -0.2, -0.1, -0.05, -0.1]
+        deltax = [-0.19, 0.3, 0.3, -0.6, -0.1]
+        deltay = [-0.15, -0.25, -0.35, -0.25, -0.2]
         for i, radius, annotation, dx, dy  in zip(list(range(len(radii))), radii,annotations, deltax, deltay):
             angle = 90 + sum(sizes[:i])/sum(sizes)*360 + (sizes[i])/(sum(sizes))*360*1/2
             x = radius*np.cos(np.radians(angle)) + dx
             y = radius*np.sin(np.radians(angle)) + dy
             # plt.annotate(annotation, (x, y), ha='center', va='center')
-            plt.text(x, y, annotation,   ha='center', va='center')
+            plt.text(x, y, annotation,   ha='center', va='center', fontsize= 26)
 
         # plt.suptitle(self.title)
         if self.save_bool:

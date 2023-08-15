@@ -18,11 +18,11 @@ y_tilt_2 = 0.8865
 c_rot_1 = 0.25      # [-] position of the rotating axis in percentage chord
 c_rot_2 = 0.25
 
-#MADO parameters
-n_iters = 8
-
-init_ar1 = 8
-init_ar2 = 9
+#MADO settings
+n_iters = 10
+baseline_contingency = True
+init_ar1 = 10
+init_ar2 = 12
 
 #constraints
 
