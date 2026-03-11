@@ -134,3 +134,5 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+Optimization_mcs_out
+Optimization_baseline_out

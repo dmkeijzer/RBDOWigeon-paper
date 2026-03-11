@@ -6,23 +6,13 @@ services:
       target: framework_mcs
     volumes:
       # Map a local folder './results' into the container
-      - ./results:/app/output
+      - ./results_mcs:/app/output/mcs:z
 
   framework_baseline:
     build:
       context: .
-      target: framework_mcs
+      target: framework_baseline
     volumes:
       # Map a local folder './results' into the container
-      - ./results:/app/output
+      - ./results_baseline:/app/output/baseline:z
 
-  # 2. Run this second to generate the paper figures
-  plots:
-    build:
-      context: .
-      target: plotting
-    volumes:
-      # Read the data from the framework
-      - ./results:/app/output
-      # Output the final plots to your host machine
-      - ./figures:/app/figures
