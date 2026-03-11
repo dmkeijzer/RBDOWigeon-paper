@@ -4,7 +4,16 @@ import scipy.interpolate as sp_int
 
 
 class PlotBlade:
-    def __init__(self, chords, pitchs, radial_coords, R, xi_0, airfoil_name='naca4412', tc_ratio=0.12):
+    def __init__(
+        self,
+        chords,
+        pitchs,
+        radial_coords,
+        R,
+        xi_0,
+        airfoil_name="naca4412",
+        tc_ratio=0.12,
+    ):
         """
         :param chords: Array with chords, from root to tip [m]
         :param pitchs: Array with pitch angles, from root to tip [rad]
@@ -23,7 +32,7 @@ class PlotBlade:
         self.tc_ratio = tc_ratio
 
     def load_airfoil(self):
-        file = open('../PropandPower/'+self.airfoil_name)
+        file = open("../PropandPower/" + self.airfoil_name)
 
         airfoil = file.readlines()
 
@@ -53,7 +62,7 @@ class PlotBlade:
     def plot_blade(self):
         # Create figures
         fig, axs = plt.subplots(2, 1)
-        axs[0].axis('equal')
+        axs[0].axis("equal")
 
         # Plot side view of the airfoil cross-sections
         for i in range(len(self.chords)):
@@ -68,8 +77,14 @@ class PlotBlade:
             # Apply pitch
             for j in range(len(x_coords)):
                 # Transform coordinates with angle
-                x_coord_n = np.cos(self.pitchs[i]) * x_coords[j] + np.sin(self.pitchs[i]) * y_coords[j]
-                y_coord_n = -np.sin(self.pitchs[i]) * x_coords[j] + np.cos(self.pitchs[i]) * y_coords[j]
+                x_coord_n = (
+                    np.cos(self.pitchs[i]) * x_coords[j]
+                    + np.sin(self.pitchs[i]) * y_coords[j]
+                )
+                y_coord_n = (
+                    -np.sin(self.pitchs[i]) * x_coords[j]
+                    + np.cos(self.pitchs[i]) * y_coords[j]
+                )
 
                 # Save new coordinates
                 x_coords_n.append(x_coord_n)
@@ -78,15 +93,15 @@ class PlotBlade:
             # Plot the cross section
 
             axs[0].plot(x_coords_n, y_coords_n)
-        axs[0].hlines(0, -0.2, 0.3, label='Disk plane', colors='k', linewidths=0.75)
+        axs[0].hlines(0, -0.2, 0.3, label="Disk plane", colors="k", linewidths=0.75)
 
         y_mins = []
         y_maxs = []
         for i in range(len(self.chords)):
             chord_len = self.chords[i]
             # Plot chord at its location, align half chords
-            y_maxs.append(chord_len/4)
-            y_mins.append(-3*chord_len/4)
+            y_maxs.append(chord_len / 4)
+            y_mins.append(-3 * chord_len / 4)
 
         # # Interpolate for smooth distribution
         # y_max_fun = sp_int.CubicSpline(self.radial_coords, y_maxs, extrapolate=True)
@@ -100,14 +115,14 @@ class PlotBlade:
         y_min_fun = np.polynomial.polynomial.Polynomial(coef_y_min_fun)
 
         # Plot
-        axs[1].axis('equal')
+        axs[1].axis("equal")
 
         # Plot actual points
         axs[1].scatter(self.radial_coords, y_maxs)
         axs[1].scatter(self.radial_coords, y_mins)
 
         # Plot smooth distribution  TODO: revise
-        radius = np.linspace(self.xi_0*self.R, self.R, 200)
+        radius = np.linspace(self.xi_0 * self.R, self.R, 200)
         axs[1].plot(radius, y_min_fun(radius))
         axs[1].plot(radius, y_max_fun(radius))
 
@@ -116,7 +131,7 @@ class PlotBlade:
 
     def plot_3D_blade(self):
         fig = plt.figure()
-        ax = plt.axes(projection='3d')
+        ax = plt.axes(projection="3d")
         # ax.set_aspect('equal')
 
         # Plot airfoil blade in 3D
@@ -134,8 +149,14 @@ class PlotBlade:
             # Apply pitch
             for j in range(len(x_coords)):
                 # Transform coordinates with angle
-                x_coord_n = np.cos(self.pitchs[i]) * x_coords[j] + np.sin(self.pitchs[i]) * y_coords[j]
-                y_coord_n = -np.sin(self.pitchs[i]) * x_coords[j] + np.cos(self.pitchs[i]) * y_coords[j]
+                x_coord_n = (
+                    np.cos(self.pitchs[i]) * x_coords[j]
+                    + np.sin(self.pitchs[i]) * y_coords[j]
+                )
+                y_coord_n = (
+                    -np.sin(self.pitchs[i]) * x_coords[j]
+                    + np.cos(self.pitchs[i]) * y_coords[j]
+                )
 
                 # Save new coordinates
                 x_coords_n.append(x_coord_n)
@@ -145,26 +166,33 @@ class PlotBlade:
                 point = [x_coord_n, y_coord_n, self.radial_coords[i]]
                 blade_plot = np.vstack((blade_plot, point))
 
-            ax.plot3D(x_coords_n, y_coords_n, self.radial_coords[i], color='k')
+            ax.plot3D(x_coords_n, y_coords_n, self.radial_coords[i], color="k")
 
         # ax.plot3D(blade_plot[:][0], blade_plot[:][1], blade_plot[:][2], color='k')
-
 
         # Trick to set 3D axes to equal scale, obtained from:
         # https://stackoverflow.com/questions/13685386/matplotlib-equal-unit-length-with-equal-aspect-ratio-z-axis-is-not-equal-to
 
         # Just to get max X, Y, and Z
         X = np.array([self.chords[0], self.chords[-1]])
-        Y = np.array([self.chords[0]*self.tc_ratio, self.chords[-1]*self.tc_ratio])
+        Y = np.array([self.chords[0] * self.tc_ratio, self.chords[-1] * self.tc_ratio])
         Z = np.array([0, self.radial_coords[-1]])
 
         # Create cubic bounding box to simulate equal aspect ratio
-        max_range = np.array([X.max() - X.min(), Y.max() - Y.min(), Z.max() - Z.min()]).max()
-        Xb = 0.5 * max_range * np.mgrid[-1:2:2, -1:2:2, -1:2:2][0].flatten() + 0.5 * (X.max() + X.min())
-        Yb = 0.5 * max_range * np.mgrid[-1:2:2, -1:2:2, -1:2:2][1].flatten() + 0.5 * (Y.max() + Y.min())
-        Zb = 0.5 * max_range * np.mgrid[-1:2:2, -1:2:2, -1:2:2][2].flatten() + 0.5 * (Z.max() + Z.min())
+        max_range = np.array(
+            [X.max() - X.min(), Y.max() - Y.min(), Z.max() - Z.min()]
+        ).max()
+        Xb = 0.5 * max_range * np.mgrid[-1:2:2, -1:2:2, -1:2:2][0].flatten() + 0.5 * (
+            X.max() + X.min()
+        )
+        Yb = 0.5 * max_range * np.mgrid[-1:2:2, -1:2:2, -1:2:2][1].flatten() + 0.5 * (
+            Y.max() + Y.min()
+        )
+        Zb = 0.5 * max_range * np.mgrid[-1:2:2, -1:2:2, -1:2:2][2].flatten() + 0.5 * (
+            Z.max() + Z.min()
+        )
         # Comment or uncomment following both lines to test the fake bounding box:
         for xb, yb, zb in zip(Xb, Yb, Zb):
-            ax.plot([xb], [yb], [zb], 'w')
+            ax.plot([xb], [yb], [zb], "w")
 
         plt.show()

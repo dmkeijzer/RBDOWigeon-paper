@@ -69,16 +69,17 @@ def closestNumber(n, m):
     n1 = m * q
 
     # 2nd possible closest number
-    if ((n * m) > 0):
-        n2 = (m * (q + 1))
+    if (n * m) > 0:
+        n2 = m * (q + 1)
     else:
-        n2 = (m * (q - 1))
+        n2 = m * (q - 1)
 
     # if true, then n1 is the required closest number
-    if (abs(n - n1) < abs(n - n2)):
+    if abs(n - n1) < abs(n - n2):
         return n1
 
     # else n2 is the required closest number
     return n2
 
-print(closestNumber(535,24))
+
+print(closestNumber(535, 24))

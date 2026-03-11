@@ -37,6 +37,7 @@ class Rotor:
     Container for data related to one rotor.
     @author: Jakob Schoser
     """
+
     x: float  # x (longitudinal) position w.r.t the centre of mass [m]
     y: float  # y (lateral) position w.r.t the centre of mass [m]
     K: float  # maximum lift [N]
@@ -52,6 +53,7 @@ class HoverControlCalcBase:
     x-axis pointing backwards and the y-axis pointing towards starboard.
     @author: Jakob Schoser
     """
+
     def __init__(self, m: float, rotors: list):
         """
         Construct an ACAI calculator object for a given aircraft.
@@ -71,7 +73,7 @@ class HoverControlCalcBase:
         for rotor in self.rotors:
             color = "tab:blue" if rotor.ccw else "tab:orange"
             color = colorsys.rgb_to_hls(*mc.to_rgb(color))
-            color = colorsys.hls_to_rgb(color[0], rotor.eta*color[1], color[2])
+            color = colorsys.hls_to_rgb(color[0], rotor.eta * color[1], color[2])
             plt.scatter(rotor.x, rotor.y, color=color)
 
     def acai(self, cg: list) -> float:
@@ -94,7 +96,7 @@ class HoverControlCalcBase:
             fc[i] = 0.5 * r.K
 
         if np.linalg.matrix_rank(Bf) < n_ctrl:
-            return -1E6
+            return -1e6
 
         G = np.zeros(n_ctrl)
         G[0] = self.m * consts.g
@@ -120,16 +122,17 @@ class HoverControlCalcBase:
 
                 # equation 14
                 xiB2 = xi.transpose() @ B2
-                d[j] = (0.5 * np.sign(xiB2) @ L @ xiB2.transpose()
-                        - np.abs(xi.transpose() @ (Bf @ fc - G)))
+                d[j] = 0.5 * np.sign(xiB2) @ L @ xiB2.transpose() - np.abs(
+                    xi.transpose() @ (Bf @ fc - G)
+                )
 
             else:
-                d[j] = 1E6
+                d[j] = 1e6
 
         # equation 13
         return np.sign(np.min(d)) * np.min(np.abs(d))
 
-    def rank_cab(self, Jx=1., Jy=1., Jz=1.) -> int:
+    def rank_cab(self, Jx=1.0, Jy=1.0, Jz=1.0) -> int:
         """
         Calculate the rank of the controllability matrix, which must be 8 for
         the aircraft to be controllable. The moments of inertia are accessible
@@ -141,12 +144,12 @@ class HoverControlCalcBase:
         """
         # state matrix
         A = np.zeros((n_states, n_states))
-        A[:n_states // 2, n_states // 2:] = np.eye(n_states // 2)
+        A[: n_states // 2, n_states // 2 :] = np.eye(n_states // 2)
 
         # control matrix
         B = np.zeros((n_states, n_ctrl))
         Jf_inv = np.diag([-1 / self.m, 1 / Jx, 1 / Jy, 1 / Jz])
-        B[n_states // 2:, :] = Jf_inv
+        B[n_states // 2 :, :] = Jf_inv
 
         # controllability system
         Cab = np.hstack([np.linalg.matrix_power(A, i) @ B for i in range(8)])
@@ -164,8 +167,7 @@ class HoverControlCalcBase:
 
         return True
 
-    def calc_x_cg_range(self, x_min: float, x_max: float,
-                        dx: float, y: float) -> tuple:
+    def calc_x_cg_range(self, x_min: float, x_max: float, dx: float, y: float) -> tuple:
         """
         Calculate the allowable CG range in x-direction for a given y-location
         :param x_min: Minimum x-location in the considered CG range
@@ -205,8 +207,7 @@ class HoverControlCalcBase:
         for f in failed:
             self.rotors[f].eta = 0
 
-    def find_max_allowable_rotor_failures(self, cg: list,
-                                          max_n_failures: int) -> list:
+    def find_max_allowable_rotor_failures(self, cg: list, max_n_failures: int) -> list:
         """
         Find the combinations of rotor failures that allow for the highest
         number of rotor failures without becoming uncontrollable.
@@ -253,8 +254,14 @@ class HoverControlCalcBase:
         self.reset_rotors()
         return controllable_combos
 
-    def calc_crit_x_cg_range(self, x_min: float, x_max: float, dx: float,
-                             failure_eval_cg: list, n_failures: list) -> list:
+    def calc_crit_x_cg_range(
+        self,
+        x_min: float,
+        x_max: float,
+        dx: float,
+        failure_eval_cg: list,
+        n_failures: list,
+    ) -> list:
         """
         Calculate the allowable CG range in x-direction for a given y-location,
         such that the CG location is not critical for controllability
@@ -286,8 +293,9 @@ class HoverControlCalcBase:
             limiting_failures_front, limiting_failures_aft = None, None
             for combo in failures:
                 self.fail_rotors(combo)
-                _x_front, _x_aft = self.calc_x_cg_range(x_min, x_max, dx,
-                                                        failure_eval_cg[1])
+                _x_front, _x_aft = self.calc_x_cg_range(
+                    x_min, x_max, dx, failure_eval_cg[1]
+                )
 
                 # go to the next combination if this one cannot be controllable
                 # with the given CG
@@ -308,9 +316,9 @@ class HoverControlCalcBase:
                         x_aft = _x_aft
                         limiting_failures_aft = combo
 
-            return_list.append((
-                x_front, x_aft, limiting_failures_front, limiting_failures_aft
-            ))
+            return_list.append(
+                (x_front, x_aft, limiting_failures_front, limiting_failures_aft)
+            )
 
         self.reset_rotors()
         return return_list
@@ -322,9 +330,19 @@ class HoverControlCalcTandem(HoverControlCalcBase):
     set up the rotors for a tandem wing aircraft.
     @author Jakob Schoser
     """
-    def __init__(self, m: float, n_rot_f: int, n_rot_r: int, x_wf: float,
-                 x_wr: float, rot_y_range_f: list, rot_y_range_r: list,
-                 K: float, ku: float):
+
+    def __init__(
+        self,
+        m: float,
+        n_rot_f: int,
+        n_rot_r: int,
+        x_wf: float,
+        x_wr: float,
+        rot_y_range_f: list,
+        rot_y_range_r: list,
+        K: float,
+        ku: float,
+    ):
         """
         Construct an ACAI calculator object for a given tandem wing aircraft.
         The default rotation direction is set to be inboard rotating.
@@ -343,15 +361,21 @@ class HoverControlCalcTandem(HoverControlCalcBase):
         rotors = []
 
         xs = n_rot_f * [x_wf] + n_rot_r * [x_wr]
-        ys = np.concatenate((
-            np.linspace(-rot_y_range_f[1], -rot_y_range_f[0], n_rot_f // 2),
-            np.linspace(rot_y_range_f[0], rot_y_range_f[1], n_rot_f // 2),
-            np.linspace(-rot_y_range_r[1], -rot_y_range_r[0], n_rot_r // 2),
-            np.linspace(rot_y_range_r[0], rot_y_range_r[1], n_rot_r // 2)
-        ))
+        ys = np.concatenate(
+            (
+                np.linspace(-rot_y_range_f[1], -rot_y_range_f[0], n_rot_f // 2),
+                np.linspace(rot_y_range_f[0], rot_y_range_f[1], n_rot_f // 2),
+                np.linspace(-rot_y_range_r[1], -rot_y_range_r[0], n_rot_r // 2),
+                np.linspace(rot_y_range_r[0], rot_y_range_r[1], n_rot_r // 2),
+            )
+        )
 
-        ccws = (n_rot_f // 2 * [True] + n_rot_f // 2 * [False]
-                + n_rot_r // 2 * [True] + n_rot_r // 2 * [False])
+        ccws = (
+            n_rot_f // 2 * [True]
+            + n_rot_f // 2 * [False]
+            + n_rot_r // 2 * [True]
+            + n_rot_r // 2 * [False]
+        )
 
         for i in range(n_rot_f + n_rot_r):
             rotors.append(Rotor(xs[i], ys[i], K, ku, 1, ccws[i]))

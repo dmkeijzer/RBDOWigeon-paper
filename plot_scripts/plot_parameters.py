@@ -13,7 +13,9 @@ import modules.plotting.csv_baseline_reader as csv
 mcs_ploter = npz_tool(True)
 mcs_ploter.analyze_all()
 
-print(f"Plot the RBDO based optimization successfully of {os.path.split(csv.data['mcs']['dir'])[-1]}")
+print(
+    f"Plot the RBDO based optimization successfully of {os.path.split(csv.data['mcs']['dir'])[-1]}"
+)
 
 # Plot basline
 csv.write_all_parameters()
@@ -21,6 +23,6 @@ csv.plot_design_params(True)
 csv.plot_energy_phases(True)
 csv.plot_pie_chart_energy(True)
 
-print(f"Plot the baseline  optimization successfully of {os.path.split(csv.data['baseline']['dir'])[-1]}")
-
-
+print(
+    f"Plot the baseline  optimization successfully of {os.path.split(csv.data['baseline']['dir'])[-1]}"
+)

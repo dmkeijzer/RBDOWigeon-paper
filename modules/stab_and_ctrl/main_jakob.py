@@ -8,7 +8,7 @@ import constants as const
 from matplotlib import pyplot as plt
 
 # example values based on inputs_config_1.json
-W = 3652.352770706565*9.80665
+W = 3652.352770706565 * 9.80665
 h = 305
 lfus = 7.2
 hfus = 1.705
@@ -56,7 +56,9 @@ mtom = W / 9.80665
 mcargo = 4 * 7
 mpax = 88
 mpil = 88
-mfus = mtom - mbat - 2 * mwing - (n_rot_f + n_rot_r) * mengine - mcargo - 4 * mpax - mpil
+mfus = (
+    mtom - mbat - 2 * mwing - (n_rot_f + n_rot_r) * mengine - mcargo - 4 * mpax - mpil
+)
 
 x_pil = 1.9
 x_pax = [2.9, 4.3]
@@ -87,13 +89,13 @@ phi = np.deg2rad(7)
 psi = np.deg2rad(55)
 min_ng_load_frac = 0.08
 
-Pbr_cruise_pe = 110024/1.2 * 0.9 /16
+Pbr_cruise_pe = 110024 / 1.2 * 0.9 / 16
 elevator_effect = 1.4
 
 # position parameters for the wing
 d = 0
 dy = 0
-Sfwd_Srear = Sfwd/Srear
+Sfwd_Srear = Sfwd / Srear
 
 done = False
 
@@ -101,20 +103,40 @@ while not done:
     x_wf = cfwd / 4 + d
     x_wr = lfus - 3 / 4 * crear
 
-    cgcalc = CgCalculator(mwing + mengine * n_rot_f, mwing + mengine * n_rot_r,
-                          mfus, mbat, mcargo, mpax, mpil, [x_fus, 0, 0.5],
-                          [x_bat, 0, z_bat], [x_cargo, 0, z_cargo],
-                          [[x_pax[0], -y_pax, z_pax], [x_pax[0], y_pax, z_pax],
-                           [x_pax[1], -y_pax, z_pax], [x_pax[1], y_pax, z_pax]],
-                          [x_pil, 0, z_pil])
+    cgcalc = CgCalculator(
+        mwing + mengine * n_rot_f,
+        mwing + mengine * n_rot_r,
+        mfus,
+        mbat,
+        mcargo,
+        mpax,
+        mpil,
+        [x_fus, 0, 0.5],
+        [x_bat, 0, z_bat],
+        [x_cargo, 0, z_cargo],
+        [
+            [x_pax[0], -y_pax, z_pax],
+            [x_pax[0], y_pax, z_pax],
+            [x_pax[1], -y_pax, z_pax],
+            [x_pax[1], y_pax, z_pax],
+        ],
+        [x_pil, 0, z_pil],
+    )
     x_range, y_range, z_range = cgcalc.calc_cg_range([x_wf, z_wf], [x_wr, z_wr])
 
-    lgcalc = LandingGearCalc(max_tw, x_ng_min, y_max_rotor, Gamma,
-                             z_rotor_line_root, rotor_rad, fus_back_bottom,
-                             fus_back_top)
-    x_ng, x_mlg, tw, h_mlg = lgcalc.optimum_placement(x_range, x_cg_margin,
-                                                      z_range[1], theta, phi,
-                                                      psi, min_ng_load_frac)
+    lgcalc = LandingGearCalc(
+        max_tw,
+        x_ng_min,
+        y_max_rotor,
+        Gamma,
+        z_rotor_line_root,
+        rotor_rad,
+        fus_back_bottom,
+        fus_back_top,
+    )
+    x_ng, x_mlg, tw, h_mlg = lgcalc.optimum_placement(
+        x_range, x_cg_margin, z_range[1], theta, phi, psi, min_ng_load_frac
+    )
 
     if tw > max_tw:
         # TODO: do something to fix it and iterate
@@ -127,28 +149,69 @@ while not done:
     x_min_test, x_max_test = 0, lfus
     dx = 0.1
 
-    hcct = HoverControlCalcTandem(mtom, n_rot_f, n_rot_r, x_wf, x_wr,
-                                  rot_y_range_f, rot_y_range_r, K, ku)
-    x_min, x_max, _, _ = hcct.calc_crit_x_cg_range(x_max_test, x_max_test, 0.1,
-                                                   [x_range[1], y_range[1]],
-                                                   [n_failures])[0]
+    hcct = HoverControlCalcTandem(
+        mtom, n_rot_f, n_rot_r, x_wf, x_wr, rot_y_range_f, rot_y_range_r, K, ku
+    )
+    x_min, x_max, _, _ = hcct.calc_crit_x_cg_range(
+        x_max_test, x_max_test, 0.1, [x_range[1], y_range[1]], [n_failures]
+    )[0]
 
-    if (x_min is None or x_range[0] < x_min or x_range[1] < x_min
-            or x_range[0] > x_max or x_range[1] > x_max):
+    if (
+        x_min is None
+        or x_range[0] < x_min
+        or x_range[1] < x_min
+        or x_range[0] > x_max
+        or x_range[1] > x_max
+    ):
         # TODO: do something to fix it and iterate
         print("Warning: Uncontrollable in hover!")
 
-    wps = Wing_placement_sizing(W,h, lfus, hfus, wfus, V0, CD0, CLfwd,
-                                CLrear, CLdesfwd, CLdesrear, Clafwd, Clarear,
-                                Cmacfwd, Cmacrear, Sfwd, Srear, Afwd, Arear,
-                                Gamma, Lambda_c4_fwd, Lambda_c4_rear, cfwd,
-                                crear, bfwd, brear, efwd, erear, taper,
-                                n_rot_f, n_rot_r, rot_y_range_f, rot_y_range_r,
-                                K, ku, z_range[1], d, dy, Pbr_cruise_pe)
+    wps = Wing_placement_sizing(
+        W,
+        h,
+        lfus,
+        hfus,
+        wfus,
+        V0,
+        CD0,
+        CLfwd,
+        CLrear,
+        CLdesfwd,
+        CLdesrear,
+        Clafwd,
+        Clarear,
+        Cmacfwd,
+        Cmacrear,
+        Sfwd,
+        Srear,
+        Afwd,
+        Arear,
+        Gamma,
+        Lambda_c4_fwd,
+        Lambda_c4_rear,
+        cfwd,
+        crear,
+        bfwd,
+        brear,
+        efwd,
+        erear,
+        taper,
+        n_rot_f,
+        n_rot_r,
+        rot_y_range_f,
+        rot_y_range_r,
+        K,
+        ku,
+        z_range[1],
+        d,
+        dy,
+        Pbr_cruise_pe,
+    )
 
     x_test_range = np.arange(x_min_test, x_max_test, dx)
-    Sfwd_Srear_stab, Sfwd_Srear_ctrl = wps.Sr_Sfwd(np.array(x_range),
-                                                   elevator_effect, d)
+    Sfwd_Srear_stab, Sfwd_Srear_ctrl = wps.Sr_Sfwd(
+        np.array(x_range), elevator_effect, d
+    )
 
     # FIXME: this assumes that the CG shifts forward with increasing Swfd/Srear
     if Sfwd_Srear_stab[0] < Sfwd_Srear or Sfwd_Srear_stab[1] < Sfwd_Srear:

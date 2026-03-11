@@ -11,7 +11,21 @@ ADKINS AND LIEBECK, based on Larrabee.
 
 
 class BEM:
-    def __init__(self, B, R, rpm, xi_0, rho, dyn_vis, V_fr, N_stations, a, RN_spacing=100000, T=None, P=None):
+    def __init__(
+        self,
+        B,
+        R,
+        rpm,
+        xi_0,
+        rho,
+        dyn_vis,
+        V_fr,
+        N_stations,
+        a,
+        RN_spacing=100000,
+        T=None,
+        P=None,
+    ):
         """
         :param B: Number of blades [-]
         :param R: Outer radius of propeller [m]
@@ -33,14 +47,14 @@ class BEM:
         """
         self.B = B
         self.R = R
-        self.D = 2*R
+        self.D = 2 * R
         self.Omega = rpm * 2 * np.pi / 60  # rpm to rad/s
         self.xi_0 = xi_0
         self.rho = rho
         self.dyn_vis = dyn_vis
         self.V = V_fr
         # self.phi_T = 1
-        self.lamb = V_fr/(self.Omega*R)  # Speed ratio
+        self.lamb = V_fr / (self.Omega * R)  # Speed ratio
         self.N_s = N_stations
         self.a = a
         self.RN_spacing = RN_spacing
@@ -58,19 +72,19 @@ class BEM:
 
     # Prandtl relation for tip loss
     def F(self, r, zeta):
-        return (2/np.pi) * np.arccos(np.exp(-self.f(r, zeta)))
+        return (2 / np.pi) * np.arccos(np.exp(-self.f(r, zeta)))
 
     # Exponent used for function above
     def f(self, r, zeta):
-        return (self.B/2)*(1-self.Xi(r))/(np.sin(self.phi_t(zeta)))
+        return (self.B / 2) * (1 - self.Xi(r)) / (np.sin(self.phi_t(zeta)))
 
     # Pitch of blade tip
     def phi_t(self, zeta):
-        return np.arctan(self.lamb * (1 + zeta/2))
+        return np.arctan(self.lamb * (1 + zeta / 2))
 
     # Non-dimensional radius, r/R
     def Xi(self, r):
-        return r/self.R
+        return r / self.R
 
     # Angle of local velocity of the blade wrt to disk plane
     def phi(self, r, zeta):
@@ -78,8 +92,8 @@ class BEM:
 
     # Mach as a function of radius
     def M(self, r):
-        speed = np.sqrt(self.V**2 + (self.Omega*r)**2)
-        return speed/self.a
+        speed = np.sqrt(self.V**2 + (self.Omega * r) ** 2)
+        return speed / self.a
 
     # Reynolds number
     def RN(self, Wc):
@@ -99,12 +113,23 @@ class BEM:
         # print(self.B)
         # print("")
         # TODO: ask and revise
-        return 4*np.pi*self.lamb * F * np.sin(phi) * np.cos(phi) * self.V * self.R * zeta / (Cl * self.B)
+        return (
+            4
+            * np.pi
+            * self.lamb
+            * F
+            * np.sin(phi)
+            * np.cos(phi)
+            * self.V
+            * self.R
+            * zeta
+            / (Cl * self.B)
+        )
         # return 4 * np.pi * r * zeta * self.V * F * np.sin(phi) * np.cos(phi) / (Cl * self.B)
 
     # Non-dimensional speed
     def x(self, r):
-        return self.Omega*r/self.V
+        return self.Omega * r / self.V
 
     # # Integrals
     # def I_prim_1(self, xi, zeta, eps):
@@ -130,19 +155,23 @@ class BEM:
     #            (np.cos(np.arctan((1+zeta/2)*self.lamb/xi)))**2
 
     def phi_int(self, xi, zeta):
-        return np.arctan((1 + zeta/2)*self.lamb/xi)
+        return np.arctan((1 + zeta / 2) * self.lamb / xi)
 
     # F function used for integration part only
     def F_int(self, xi, zeta):
-        return 2*np.arccos(np.exp(-self.f_int(xi, zeta)))/np.pi
+        return 2 * np.arccos(np.exp(-self.f_int(xi, zeta))) / np.pi
 
     # f function used for integration part only
     def f_int(self, xi, zeta):
-        return (self.B/2)*(1 - xi)/np.sin(self.phi_t(zeta))
+        return (self.B / 2) * (1 - xi) / np.sin(self.phi_t(zeta))
 
     # G function used for integration part only
     def G_int(self, xi, zeta):
-        return self.F_int(xi, zeta) * np.cos(self.phi_int(xi, zeta)) * np.sin(self.phi_int(xi, zeta))
+        return (
+            self.F_int(xi, zeta)
+            * np.cos(self.phi_int(xi, zeta))
+            * np.sin(self.phi_int(xi, zeta))
+        )
 
     # # Integrals used to calculate internal variables, refer to paper for more explanation if needed
     # def I_prim_1(self, xi, zeta, eps):
@@ -162,18 +191,30 @@ class BEM:
     # Integrals used to calculate internal variables, refer to paper for more explanation if needed
     # Assuming average eps
     def I_prim_1(self, xi, zeta, eps):
-        return 4 * xi * self.G_int(xi, zeta) * (1 - eps * np.tan(self.phi_int(xi, zeta)))
+        return (
+            4 * xi * self.G_int(xi, zeta) * (1 - eps * np.tan(self.phi_int(xi, zeta)))
+        )
 
     def I_prim_2(self, xi, zeta, eps):
-        return self.lamb * (self.I_prim_1(xi, zeta, eps) / (2 * xi)) * (1 + eps / np.tan(self.phi_int(xi, zeta))) * \
-               np.sin(self.phi_int(xi, zeta)) * np.cos(self.phi_int(xi, zeta))
+        return (
+            self.lamb
+            * (self.I_prim_1(xi, zeta, eps) / (2 * xi))
+            * (1 + eps / np.tan(self.phi_int(xi, zeta)))
+            * np.sin(self.phi_int(xi, zeta))
+            * np.cos(self.phi_int(xi, zeta))
+        )
 
     def J_prim_1(self, xi, zeta, eps):
-        return 4 * xi * self.G_int(xi, zeta) * (1 + eps / np.tan(self.phi_int(xi, zeta)))
+        return (
+            4 * xi * self.G_int(xi, zeta) * (1 + eps / np.tan(self.phi_int(xi, zeta)))
+        )
 
     def J_prim_2(self, xi, zeta, eps):
-        return (self.J_prim_1(xi, zeta, eps) / 2) * (1 - eps * np.tan(self.phi_int(xi, zeta))) * \
-               (np.cos(self.phi_int(xi, zeta))) ** 2
+        return (
+            (self.J_prim_1(xi, zeta, eps) / 2)
+            * (1 - eps * np.tan(self.phi_int(xi, zeta)))
+            * (np.cos(self.phi_int(xi, zeta))) ** 2
+        )
 
     # # Integrals used to calculate internal variables, refer to paper for more explanation if needed
     # # Assuming average eps
@@ -224,7 +265,7 @@ class BEM:
 
     # Propeller efficiency Tc/Pc
     def efficiency(self, Tc, Pc):
-        return Tc/Pc
+        return Tc / Pc
 
     # Prandtl-Glauert correction factor: sqrt(1 - M^2)
     def PG(self, M):
@@ -236,14 +277,13 @@ class BEM:
         stations = np.arange(1, self.N_s + 1)
 
         # Length of each station
-        st_len = (self.R - self.R*self.xi_0)/len(stations)
+        st_len = (self.R - self.R * self.xi_0) / len(stations)
 
         # Radius of the middle point of each station.
         # Station 1 has st length/2, each station has that plus N*st length
         # Station 1 starts after hub
-        stations_r = self.xi_0*self.R + st_len/2 + (stations-1)*st_len
+        stations_r = self.xi_0 * self.R + st_len / 2 + (stations - 1) * st_len
         # stations_r = self.xi_0*self.R + (stations)*st_len
-
 
         # F and phi for each station
         # self.Xi(stations_r),
@@ -261,7 +301,7 @@ class BEM:
         cs = np.ones(self.N_s)
         betas = np.ones(self.N_s)
         # Ves = np.ones(self.N_s)
-        Ves = zeta*self.V + self.V
+        Ves = zeta * self.V + self.V
 
         # Optimise each station for min D/L
         for station in stations:
@@ -284,17 +324,17 @@ class BEM:
                 RN = self.RN_spacing * round(Reyn / self.RN_spacing)
 
                 # Maximum and minimum RN in database
-                if RN<100000:
+                if RN < 100000:
                     RN = 100000
-                if RN>5000000:
+                if RN > 5000000:
                     RN = 5000000
 
                 # Look for corresponding airfoil data file for that RN
                 filename1 = "4412_Re%d_up.txt" % RN
                 filename2 = "4412_Re%d_dwn.txt" % RN
 
-                file_up = open('../PropandPower/Airfoil_Data/'+filename1, "r")
-                file_down = open('../PropandPower/Airfoil_Data/'+filename2, "r")
+                file_up = open("../PropandPower/Airfoil_Data/" + filename1, "r")
+                file_down = open("../PropandPower/Airfoil_Data/" + filename2, "r")
 
                 # Read lines
                 lines_up = file_up.readlines()
@@ -323,7 +363,7 @@ class BEM:
                     # Protect against empty lines
                     if len(a) > 0:
                         # There is a line with ---- before the numbers, so once we get to this line, start saving
-                        if a[0].count('-') >= 1:
+                        if a[0].count("-") >= 1:
                             save_lines = True
 
                 # Restart boolean for down file
@@ -340,7 +380,7 @@ class BEM:
                         format_lines.append(new_line)
 
                     if len(a) > 0:
-                        if a[0].count('-') >= 1:
+                        if a[0].count("-") >= 1:
                             save_lines = True
 
                 # Convert to numpy array with airfoil data
@@ -360,15 +400,21 @@ class BEM:
                 # Subtract current Cl from list of Cls
                 # 'Uncorrect' Cl for Mach, since the files do not take Mach into account, only RN
                 # Mach corrections are done with omega*r and not w
-                airfoil_data_check[:, 1] -= (lift_coef * self.PG(self.M(stations_r[station])))
+                airfoil_data_check[:, 1] -= lift_coef * self.PG(
+                    self.M(stations_r[station])
+                )
 
                 # Check what line has min Cl difference, and retrieve index of that column
                 index = np.argmin(np.abs(airfoil_data_check[:, 1]))
 
                 # Obtain the Cd and AoA from the line where Cl difference is min
                 # Correct the Cd obtained for Mach number
-                Cd_ret = airfoil_data[index, 2]/self.PG(self.M(stations_r[station]))  # Retrieved Cd
-                alpha_ret = np.deg2rad(airfoil_data[index, 0])                        # Retrieved AoA (from deg to rad)
+                Cd_ret = airfoil_data[index, 2] / self.PG(
+                    self.M(stations_r[station])
+                )  # Retrieved Cd
+                alpha_ret = np.deg2rad(
+                    airfoil_data[index, 0]
+                )  # Retrieved AoA (from deg to rad)
 
                 # Compute D/L ration
                 eps = Cd_ret / lift_coef
@@ -425,8 +471,8 @@ class BEM:
             filename1 = "4412_Re%d_up.txt" % RN
             filename2 = "4412_Re%d_dwn.txt" % RN
 
-            file_up = open('../PropandPower/Airfoil_Data/' + filename1, "r")
-            file_down = open('../PropandPower/Airfoil_Data/' + filename2, "r")
+            file_up = open("../PropandPower/Airfoil_Data/" + filename1, "r")
+            file_down = open("../PropandPower/Airfoil_Data/" + filename2, "r")
 
             # Read lines
             lines_up = file_up.readlines()
@@ -455,7 +501,7 @@ class BEM:
                 # Protect against empty lines
                 if len(a) > 0:
                     # There is a line with ---- before the numbers, so once we get to this line, start saving
-                    if a[0].count('-') >= 1:
+                    if a[0].count("-") >= 1:
                         save_lines = True
 
             # Restart boolean for down file
@@ -472,7 +518,7 @@ class BEM:
                     format_lines.append(new_line)
 
                 if len(a) > 0:
-                    if a[0].count('-') >= 1:
+                    if a[0].count("-") >= 1:
                         save_lines = True
 
             # Convert to numpy array with airfoil data
@@ -491,15 +537,19 @@ class BEM:
 
             # Subtract current Cl from list of Cls
             # 'Uncorrect' Cl for Mach, since the files do not take Mach into account, only RN
-            airfoil_data_check[:, 1] -= (lift_coef * self.PG(self.M(stations_r[station])))
+            airfoil_data_check[:, 1] -= lift_coef * self.PG(self.M(stations_r[station]))
 
             # Check what line has min Cl difference, and retrieve index of that column
             index = np.argmin(np.abs(airfoil_data_check[:, 1]))
 
             # Obtain the Cd and AoA from the line where Cl difference is min
             # Correct the Cd obtained for Mach number
-            Cd_ret = airfoil_data[index, 2] / self.PG(self.M(stations_r[station]))  # Retrieved Cd
-            alpha_ret = np.deg2rad(airfoil_data[index, 0])  # Retrieved AoA (from deg to rad)
+            Cd_ret = airfoil_data[index, 2] / self.PG(
+                self.M(stations_r[station])
+            )  # Retrieved Cd
+            alpha_ret = np.deg2rad(
+                airfoil_data[index, 0]
+            )  # Retrieved AoA (from deg to rad)
 
             # Compute D/L ration
             eps = Cd_ret / lift_coef
@@ -510,21 +560,24 @@ class BEM:
             E[station] = eps
 
         # Calculate interference factors
-        a = (zeta/2) * (np.cos(phis))**2 * (1 - E*np.tan(phis))
-        a_prime = (zeta/(2*self.x(stations_r))) * np.cos(phis) * np.sin(phis) * \
-                  (1 + E/np.tan(phis))
+        a = (zeta / 2) * (np.cos(phis)) ** 2 * (1 - E * np.tan(phis))
+        a_prime = (
+            (zeta / (2 * self.x(stations_r)))
+            * np.cos(phis)
+            * np.sin(phis)
+            * (1 + E / np.tan(phis))
+        )
 
         # Calculate local speed at the blade station
         W = self.V * (1 + a) / np.sin(phis)
 
         # Calculate required chord of the station and save to array
-        c = Wc/W
+        c = Wc / W
         cs = c
 
         # Calculate blade pitch angle as AoA+phi and save to array
         beta = alpha + phis
         betas = beta
-
 
         # # Possibly implement a function for eps as a function of r/R (xi)
         # eps_fun = spinplt.interp1d(E, stations_r/self.R, fill_value="extrapolate")
@@ -566,22 +619,38 @@ class BEM:
 
         # Calculate new speed ratio and Tc or Pc as required
         if self.Tc is not None:
-            zeta_new = (I1/(2*I2)) - ((I1/(2*I2))**2 - self.Tc/I2)**(1/2)
-            Pc = J1*zeta_new + J2*zeta_new**2
+            zeta_new = (I1 / (2 * I2)) - ((I1 / (2 * I2)) ** 2 - self.Tc / I2) ** (
+                1 / 2
+            )
+            Pc = J1 * zeta_new + J2 * zeta_new**2
 
             # Propeller efficiency
             eff = self.efficiency(self.Tc, Pc)
 
-            return zeta_new, [cs, betas, alpha, stations_r, E, eff, self.Tc, Pc], Ves, [Cl, Cd], solidity
+            return (
+                zeta_new,
+                [cs, betas, alpha, stations_r, E, eff, self.Tc, Pc],
+                Ves,
+                [Cl, Cd],
+                solidity,
+            )
 
         elif self.Pc is not None:
-            zeta_new = -(J1/(2*J2)) + ((J1/(2*J2))**2 + self.Pc/J2)**(1/2)
-            Tc = I1*zeta_new - I2*zeta_new**2
+            zeta_new = -(J1 / (2 * J2)) + ((J1 / (2 * J2)) ** 2 + self.Pc / J2) ** (
+                1 / 2
+            )
+            Tc = I1 * zeta_new - I2 * zeta_new**2
 
             # Propeller efficiency
             eff = self.efficiency(Tc, self.Pc)
 
-            return zeta_new, [cs, betas, alpha, stations_r, E, eff, Tc, self.Pc], Ves, [Cl, Cd], solidity
+            return (
+                zeta_new,
+                [cs, betas, alpha, stations_r, E, eff, Tc, self.Pc],
+                Ves,
+                [Cl, Cd],
+                solidity,
+            )
 
     def optimise_blade(self, zeta_init):
         convergence = 1
@@ -596,7 +665,7 @@ class BEM:
             if zeta == 0:
                 convergence = np.abs(zeta_new - zeta)
             else:
-                convergence = np.abs(zeta_new - zeta)/zeta
+                convergence = np.abs(zeta_new - zeta) / zeta
 
             zeta = zeta_new
         #     print(convergence, "conv")
@@ -607,21 +676,35 @@ class BEM:
 
     # Advance ratio
     def J(self):
-        return self.V / ((self.Omega/(2*np.pi)) * self.D)
+        return self.V / ((self.Omega / (2 * np.pi)) * self.D)
 
 
 # Analyse the propeller in off-design conditions
 class OffDesignAnalysisBEM:
-    def __init__(self, V: float, B: int, R: float, chords: np.array, betas: np.array, r_stations: np.array,
-                 Cls: np.array, Cds: np.array, rpm: float, rho: float, dyn_vis: float, a: float, RN: np.array,
-                 RN_spacing=100000):
+    def __init__(
+        self,
+        V: float,
+        B: int,
+        R: float,
+        chords: np.array,
+        betas: np.array,
+        r_stations: np.array,
+        Cls: np.array,
+        Cds: np.array,
+        rpm: float,
+        rho: float,
+        dyn_vis: float,
+        a: float,
+        RN: np.array,
+        RN_spacing=100000,
+    ):
         """
         TODO: Add
         """
         self.V = V
         self.B = B
         self.R = R
-        self.D = 2*R
+        self.D = 2 * R
 
         self.chords = chords
         self.betas = betas
@@ -661,7 +744,7 @@ class OffDesignAnalysisBEM:
 
     # Non-dimensional radius, r/R
     def Xi(self, r):
-        return r/self.R
+        return r / self.R
 
     # # Angle of local velocity of the blade wrt to disk plane
     # def phi(self, r, zeta):
@@ -672,7 +755,7 @@ class OffDesignAnalysisBEM:
         # return self.Omega*r/self.a
         # mach = W/self.a
         # print(mach)
-        return W/self.a
+        return W / self.a
 
     # Reynolds number
     def RN(self, W, c):
@@ -680,7 +763,7 @@ class OffDesignAnalysisBEM:
         return W * c * self.rho / self.dyn_vis
 
     def W(self, a, a_prim, r):
-        return np.sqrt((self.V * (1 + a))**2 + (self.Omega * r * (1 - a_prim))**2)
+        return np.sqrt((self.V * (1 + a)) ** 2 + (self.Omega * r * (1 - a_prim)) ** 2)
 
     # Cx and Cy coefficients from Cl and Cd
     def Cy(self, Cl, Cd, phi):
@@ -698,7 +781,7 @@ class OffDesignAnalysisBEM:
         # print("Cl", Cl)
         # print("Cd", Cd)
         # print("Phi", phi)
-        return self.Cy(Cl, Cd, phi) / (4 * (np.sin(phi))**2)
+        return self.Cy(Cl, Cd, phi) / (4 * (np.sin(phi)) ** 2)
 
     def K_prim(self, Cl, Cd, phi):
         return self.Cx(Cl, Cd, phi) / (4 * np.sin(phi) * np.cos(phi))
@@ -709,12 +792,12 @@ class OffDesignAnalysisBEM:
         K = self.K(Cl, Cd, phi)
 
         # From Viterna and Janetzke
-        sign = np.sign(sigma * K / (self.F(r, phi_t) - sigma*K))
+        sign = np.sign(sigma * K / (self.F(r, phi_t) - sigma * K))
         # print(sign)
         # if any(sign) < 0:
         #     print("a sign negative")
 
-        magnitude = np.minimum(np.abs(sigma * K / (self.F(r, phi_t) - sigma*K)), 0.7)
+        magnitude = np.minimum(np.abs(sigma * K / (self.F(r, phi_t) - sigma * K)), 0.7)
 
         # TODO: check sign of a
         # print("a:", omega * K / (self.F(r, zeta) - omega*K))
@@ -735,7 +818,9 @@ class OffDesignAnalysisBEM:
         # if any(sign) < 0:
         #     print("a' sign negative")
 
-        magnitude = np.minimum(np.abs(sigma * K_prim / (self.F(r, phi_t) + sigma * K_prim)), 0.7)
+        magnitude = np.minimum(
+            np.abs(sigma * K_prim / (self.F(r, phi_t) + sigma * K_prim)), 0.7
+        )
 
         return magnitude  # *sign
         # return np.abs(sigma * K_prim / (self.F(r, phi_t) + sigma * K_prim))
@@ -751,12 +836,23 @@ class OffDesignAnalysisBEM:
 
     # Differential forms wrt xi
     def C_T_prim(self, r, c, Cl, Cd, F, K_prim, phi):
-        return (np.pi**3 / 4) * self.solidity_local(c, r) * self.Cy(Cl, Cd, phi) * (r/self.R) * \
-               self.F(r, phi[-1])**32 / ((F + self.solidity_local(c, r)*K_prim) * np.cos(phi))**2
+        return (
+            (np.pi**3 / 4)
+            * self.solidity_local(c, r)
+            * self.Cy(Cl, Cd, phi)
+            * (r / self.R)
+            * self.F(r, phi[-1]) ** 32
+            / ((F + self.solidity_local(c, r) * K_prim) * np.cos(phi)) ** 2
+        )
 
     def C_P_prim(self, r, c, Cl, Cd, F, K_prim, phi):
-        return self.C_T_prim(r, c, Cl, Cd, F, K_prim, phi) * np.pi * (r/self.R) * self.Cx(Cl, Cd, phi) / \
-               self.Cy(Cl, Cd, phi)
+        return (
+            self.C_T_prim(r, c, Cl, Cd, F, K_prim, phi)
+            * np.pi
+            * (r / self.R)
+            * self.Cx(Cl, Cd, phi)
+            / self.Cy(Cl, Cd, phi)
+        )
 
     """ 
     These functions take xi instead of r as an input and are used for integration
@@ -850,7 +946,6 @@ class OffDesignAnalysisBEM:
         Reyn = self.RN_init
 
         for station in range(len(Reyn)):
-
             RN = self.RN_spacing * round(Reyn[station] / self.RN_spacing)
 
             # Maximum and minimum RN in database
@@ -863,8 +958,8 @@ class OffDesignAnalysisBEM:
             filename1 = "4412_Re%d_up.txt" % RN
             filename2 = "4412_Re%d_dwn.txt" % RN
 
-            file_up = open('../PropandPower/Airfoil_Data/' + filename1, "r")
-            file_down = open('../PropandPower/Airfoil_Data/' + filename2, "r")
+            file_up = open("../PropandPower/Airfoil_Data/" + filename1, "r")
+            file_down = open("../PropandPower/Airfoil_Data/" + filename2, "r")
 
             # Read lines
             lines_up = file_up.readlines()
@@ -893,7 +988,7 @@ class OffDesignAnalysisBEM:
                 # Protect against empty lines
                 if len(a) > 0:
                     # There is a line with ---- before the numbers, so once we get to this line, start saving
-                    if a[0].count('-') >= 1:
+                    if a[0].count("-") >= 1:
                         save_lines = True
 
             # Restart boolean for down file
@@ -910,7 +1005,7 @@ class OffDesignAnalysisBEM:
                     format_lines.append(new_line)
 
                 if len(a) > 0:
-                    if a[0].count('-') >= 1:
+                    if a[0].count("-") >= 1:
                         save_lines = True
 
             # Convert to numpy array with airfoil data
@@ -934,8 +1029,12 @@ class OffDesignAnalysisBEM:
 
             # Obtain the Cl and Cd from the line where Cl difference is min
             # Correct the Cl/Cd obtained for Mach number
-            Cl_ret = airfoil_data[index, 1] / self.PG(self.M(self.Omega*self.r_stations[station]))  # Retrieved Cl
-            Cd_ret = airfoil_data[index, 2] / self.PG(self.M(self.Omega*self.r_stations[station]))  # Retrieved Cd
+            Cl_ret = airfoil_data[index, 1] / self.PG(
+                self.M(self.Omega * self.r_stations[station])
+            )  # Retrieved Cl
+            Cd_ret = airfoil_data[index, 2] / self.PG(
+                self.M(self.Omega * self.r_stations[station])
+            )  # Retrieved Cd
 
             # print("Cl/Cd", airfoil_data[index, 1], airfoil_data[index, 2])  # Retrieved Cd)
             # print("Ws", Ws[station], "Mach", self.M(Ws[station]), "PG", self.PG(self.M(Ws[station])))
@@ -948,8 +1047,22 @@ class OffDesignAnalysisBEM:
         """
 
         # Calculate initial estimates for the interference factors
-        a_facs = self.a_fac(Cls, Cds, phi, self.chords, self.r_stations, phi[-1]*self.r_stations[-1]/self.R)
-        a_prims = self.a_prim_fac(Cls, Cds, phi, self.chords, self.r_stations, phi[-1]*self.r_stations[-1]/self.R)
+        a_facs = self.a_fac(
+            Cls,
+            Cds,
+            phi,
+            self.chords,
+            self.r_stations,
+            phi[-1] * self.r_stations[-1] / self.R,
+        )
+        a_prims = self.a_prim_fac(
+            Cls,
+            Cds,
+            phi,
+            self.chords,
+            self.r_stations,
+            phi[-1] * self.r_stations[-1] / self.R,
+        )
 
         # Iterate to get a convergent analysis
         count = 0
@@ -975,17 +1088,17 @@ class OffDesignAnalysisBEM:
                 RN = self.RN_spacing * round(RN / self.RN_spacing)
 
                 # Maximum and minimum RN in database
-                if RN<100000:
+                if RN < 100000:
                     RN = 100000
-                if RN>5000000:
+                if RN > 5000000:
                     RN = 5000000
 
                 # Look for corresponding airfoil data file for that RN
                 filename1 = "4412_Re%d_up.txt" % RN
                 filename2 = "4412_Re%d_dwn.txt" % RN
 
-                file_up = open('../PropandPower/Airfoil_Data/'+filename1, "r")
-                file_down = open('../PropandPower/Airfoil_Data/'+filename2, "r")
+                file_up = open("../PropandPower/Airfoil_Data/" + filename1, "r")
+                file_down = open("../PropandPower/Airfoil_Data/" + filename2, "r")
 
                 # Read lines
                 lines_up = file_up.readlines()
@@ -1014,7 +1127,7 @@ class OffDesignAnalysisBEM:
                     # Protect against empty lines
                     if len(a) > 0:
                         # There is a line with ---- before the numbers, so once we get to this line, start saving
-                        if a[0].count('-') >= 1:
+                        if a[0].count("-") >= 1:
                             save_lines = True
 
                 # Restart boolean for down file
@@ -1031,7 +1144,7 @@ class OffDesignAnalysisBEM:
                         format_lines.append(new_line)
 
                     if len(a) > 0:
-                        if a[0].count('-') >= 1:
+                        if a[0].count("-") >= 1:
                             save_lines = True
 
                 # Convert to numpy array with airfoil data
@@ -1055,8 +1168,12 @@ class OffDesignAnalysisBEM:
 
                 # Obtain the Cl and Cd from the line where Cl difference is min
                 # Correct the Cl/Cd obtained for Mach number
-                Cl_ret = airfoil_data[index, 1]/self.PG(self.M(Ws[station]))  # Retrieved Cl
-                Cd_ret = airfoil_data[index, 2]/self.PG(self.M(Ws[station]))  # Retrieved Cd
+                Cl_ret = airfoil_data[index, 1] / self.PG(
+                    self.M(Ws[station])
+                )  # Retrieved Cl
+                Cd_ret = airfoil_data[index, 2] / self.PG(
+                    self.M(Ws[station])
+                )  # Retrieved Cd
 
                 # print("Cl/Cd", airfoil_data[index, 1], airfoil_data[index, 2])  # Retrieved Cd)
                 # print("Ws", Ws[station], "Mach", self.M(Ws[station]), "PG", self.PG(self.M(Ws[station])))
@@ -1070,8 +1187,22 @@ class OffDesignAnalysisBEM:
             # print("")
 
             # Update the interference factors
-            a_facs = self.a_fac(Cls, Cds, phi, self.chords, self.r_stations, phi[-1]*self.r_stations[-1]/self.R)
-            a_prims = self.a_prim_fac(Cls, Cds, phi, self.chords, self.r_stations, phi[-1]*self.r_stations[-1]/self.R)
+            a_facs = self.a_fac(
+                Cls,
+                Cds,
+                phi,
+                self.chords,
+                self.r_stations,
+                phi[-1] * self.r_stations[-1] / self.R,
+            )
+            a_prims = self.a_prim_fac(
+                Cls,
+                Cds,
+                phi,
+                self.chords,
+                self.r_stations,
+                phi[-1] * self.r_stations[-1] / self.R,
+            )
 
             # Update phi
             phi_new = self.phi(a_facs, a_prims, self.r_stations)
@@ -1114,7 +1245,7 @@ class OffDesignAnalysisBEM:
         #                                   self.F(self.r_stations, phi[-1]*self.r_stations[-1]/self.R),
         #                                   self.K_prim(Cls, Cds, phi), phi), self.r_stations)
 
-        C_T_prim = T_prim/(self.rho * self.n**2 * self.D**4)
+        C_T_prim = T_prim / (self.rho * self.n**2 * self.D**4)
         C_T = spint.trapz(C_T_prim, self.r_stations)
 
         # print("C_T", C_T)
@@ -1127,7 +1258,7 @@ class OffDesignAnalysisBEM:
 
         # Power coefficient
         # Cp = Ct * pi * xi * Cx/Cy
-        C_P_prim = C_T_prim * np.pi * self.r_stations/self.R * Cx/Cy
+        C_P_prim = C_T_prim * np.pi * self.r_stations / self.R * Cx / Cy
         C_P = spint.trapz(C_P_prim, self.r_stations)
 
         # print("C_P", C_P)
@@ -1147,8 +1278,28 @@ class OffDesignAnalysisBEM:
 
 
 class Optiblade:
-    def __init__(self, B, R, rpm_cr, xi_0, rho_cr, dyn_vis_cr, V_cr, N_stations, a_cr, RN_spacing, max_M_tip, rho_h,
-                 dyn_vis_h, V_h, a_h, rpm_h, delta_pitch, T_cr, T_h):
+    def __init__(
+        self,
+        B,
+        R,
+        rpm_cr,
+        xi_0,
+        rho_cr,
+        dyn_vis_cr,
+        V_cr,
+        N_stations,
+        a_cr,
+        RN_spacing,
+        max_M_tip,
+        rho_h,
+        dyn_vis_h,
+        V_h,
+        a_h,
+        rpm_h,
+        delta_pitch,
+        T_cr,
+        T_h,
+    ):
         """
         This file is for the blade shape optimisation. It optimises the blade for cruise, and checks if the blade can
         meet hover thrust requirements. If not, it designs the blade for higher thrust levels and checks again, up until
@@ -1210,8 +1361,19 @@ class Optiblade:
 
     def blade_design(self, design_thrust_factor):
         # Design the propeller for given conditions
-        propeller = BEM(self.B, self.R, self.rpm_cr, self.xi_0, self.rho_cr, self.dyn_vis_cr, self.V_cr, self.N_s,
-                        self.a_cr, self.RN_spacing, T=self.T_cr * design_thrust_factor)
+        propeller = BEM(
+            self.B,
+            self.R,
+            self.rpm_cr,
+            self.xi_0,
+            self.rho_cr,
+            self.dyn_vis_cr,
+            self.V_cr,
+            self.N_s,
+            self.a_cr,
+            self.RN_spacing,
+            T=self.T_cr * design_thrust_factor,
+        )
 
         # Zeta to initialise the procedure
         zeta_init = 0
@@ -1221,24 +1383,24 @@ class Optiblade:
 
     # Check the max thrust a certain design can produce
     # def max_T_check(self, blade):
-        # # Get the blade design
-        # # Out: zeta_new, [cs, betas, alpha, stations_r, E, eff, self.Tc, Pc], Ves, [Cl, Cd]
-        # design_blade = blade
-        #
-        # # Max tip speed and corresponding rpm
-        # omega_max = self.max_M_tip*self.a_h/self.R
-        # rpm_max = omega_max/0.10472
-        #
-        # # T, Q, eff
-        # # TODO: implement max pitch for highest thrust: self.delta_pitch
-        # blade_hover = OffDesignAnalysisBEM(self.V_h, self.B, self.R, design_blade[1][0],
-        #                                    design_blade[1][1] - design_blade[1][1][-1],
-        #                                    design_blade[1][3], design_blade[3][0], design_blade[3][1], rpm_max,
-        #                                    design_blade[0], self.rho_h, self.dyn_vis_h, self.a_h).analyse_propeller()
-        # # Return max thrust
-        # return blade_hover[0]
+    # # Get the blade design
+    # # Out: zeta_new, [cs, betas, alpha, stations_r, E, eff, self.Tc, Pc], Ves, [Cl, Cd]
+    # design_blade = blade
+    #
+    # # Max tip speed and corresponding rpm
+    # omega_max = self.max_M_tip*self.a_h/self.R
+    # rpm_max = omega_max/0.10472
+    #
+    # # T, Q, eff
+    # # TODO: implement max pitch for highest thrust: self.delta_pitch
+    # blade_hover = OffDesignAnalysisBEM(self.V_h, self.B, self.R, design_blade[1][0],
+    #                                    design_blade[1][1] - design_blade[1][1][-1],
+    #                                    design_blade[1][3], design_blade[3][0], design_blade[3][1], rpm_max,
+    #                                    design_blade[0], self.rho_h, self.dyn_vis_h, self.a_h).analyse_propeller()
+    # # Return max thrust
+    # return blade_hover[0]
 
-        # return self.T_h+1
+    # return self.T_h+1
 
     def optimised_blade(self):
         # Multiply design (cruise) drag times factor
@@ -1260,9 +1422,21 @@ class Optiblade:
 
         # Now we have a blade design that can provide the necessary max thrust
         # Analyse the blade at optimum hover condition to optimise
-        blade_hover = OffDesignAnalysisBEM(self.V_h, self.B, self.R, blade[1][0], blade[1][1]-self.delta_pitch,
-                                           blade[1][3], blade[3][0], blade[3][1], self.rpm_h,
-                                           blade[0], self.rho_h, self.dyn_vis_h, self.a_h).analyse_propeller()
+        blade_hover = OffDesignAnalysisBEM(
+            self.V_h,
+            self.B,
+            self.R,
+            blade[1][0],
+            blade[1][1] - self.delta_pitch,
+            blade[1][3],
+            blade[3][0],
+            blade[3][1],
+            self.rpm_h,
+            blade[0],
+            self.rho_h,
+            self.dyn_vis_h,
+            self.a_h,
+        ).analyse_propeller()
 
         # Return [blade in cruise], [T, Q, eff] of blade in hover, and thrust factor at which the blade is designed
         # The cost function should maximise both cruise and hover efficiency, so [0][1][5] and [1][2] TODO: check

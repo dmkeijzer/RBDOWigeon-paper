@@ -11,45 +11,53 @@ import pandas as pd
 import os
 
 
-#=========================================================================
+# =========================================================================
 # Get the required data to plot with
-#=========================================================================
+# =========================================================================
 
-world = gpd.read_file(gpd.datasets.get_path('naturalearth_lowres'))
-europe = world[world.continent == 'Europe']
-europe = europe.to_crs(epsg=3395) # make the plot of Europe a conformal projection
+world = gpd.read_file(gpd.datasets.get_path("naturalearth_lowres"))
+europe = world[world.continent == "Europe"]
+europe = europe.to_crs(epsg=3395)  # make the plot of Europe a conformal projection
 plt_data = pd.read_csv(os.path.join(os.path.dirname(__file__), "plotting_df.csv"))
 
 
-#=========================================================================
+# =========================================================================
 # Here under are all the plotting commands
 # epsg(3395) is a conformal projection (lat and lon lines remain adjacent)
-#=========================================================================
+# =========================================================================
 
-map_limits_x = [-13.85e5,2.9e6] 
+map_limits_x = [-13.85e5, 2.9e6]
 map_limits_y = [4.0e6, 8.67e6]
 
-fig = plt.figure(figsize=(20,10))
+fig = plt.figure(figsize=(20, 10))
 ax1 = plt.subplot(221, projection=ccrs.epsg(3395))
-europe.plot(legend=False, cmap=matplotlib.cm.Greys, ec="black", lw=0.4,alpha=0.8,ax=ax1) 
+europe.plot(
+    legend=False, cmap=matplotlib.cm.Greys, ec="black", lw=0.4, alpha=0.8, ax=ax1
+)
 plt.xlim(map_limits_x)
 plt.ylim(map_limits_y)
 # plt.gca().set_aspect('equal', adjustable='box')
 plt.title(" GDP > 159.2 ")
-ax2 = plt.subplot(222, projection=ccrs.epsg(3395)) 
-europe.plot(legend=False, cmap=matplotlib.cm.Greys, ec="black", lw=0.4,alpha=0.8,ax=ax2) 
+ax2 = plt.subplot(222, projection=ccrs.epsg(3395))
+europe.plot(
+    legend=False, cmap=matplotlib.cm.Greys, ec="black", lw=0.4, alpha=0.8, ax=ax2
+)
 plt.xlim(map_limits_x)
 plt.ylim(map_limits_y)
 # plt.gca().set_aspect('equal', adjustable='box')
 plt.title("152.2 > GDP > 84.9")
-ax3 = plt.subplot(223, projection=ccrs.epsg(3395)) 
-europe.plot(legend=False, cmap=matplotlib.cm.Greys, ec="black", lw=0.4,alpha=0.8,ax=ax3) 
+ax3 = plt.subplot(223, projection=ccrs.epsg(3395))
+europe.plot(
+    legend=False, cmap=matplotlib.cm.Greys, ec="black", lw=0.4, alpha=0.8, ax=ax3
+)
 plt.xlim(map_limits_x)
 plt.ylim(map_limits_y)
 # plt.gca().set_aspect('equal', adjustable='box')
 plt.title("84.9 > GDP > 58.8 ")
-ax4 = plt.subplot(224, projection=ccrs.epsg(3395))  
-europe.plot(legend=False, cmap=matplotlib.cm.Greys, ec="black", lw=0.4,alpha=0.8,ax=ax4) 
+ax4 = plt.subplot(224, projection=ccrs.epsg(3395))
+europe.plot(
+    legend=False, cmap=matplotlib.cm.Greys, ec="black", lw=0.4, alpha=0.8, ax=ax4
+)
 plt.xlim(map_limits_x)
 plt.ylim(map_limits_y)
 # plt.gca().set_aspect('equal', adjustable='box')
@@ -59,70 +67,162 @@ lim = 400
 a = 0.38
 iso = iso_cities(lim)
 
-#-----------------------------------------------------------------------------------
+# -----------------------------------------------------------------------------------
 # This loop plots all the cities and their surrounding circles into their subplots
 # It first checks whether the city is isolated to mark it black.
 # then there some if statements used to put them into the right category of gdp
 # the function .tissot from cartopy is used for the circles
-#---------------------------------------------------------------------------------
+# ---------------------------------------------------------------------------------
 
 col_count1 = 0
 col_count2 = 0
 col_count3 = 0
 col_count4 = 0
 
-for row in np.delete(plt_data.to_numpy(), 0 , 1):
-   if row[0] in iso:
-      col = [0,0,0, a]
-      edgecol = [0,0,0, 0.9]
-   else:
-      if row[3] >= 159.2:
-         col_count = col_count1
-         col_count1 += 1
-      if row[3] >= 84.9 and row[3] < 159.2:
-         col_count = col_count2
-         col_count2 += 1
-      if row[3] >= 58.8 and row[3] < 84.9:
-         col_count = col_count3
-         col_count3 += 1
-      if row[3] < 58.8:
-         col_count = col_count4
-         col_count4 += 1
-      col = list(sns.color_palette("tab10", 13 )[col_count])
-      edgecol = list(col)
-      col.append(a)
-      edgecol.append(0.8)
-   
-   if row[3] >= 159.2:
-      ax1.tissot(rad_km=lim, lons= row[2], lats=row[1], n_samples=36 , facecolor= col,   zorder=10,  edgecolor= edgecol, lw= 1.5)
-      edgecol[-1] = 1
-      ax1.tissot(rad_km=20, lons= row[2], lats=row[1], n_samples=36 , facecolor= edgecol,   zorder=10)
-      ax1.text(row[2] , row[1] - 1, row[0], fontsize=8, color='black',horizontalalignment='right', transform=ccrs.PlateCarree())
-   if row[3] >= 84.9 and row[3] < 159.2:
-      ax2.tissot(rad_km=lim, lons= row[2], lats=row[1], n_samples=36 , facecolor= col,   zorder=10,  edgecolor= edgecol, lw= 1.5)
-      edgecol[-1] = 1
-      ax2.tissot(rad_km=20, lons= row[2], lats=row[1], n_samples=36 , facecolor= edgecol,   zorder=10)
-      ax2.text(row[2] , row[1] - 1, row[0], fontsize=8, color='black',horizontalalignment='right', transform=ccrs.PlateCarree())
-   if row[3] >= 58.8 and row[3] < 84.9:
-      ax3.tissot(rad_km=lim, lons= row[2], lats=row[1], n_samples=36 , facecolor= col,   zorder=10,  edgecolor= edgecol, lw= 1.5)
-      edgecol[-1] = 1
-      ax3.tissot(rad_km=20, lons= row[2], lats=row[1], n_samples=36 , facecolor= edgecol,   zorder=10)
-      ax3.text(row[2] , row[1] - 1, row[0], fontsize=8, color='black',horizontalalignment='right', transform=ccrs.PlateCarree())
-   if row[3] < 58.8:
-      ax4.tissot(rad_km=lim, lons= row[2], lats=row[1], n_samples=36 , facecolor= col,   zorder=10,  edgecolor= edgecol, lw= 1.5)
-      edgecol[-1] = 1
-      ax4.tissot(rad_km=20, lons= row[2], lats=row[1], n_samples=36 , facecolor= edgecol,   zorder=10)
-      ax4.text(row[2] , row[1] - 1, row[0], fontsize=8, color='black',horizontalalignment='right', transform=ccrs.PlateCarree())
+for row in np.delete(plt_data.to_numpy(), 0, 1):
+    if row[0] in iso:
+        col = [0, 0, 0, a]
+        edgecol = [0, 0, 0, 0.9]
+    else:
+        if row[3] >= 159.2:
+            col_count = col_count1
+            col_count1 += 1
+        if row[3] >= 84.9 and row[3] < 159.2:
+            col_count = col_count2
+            col_count2 += 1
+        if row[3] >= 58.8 and row[3] < 84.9:
+            col_count = col_count3
+            col_count3 += 1
+        if row[3] < 58.8:
+            col_count = col_count4
+            col_count4 += 1
+        col = list(sns.color_palette("tab10", 13)[col_count])
+        edgecol = list(col)
+        col.append(a)
+        edgecol.append(0.8)
+
+    if row[3] >= 159.2:
+        ax1.tissot(
+            rad_km=lim,
+            lons=row[2],
+            lats=row[1],
+            n_samples=36,
+            facecolor=col,
+            zorder=10,
+            edgecolor=edgecol,
+            lw=1.5,
+        )
+        edgecol[-1] = 1
+        ax1.tissot(
+            rad_km=20,
+            lons=row[2],
+            lats=row[1],
+            n_samples=36,
+            facecolor=edgecol,
+            zorder=10,
+        )
+        ax1.text(
+            row[2],
+            row[1] - 1,
+            row[0],
+            fontsize=8,
+            color="black",
+            horizontalalignment="right",
+            transform=ccrs.PlateCarree(),
+        )
+    if row[3] >= 84.9 and row[3] < 159.2:
+        ax2.tissot(
+            rad_km=lim,
+            lons=row[2],
+            lats=row[1],
+            n_samples=36,
+            facecolor=col,
+            zorder=10,
+            edgecolor=edgecol,
+            lw=1.5,
+        )
+        edgecol[-1] = 1
+        ax2.tissot(
+            rad_km=20,
+            lons=row[2],
+            lats=row[1],
+            n_samples=36,
+            facecolor=edgecol,
+            zorder=10,
+        )
+        ax2.text(
+            row[2],
+            row[1] - 1,
+            row[0],
+            fontsize=8,
+            color="black",
+            horizontalalignment="right",
+            transform=ccrs.PlateCarree(),
+        )
+    if row[3] >= 58.8 and row[3] < 84.9:
+        ax3.tissot(
+            rad_km=lim,
+            lons=row[2],
+            lats=row[1],
+            n_samples=36,
+            facecolor=col,
+            zorder=10,
+            edgecolor=edgecol,
+            lw=1.5,
+        )
+        edgecol[-1] = 1
+        ax3.tissot(
+            rad_km=20,
+            lons=row[2],
+            lats=row[1],
+            n_samples=36,
+            facecolor=edgecol,
+            zorder=10,
+        )
+        ax3.text(
+            row[2],
+            row[1] - 1,
+            row[0],
+            fontsize=8,
+            color="black",
+            horizontalalignment="right",
+            transform=ccrs.PlateCarree(),
+        )
+    if row[3] < 58.8:
+        ax4.tissot(
+            rad_km=lim,
+            lons=row[2],
+            lats=row[1],
+            n_samples=36,
+            facecolor=col,
+            zorder=10,
+            edgecolor=edgecol,
+            lw=1.5,
+        )
+        edgecol[-1] = 1
+        ax4.tissot(
+            rad_km=20,
+            lons=row[2],
+            lats=row[1],
+            n_samples=36,
+            facecolor=edgecol,
+            zorder=10,
+        )
+        ax4.text(
+            row[2],
+            row[1] - 1,
+            row[0],
+            fontsize=8,
+            color="black",
+            horizontalalignment="right",
+            transform=ccrs.PlateCarree(),
+        )
 
 fig.tight_layout()
-fig.subplots_adjust(wspace= -0.70)
-fig.subplots_adjust(hspace= 0.06)
+fig.subplots_adjust(wspace=-0.70)
+fig.subplots_adjust(hspace=0.06)
 # plt.show()
-plt.savefig(os.path.join(os.path.expanduser("~"), "Downloads", "cities_by_gmp_europe.pdf"), bbox_inches= "tight" )
-
-
-
-
-
-
-
+plt.savefig(
+    os.path.join(os.path.expanduser("~"), "Downloads", "cities_by_gmp_europe.pdf"),
+    bbox_inches="tight",
+)

@@ -4,8 +4,9 @@ from constants import *
 
 
 class BL:
-
-    def __init__(self, Sw, b, V, xc_prop, c_r, taper, mu, density, D_prop, laminar=True):
+    def __init__(
+        self, Sw, b, V, xc_prop, c_r, taper, mu, density, D_prop, laminar=True
+    ):
         """
         :param Sw: Wing surface area [m^2]
         :param b: Wing span (FULL wing) [m]
@@ -19,7 +20,7 @@ class BL:
         :param laminar: Boolean, laminar flow true or false
         """
         self.laminar = laminar
-        self.nu = mu/density
+        self.nu = mu / density
         self.density = density
         self.mu = mu
         self.xc_prop = xc_prop
@@ -31,7 +32,7 @@ class BL:
         self.V = V
 
     def c(self, y):
-        return self.c_r * (1 - (1-self.taper)/self.b * 2*y)
+        return self.c_r * (1 - (1 - self.taper) / self.b * 2 * y)
 
     def L(self, y):
         return self.c(y) * self.xc_prop
@@ -41,16 +42,19 @@ class BL:
 
     def BL_height(self, y):
         if self.laminar:
-            return 5.2 * np.sqrt(self.L(y) / self.Re(y))  # https://ocw.tudelft.nl/wp-content/uploads/AE1101-Aero-4.pdf
+            return 5.2 * np.sqrt(
+                self.L(y) / self.Re(y)
+            )  # https://ocw.tudelft.nl/wp-content/uploads/AE1101-Aero-4.pdf
         else:
-            return 0.37 * self.L(y) / self.Re(y)**(1/5)  # https://ocw.tudelft.nl/wp-content/uploads/AE1101-Aero-4.pdf
+            return (
+                0.37 * self.L(y) / self.Re(y) ** (1 / 5)
+            )  # https://ocw.tudelft.nl/wp-content/uploads/AE1101-Aero-4.pdf
 
     def ratio_BL_D(self, y):
-        return self.BL_height(y)/self.D_prop
+        return self.BL_height(y) / self.D_prop
 
 
 class LE_prop:
-
     def __init__(self, ve, v0, L, Sw):
         """
         :param ve: Fan exit speed [m/s]
@@ -66,10 +70,10 @@ class LE_prop:
         # self.WS = WS
 
     def S1(self):
-        return self.S * (self.v0/self.ve)**2
+        return self.S * (self.v0 / self.ve) ** 2
 
     def S_ratio(self):
-        return self.S1()/self.S
+        return self.S1() / self.S
 
 
 # class Noise:

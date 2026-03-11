@@ -64,7 +64,7 @@ dyn_visc = ISA.viscosity_dyn()
 B = 5
 xi_0 = 0.1
 R = 0.55
-A_prop = np.pi*R**2
+A_prop = np.pi * R**2
 MTOM = 3000
 
 # M_t_max = 0.6
@@ -78,9 +78,11 @@ N_stations = 30
 RN_spacing = 100000
 
 T_cr_per_eng = 27.55 * 5 * 6
-T_h_per_eng = MTOM*9.80665 / 12
+T_h_per_eng = MTOM * 9.80665 / 12
 
-propeller = BEM.BEM(B, R, rpm, xi_0, rho, dyn_visc, V_cruise, N_stations, a, RN_spacing, T=T_cr_per_eng)
+propeller = BEM.BEM(
+    B, R, rpm, xi_0, rho, dyn_visc, V_cruise, N_stations, a, RN_spacing, T=T_cr_per_eng
+)
 # propeller = BEM.BEM(B, R, rpm, xi_0, rho, dyn_visc, V_h, N_stations, a, RN_spacing, T=T_h_per_eng)
 
 
@@ -113,7 +115,7 @@ print("Exit speed per station:", V_e)
 print("")
 print("Average exit speed per station:", np.average(V_e))
 print("")
-print("Propulsive efficiency:", 2/(1 + np.average(V_e)/V_cruise))
+print("Propulsive efficiency:", 2 / (1 + np.average(V_e) / V_cruise))
 print("")
 print("Cls, Cds", coefs)
 print("")
@@ -165,8 +167,21 @@ RN = Omega * design[3] * design[0] * rho / dyn_visc
 
 # TODO: J has to be the same as in cruise for max efficiency (Larrabee)
 # zeta_new, [cs, betas, alpha, stations_r, E, eff, self.Tc, Pc], Ves, [Cl, Cd]  #-np.deg2rad(30)
-blade_hover = BEM.OffDesignAnalysisBEM(V_cruise, B, R, design[0], design[1]-np.deg2rad(6.5), design[3], coefs[0],
-                                       coefs[1], rpm, rho, dyn_visc, a, RN)
+blade_hover = BEM.OffDesignAnalysisBEM(
+    V_cruise,
+    B,
+    R,
+    design[0],
+    design[1] - np.deg2rad(6.5),
+    design[3],
+    coefs[0],
+    coefs[1],
+    rpm,
+    rho,
+    dyn_visc,
+    a,
+    RN,
+)
 
 blade_hover_analysis = blade_hover.analyse_propeller()
 

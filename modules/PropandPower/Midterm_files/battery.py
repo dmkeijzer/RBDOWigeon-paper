@@ -3,6 +3,7 @@
 
 class Battery:
     """This class is to estimate the parameters of a battery"""
+
     def __init__(self, sp_en_den, vol_en_den, tot_energy, cost):
         self.sp_en_den = sp_en_den
         self.energy = tot_energy
@@ -23,7 +24,7 @@ class Battery:
         :param vol_en_den: Volumetric energy density of the battery [Wh/l]
         :return: Volume of the battery [m^3]
         """
-        return self.energy/self.vol_en_den * 0.001
+        return self.energy / self.vol_en_den * 0.001
 
     def price(self):
         """
@@ -31,4 +32,4 @@ class Battery:
         :param cost: Cost per Wh of the battery [US$/Wh]
         :return: Approx cost of the battery [US$]
         """
-        return self.energy*self.cost
+        return self.energy * self.cost

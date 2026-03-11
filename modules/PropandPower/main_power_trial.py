@@ -12,7 +12,9 @@ energy = 301111.1
 P_max = 1809362.3556091622
 safety = 1.0
 
-bat = bat.Battery(sp_en_den, vol_en_den, energy, bat_cost, DoD, P_den, P_max, safety, EOL_C)
+bat = bat.Battery(
+    sp_en_den, vol_en_den, energy, bat_cost, DoD, P_den, P_max, safety, EOL_C
+)
 
 
 print("mass", bat.mass())
@@ -28,4 +30,3 @@ if bat.mass_both()[0] > bat.mass_both()[1]:
     print("Energy limiting")
 else:
     print("Power limiting")
-

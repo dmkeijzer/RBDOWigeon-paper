@@ -19,19 +19,40 @@ def deps_da_emp(lambda_c4f, bf, lh, h_ht, A, CLaf):
     """
     r = lh * 2 / bf
     mtv = h_ht * 2 / bf  # Approximation
-    Keps = (0.1124 + 0.1265 * lambda_c4f + 0.1766 * lambda_c4f ** 2) / r ** 2 + 0.1024 / r + 2
-    Keps0 = 0.1124 / r ** 2 + 0.1024 / r + 2
-    v = 1 + (r ** 2 / (r ** 2 + 0.7915 + 5.0734 * mtv ** 2)) ** (0.3113)
-    de_da = Keps / Keps0 * CLaf / (np.pi * A) * (
-            r / (r ** 2 + mtv ** 2) * 0.4876 / (np.sqrt(r ** 2 + 0.6319 + mtv ** 2)) + v * (
-            1 - np.sqrt(mtv ** 2 / (1 + mtv ** 2))))
+    Keps = (
+        (0.1124 + 0.1265 * lambda_c4f + 0.1766 * lambda_c4f**2) / r**2 + 0.1024 / r + 2
+    )
+    Keps0 = 0.1124 / r**2 + 0.1024 / r + 2
+    v = 1 + (r**2 / (r**2 + 0.7915 + 5.0734 * mtv**2)) ** (0.3113)
+    de_da = (
+        Keps
+        / Keps0
+        * CLaf
+        / (np.pi * A)
+        * (
+            r / (r**2 + mtv**2) * 0.4876 / (np.sqrt(r**2 + 0.6319 + mtv**2))
+            + v * (1 - np.sqrt(mtv**2 / (1 + mtv**2)))
+        )
+    )
 
     return de_da
 
 
-def de_da_compute(taperf, taperr, lambda_c4f, lambda_c4r, alpha, V,
-                 dxrange, dzrange, Srange, Sr_Sfrange, Afrange, Arrange,
-                 filename):
+def de_da_compute(
+    taperf,
+    taperr,
+    lambda_c4f,
+    lambda_c4r,
+    alpha,
+    V,
+    dxrange,
+    dzrange,
+    Srange,
+    Sr_Sfrange,
+    Afrange,
+    Arrange,
+    filename,
+):
     dxgrid, dzgrid, Sgrid, Sr_Sfgrid, Afgrid, Argrid = np.meshgrid(
         dxrange, dzrange, Srange, Sr_Sfrange, Afrange, Arrange, indexing="ij"
     )
@@ -48,22 +69,23 @@ def de_da_compute(taperf, taperr, lambda_c4f, lambda_c4r, alpha, V,
                 for l, Sr_Sf in enumerate(Sr_Sfrange):
                     for m, Af in enumerate(Afrange):
                         for n, Ar in enumerate(Arrange):
-                            print(bf[i, j, k, l, m, n],
-                                    Af,
-                                    crf[i, j, k, l, m, n],
-                                    crf[i, j, k, l, m, n] * taperf,
-                                    lambda_c4f,
-                                    alpha,
-                                    dz,
-                                    dx,
-                                    br[i, j, k, l, m, n],
-                                    Ar,
-                                    crr[i, j, k, l, m, n],
-                                    crr[i, j, k, l, m, n] * taperr,
-                                    lambda_c4r,
-                                    V)
-                            de_da[i, j, k, l, m, n], \
-                            de_da_up[i, j, k, l, m, n] = \
+                            print(
+                                bf[i, j, k, l, m, n],
+                                Af,
+                                crf[i, j, k, l, m, n],
+                                crf[i, j, k, l, m, n] * taperf,
+                                lambda_c4f,
+                                alpha,
+                                dz,
+                                dx,
+                                br[i, j, k, l, m, n],
+                                Ar,
+                                crr[i, j, k, l, m, n],
+                                crr[i, j, k, l, m, n] * taperr,
+                                lambda_c4r,
+                                V,
+                            )
+                            de_da[i, j, k, l, m, n], de_da_up[i, j, k, l, m, n] = (
                                 downwash_upwash(
                                     bf[i, j, k, l, m, n],
                                     Af,
@@ -78,7 +100,9 @@ def de_da_compute(taperf, taperr, lambda_c4f, lambda_c4r, alpha, V,
                                     crr[i, j, k, l, m, n],
                                     crr[i, j, k, l, m, n] * taperr,
                                     lambda_c4r,
-                                    V)
+                                    V,
+                                )
+                            )
 
     np.save(filename + "_raw_de_da", de_da)
     np.save(filename + "_raw_de_da_up", de_da_up)
@@ -86,8 +110,16 @@ def de_da_compute(taperf, taperr, lambda_c4f, lambda_c4r, alpha, V,
     de_da = de_da.flatten()
     de_da_up = de_da_up.flatten()
 
-    pts = np.array([dxgrid.flatten(), dzgrid.flatten(), Sgrid.flatten(),
-                    Sr_Sfgrid.flatten(), Afgrid.flatten(), Argrid.flatten()])
+    pts = np.array(
+        [
+            dxgrid.flatten(),
+            dzgrid.flatten(),
+            Sgrid.flatten(),
+            Sr_Sfgrid.flatten(),
+            Afgrid.flatten(),
+            Argrid.flatten(),
+        ]
+    )
     pts = np.moveaxis(pts, [0], [1])
 
     np.save(filename + "_pts", pts)
@@ -99,8 +131,7 @@ def de_da_load(filename):
     pts = np.load(filename + "_pts.npy")
     de_da = np.load(filename + "_de_da_vals.npy")
     de_da_up = np.load(filename + "_de_da_up_vals.npy")
-    return LinearNDInterpolator(pts, de_da), \
-           LinearNDInterpolator(pts, de_da_up)
+    return LinearNDInterpolator(pts, de_da), LinearNDInterpolator(pts, de_da_up)
 
 
 def compare_ll_interp(filename):
@@ -126,8 +157,9 @@ def compare_ll_interp(filename):
     Afrange = np.linspace(2, 14, res)
     Arrange = np.linspace(2, 14, res)
 
-    def create_plot(dx, dz, S, Sr_Sf, Af, Ar, xaxis_range, xaxis_label,
-                    alpha=np.deg2rad(5), V=55):
+    def create_plot(
+        dx, dz, S, Sr_Sf, Af, Ar, xaxis_range, xaxis_label, alpha=np.deg2rad(5), V=55
+    ):
         bf, br = bf_br(S, Sr_Sf, Af, Ar)
         crf, crr = crf_crr(S, Sr_Sf, Af, Ar, taperf, taperr)
 
@@ -147,9 +179,22 @@ def compare_ll_interp(filename):
             Sr_Sf_pt = Sr_Sf if not isinstance(Sr_Sf, np.ndarray) else Sr_Sf[i]
             Ar_pt = Ar if not isinstance(Ar, np.ndarray) else Ar[i]
 
-            ll = downwash_upwash(bf_pt, Af_pt, crf_pt, crf_pt * taperf,
-                                 lambda_c4f, alpha, dz_pt, dx_pt, br_pt,
-                                 Ar_pt, crr_pt, crr_pt * taperr, lambda_c4r, V)
+            ll = downwash_upwash(
+                bf_pt,
+                Af_pt,
+                crf_pt,
+                crf_pt * taperf,
+                lambda_c4f,
+                alpha,
+                dz_pt,
+                dx_pt,
+                br_pt,
+                Ar_pt,
+                crr_pt,
+                crr_pt * taperr,
+                lambda_c4r,
+                V,
+            )
             # interp_down_val = de_da_interp(dx_pt, dz_pt, S_pt, Sr_Sf_pt,
             #                                Af_pt, Ar_pt)
             # interp_up_val = de_da_up_interp(dx_pt, dz_pt, S_pt, Sr_Sf_pt,
@@ -165,20 +210,39 @@ def compare_ll_interp(filename):
         plt.title("Downwash")
         plt.xlabel(xaxis_label)
         plt.ylabel(r"$d\varepsilon/d\alpha$")
-        plt.plot(xaxis_range, interp_down_list, label="interpolated lifting line",
-                 color="tab:blue", marker="o")
-        plt.plot(xaxis_range, ll_down_list, label="lifting line",
-                 color="tab:orange", marker="o")
+        plt.plot(
+            xaxis_range,
+            interp_down_list,
+            label="interpolated lifting line",
+            color="tab:blue",
+            marker="o",
+        )
+        plt.plot(
+            xaxis_range,
+            ll_down_list,
+            label="lifting line",
+            color="tab:orange",
+            marker="o",
+        )
 
         plt.subplot(212)
         plt.title("Upwash")
         plt.xlabel(xaxis_label)
         plt.ylabel(r"$d\varepsilon/d\alpha$")
-        plt.plot(xaxis_range, interp_up_list,
-                 label="interpolated lifting line",
-                 color="tab:blue", marker="o")
-        plt.plot(xaxis_range, ll_up_list, label="lifting line",
-                 color="tab:orange", marker="o")
+        plt.plot(
+            xaxis_range,
+            interp_up_list,
+            label="interpolated lifting line",
+            color="tab:blue",
+            marker="o",
+        )
+        plt.plot(
+            xaxis_range,
+            ll_up_list,
+            label="lifting line",
+            color="tab:orange",
+            marker="o",
+        )
 
         plt.legend()
 
@@ -224,8 +288,9 @@ def compare_ll_emp_downwash():
     Vrange = np.linspace(35, 70, res)
     Srange = np.linspace(8, 32, res)
 
-    def create_plot(S, xf, xr, zf, zr, Sr_Sf, Af, Ar, xaxis_range,
-                    alpha=np.deg2rad(5), V=55):
+    def create_plot(
+        S, xf, xr, zf, zr, Sr_Sf, Af, Ar, xaxis_range, alpha=np.deg2rad(5), V=55
+    ):
         lambda_c2f = lambda_c4_to_lambda_c2(Af, taperf, lambda_c4f)
         CLaf = CLa(Claf, Af, lambda_c2f)
         bf, br = bf_br(S, Sr_Sf, Af, Ar)
@@ -247,9 +312,21 @@ def compare_ll_emp_downwash():
             alpha_pt = alpha if not isinstance(alpha, np.ndarray) else alpha[i]
             V_pt = V if not isinstance(V, np.ndarray) else V[i]
 
-            ll = downwash(bf_pt, Af_pt, crf_pt, crf_pt * taperf,
-                          lambda_c4f, alpha_pt, zr_pt - zf_pt, xr_pt - xf_pt,
-                          br_pt, crr_pt, crr_pt * taperr, lambda_c4r, V_pt)
+            ll = downwash(
+                bf_pt,
+                Af_pt,
+                crf_pt,
+                crf_pt * taperf,
+                lambda_c4f,
+                alpha_pt,
+                zr_pt - zf_pt,
+                xr_pt - xf_pt,
+                br_pt,
+                crr_pt,
+                crr_pt * taperr,
+                lambda_c4r,
+                V_pt,
+            )
             ll_list.append(ll)
 
         if isinstance(emp, np.ndarray):
@@ -257,8 +334,9 @@ def compare_ll_emp_downwash():
         else:
             plt.axhline(emp, label="empirical")
 
-        plt.plot(xaxis_range, ll_list, label="lifting line",
-                 color="tab:orange", marker="o")
+        plt.plot(
+            xaxis_range, ll_list, label="lifting line", color="tab:orange", marker="o"
+        )
         plt.legend()
 
     plt.xlabel(r"$x_f$")
@@ -324,6 +402,3 @@ if __name__ == "__main__":
     #               "downwash_interp_1506_1431")
 
     compare_ll_interp("downwash_interp_1506_1431")
-
-
-

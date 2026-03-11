@@ -28,7 +28,7 @@ rpm = 2500
 R = 0.5029
 xi_0 = 0.1
 
-A_prop = np.pi * R**2 - (np.pi * (R*xi_0)**2)
+A_prop = np.pi * R**2 - (np.pi * (R * xi_0) ** 2)
 A_tot = A_prop * n_prop
 
 DiskLoad = MTOM / A_tot
@@ -36,7 +36,7 @@ DiskLoad = MTOM / A_tot
 V_cr = 72
 T_cr_per_eng = 400
 
-ActDisk = ADT.ActDisk_verif(V_cr, T_cr_per_eng*n_prop, rho, A_tot)
+ActDisk = ADT.ActDisk_verif(V_cr, T_cr_per_eng * n_prop, rho, A_tot)
 
 print("Cruise exit speed (ADT):", ActDisk.v_e_cr())
 
@@ -76,7 +76,7 @@ J = V/(nD)
 """
 
 # Fix n and D, change only V
-D = 2*R
+D = 2 * R
 n = rpm / 60
 B = 5
 
@@ -87,7 +87,7 @@ for V in range(90, 200, 5):
     blade_design = blade.optimise_blade(0)
 
     # Check the advance ratio
-    J = V/(n*D)
+    J = V / (n * D)
     Js.append(J)
 
     # Compute the efficiency
@@ -97,7 +97,7 @@ for V in range(90, 200, 5):
 # Plot efficiency against advance ratio
 plt.plot(Js, effs)
 plt.xlabel("Advance ratio, J = V/(nD) [-]")
-plt.ylabel(r'$\eta$ [-]')
+plt.ylabel(r"$\eta$ [-]")
 
 plt.show()
 
@@ -154,7 +154,9 @@ RN_spacing = 100000
 
 T_cr_per_eng = 27.55 * 12
 
-propeller = BEM.BEM(B, R, rpm, xi_0, rho, dyn_visc, V_cruise, N_stations, a, RN_spacing, T=T_cr_per_eng)
+propeller = BEM.BEM(
+    B, R, rpm, xi_0, rho, dyn_visc, V_cruise, N_stations, a, RN_spacing, T=T_cr_per_eng
+)
 
 
 # Zeta init
@@ -244,20 +246,32 @@ RN = (Omega * design[3]) * design[0] * rho / dyn_visc
 #
 # print(blade_hover_analysis)
 
-D = 2*R
+D = 2 * R
 
 Js = []
 effs = []
 for rpm in range(1000, 5500, 50):
-
     n = rpm / 60
-    blade_hover = BEM.OffDesignAnalysisBEM(V_cruise, B, R, design[0], design[1] - np.deg2rad(0), design[3], coefs[0],
-                                           coefs[1], rpm, rho, dyn_visc, a, RN)
+    blade_hover = BEM.OffDesignAnalysisBEM(
+        V_cruise,
+        B,
+        R,
+        design[0],
+        design[1] - np.deg2rad(0),
+        design[3],
+        coefs[0],
+        coefs[1],
+        rpm,
+        rho,
+        dyn_visc,
+        a,
+        RN,
+    )
 
     blade_hover_analysis = blade_hover.analyse_propeller()
 
     # Check the advance ratio
-    J = V_cruise/(n*D)
+    J = V_cruise / (n * D)
     Js.append(J)
 
     # Compute the efficiency
@@ -267,6 +281,6 @@ for rpm in range(1000, 5500, 50):
 # Plot efficiency against advance ratio
 plt.plot(Js, effs)
 plt.xlabel("Advance ratio, J = V/(nD) [-]")
-plt.ylabel(r'$\eta$ [-]')
+plt.ylabel(r"$\eta$ [-]")
 
 plt.show()

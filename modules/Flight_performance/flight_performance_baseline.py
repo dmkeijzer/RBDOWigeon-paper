@@ -18,10 +18,12 @@ import sys
 from input.constants import g, eff_hover, eff_prop
 import input.constants_final as const
 import scipy.optimize as optimize
+
 # TODO: Remove this import in the integrated program, make sure aerodynamics is called first and the variables have the
 # same names
-#from Preliminary_Lift.main_aero import Cl_alpha_curve, CD_a_w, CD_a_f, alpha_lst, Drag
+# from Preliminary_Lift.main_aero import Cl_alpha_curve, CD_a_w, CD_a_f, alpha_lst, Drag
 plt.rcParams["figure.figsize"] = (5, 4)
+
 
 class mission:
     """
@@ -39,9 +41,22 @@ class mission:
         - Efficiencies
     """
 
-    def __init__(self, mass, cruising_alt, cruise_speed, CL_max, wing_surface, A_disk, P_max,
-                 Cl_alpha_curve, CD_a_w, CD_a_f, alpha_lst, Drag,  plotting=False):
-
+    def __init__(
+        self,
+        mass,
+        cruising_alt,
+        cruise_speed,
+        CL_max,
+        wing_surface,
+        A_disk,
+        P_max,
+        Cl_alpha_curve,
+        CD_a_w,
+        CD_a_f,
+        alpha_lst,
+        Drag,
+        plotting=False,
+    ):
         """
         :param mass:            [kg]    Aircraft mass
         :param cruising_alt:    [m]     Cruising altitude
@@ -77,8 +92,8 @@ class mission:
         self.h_cruise = cruising_alt
         self.v_cruise = cruise_speed
 
-        plt.rcParams.update({'font.size': 16})
-        self.path = '../Flight_performance/Figures/'
+        plt.rcParams.update({"font.size": 16})
+        self.path = "../Flight_performance/Figures/"
         self.plotting = plotting
 
         self.Cl_alpha_curve = Cl_alpha_curve
@@ -90,17 +105,26 @@ class mission:
         # Interpolate CL, CD vs alpha
         self.CD_f = interpolate.interp1d(alpha_lst, CD_a_f)(0)
 
-
     def max_thrust(self, rho, V):
 
-        def fprime1(T,V,rho): 
-            eff = eff_hover + V*(eff_prop - eff_hover)/self.v_cruise
-            return (0.4*V + 1.2*(V**2/4 + T/(2*self.A_disk*rho))**0.5 + 0.3*T/(self.A_disk*rho*(V**2/4 + T/(2*self.A_disk*rho))**0.5))/eff
-        
-        def fprime2(T,V,rho):
-            eff = eff_hover + V*(eff_prop - eff_hover)/self.v_cruise
-            return (1.2/(V**2 + 2*T/(self.A_disk*rho))**0.5 - 0.6*T/(self.A_disk*rho*(V**2 + 2*T/(self.A_disk*rho))**1.5))/(self.A_disk*eff*rho)
+        def fprime1(T, V, rho):
+            eff = eff_hover + V * (eff_prop - eff_hover) / self.v_cruise
+            return (
+                0.4 * V
+                + 1.2 * (V**2 / 4 + T / (2 * self.A_disk * rho)) ** 0.5
+                + 0.3
+                * T
+                / (self.A_disk * rho * (V**2 / 4 + T / (2 * self.A_disk * rho)) ** 0.5)
+            ) / eff
 
+        def fprime2(T, V, rho):
+            eff = eff_hover + V * (eff_prop - eff_hover) / self.v_cruise
+            return (
+                1.2 / (V**2 + 2 * T / (self.A_disk * rho)) ** 0.5
+                - 0.6
+                * T
+                / (self.A_disk * rho * (V**2 + 2 * T / (self.A_disk * rho)) ** 1.5)
+            ) / (self.A_disk * eff * rho)
 
         def thrust_to_power_max(T, V, rho):
             return self.thrust_to_power(T, V, rho)[1] - self.P_max
@@ -108,14 +132,26 @@ class mission:
         if isinstance(V, np.ndarray):
             Tlst = []
             for v in V:
-                T_max  = optimize.newton(thrust_to_power_max, fprime= fprime1, fprime2= fprime2, x0=20000, args=(v, rho), maxiter=1000)
+                T_max = optimize.newton(
+                    thrust_to_power_max,
+                    fprime=fprime1,
+                    fprime2=fprime2,
+                    x0=20000,
+                    args=(v, rho),
+                    maxiter=1000,
+                )
                 Tlst.append(T_max)
 
             return np.array(Tlst)
         else:
-
-           return optimize.newton(thrust_to_power_max, fprime=fprime1, fprime2= fprime2, x0=20000, args=(V, rho), maxiter=100000)
-
+            return optimize.newton(
+                thrust_to_power_max,
+                fprime=fprime1,
+                fprime2=fprime2,
+                x0=20000,
+                args=(V, rho),
+                maxiter=100000,
+            )
 
     def aero_coefficients(self, angle_of_attack):
         """
@@ -153,22 +189,31 @@ class mission:
         :return: P_a: available power
         """
 
-        P_a = T * V + 1.2 * T * (-V / 2 + np.sqrt(V ** 2 / 4 + T / (2 * rho * self.A_disk)))
+        P_a = T * V + 1.2 * T * (
+            -V / 2 + np.sqrt(V**2 / 4 + T / (2 * rho * self.A_disk))
+        )
 
         # Interpolate between efficiencies
-        eff = eff_hover + V*(eff_prop - eff_hover)/self.v_cruise
+        eff = eff_hover + V * (eff_prop - eff_hover) / self.v_cruise
 
-        P_r = P_a/eff
+        P_r = P_a / eff
 
         return P_a, P_r
 
-    def target_accelerations_new(self, vx, vy, y, y_tgt, vx_tgt, max_ax, max_ay, max_vy):
+    def target_accelerations_new(
+        self, vx, vy, y, y_tgt, vx_tgt, max_ax, max_ay, max_vy
+    ):
 
         # Limit altitude
         vy_tgt = np.maximum(np.minimum(-0.5 * (y - y_tgt), max_vy), -max_vy)
 
         # Slow down when approaching 15 m while going too fast in horizontal direction
-        if const.transition_height_baseline + (np.abs(vy) / self.ay_target_descend) > y > y_tgt and abs(vx) > 0.25:
+        if (
+            const.transition_height_baseline + (np.abs(vy) / self.ay_target_descend)
+            > y
+            > y_tgt
+            and abs(vx) > 0.25
+        ):
             vy_tgt = 0
 
         # Keep horizontal velocity zero when flying low
@@ -187,7 +232,7 @@ class mission:
         # print('this is still running')
         # Initialization
         vx = float(vx_start)
-        vy = 0.
+        vy = 0.0
         t = 0
         x = 0
         y = y_start
@@ -221,13 +266,12 @@ class mission:
         # Preliminary calculations
         running = True
         while running:
-
             t += dt
 
             # ======== Actual Simulation ========
 
             rho = ISA(y).density()
-            V = np.sqrt(vx ** 2 + vy ** 2)
+            V = np.sqrt(vx**2 + vy**2)
             gamma = np.arctan(vy / vx)
             alpha = th - gamma
 
@@ -239,33 +283,48 @@ class mission:
             D = 0.5 * rho * V * V * self.S * CD
 
             # Get the target accelerations
-            ax_tgt, ay_tgt = self.target_accelerations_new(vx, vy, y, y_tgt, vx_tgt,
-                                                           max_ax, max_ay, max_vy)
+            ax_tgt, ay_tgt = self.target_accelerations_new(
+                vx, vy, y, y_tgt, vx_tgt, max_ax, max_ay, max_vy
+            )
 
             # If a constraint on rotational speed is added, calculate the limits in rotation
             th_min, th_max = th - self.max_rot * dt, th + self.max_rot * dt
             T_min, T_max = T - 200, T + 200  # TODO: Sanity check
 
             # Calculate the accelerations
-            ax = float((-D * np.cos(gamma) - L * np.sin(gamma) + T * np.cos(th)) / self.m)
-            ay = float((L * np.cos(gamma) - self.m * g - D * np.sin(gamma) + T * np.sin(th)) / self.m)
+            ax = float(
+                (-D * np.cos(gamma) - L * np.sin(gamma) + T * np.cos(th)) / self.m
+            )
+            ay = float(
+                (L * np.cos(gamma) - self.m * g - D * np.sin(gamma) + T * np.sin(th))
+                / self.m
+            )
 
             # Prevent going underground
             if y <= 0:
                 vy = 0
 
             # Solve for the thrust and wing angle, using the target acceleration values
-            th = np.arctan2((self.m * ay_tgt + self.m * g - L * np.cos(gamma) + D * np.sin(gamma)),
-                            (self.m * ax_tgt + D * np.cos(gamma) + L * np.sin(gamma)))
+            th = np.arctan2(
+                (self.m * ay_tgt + self.m * g - L * np.cos(gamma) + D * np.sin(gamma)),
+                (self.m * ax_tgt + D * np.cos(gamma) + L * np.sin(gamma)),
+            )
 
             th = np.maximum(np.minimum(th, th_max), th_min)
 
             # Thrust can be calculated in two ways, result should be very close
-            T = (self.m * ay_tgt + self.m * g - L * np.cos(gamma) + D * np.sin(gamma)) / np.sin(th)
-            #T = (self.m*ax_tgt + D*np.cos(gamma) + L*np.sin(gamma))/np.cos(th)
+            T = (
+                self.m * ay_tgt + self.m * g - L * np.cos(gamma) + D * np.sin(gamma)
+            ) / np.sin(th)
+            # T = (self.m*ax_tgt + D*np.cos(gamma) + L*np.sin(gamma))/np.cos(th)
 
             # Apply maximum and minimum bounds on thrust, based on maximum power, and on rate of change of thrust
-            T = float(np.minimum(np.maximum(np.minimum(np.maximum(T, T_min), T_max), 0), self.max_thrust(rho,V*np.cos(alpha))))
+            T = float(
+                np.minimum(
+                    np.maximum(np.minimum(np.maximum(T, T_min), T_max), 0),
+                    self.max_thrust(rho, V * np.cos(alpha)),
+                )
+            )
 
             # Perform numerical integration
             vx += float(ax) * dt
@@ -288,7 +347,13 @@ class mission:
 
             # Check if end conditions are satisfied
 
-            if abs(vx - vx_tgt) < 0.8 and abs(y - y_tgt) < 0.5 and abs(vy) < 0.5 and t >= 5 or t > 600:
+            if (
+                abs(vx - vx_tgt) < 0.8
+                and abs(y - y_tgt) < 0.5
+                and abs(vy) < 0.5
+                and t >= 5
+                or t > 600
+            ):
                 running = False
 
                 # if t > 600:
@@ -305,36 +370,40 @@ class mission:
         ax_arr = np.array(ax_lst)
         ay_arr = np.array(ay_lst)
         rho_arr = np.array(rho_lst)
-        V_arr = np.sqrt(vx_arr ** 2 + vy_arr ** 2)
+        V_arr = np.sqrt(vx_arr**2 + vy_arr**2)
 
         # ======= Get Required outputs =======
 
         # Get the available power
-        P_a, P_r = self.thrust_to_power(T_arr, V_arr*np.cos(th_arr - np.tan(vy_arr/vx_arr)), rho_arr)
+        P_a, P_r = self.thrust_to_power(
+            T_arr, V_arr * np.cos(th_arr - np.tan(vy_arr / vx_arr)), rho_arr
+        )
 
         # TODO: IMPLEMENT
-        P_tot   = P_r #+ self.P_systems + self.P_peak
+        P_tot = P_r  # + self.P_systems + self.P_peak
 
         # Add to total energy
 
         if self.plotting:
             fig, ax1 = plt.subplots()
-            ax1.plot(t_arr, np.degrees(th_arr), c='orange', label = 'Wing angle')
+            ax1.plot(t_arr, np.degrees(th_arr), c="orange", label="Wing angle")
             ax1.set_xlabel("Time [s]")
             ax1.set_ylabel("Wing angle [deg]")
 
             ax2 = ax1.twinx()
-            ax2.plot(t_arr, T_arr, label = 'Thrust')
+            ax2.plot(t_arr, T_arr, label="Thrust")
             ax2.set_xlabel("Time [s]")
             ax2.set_ylabel("Thrust [N]")
 
             ax1.grid()
-            fig.legend(loc = 'upper right', bbox_to_anchor=(1,1), bbox_transform=ax1.transAxes)#loc = 'upper center')
+            fig.legend(
+                loc="upper right", bbox_to_anchor=(1, 1), bbox_transform=ax1.transAxes
+            )  # loc = 'upper center')
             fig.tight_layout(pad=0.05)
             # plt.savefig(self.path + 'inputs_' + 'climb' * (y_tgt > 10) + 'descend' * (y_tgt < 10) + '.pdf')
             plt.show()
 
-            #plt.subplot(221)
+            # plt.subplot(221)
             plt.plot(t_arr, V_arr)
             plt.xlabel("Time [s]")
             plt.ylabel("Speed [m/s]")
@@ -343,7 +412,7 @@ class mission:
             # plt.savefig(self.path + 'transition_' + 'climb' * (y_tgt > 10) + 'descend' * (y_tgt < 10) + '_V.pdf')
             plt.show()
 
-            #plt.subplot(222)
+            # plt.subplot(222)
             plt.plot(x_arr, y_arr)
             plt.xlabel("Distance [m]")
             plt.ylabel("Altitude [m]")
@@ -352,7 +421,7 @@ class mission:
             # plt.savefig(self.path + 'transition_' + 'climb' * (y_tgt > 10) + 'descend' * (y_tgt < 10) + '_profile.pdf')
             plt.show()
 
-            #plt.subplot(223)
+            # plt.subplot(223)
             plt.plot(t_arr, vy_arr)
             plt.xlabel("Time [s]")
             plt.ylabel("$v_y$ [m/s]")
@@ -361,7 +430,7 @@ class mission:
             # plt.savefig(self.path + 'transition_' + 'climb' * (y_tgt > 10) + 'descend' * (y_tgt < 10) + '_vy.pdf')
             plt.show()
 
-            plt.plot(t_arr, P_tot/1e3)
+            plt.plot(t_arr, P_tot / 1e3)
             plt.xlabel("Time [s]")
             plt.ylabel("Power [kW]")
             plt.grid()
@@ -369,8 +438,8 @@ class mission:
             # plt.savefig(self.path + 'transition_' + 'climb' * (y_tgt > 10) + 'descend' * (y_tgt < 10) + '_P.pdf')
             plt.show()
 
-            #plt.subplot(224)
-            plt.plot(t_arr, np.sqrt((ay_arr + g) ** 2 + ax_arr ** 2) / g)
+            # plt.subplot(224)
+            plt.plot(t_arr, np.sqrt((ay_arr + g) ** 2 + ax_arr**2) / g)
             plt.xlabel("Time [s]")
             plt.ylabel("accelerations [g]")
             plt.grid()
@@ -383,7 +452,7 @@ class mission:
         energy = np.sum(P_tot * dt)
         time = t
 
-        max_power  = np.max(P_tot)
+        max_power = np.max(P_tot)
         max_thrust = np.max(T_arr)
 
         return distance, energy, time, max_power, max_thrust
@@ -398,43 +467,61 @@ class mission:
 
         # Drag coefficient
         CD_cruise = self.Drag.CD(CL_cruise)
-        eff_cruise = eff_hover + speed*(eff_prop - eff_hover)/self.v_cruise
+        eff_cruise = eff_hover + speed * (eff_prop - eff_hover) / self.v_cruise
 
-        D_cruise = CD_cruise*0.5*rho*speed*speed*self.S
-        #print('cruise_drag', CD_cruise)
+        D_cruise = CD_cruise * 0.5 * rho * speed * speed * self.S
+        # print('cruise_drag', CD_cruise)
         P = self.thrust_to_power(D_cruise, speed, rho)[1]
 
         return P, D_cruise
 
-    def total_energy(self, simplified = False):
+    def total_energy(self, simplified=False):
 
-        #P_cruise, D_cruise = self.power_cruise_config(self.h_cruise, self.v_cruise, self.m)
+        # P_cruise, D_cruise = self.power_cruise_config(self.h_cruise, self.v_cruise, self.m)
 
         # print('wrong if statement')
         # Get the energy and distance needed to reach cruise
-        d_climb, E_climb, t_climb, P_m_to, T_m_to = self.numerical_simulation(vx_start=0.001, y_start=0,
-                                                                                th_start=np.pi / 2, y_tgt=self.h_cruise,
-                                                                                vx_tgt=self.v_cruise)
+        d_climb, E_climb, t_climb, P_m_to, T_m_to = self.numerical_simulation(
+            vx_start=0.001,
+            y_start=0,
+            th_start=np.pi / 2,
+            y_tgt=self.h_cruise,
+            vx_tgt=self.v_cruise,
+        )
 
         # Get the energy and distance needed to descend
-        d_desc, E_desc, t_desc, P_m_la, T_m_la = self.numerical_simulation(vx_start=self.v_cruise,
-                                                                            y_start=self.h_cruise,
-                                                                            th_start = np.radians(5), y_tgt=0, vx_tgt=0)
+        d_desc, E_desc, t_desc, P_m_la, T_m_la = self.numerical_simulation(
+            vx_start=self.v_cruise,
+            y_start=self.h_cruise,
+            th_start=np.radians(5),
+            y_tgt=0,
+            vx_tgt=0,
+        )
 
         # Distance spent in cruise
-        d_cruise = self.mission_dist  - d_desc - d_climb
+        d_cruise = self.mission_dist - d_desc - d_climb
 
         # Time spent cruising
         t_cruise = d_cruise / self.v_cruise
 
         # Get the brake power used in cruise
-        P_cruise, D_cruise = self.power_cruise_config(self.h_cruise, self.v_cruise, self.m)  # + self.P_systems
+        P_cruise, D_cruise = self.power_cruise_config(
+            self.h_cruise, self.v_cruise, self.m
+        )  # + self.P_systems
 
-        V = speeds(altitude=self.h_cruise, m=self.m, CLmax=self.CL_max, S=self.S, componentdrag_object=self.Drag)
+        V = speeds(
+            altitude=self.h_cruise,
+            m=self.m,
+            CLmax=self.CL_max,
+            S=self.S,
+            componentdrag_object=self.Drag,
+        )
 
         # Loiter power
         V_loit = V.climb()
-        P_loiter, _ = self.power_cruise_config(altitude=self.h_cruise, speed=V_loit, mass=self.m)  # + self.P_systems
+        P_loiter, _ = self.power_cruise_config(
+            altitude=self.h_cruise, speed=V_loit, mass=self.m
+        )  # + self.P_systems
 
         # Cruise energy
         E_cruise = P_cruise * t_cruise
@@ -448,46 +535,68 @@ class mission:
         t_tot = t_climb + t_desc + t_cruise + self.t_loiter
 
         # Pie chart
-        labels = ['Take-off', 'Cruise', 'Landing', 'Loiter']
+        labels = ["Take-off", "Cruise", "Landing", "Loiter"]
         Energy = [E_climb, E_cruise, E_desc, E_loiter]
         Time = [t_climb, t_cruise, t_desc, self.t_loiter]
 
         if self.plotting:
-
-            plt.pie(Energy, labels=labels, autopct='%1.1f%%')
+            plt.pie(Energy, labels=labels, autopct="%1.1f%%")
             plt.tight_layout(pad=0.05)
             # plt.savefig(self.path + 'energy_breakdown.pdf')
             plt.show()
 
-
-            plt.pie(Time, labels=labels, autopct='%1.1f%%')
+            plt.pie(Time, labels=labels, autopct="%1.1f%%")
             plt.tight_layout(pad=0.05)
             # plt.savefig(self.path + 'time_breakdown.pdf')
 
             plt.show()
 
-        return E_tot, t_tot, max(P_m_to, P_m_la), max(T_m_to, T_m_la), t_cruise + self.t_loiter, Energy
+        return (
+            E_tot,
+            t_tot,
+            max(P_m_to, P_m_la),
+            max(T_m_to, T_m_la),
+            t_cruise + self.t_loiter,
+            Energy,
+        )
 
 
 class evtol_performance:
     """
     This script calculates different performance characteristics for a tilt-wing evtol.
     """
-    def __init__(self, cruising_alt, cruise_speed, S, CL_max, mass, battery_capacity, EOM, loiter_time, A_disk, P_max,
-                 CL_alpha_curve, CD_a_w, CD_a_f, alpha_lst, Drag):
+
+    def __init__(
+        self,
+        cruising_alt,
+        cruise_speed,
+        S,
+        CL_max,
+        mass,
+        battery_capacity,
+        EOM,
+        loiter_time,
+        A_disk,
+        P_max,
+        CL_alpha_curve,
+        CD_a_w,
+        CD_a_f,
+        alpha_lst,
+        Drag,
+    ):
 
         # Change this when datafile is final
-        self.S      = S
+        self.S = S
         self.CL_max = CL_max
-        self.m      = mass
-        self.W      = self.m*g
-        self.bat_E  = battery_capacity
+        self.m = mass
+        self.W = self.m * g
+        self.bat_E = battery_capacity
         self.v_cruise = cruise_speed
         self.h_cruise = cruising_alt
-        self.EOM    = EOM
+        self.EOM = EOM
         self.t_loiter = loiter_time
         self.A_disk = A_disk
-        self.P_max  = P_max
+        self.P_max = P_max
 
         self.CL_alpha_curve = CL_alpha_curve
         self.alpha_lst = alpha_lst
@@ -499,8 +608,8 @@ class evtol_performance:
         CD_w_alpha = interpolate.interp1d(alpha_lst, CD_a_w)
         self.CD_vert = CD_f_alpha(88.9) + CD_w_alpha(88.9)
 
-        plt.rcParams.update({'font.size': 16})
-        self.path = '../Flight_performance/Figures/'
+        plt.rcParams.update({"font.size": 16})
+        self.path = "../Flight_performance/Figures/"
 
     def thrust_to_power(self, T, V, rho):
         """
@@ -513,12 +622,14 @@ class evtol_performance:
         :return: P_a: available power
         """
 
-        P_a = T * V + 1.2 * T * ((-V / 2) + np.sqrt((V**2)/4 + (T / (2 * rho * self.A_disk))))
+        P_a = T * V + 1.2 * T * (
+            (-V / 2) + np.sqrt((V**2) / 4 + (T / (2 * rho * self.A_disk)))
+        )
 
         # Interpolate between efficiencies
-        eff = eff_hover + V*(eff_prop - eff_hover)/self.v_cruise
+        eff = eff_hover + V * (eff_prop - eff_hover) / self.v_cruise
 
-        P_r = P_a/eff
+        P_r = P_a / eff
         ## print(P_a, P_r)
         return P_r - self.P_max
 
@@ -527,12 +638,16 @@ class evtol_performance:
         if isinstance(V, np.ndarray):
             Tlst = []
             for v in V:
-                T_max  = optimize.newton(self.thrust_to_power, x0=20000, args=(v, rho), maxiter=100000)
+                T_max = optimize.newton(
+                    self.thrust_to_power, x0=20000, args=(v, rho), maxiter=100000
+                )
                 Tlst.append(T_max)
 
             return np.array(Tlst)
         else:
-            return optimize.newton(self.thrust_to_power, x0=20000, args=(V, rho), maxiter=100000)
+            return optimize.newton(
+                self.thrust_to_power, x0=20000, args=(V, rho), maxiter=100000
+            )
 
     def quickly_checking_something(self):
 
@@ -543,163 +658,194 @@ class evtol_performance:
         for rho in rhos:
             T_max = self.max_thrust(rho, V)
 
-            plt.plot(rho, T_max, '+')
-        plt.title('thrust')
+            plt.plot(rho, T_max, "+")
+        plt.title("thrust")
         plt.show()
 
-
-    def climb_performance(self, testing = False):
+    def climb_performance(self, testing=False):
 
         # Altitudes to consider climb performance at
-        altitudes   = np.array([self.h_cruise, 3000])
+        altitudes = np.array([self.h_cruise, 3000])
 
         for h in altitudes:
-
             # Density at altitude
-            rho     = ISA(h).density()
+            rho = ISA(h).density()
 
             # Stall speed
-            V_stall = np.sqrt(2*self.W/(rho*self.S*self.CL_max))
+            V_stall = np.sqrt(2 * self.W / (rho * self.S * self.CL_max))
 
             # Range of speeds
-            V   = np.linspace(V_stall, 220, 100)
+            V = np.linspace(V_stall, 220, 100)
 
             # Lift coefficient
-            CL  = 2*self.W/(rho*V*V*self.S)
+            CL = 2 * self.W / (rho * V * V * self.S)
 
             err = 1
             while np.any(err > 0.1):
                 # Drag coefficient
-                CD  = self.Drag.CD(CL)
+                CD = self.Drag.CD(CL)
 
                 # Drag
-                D   = CD*0.5*rho*V*V*self.S
+                D = CD * 0.5 * rho * V * V * self.S
 
                 # Maximum available thrust
-                T   = self.max_thrust(rho, V)
+                T = self.max_thrust(rho, V)
 
-                gamma = np.arcsin(np.minimum((T - D)/self.W, 1))
+                gamma = np.arcsin(np.minimum((T - D) / self.W, 1))
 
                 # Climb rate, setting a hard limit on climbs more than 90 degrees
-                RC = np.minimum((T - D)/self.W, 1)*V
+                RC = np.minimum((T - D) / self.W, 1) * V
 
-                CLnew = 2*self.W*np.cos(gamma)/(rho*V*V*self.S)
+                CLnew = 2 * self.W * np.cos(gamma) / (rho * V * V * self.S)
 
                 err = abs(CL - CLnew)
 
                 CL = CLnew
 
             # Plot results
-            plt.plot(V, RC, label = 'Altitude: ' + str(h))
+            plt.plot(V, RC, label="Altitude: " + str(h))
 
             if h == self.h_cruise:
-
                 idx = np.argmax(np.abs(RC))
 
             # If running a test, return the speed for which the rate of climb is closest to zero
             if h == self.h_cruise and testing:
-
                 idx = np.argmin(np.abs(RC))
 
                 return V[idx]
 
         plt.grid()
-        plt.xlabel('Speed [m/s]')
-        plt.ylabel('Rate-of-climb [m/s]')
+        plt.xlabel("Speed [m/s]")
+        plt.ylabel("Rate-of-climb [m/s]")
         plt.legend()
         plt.tight_layout(pad=0.05)
-        plt.savefig(self.path + 'Climb_performance_cruise' + '.pdf')
+        plt.savefig(self.path + "Climb_performance_cruise" + ".pdf")
         plt.show()
 
         return V[idx]
 
-    def vertical_equilibrium(self, altitude, m, testing = False, test_thrust = 0):#rate_of_climb, altitude, m, testing = False, test_thrust = None):
+    def vertical_equilibrium(
+        self, altitude, m, testing=False, test_thrust=0
+    ):  # rate_of_climb, altitude, m, testing = False, test_thrust = None):
 
         # Density at altitude
-        rho     = ISA(altitude).density()
+        rho = ISA(altitude).density()
 
         # thrust = self.max_thrust(rho, rate_of_climb)
         # if testing:
         #     thrust = test_thrust
 
-        RC_init     = 20
+        RC_init = 20
         if testing:
             RC_init = -5
         err = 1
         N_it = 0
         # Iterate until the rate-of-climb converges
         while abs(err) > 0.1:
-
-            T       = self.max_thrust(rho, RC_init)
+            T = self.max_thrust(rho, RC_init)
 
             if testing:
                 T = test_thrust
 
-            RC  = np.sqrt(abs(T - m*g)/(self.CD_vert*0.5*rho*self.S))*np.sign(T - m*g)
+            RC = np.sqrt(
+                abs(T - m * g) / (self.CD_vert * 0.5 * rho * self.S)
+            ) * np.sign(T - m * g)
 
-            err     = abs(RC) - abs(RC_init)
+            err = abs(RC) - abs(RC_init)
             N_it += 1
 
             if N_it > 500:
-                print('vertical_climb does not converge')
+                print("vertical_climb does not converge")
                 break
 
             RC_init = RC
 
         return RC
 
-    def vertical_climb(self, testing = False):
+    def vertical_climb(self, testing=False):
 
         # Range of altitudes and masses
-        masses    = np.linspace(self.EOM, self.m, 4)
+        masses = np.linspace(self.EOM, self.m, 4)
         altitudes = np.arange(0, 3000, 100)
-        RC  = np.zeros(np.size(altitudes))
+        RC = np.zeros(np.size(altitudes))
 
         for j, m in enumerate(masses):
             for i, h in enumerate(altitudes):
-
                 # Solve the equation for the rate of climb
-                RC[i] = self.vertical_equilibrium(h, m)  # optimize.root_scalar(self.vertical_equilibrium, x0 = 5, args = (h, m, testing))#fsolve(self.vertical_equilibrium, 5, args = (h, m, testing))
+                RC[i] = self.vertical_equilibrium(
+                    h, m
+                )  # optimize.root_scalar(self.vertical_equilibrium, x0 = 5, args = (h, m, testing))#fsolve(self.vertical_equilibrium, 5, args = (h, m, testing))
 
             # Plot the results
-            plt.plot(altitudes, RC, label = 'mass: ' + str(m))
+            plt.plot(altitudes, RC, label="mass: " + str(m))
 
-        plt.xlabel('Altitude [m]')
-        plt.ylabel('Rate-of-climb [m/s]')
+        plt.xlabel("Altitude [m]")
+        plt.ylabel("Rate-of-climb [m/s]")
         plt.grid()
         plt.legend()
         plt.tight_layout(pad=0.05)
-        plt.savefig(self.path + 'Climb_performance_vertical' + '.pdf')
+        plt.savefig(self.path + "Climb_performance_vertical" + ".pdf")
         plt.show()
 
-    def range(self, cruising_altitude, cruise_speed, mass, wind_speed = 0, loiter = False):
+    def range(self, cruising_altitude, cruise_speed, mass, wind_speed=0, loiter=False):
 
         # Call mission class
-        energy = mission(mass=mass, cruising_alt=cruising_altitude, cruise_speed=cruise_speed, CL_max = self.CL_max,
-                         wing_surface = self.S, A_disk = self.A_disk, P_max = self.P_max,
-                         Cl_alpha_curve = self.CL_alpha_curve, CD_a_w = self.CD_a_w, CD_a_f = self.CD_a_f,
-                         alpha_lst = self.alpha_lst, Drag = self.Drag,plotting = False)
+        energy = mission(
+            mass=mass,
+            cruising_alt=cruising_altitude,
+            cruise_speed=cruise_speed,
+            CL_max=self.CL_max,
+            wing_surface=self.S,
+            A_disk=self.A_disk,
+            P_max=self.P_max,
+            Cl_alpha_curve=self.CL_alpha_curve,
+            CD_a_w=self.CD_a_w,
+            CD_a_f=self.CD_a_f,
+            alpha_lst=self.alpha_lst,
+            Drag=self.Drag,
+            plotting=False,
+        )
 
         # Get the distances and energy needed for take-off and landing
-        d_la, E_la, t_la,_,_ = energy.numerical_simulation(vx_start=cruise_speed, y_start=cruising_altitude,
-                                                       th_start=np.radians(5), y_tgt=0, vx_tgt=0)
+        d_la, E_la, t_la, _, _ = energy.numerical_simulation(
+            vx_start=cruise_speed,
+            y_start=cruising_altitude,
+            th_start=np.radians(5),
+            y_tgt=0,
+            vx_tgt=0,
+        )
 
-        d_to, E_to, t_to,_,_ = energy.numerical_simulation(vx_start=0.001, y_start=0, th_start=np.pi / 2,
-                                                       y_tgt=cruising_altitude, vx_tgt=cruise_speed)
+        d_to, E_to, t_to, _, _ = energy.numerical_simulation(
+            vx_start=0.001,
+            y_start=0,
+            th_start=np.pi / 2,
+            y_tgt=cruising_altitude,
+            vx_tgt=cruise_speed,
+        )
 
         # Power needed for cruise
-        P_cr,_ = energy.power_cruise_config(altitude = cruising_altitude, speed = cruise_speed, mass = mass)
+        P_cr, _ = energy.power_cruise_config(
+            altitude=cruising_altitude, speed=cruise_speed, mass=mass
+        )
 
-        V = speeds(altitude = cruising_altitude, m = mass, CLmax = self.CL_max, S = self.S, componentdrag_object=self.Drag)
+        V = speeds(
+            altitude=cruising_altitude,
+            m=mass,
+            CLmax=self.CL_max,
+            S=self.S,
+            componentdrag_object=self.Drag,
+        )
 
         # Power needed for loiter
-        P_lt,_ = energy.power_cruise_config(altitude = cruising_altitude, speed = V.climb(), mass = mass)
+        P_lt, _ = energy.power_cruise_config(
+            altitude=cruising_altitude, speed=V.climb(), mass=mass
+        )
 
         # Energy needed for loiter
-        E_lt = P_lt*self.t_loiter
+        E_lt = P_lt * self.t_loiter
 
         # Find the remaining energy for cruise
-        E_cr = self.bat_E - E_la - E_to - E_lt*loiter
+        E_cr = self.bat_E - E_la - E_to - E_lt * loiter
 
         if np.any(E_cr <= 0):
             print("No energy left for cruise")
@@ -711,7 +857,7 @@ class evtol_performance:
         d_cr = (cruise_speed - wind_speed) * t_cr
 
         # Mission time
-        t_tot = t_to + t_la + t_cr + self.t_loiter*loiter
+        t_tot = t_to + t_la + t_cr + self.t_loiter * loiter
 
         return d_cr, t_tot
 
@@ -728,18 +874,21 @@ class evtol_performance:
 
         # Loop through all masses
         for i, m in enumerate(mass):
-
             # Get the range
-            d_cr[i], t_cr[i] = self.range(cruising_altitude=self.h_cruise, cruise_speed = self.v_cruise, mass = m,
-                                          loiter = True)
+            d_cr[i], t_cr[i] = self.range(
+                cruising_altitude=self.h_cruise,
+                cruise_speed=self.v_cruise,
+                mass=m,
+                loiter=True,
+            )
 
         # Plot results
-        plt.plot(d_cr/1000, payload_mass)
-        plt.xlabel('Range [km]')
-        plt.ylabel('Payload mass [kg]')
+        plt.plot(d_cr / 1000, payload_mass)
+        plt.xlabel("Range [km]")
+        plt.ylabel("Payload mass [kg]")
         plt.grid()
         plt.tight_layout(pad=0.05)
-        plt.savefig(self.path + 'Payload_range' + '.pdf')
+        plt.savefig(self.path + "Payload_range" + ".pdf")
         plt.show()
 
     def power_polar(self, h):
@@ -748,21 +897,19 @@ class evtol_performance:
 
         speed = speeds(h, self.m, self.CL_max, self.S, self.Drag)
 
-        V   = np.linspace(speed.stall(), 200, 200)
+        V = np.linspace(speed.stall(), 200, 200)
 
         # Calculate the drag
-        CL  = 2*self.W/(rho*V*V*self.S)
-        CD  = self.Drag.CD(CL)
+        CL = 2 * self.W / (rho * V * V * self.S)
+        CD = self.Drag.CD(CL)
 
-        D   = CD*0.5*rho*V*V*self.S
+        D = CD * 0.5 * rho * V * V * self.S
 
         # Brake power required
         P_br = self.thrust_to_power(D, V, rho) + self.P_max
 
         plt.plot(V, P_br)
-        plt.plot(V, D*V)
-        plt.plot(V, P_br - D*V)
+        plt.plot(V, D * V)
+        plt.plot(V, P_br - D * V)
         plt.grid()
         plt.show()
-
-

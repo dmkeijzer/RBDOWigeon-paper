@@ -9,10 +9,10 @@ def closestNumber(n, m):
     n1 = m * q
 
     # 2nd possible closest number
-    if ((n * m) > 0):
-        n2 = (m * (q + 1))
+    if (n * m) > 0:
+        n2 = m * (q + 1)
     else:
-        n2 = (m * (q - 1))
+        n2 = m * (q - 1)
 
     # if true, then n1 is the required closest number
     if n1 > n:

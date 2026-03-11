@@ -4,10 +4,6 @@ It is still kept in case the new version misses something.
 """
 
 
-
-
-
-
 # import sys
 # import numpy as np
 # import matplotlib.pyplot as plt

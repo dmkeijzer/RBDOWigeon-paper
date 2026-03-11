@@ -7,30 +7,43 @@ import scipy.optimize as optimize
 from Preliminary_Lift.main_aero import Cl_alpha_curve, CD_a_w, CD_a_f, alpha_lst, Drag
 from Final_optimization import constants_final as const
 
+
 class validation:
-    def __init__(self, mass, cruising_alt, cruise_speed, CL_max, P_max, wing_surface, A_disk, t_loiter = 30*60,
-                 rotational_rate = 5, roc = 5, rod = 5, mission_dist = 300e3):
+    def __init__(
+        self,
+        mass,
+        cruising_alt,
+        cruise_speed,
+        CL_max,
+        P_max,
+        wing_surface,
+        A_disk,
+        t_loiter=30 * 60,
+        rotational_rate=5,
+        roc=5,
+        rod=5,
+        mission_dist=300e3,
+    ):
 
         # Initial values for all the input parameters
         self.mass = mass
         self.h_cr = cruising_alt
         self.v_cr = cruise_speed
-        self.S    = wing_surface
+        self.S = wing_surface
         self.CL_max = CL_max
         self.t_lt = t_loiter
-        self.rot  = rotational_rate
-        self.roc  = roc
-        self.rod  = rod
+        self.rot = rotational_rate
+        self.roc = roc
+        self.rod = rod
         self.dist = mission_dist
         self.A_disk = A_disk
         self.P_max = P_max
 
         # Range over which the values are allowed to vary
-        var     = 0.05    # [-] +- percentage variation
-        N_pts   = 5       # [-] Number of different variations per parameter
+        var = 0.05  # [-] +- percentage variation
+        N_pts = 5  # [-] Number of different variations per parameter
 
     # def monte_carlo_sim(self, var, N_sim):
-
 
     #     max_var = 1 + var
     #     min_var = 1 - var
@@ -55,9 +68,6 @@ class validation:
     #                     Drag = Drag)
 
     #         E[i], t[i],_,_,_ = m.total_energy_monte_carlo()
-
-
-
 
     #     plt.hist(E)
     #     plt.show()
@@ -92,17 +102,24 @@ class validation:
     #
     #     print('Comparing the upper bound: ', 100*(E_nt - E_ub)/E_ub, E_nt, E_ub)
 
+
 mass = 2800
 cruising_alt = 1000
 cruise_speed = 72
 CL_max = 1.5856
 wing_surface = 19.82
-EOM = mass - (const.m_pax*4 + const.m_cargo_tot)
-A_disk = 0.795*const.n_prop
-P_max  = 1.81e6
+EOM = mass - (const.m_pax * 4 + const.m_cargo_tot)
+A_disk = 0.795 * const.n_prop
+P_max = 1.81e6
 
-validate = validation(mass = mass, cruising_alt = cruising_alt, cruise_speed = cruise_speed,
-                      CL_max = 1.7, wing_surface = 14, A_disk = 8, P_max = P_max)
-#validate.energy_bounds_takeoff()
+validate = validation(
+    mass=mass,
+    cruising_alt=cruising_alt,
+    cruise_speed=cruise_speed,
+    CL_max=1.7,
+    wing_surface=14,
+    A_disk=8,
+    P_max=P_max,
+)
+# validate.energy_bounds_takeoff()
 validate.monte_carlo_sim(0.10, 100)
-

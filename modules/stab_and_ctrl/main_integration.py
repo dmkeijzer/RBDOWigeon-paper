@@ -18,6 +18,7 @@ class Fuselage:
     controllability
     @author Jakob Schoser
     """
+
     m_empty: float  # empty fuselage mass (excl. battery, incl. vertical
     #                      tail and landing gear)
     m_cargo: float  # cargo mass
@@ -46,6 +47,7 @@ class Wing:
     controllability
     @author Jakob Schoser
     """
+
     xcg: float
     zcg: float
 
@@ -74,6 +76,7 @@ class PropAndPower:
     and controllability
     @author Jakob Schoser
     """
+
     n_engf: int  # number of engines on front wing
     n_engr: int  # number of engines on rear wing
     m_peng: float  # mass per engine (incl. propeller)
@@ -92,6 +95,7 @@ class Performance:
     controllability
     @author Jakob Schoser
     """
+
     v_stall: float  # stall speed
     v_cruise: float  # cruise speed
     v_max: float  # maximum speed
@@ -104,6 +108,7 @@ class StabAndControlOutputs:
     Class containing all output fields from stability and controllability
     @author Jakob Schoser
     """
+
     xcg_range: list
     ycg_range: list
     zcg_range: list
@@ -117,8 +122,9 @@ class StabAndControlOutputs:
     h_mlg: float  # height of the main landing gear
 
 
-def stab_and_ctrl_main(fus: Fuselage, wf: Wing, wr: Wing, pnp: PropAndPower,
-                       perf: Performance):
+def stab_and_ctrl_main(
+    fus: Fuselage, wf: Wing, wr: Wing, pnp: PropAndPower, perf: Performance
+):
     """
     Function that takes input values to calculate relevant outputs based on
     stability and control considerations.
@@ -146,15 +152,17 @@ def stab_and_ctrl_main(fus: Fuselage, wf: Wing, wr: Wing, pnp: PropAndPower,
     out = StabAndControlOutputs(
         [3, 0, 0.2],
         1,
-        [1/4 * wf.mac + wf_offset_x, 0.2 + wf_offset_z],
-        [fus.l - 3/4 * wr.mac, 1.5],
+        [1 / 4 * wf.mac + wf_offset_x, 0.2 + wf_offset_z],
+        [fus.l - 3 / 4 * wr.mac, 1.5],
         1,
         4,
         1.5,
         0.5,
-        [i < pnp.n_engf // 2 or 0 <= i - pnp.n_engf < pnp.n_engr // 2
-         for i in range(pnp.n_engf + pnp.n_engr)],
-        TailAndCtrlSurf()
+        [
+            i < pnp.n_engf // 2 or 0 <= i - pnp.n_engf < pnp.n_engr // 2
+            for i in range(pnp.n_engf + pnp.n_engr)
+        ],
+        TailAndCtrlSurf(),
     )
 
     done = False
@@ -162,24 +170,47 @@ def stab_and_ctrl_main(fus: Fuselage, wf: Wing, wr: Wing, pnp: PropAndPower,
         m_wf = wf.m + pnp.n_engf * pnp.m_peng
         m_wr = wr.m + pnp.n_engr * pnp.m_peng
 
-        mtom = (fus.m_empty + fus.m_pil + fus.m_cargo +
-                fus.m_ppax * len(fus.cg_pax) + pnp.m_bat + m_wf + m_wr)
+        mtom = (
+            fus.m_empty
+            + fus.m_pil
+            + fus.m_cargo
+            + fus.m_ppax * len(fus.cg_pax)
+            + pnp.m_bat
+            + m_wf
+            + m_wr
+        )
 
         bf = np.sqrt(wf.S * wf.AR)
         br = np.sqrt(wr.S * wr.AR)
 
         x_min_test, x_max_test = 0, fus.l
 
-        cgcalc = ld.CgCalculator(m_wf, m_wr, fus.m_empty, pnp.m_bat,
-                                 fus.m_cargo, fus.m_ppax, fus.m_pil,
-                                 fus.cg_empty, out.cg_bat, fus.cg_cargo,
-                                 fus.cg_pax, fus.cg_pil)
+        cgcalc = ld.CgCalculator(
+            m_wf,
+            m_wr,
+            fus.m_empty,
+            pnp.m_bat,
+            fus.m_cargo,
+            fus.m_ppax,
+            fus.m_pil,
+            fus.cg_empty,
+            out.cg_bat,
+            fus.cg_cargo,
+            fus.cg_pax,
+            fus.cg_pil,
+        )
         x_range, y_range, z_range = cgcalc.calc_cg_range(out.cg_wf, out.cg_wr)
 
-        lgcalc = lgp.LandingGearCalc(fus.max_tw, fus.min_x_ng,
-                                     wf.y_b_eng[1] * np.sqrt(wf.AR * wf.S),
-                                     wf.Gamma, wf.h_eng + out.cg_wf[1],
-                                     pnp.prop_diam/2, fus.us_bp, fus.us_tp)
+        lgcalc = lgp.LandingGearCalc(
+            fus.max_tw,
+            fus.min_x_ng,
+            wf.y_b_eng[1] * np.sqrt(wf.AR * wf.S),
+            wf.Gamma,
+            wf.h_eng + out.cg_wf[1],
+            pnp.prop_diam / 2,
+            fus.us_bp,
+            fus.us_tp,
+        )
         out.x_ng, out.x_mlg, out.tw, out.h_mlg = lgcalc.optimum_placement(
             x_range, x_cg_margin, z_range[1], theta, phi, psi, min_ng_load_frac
         )
@@ -187,35 +218,77 @@ def stab_and_ctrl_main(fus: Fuselage, wf: Wing, wr: Wing, pnp: PropAndPower,
             # TODO: do something to fix it and iterate
             print("Warning: track width too large!")
 
-        hcct = hc.HoverControlCalcTandem(mtom, pnp.n_engf, pnp.n_engf,
-                                         out.cg_wf[0], out.cg_wr[0],
-                                         wf.y_b_eng * bf, wr.y_b_eng * br,
-                                         pnp.max_T_hover_pe, ku)
+        hcct = hc.HoverControlCalcTandem(
+            mtom,
+            pnp.n_engf,
+            pnp.n_engf,
+            out.cg_wf[0],
+            out.cg_wr[0],
+            wf.y_b_eng * bf,
+            wr.y_b_eng * br,
+            pnp.max_T_hover_pe,
+            ku,
+        )
         x_min, x_max, _, _ = hcct.calc_crit_x_cg_range(
             x_max_test, x_max_test, dx, [x_range[1], y_range[1]], [n_failures]
         )[0]
 
-        if (x_min is None or x_range[0] < x_min or x_range[1] < x_min
-                or x_range[0] > x_max or x_range[1] > x_max):
+        if (
+            x_min is None
+            or x_range[0] < x_min
+            or x_range[1] < x_min
+            or x_range[0] > x_max
+            or x_range[1] > x_max
+        ):
             # TODO: do something to fix it and iterate
             print("Warning: Uncontrollable in hover!")
 
         # FIXME: assumes that both wings have the same Cd0, Gamma and taper
-        wps = sp.Wing_placement_sizing(mtom * const.g, perf.alt, fus.l, fus.h,
-                                       fus.w, perf.v_cruise, wf.Cd0, wf.CLmax,
-                                       wr.CLmax, wf.CLdes, wf.CLdes,
-                                       wf.Clalpha_af, wf.Clalpha_af, wf.Cmac,
-                                       wr.Cmac, wf.S, wr.S, wf.AR, wr.AR,
-                                       wf.Gamma, wf.lambda_c4, wr.lambda_c4,
-                                       wf.mac, wr.mac, bf, br, wf.e, wr.e,
-                                       wf.taper, pnp.n_engf, pnp.n_engr,
-                                       wf.y_b_eng * bf, wr.y_b_eng * br,
-                                       pnp.max_T_hover_pe, ku, z_range[1],
-                                       wf_offset_x, wf_offset_z,
-                                       pnp.P_shaft_cruise_pe_f)
+        wps = sp.Wing_placement_sizing(
+            mtom * const.g,
+            perf.alt,
+            fus.l,
+            fus.h,
+            fus.w,
+            perf.v_cruise,
+            wf.Cd0,
+            wf.CLmax,
+            wr.CLmax,
+            wf.CLdes,
+            wf.CLdes,
+            wf.Clalpha_af,
+            wf.Clalpha_af,
+            wf.Cmac,
+            wr.Cmac,
+            wf.S,
+            wr.S,
+            wf.AR,
+            wr.AR,
+            wf.Gamma,
+            wf.lambda_c4,
+            wr.lambda_c4,
+            wf.mac,
+            wr.mac,
+            bf,
+            br,
+            wf.e,
+            wr.e,
+            wf.taper,
+            pnp.n_engf,
+            pnp.n_engr,
+            wf.y_b_eng * bf,
+            wr.y_b_eng * br,
+            pnp.max_T_hover_pe,
+            ku,
+            z_range[1],
+            wf_offset_x,
+            wf_offset_z,
+            pnp.P_shaft_cruise_pe_f,
+        )
 
-        Sfwd_Srear_stab, Sfwd_Srear_ctrl = wps.Sr_Sfwd(np.array(x_range),
-                                                       elev_eff, wf_offset_x)
+        Sfwd_Srear_stab, Sfwd_Srear_ctrl = wps.Sr_Sfwd(
+            np.array(x_range), elev_eff, wf_offset_x
+        )
 
         # FIXME: assumes that the CG shifts forward with increasing Swfd/Srear
         if Sfwd_Srear_stab[0] < Sfwd_Srear or Sfwd_Srear_stab[1] < Sfwd_Srear:

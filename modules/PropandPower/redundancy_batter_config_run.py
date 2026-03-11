@@ -8,7 +8,7 @@ per_mot = 0.99
 
 # Cell characteristics
 V_cell = 3.7  # V
-C_cell = 10 #5  # Ah
+C_cell = 10  # 5  # Ah
 E_cell = V_cell * C_cell  # Wh
 
 # inputs
@@ -48,7 +48,12 @@ print("    -", per_increase, "% increase in cells")
 N_c_new = red.N_cells_new()
 print("The total number of cells than becomes", N_c_new)
 
-print("Single battery:", N_ser, "in series and", int(N_par_new/(n_mot * n_bat_mot)), "cells in parallel")
+print(
+    "Single battery:",
+    N_ser,
+    "in series and",
+    int(N_par_new / (n_mot * n_bat_mot)),
+    "cells in parallel",
+)
 
-print("Single battery contains", E_cell,"Wh of energy")
-
+print("Single battery contains", E_cell, "Wh of energy")

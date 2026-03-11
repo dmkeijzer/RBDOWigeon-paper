@@ -3,7 +3,10 @@ import numpy as np
 
 class Battery:
     """This class is to estimate the parameters of a battery"""
-    def __init__(self, sp_en_den, vol_en_den, tot_energy, cost, DoD, P_den, P_max, safety, EOL_C):
+
+    def __init__(
+        self, sp_en_den, vol_en_den, tot_energy, cost, DoD, P_den, P_max, safety, EOL_C
+    ):
         """
         :param sp_en_den: Specific energy density of the battery [Wh/kg]
         :param vol_en_den: Volumetric energy density of the battery [Wh/l]
@@ -28,7 +31,7 @@ class Battery:
     def mass(self):
         m_en = self.energy / self.sp_en_den
         m_p = self.P_max / self.P_den
-        print('m_en, m_p', m_en, m_p)
+        print("m_en, m_p", m_en, m_p)
         bat_mass = np.maximum(m_en, m_p)
         return bat_mass / (self.DoD * self.EOL_C) * self.safety
 
@@ -36,7 +39,9 @@ class Battery:
         return self.mass() * self.sp_en_den / self.vol_en_den * 0.001
 
     def price(self):
-        return self.mass() * self.sp_en_den * self.cost / 1000  # divide by 1000 since cost is in kWh
+        return (
+            self.mass() * self.sp_en_den * self.cost / 1000
+        )  # divide by 1000 since cost is in kWh
 
     def mass_both(self):
         m_en = self.energy / self.sp_en_den / (self.DoD * self.EOL_C) * self.safety
