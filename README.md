@@ -1,13 +1,28 @@
-<div align="center">
 <h1> Repository for Reliability-Based Design Optimization of an eVTOL</h1>
 
 ## Introduction
 
 This repository contains the models, optimisation setup, and post‑processing tools used in the Design Synthesis Exercise for a long‑range electric VTOL (eVTOL) concept. The codebase brings together aerodynamic and performance models, structural and weight estimation, and mission analysis to evaluate and optimise candidate designs. In addition to deterministic analyses, the repository supports Monte Carlo Simulation (MCS) and Reliability‑Based Design Optimisation (RBDO) to capture the impact of uncertainty in key mission and design variables. The included plotting utilities make it straightforward to visualise optimisation results, compare stochastic and deterministic performance, and inspect the underlying statistical assumptions.
 
+
+
 ## Compatibility
+-  The easiest method to run this repository is to use the docker image or build file provided. 
 - All Python Package Index dependencies listed in requirements.txt (install with `pip install -r requirements.txt`)
 - Tests written and stored in test directory with pytest
+
+## Running the docker image
+
+
+To run the baseline one can use the following command from the root directory of this project. This is important as you require the `docker-compose.yml`.
+
+` docker compose up framework_baseline`
+
+To then run the monte carlo simulation where the different mission are simulated one can run the following. Note that this requires atleast 10 hours to get some results from a decent machine. 
+
+` docker compose up framework_mcs`
+
+The result will be written to the directr
 
 ## Plotting and Post‑Processing
 
