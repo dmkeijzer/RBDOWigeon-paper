@@ -1,6 +1,6 @@
 #output directory
 
-output/* 
+# output/* 
 reports/*
 
 # Byte-compiled / optimized / DLL files
