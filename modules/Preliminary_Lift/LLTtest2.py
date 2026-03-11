@@ -8,7 +8,7 @@ from matplotlib import pyplot as plt
 from Preliminary_Lift.Wing_design import deps_da
 from Aero_tools import ISA
 from scipy.interpolate import interp1d
-from scipy.integrate import quad, trapz
+from scipy.integrate import quad, trapezoid
 
 # INPUTS
 alpha = 9  # Geometric angle of attack at root, degrees
@@ -439,7 +439,7 @@ def downwash_fore(c, y, y2, Cl, x_h, z_h, V_inf):
         # f = interp1d(thetas, Circwsin)
 
         # integral = quad(f,thetas[0],thetas[-1], limit = 500)
-        integral = trapz(Circwsin, thetas)
+        integral = trapezoid(Circwsin, thetas)
         w.append(integral * (1 / (np.pi * 4 * r_avg)))
     for i in range(len(c)):
         vertang = np.arctan2(z_h, y - y2[i])

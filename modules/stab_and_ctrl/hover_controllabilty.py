@@ -122,9 +122,9 @@ class HoverControlCalcBase:
 
                 # equation 14
                 xiB2 = xi.transpose() @ B2
-                d[j] = 0.5 * np.sign(xiB2) @ L @ xiB2.transpose() - np.abs(
+                d[j] = (0.5 * np.sign(xiB2) @ L @ xiB2.transpose() - np.abs(
                     xi.transpose() @ (Bf @ fc - G)
-                )
+                ))[0][0]
 
             else:
                 d[j] = 1e6

@@ -56,7 +56,7 @@ def Cd(CL):
     CL = np.minimum(CL, np.array(df["CL"])[np.array(df["alpha"]) == 18])
     CD = fcd(CL)
     if len(CD) == 1:
-        CD = float(CD)
+        CD = float(CD[0])
     return CD
 
 
