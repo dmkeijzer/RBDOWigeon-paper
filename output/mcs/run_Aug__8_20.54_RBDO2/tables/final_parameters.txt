@@ -1,0 +1,84 @@
+MAC1                                                                 0.811746
+MAC2                                                                 0.773706
+taper                                                                    0.45
+rootchord1                                                            1.06841
+rootchord2                                                           1.018343
+thicknessChordRatio                                                      0.17
+xAC                                                                      0.25
+MTOM                                                              2039.758351
+AR1                                                                 10.067073
+AR2                                                                 13.728382
+S1                                                                   6.040257
+S2                                                                   7.483129
+span1                                                                 7.79793
+span2                                                               10.135642
+nmax                                                                      3.2
+Pmax                                                                       17
+lf                                                                   8.396023
+m_pax                                                                      88
+n_prop                                                                     12
+n_pax                                                                       5
+pos_fus                                                              3.358409
+pos_lgear                                                               4.125
+pos_frontwing                                                             0.5
+pos_backwing                                                         7.344783
+zpos_frontwing                                                            0.3
+zpos_backwing                                                             1.7
+m_prop                                                              17.989786
+pos_prop_front                                                       0.097063
+pos_prop_back                                                        6.951357
+Mac1                                                                -0.003095
+Mac2                                                                -0.003238
+flighttime                                                           1.809636
+takeofftime                                                          0.074222
+enginePlacement_front                                                0.297063
+enginePlacement_back                                                 7.151357
+T_max                                                            24245.160877
+T_max_ctrl                                                                1.3
+battery_pos                                                          2.410408
+cargo_m                                                                    35
+cargo_pos                                                                 6.5
+battery_m                                                          513.225029
+P_max                                                          1091741.202128
+vol_bat                                                            193.885011
+price_bat                                                        17449.650999
+h_winglet_1                                                               0.5
+h_winglet_2                                                               0.5
+V_cruise                                                            62.743791
+h_cruise                                                               1000.0
+CLmax                                                                1.709544
+CD0fwd                                                               0.008559
+CD0fwd                                                               0.008559
+CD0                                                                  0.007622
+Clafwd                                                               6.028232
+Clarear                                                              6.028232
+CL_cr_fwd                                                            0.682791
+CL_cr_rear                                                           0.682791
+CL_cr                                                                0.682791
+P_br_cruise_per_engine                                            6403.662105
+T_cr_per_engine                                                     83.829099
+Prop_radius_front                                                    0.461793
+Prop_radius_back                                                     0.695564
+Disk_load_front                                                     256.28177
+Disk_load_back                                                     112.963439
+Root chord_vertical tail                                             1.387916
+Vertical_tail_mass                                                   9.334913
+Energy                                                       557638784.906311
+Energy_rv                   <modules.MCS.rv_handler.RandVar object at 0x00...
+time_rv                     <modules.MCS.rv_handler.RandVar object at 0x00...
+power_rv                    <modules.MCS.rv_handler.RandVar object at 0x00...
+thrust_rv                   <modules.MCS.rv_handler.RandVar object at 0x00...
+time_cruise_rv              <modules.MCS.rv_handler.RandVar object at 0x00...
+Ecruise_rv                  <modules.MCS.rv_handler.RandVar object at 0x00...
+Eclimb_rv                   <modules.MCS.rv_handler.RandVar object at 0x00...
+Edesc_rv                    <modules.MCS.rv_handler.RandVar object at 0x00...
+Eloit_cr_rv                 <modules.MCS.rv_handler.RandVar object at 0x00...
+Eloit_hov_rv                <modules.MCS.rv_handler.RandVar object at 0x00...
+Energy_dist                 [225437154.5536814, 65143786.26378447, 4965836...
+Cr_vert                                                              1.387916
+m_v_tail                                                             9.334913
+Cm_alpha                                                            -0.090636
+ctrl_margin                                                         -0.251621
+S_vtail                                                              1.321449
+b_vtail                                                              1.360158
+Converged_des                                                            True
