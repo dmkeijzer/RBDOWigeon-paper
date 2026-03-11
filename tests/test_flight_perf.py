@@ -1,6 +1,6 @@
 import sys
 import pathlib as pl
-import  numpy as np
+import numpy as np
 import os
 import pickle
 import matplotlib.pyplot as plt
@@ -15,38 +15,58 @@ import modules.MCS.mcs_handling as mcs
 import input.constants_final as const
 
 
-
 def test_flight_performance_baseline(mission_class_baseline):
     # mission_class_baseline.plotting = True
-    Etot, t_tot, P_mac, T_max, t_hor, energy_dist = mission_class_baseline.total_energy()
+    Etot, t_tot, P_mac, T_max, t_hor, energy_dist = (
+        mission_class_baseline.total_energy()
+    )
 
     print(f"Energy = {Etot}")
     print(f"Time = {t_tot}")
 
-    assert Etot/3.6e6 > 100
-    assert Etot/3.6e6 > 100 # Needs more elaborate tests
+    assert Etot / 3.6e6 > 100
+    assert Etot / 3.6e6 > 100  # Needs more elaborate tests
 
 
 def test_flight_performance_mcs(mission_class_mcs):
     # mission_class_mcs.plotting = True
-    Etot, t_tot, P_mac, T_max, t_hor, energy_dist = mission_class_mcs.single_sample_monte_carlo(const.mission_range_baseline, const.loiter_time_baseline,const.transition_height_baseline, const.h_cruise , 0, const.h_cruise )
+    Etot, t_tot, P_mac, T_max, t_hor, energy_dist = (
+        mission_class_mcs.single_sample_monte_carlo(
+            const.mission_range_baseline,
+            const.loiter_time_baseline,
+            const.transition_height_baseline,
+            const.h_cruise,
+            0,
+            const.h_cruise,
+        )
+    )
 
     print(f"Energy = {Etot}")
     print(f"Time = {t_tot}")
 
-    assert Etot/3.6e6 > 100
-    assert Etot/3.6e6 > 100 #Needs more elaborate tests
+    assert Etot / 3.6e6 > 100
+    assert Etot / 3.6e6 > 100  # Needs more elaborate tests
 
 
 def test_equality_mission_class(mission_class_baseline, mission_class_mcs):
-    Etot, t_tot, P_mac, T_max, t_hor, energy_dist = mission_class_mcs.single_sample_monte_carlo(const.mission_range_baseline, const.loiter_time_baseline,const.transition_height_baseline, const.h_cruise , 0, const.h_cruise )
-    Etot_base, t_tot_base, P_mac_base, T_max_base, t_hor_base, energy_dist_base = mission_class_baseline.total_energy()
+    Etot, t_tot, P_mac, T_max, t_hor, energy_dist = (
+        mission_class_mcs.single_sample_monte_carlo(
+            const.mission_range_baseline,
+            const.loiter_time_baseline,
+            const.transition_height_baseline,
+            const.h_cruise,
+            0,
+            const.h_cruise,
+        )
+    )
+    Etot_base, t_tot_base, P_mac_base, T_max_base, t_hor_base, energy_dist_base = (
+        mission_class_baseline.total_energy()
+    )
 
-    print(f"Energy mcs = {Etot/3.6e6}")
-    print(f"Energy baseline = {Etot_base/3.6e6}")
-    
+    print(f"Energy mcs = {Etot / 3.6e6}")
+    print(f"Energy baseline = {Etot_base / 3.6e6}")
 
-    assert np.isclose(Etot_base/3.6e6,  Etot/3.6e6, atol= 0.1)
+    assert np.isclose(Etot_base / 3.6e6, Etot / 3.6e6, atol=0.1)
 
 
 # def test_cruising_alt_sensitivity(mission_class_mcs):

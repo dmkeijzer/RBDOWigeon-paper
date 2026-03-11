@@ -7,7 +7,9 @@ import pickle
 sys.path.append(str(list(pl.Path(__file__).parents)[2]))
 
 from modules.Flight_performance.flight_performance_mcs import mission as mission_mcs
-from modules.Flight_performance.flight_performance_baseline import mission as mission_baseline
+from modules.Flight_performance.flight_performance_baseline import (
+    mission as mission_baseline,
+)
 import input.constants_final as const
 
 
@@ -22,7 +24,7 @@ def mission_class_mcs():
 
     MTOM = MissionClass.m
     V_cr = MissionClass.v_cruise
-    CLmax= MissionClass.CL_max
+    CLmax = MissionClass.CL_max
     S_tot = MissionClass.S
     tot_prop_area = MissionClass.A_disk
     max_power = MissionClass.P_max
@@ -30,11 +32,24 @@ def mission_class_mcs():
     CD_a_w = MissionClass.CD_a_w
     CD_a_f = MissionClass.CD_a_f
     alpha_lst = MissionClass.alpha_lst
-    drag = MissionClass.Drag    
+    drag = MissionClass.Drag
 
-    mission_test = mission_mcs(MTOM, V_cr, CLmax, S_tot, tot_prop_area, P_max=max_power,
-                            Cl_alpha_curve=Cl_alpha_curve, CD_a_w=CD_a_w, CD_a_f=CD_a_f, alpha_lst=alpha_lst, Drag=drag, plot_monte_carlo=False)
+    mission_test = mission_mcs(
+        MTOM,
+        V_cr,
+        CLmax,
+        S_tot,
+        tot_prop_area,
+        P_max=max_power,
+        Cl_alpha_curve=Cl_alpha_curve,
+        CD_a_w=CD_a_w,
+        CD_a_f=CD_a_f,
+        alpha_lst=alpha_lst,
+        Drag=drag,
+        plot_monte_carlo=False,
+    )
     return mission_test
+
 
 @pytest.fixture
 def mission_class_baseline():
@@ -44,7 +59,7 @@ def mission_class_baseline():
 
     MTOM = MissionClass.m
     V_cr = MissionClass.v_cruise
-    CLmax= MissionClass.CL_max
+    CLmax = MissionClass.CL_max
     S_tot = MissionClass.S
     tot_prop_area = MissionClass.A_disk
     max_power = MissionClass.P_max
@@ -52,9 +67,21 @@ def mission_class_baseline():
     CD_a_w = MissionClass.CD_a_w
     CD_a_f = MissionClass.CD_a_f
     alpha_lst = MissionClass.alpha_lst
-    drag = MissionClass.Drag    
+    drag = MissionClass.Drag
 
-    mission_test = mission_baseline(MTOM, const.h_cruise, V_cr,   CLmax, S_tot, tot_prop_area, P_max=max_power,
-                            Cl_alpha_curve=Cl_alpha_curve, CD_a_w=CD_a_w, CD_a_f=CD_a_f, alpha_lst=alpha_lst,Drag=drag)
+    mission_test = mission_baseline(
+        MTOM,
+        const.h_cruise,
+        V_cr,
+        CLmax,
+        S_tot,
+        tot_prop_area,
+        P_max=max_power,
+        Cl_alpha_curve=Cl_alpha_curve,
+        CD_a_w=CD_a_w,
+        CD_a_f=CD_a_f,
+        alpha_lst=alpha_lst,
+        Drag=drag,
+    )
 
     return mission_test

@@ -18,13 +18,28 @@ class testpower(unittest.TestCase):
 
         P_max_crazy = 13245
         # Size batteries with values and check if it's correct
-        sample_bat_size = bat.Battery(sp_en_den, vol_en_den, tot_energy, cost, DoD, P_den, P_max, safety, EOL_C)
-        sample_bat_size_crazypower = bat.Battery(sp_en_den, vol_en_den, tot_energy, cost, DoD, P_den, P_max_crazy,
-                                                 safety, EOL_C)
+        sample_bat_size = bat.Battery(
+            sp_en_den, vol_en_den, tot_energy, cost, DoD, P_den, P_max, safety, EOL_C
+        )
+        sample_bat_size_crazypower = bat.Battery(
+            sp_en_den,
+            vol_en_den,
+            tot_energy,
+            cost,
+            DoD,
+            P_den,
+            P_max_crazy,
+            safety,
+            EOL_C,
+        )
 
         # Test battery mass test
-        self.assertAlmostEqual(sample_bat_size.mass(), 12.255, places=2)  # Size for energy
-        self.assertAlmostEqual(sample_bat_size_crazypower.mass(), 1366.873, places=2)  # Size for energy
+        self.assertAlmostEqual(
+            sample_bat_size.mass(), 12.255, places=2
+        )  # Size for energy
+        self.assertAlmostEqual(
+            sample_bat_size_crazypower.mass(), 1366.873, places=2
+        )  # Size for energy
 
         # Test volume
         self.assertAlmostEqual(sample_bat_size.volume(), 0.028835, places=5)
@@ -48,7 +63,9 @@ class testpower(unittest.TestCase):
         n_bat_mot = 3  # Number of batteries per motor
 
         # Run sample calc
-        sample_bat_red = red.redundancy_power(V_motor, E_tot, V_cell, C_cell, n_mot, n_bat_mot, per_mot)
+        sample_bat_red = red.redundancy_power(
+            V_motor, E_tot, V_cell, C_cell, n_mot, n_bat_mot, per_mot
+        )
 
         # Individual tests
         self.assertEqual(sample_bat_red.N_cells_mot(), 30989)

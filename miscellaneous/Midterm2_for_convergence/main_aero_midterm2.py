@@ -1,4 +1,5 @@
 import sys
+
 sys.path.append("../")
 from Preliminary_Lift.Airfoil import *
 from Preliminary_Lift.Drag import *
@@ -8,6 +9,7 @@ from Preliminary_Lift.Airfoil_analysis import airfoil_stats
 import os
 import json
 import matplotlib.pyplot as plt
+
 root_path = os.path.join(os.getcwd(), os.pardir)
 import constants as const
 
@@ -19,11 +21,11 @@ STR = data["Structures"]
 AR = 4
 
 
-W = 2602*const.g  # STR["MTOW"] #[N]
+W = 2602 * const.g  # STR["MTOW"] #[N]
 Vcruise = 62  # FP["V_cruise"] #[m/s]
-Wing_loading = W/14.9  # FP["WS"]
+Wing_loading = W / 14.9  # FP["WS"]
 
-#C ruise conditions
+# C ruise conditions
 h = 1000  # cruise height[m]
 atm_flight = ISA(h)
 rho = atm_flight.density()  # cte.rho
@@ -34,11 +36,11 @@ M = Mach(Vcruise, a)
 # Wing planform
 S_ref = 14.9  # [m**2] PLACEHOLDER
 # print("S", S_ref)
-b = np.sqrt(AR*S_ref) # Due to reqs
+b = np.sqrt(AR * S_ref)  # Due to reqs
 
 # For double wing
 s1 = 0.5
-s2 = 1-s1
+s2 = 1 - s1
 # Sweep
 sweepc41 = 0
 sweepc42 = 0
@@ -48,18 +50,20 @@ b_d = b  # fixed due to span limitations
 h_d = 1.4  # Vertical gap between wings. Based on fuselage size
 l_h = 5  # Horizontal gap between wings. Based on fuselage size
 e_ref = e_OS(AR)
-e = e_factor('tandem', h_d, b_d, e_ref)
+e = e_factor("tandem", h_d, b_d, e_ref)
 # Fuselage dimensions
 l1 = const.l_nosecone
 l2 = const.l_cylinder
 l3 = const.l_tailcone
 w_max = const.w_fuselage
 h_max = const.h_fuselage
-d_eq = np.sqrt(h_max*w_max)
+d_eq = np.sqrt(h_max * w_max)
 # Winglets
 h_wl1 = 0
 h_wl2 = 0
-Wing_params = wing_design(AR, s1, sweepc41, s2, sweepc42, M, S_ref, l_h, h_d, w_max, h_wl1, h_wl2)
+Wing_params = wing_design(
+    AR, s1, sweepc41, s2, sweepc42, M, S_ref, l_h, h_d, w_max, h_wl1, h_wl2
+)
 b = Wing_params.wing_planform_double()[0][0]
 C_r = Wing_params.wing_planform_double()[0][1]
 C_t = Wing_params.wing_planform_double()[0][2]
@@ -71,13 +75,13 @@ Slope1 = Wing_params.liftslope()[1]
 CLmax = Wing_params.CLmax_s()
 
 # For Drag estimation
-k = 0.634 * 10**(-5)  # Smooth paint from adsee 2 L2
+k = 0.634 * 10 ** (-5)  # Smooth paint from adsee 2 L2
 flamf = 0.1  # From ADSEE 2 L2 GA aircraft
-IF_f = 1    # From ADSEE 2 L2
-IF_w = 1.1   # From ADSEE 2 L2
+IF_f = 1  # From ADSEE 2 L2
+IF_w = 1.1  # From ADSEE 2 L2
 IF_v = 1.04  # From ADSEE 2 L2
 flamw = 0.35  # From ADSEE 2 L2 GA aircraft
-u = 8.43 * np.pi/180  # fuselage upsweep
+u = 8.43 * np.pi / 180  # fuselage upsweep
 Abase = 0
 # Airfoil
 airfoil = airfoil_stats()
@@ -90,7 +94,41 @@ S_v = 0.6
 S_t = 0
 
 
-Drag = componentdrag('tandem',S_ref,l1,l2,l3,d_eq,Vcruise,rho,MAC,AR,e,Mach(Vcruise,a),k,flamf,flamw,mu,tc,xcm,0,SweepLE,u,0,h_d,IF_f,IF_w, IF_v, CL_CDmin,Abase, S_v, s1, s2, h_wl1, h_wl2)
+Drag = componentdrag(
+    "tandem",
+    S_ref,
+    l1,
+    l2,
+    l3,
+    d_eq,
+    Vcruise,
+    rho,
+    MAC,
+    AR,
+    e,
+    Mach(Vcruise, a),
+    k,
+    flamf,
+    flamw,
+    mu,
+    tc,
+    xcm,
+    0,
+    SweepLE,
+    u,
+    0,
+    h_d,
+    IF_f,
+    IF_w,
+    IF_v,
+    CL_CDmin,
+    Abase,
+    S_v,
+    s1,
+    s2,
+    h_wl1,
+    h_wl2,
+)
 
 
 CL_design = Drag.CL_des()[0]
@@ -105,7 +143,7 @@ CDs = Drag.CD(CLmax)
 CDs_f = Drag.CD0_f
 CDs_w = CDs - CDs_f
 # Post stall
-Afus = np.pi * d_eq**2/4
+Afus = np.pi * d_eq**2 / 4
 post_stall = Wing_params.post_stall_lift_drag(tc, CDs, CDs_f, Afus)
 
 alpha_lst = np.arange(0, 89, 0.1)
@@ -116,13 +154,3 @@ CD_a_f = Wing_params.CDa_poststall(tc, CDs, CDs_f, Afus, alpha_lst, "fus", Drag.
 
 # plt.plot(alpha_lst, CD_a_w)
 # plt.show()
-
-
-
-
-
-
-
-
-
-

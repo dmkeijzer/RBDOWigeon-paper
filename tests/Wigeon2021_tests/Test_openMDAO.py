@@ -5,38 +5,37 @@ import matplotlib.pyplot as plt
 
 
 prob = om.Problem()
-prob.model.add_subsystem('cruise', test_function(), promotes_inputs=['h', 'V'])
+prob.model.add_subsystem("cruise", test_function(), promotes_inputs=["h", "V"])
 
-prob.model.set_input_defaults('h', 300)
-prob.model.set_input_defaults('V', 40)
+prob.model.set_input_defaults("h", 300)
+prob.model.set_input_defaults("V", 40)
 
 prob.driver = om.ScipyOptimizeDriver()
-prob.driver.options['optimizer'] = 'COBYLA'
+prob.driver.options["optimizer"] = "COBYLA"
 
-prob.model.add_design_var('h', lower = 305)
-prob.model.add_design_var('V', lower = 0)
+prob.model.add_design_var("h", lower=305)
+prob.model.add_design_var("V", lower=0)
 
-prob.model.add_objective('cruise.D/L')
+prob.model.add_objective("cruise.D/L")
 
 prob.setup()
 prob.run_driver()
 
-print(prob.get_val('cruise.h'), prob.get_val('cruise.V'))
+print(prob.get_val("cruise.h"), prob.get_val("cruise.V"))
 
 if __name__ == "__main__":
-
     model = om.Group()
-    model.add_subsystem('cruise', test_function(), promotes_inputs=['h', 'V'])
+    model.add_subsystem("cruise", test_function(), promotes_inputs=["h", "V"])
 
     prob = om.Problem(model)
     prob.setup()
 
-    prob.set_val('cruise.h', 305)
+    prob.set_val("cruise.h", 305)
 
     for V in range(40, 60):
-        prob['cruise.V'] = V
+        prob["cruise.V"] = V
         prob.run_model()
-        print(prob['cruise.D/L'], V)
+        print(prob["cruise.D/L"], V)
 
 
 # class parabola(om.ExplicitComponent):

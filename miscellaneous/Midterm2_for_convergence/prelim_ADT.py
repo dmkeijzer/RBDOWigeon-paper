@@ -22,20 +22,25 @@ class ActDisk:
         self.rho = rho
         self.g0 = g0
         self.rho0 = rho0
-        self.A = MTOM/DiskLoad
-        self.T_hover = MTOM*self.g0
+        self.A = MTOM / DiskLoad
+        self.T_hover = MTOM * self.g0
 
     def v_e_hover(self):
-        return np.sqrt(2*self.T_hover/(self.rho0*self.A) + 0)
+        return np.sqrt(2 * self.T_hover / (self.rho0 * self.A) + 0)
 
     def v_e_cr(self):
         return np.sqrt(2 * self.T_cruise / (self.rho * self.A) + self.v_cr**2)
 
     def eff_cruise(self):
-        return 2/(1 + self.v_e_cr()/self.v_cr)
+        return 2 / (1 + self.v_e_cr() / self.v_cr)
 
     def P_ideal(self):
-        return 0.5 * self.T_cruise * self.v_cr * ((self.T_cruise / (self.A * self.v_cr ** 2 * (self.rho / 2)) + 1) ** 2 + 1)
+        return (
+            0.5
+            * self.T_cruise
+            * self.v_cr
+            * ((self.T_cruise / (self.A * self.v_cr**2 * (self.rho / 2)) + 1) ** 2 + 1)
+        )
 
     def P_actual(self):
-        return self.P_ideal()*1.15
+        return self.P_ideal() * 1.15
